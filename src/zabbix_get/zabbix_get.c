@@ -144,7 +144,7 @@ static int	get_value(
 
 	*value = NULL;
 
-	if (SUCCEED == (ret = zbx_tcp_connect(&s, host, port, SENDER_TIMEOUT))) {
+	if (SUCCEED == (ret = zbx_tcp_connect(&s, host, port, SENDER_TIMEOUT, NULL))) {
 		zbx_snprintf(request, sizeof(request),"%s\n",key);
 		if( SUCCEED == (ret = zbx_tcp_send(&s, request)) )
 		{

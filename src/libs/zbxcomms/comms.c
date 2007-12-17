@@ -318,11 +318,12 @@ void	zbx_tcp_init(zbx_sock_t *s, ZBX_SOCKET o)
 int	zbx_tcp_connect(zbx_sock_t *s,
 	const char	*ip, 
 	unsigned short	port,
-	int		timeout
+	int		timeout,
+	const char      *from_ip,
 	)
 {
 	int	ret=SUCCEED;
-	struct	addrinfo *ai, hints;
+	struct	addrinfo *ai, hints, *from_ai;
 	char	service[MAX_STRING_LEN];
 
 	ZBX_TCP_START();
@@ -344,6 +345,22 @@ int	zbx_tcp_connect(zbx_sock_t *s,
 		zbx_set_tcp_strerror("Cannot create socket [%s]:%d [%s]", ip, port ,strerror_from_system(zbx_sock_last_error()));
 		ret=FAIL;
 		goto out;
+	}
+
+        /* if from ip specified, bind this socket to given IP address before connect */
+	if (from_ip) {
+		memset(&hints, 0x00, sizeof(struct addrinfo));
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+
+		if (0 != getaddrinfo (from_ip, NULL, &hints, &from_ai)) {
+			zbx_set_tcp_strerror("Cannot resolve PollerIP [%s] [%s]", ip, strerror_from_system(zbx_sock_last_error()));
+			ret=FAIL;
+			goto out;
+		}
+
+		bind (s->socket, from_ai->ai_addr, from_ai->ai_addrlen);
+		freeaddrinfo (from_ai);
 	}
 
 	if (0 != timeout) {
@@ -374,10 +391,11 @@ out:
 int	zbx_tcp_connect(zbx_sock_t *s,
 	const char	*ip,
 	unsigned short	port,
-	int		timeout
+	int		timeout,
+	const char      *from_ip
 	)
 {
-	ZBX_SOCKADDR	servaddr_in;
+	ZBX_SOCKADDR	servaddr_in, from_addr;
 	struct	hostent *hp;
 
 	ZBX_TCP_START();
@@ -396,6 +414,13 @@ int	zbx_tcp_connect(zbx_sock_t *s,
 	if (ZBX_SOCK_ERROR == (s->socket = socket(AF_INET,SOCK_STREAM,0))) {
 		zbx_set_tcp_strerror("Cannot create socket [%s:%d] [%s]", ip, port ,strerror_from_system(zbx_sock_last_error()));
 		return	FAIL;
+	}
+
+	if (from_ip) {
+		memset (&from_addr, 0, sizeof (ZBX_SOCKADDR));
+		from_addr.sin_family = AF_INET;
+		from_addr.sin_addr.s_addr = inet_addr (from_ip);
+		bind (s->socket, (struct sockaddr*)&from_addr, sizeof (ZBX_SOCKADDR));
 	}
 
 	if (0 != timeout) {
