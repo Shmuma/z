@@ -460,6 +460,11 @@ AC_DEFINE(HAVE_FUNCTION_SETEUID,1,[Define to 1 if function 'seteuid' and 'setegi
 AC_MSG_RESULT(yes),
 AC_MSG_RESULT(no))
 
+have_setproctitle="no"
+
+dnl Another way to find setproctitle()
+AC_CHECK_LIB(setproctitle, setproctitle, [ have_setproctitle="yes"; LIBS="-lsetproctitle $LIBS" ])
+
 dnl Check for function setproctitle()
 AC_MSG_CHECKING(for function setproctitle())
 AC_TRY_LINK(
@@ -470,9 +475,13 @@ AC_TRY_LINK(
 [
 	setproctitle("Test %d", 1);
 ],
-AC_DEFINE(HAVE_FUNCTION_SETPROCTITLE,1,[Define to 1 if function 'setproctitle' exist.])
+have_setproctitle="yes"
 AC_MSG_RESULT(yes),
 AC_MSG_RESULT(no))
+
+if test "$have_setproctitle" = "yes"; then
+AC_DEFINE(HAVE_FUNCTION_SETPROCTITLE,1,[Define to 1 if function 'setproctitle' exist.])
+fi
 
 dnl Check for totalram in struct sysinfo
 AC_MSG_CHECKING(for totalram in struct sysinfo)
