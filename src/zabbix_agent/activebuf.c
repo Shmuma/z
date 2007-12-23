@@ -150,6 +150,7 @@ static void flush_buffer ()
 
     for (i = 0; i < buffer.size; i++) {
         fwrite (buffer.entries[i].key, strlen (buffer.entries[i].key)+1, 1, buffer.file);
+        fwrite (&buffer.entries[i].refresh, sizeof (int), 1, buffer.file);
         fwrite (&buffer.entries[i].beg_offset, sizeof (size_t), 1, buffer.file);
         fwrite (&buffer.entries[i].max_offset, sizeof (size_t), 1, buffer.file);
         fwrite (&buffer.entries[i].max_items,  sizeof (int), 1, buffer.file);
@@ -166,6 +167,9 @@ static void flush_buffer ()
 /* Rebuild structure of buffers. Actual modifications occur only after buffers are freed. */
 void update_active_buffer (ZBX_ACTIVE_METRIC* active)
 {
+    if (!buffer.active)
+        return;
+
     zabbix_log (LOG_LEVEL_DEBUG, "update_active_buffer");
     
     buffer.new_entries = active;
@@ -201,7 +205,7 @@ static int read_initial_buffer ()
 
     zabbix_log (LOG_LEVEL_DEBUG, "Reading %d items of history from buffer", buffer.size);
 
-    buffer.entries = (buffer_check_entry_t*)malloc (sizeof (buffer_check_entry_t) * buffer.size);
+    buffer.entries = (buffer_check_entry_t*)calloc (buffer.size, sizeof (buffer_check_entry_t));
 
     for (i = 0; i < buffer.size; i++) {
         buffer.entries[i].key = NULL;
@@ -220,6 +224,7 @@ static int read_initial_buffer ()
             buffer.entries[i].key = zbx_strdcat (buffer.entries[i].key, buf);
         }
 
+        fread (&buffer.entries[i].refresh, sizeof (int), 1, buffer.file);
         fread (&buffer.entries[i].beg_offset, sizeof (size_t), 1, buffer.file);
         fread (&buffer.entries[i].max_offset, sizeof (size_t), 1, buffer.file);
         fread (&buffer.entries[i].max_items,  sizeof (int), 1, buffer.file);
@@ -244,8 +249,8 @@ static int read_initial_buffer ()
         if (index >= 0)
             buffer.entries[i].index = index;
 
-        zabbix_log (LOG_LEVEL_DEBUG, "Read item history. Key %s, len: %lu, items: %d, index: %d, count: %d", buffer.entries[i].key, 
-                    buffer.entries[i].max_offset - buffer.entries[i].beg_offset, buffer.entries[i].max_items,
+        zabbix_log (LOG_LEVEL_DEBUG, "Read item history. Key %s, refresh %d, len: %lu, items: %d, index: %d, count: %d", buffer.entries[i].key, 
+                    buffer.entries[i].refresh, buffer.entries[i].max_offset - buffer.entries[i].beg_offset, buffer.entries[i].max_items,
                     buffer.entries[i].index, buffer.entries[i].count);
     }
 
@@ -322,6 +327,7 @@ static int apply_new_entries ()
             buffer.entries[i].max_offset = ofs;
             buffer.entries[i].index = 0;
             buffer.entries[i].count = 0;
+            buffer.entries[i].refresh = buffer.new_entries[i].refresh;
             buffer.entries[i].max_items = (buffer.entries[i].max_offset-buffer.entries[i].beg_offset) / 6;
             buffer.entries[i].sizes = (unsigned short*)calloc (sizeof (unsigned short), buffer.entries[i].max_items);
             buffer.header_size += buffer.entries[i].max_items*sizeof (unsigned short);
@@ -377,6 +383,9 @@ void store_in_active_buffer (const char* key, const char* value)
     size_t ofs;
     unsigned char zero = 0;
 
+    if (!buffer.active)
+        return;
+
     zabbix_log (LOG_LEVEL_DEBUG, "store_in_active_buffer ()");
 
     for (i = 0; i < buffer.size; i++) {
@@ -384,6 +393,7 @@ void store_in_active_buffer (const char* key, const char* value)
             continue;
 
         e = buffer.entries+i;
+        zabbix_log (LOG_LEVEL_DEBUG, "Item found. It's %d-th item. Count: %d, It has index %d, beg: %lu, end: %lu", i, e->count, e->index, e->beg_offset, e->max_offset);
 
         /* find space to store our value */
         ofs = e->beg_offset;
@@ -391,6 +401,7 @@ void store_in_active_buffer (const char* key, const char* value)
             ofs += e->sizes[i];
 
         if (ofs + sizeof (ts) + len + 1 > e->max_offset) {
+            zabbix_log (LOG_LEVEL_DEBUG, "Wrap detected!");
             e->index = 0;
             ofs = e->beg_offset;
         }
@@ -424,6 +435,7 @@ void store_in_active_buffer (const char* key, const char* value)
         e->index++;
         e->count++;
         e->index %= e->max_items;
+        zabbix_log (LOG_LEVEL_DEBUG, "New item properties: index %d, count: %d, beg: %lu, end: %lu", e->index, e->count, e->beg_offset, e->max_offset);
         buffer.items++;
         break;
     }
@@ -435,7 +447,7 @@ void store_in_active_buffer (const char* key, const char* value)
 
 int  active_buffer_is_empty ()
 {
-    return !buffer.items;
+    return buffer.active ? !buffer.items : 1;
 }
 
 
@@ -445,6 +457,9 @@ active_buffer_items_t* take_active_buffer_items ()
     buffer_check_entry_t* e;
     int i, j, index;
     size_t ofs;
+
+    if (!buffer.active)
+        return NULL;
 
     zabbix_log (LOG_LEVEL_DEBUG, "take_active_buffer_items ()");
 
@@ -500,6 +515,9 @@ void free_active_buffer_items (active_buffer_items_t* items)
 {
     int i, j;
 
+    if (!buffer.active)
+        return;
+
     for (i = 0; i < items->size; i++) {
         for (j = 0; j < items->item[i].size; j++) 
             free (items->item[i].values[j]);
@@ -518,6 +536,9 @@ active_buffer_items_t* get_buffer_checks_list ()
     active_buffer_items_t* items;
     buffer_check_entry_t* e;
     int i;
+
+    if (!buffer.active)
+        return NULL;
 
     zabbix_log (LOG_LEVEL_DEBUG, "get_buffer_checks_list ()");
     zabbix_log (LOG_LEVEL_DEBUG, "get_buffer_checks_list () exit");
