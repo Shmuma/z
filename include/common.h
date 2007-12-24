@@ -621,9 +621,9 @@ int	comms_parse_response(char *xml,char *host,char *key, char *data, char *lastl
 int	comms_parse_multi_response (char *xml,char *host,char *key, char *data, char *lastlogsize, char *timestamp,
 		char *source, char *severity, int maxlen, void** token);
 
-char*	comms_start_multi_request (const char* host);
+char*	comms_start_multi_request (const char* host, const char* key);
 
-char*	comms_append_multi_request (char* request, const char* key, const char* data, unsigned long timestamp);
+char*	comms_append_multi_request (char* request, const char* data, unsigned long timestamp);
 
 char*	comms_finish_multi_request (char* request);
 

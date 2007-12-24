@@ -170,20 +170,31 @@ int comms_parse_multi_response (char *xml,char *host,char *key, char *data, char
 	
 	zabbix_log (LOG_LEVEL_DEBUG, "comms_parse_multi_response: started");
 	
-	/* if token is NULL, skip <reqs> tag and obtain hostname value */
+	/* if token is NULL, skip <reqs> tag and obtain hostname and key value */
 	if (!ptr) 
 	{
 		char host_b64[MAX_STRING_LEN];
+		char key_b64[MAX_STRING_LEN];
 		
 		if (strncmp (xml, "<reqs>", 6))
 			return FAIL;
 		ptr = xml+6;
 
 		memset(host_b64, 0, sizeof(host_b64));
+		memset(key_b64,0,sizeof(key_b64));
+
 		xml_get_data(ptr, "host", host_b64, sizeof(host_b64)-1);
+		xml_get_data(ptr, "key", key_b64, sizeof(key_b64)-1);
+
 		memset(host, 0, maxlen);
+		memset(key,0,maxlen);
+
 		str_base64_decode(host_b64, host, &i);
+		str_base64_decode(key_b64, key, &i);
 		
+		zabbix_log (LOG_LEVEL_DEBUG, "Host64 = %s, Host=%s", host_b64, host);
+		zabbix_log (LOG_LEVEL_DEBUG, "Key64 = %s, Key=%s", key_b64, key);
+
 		ptr = strstr (ptr, "<values>");
 		if (ptr)
 			ptr += 8;
@@ -194,23 +205,17 @@ int comms_parse_multi_response (char *xml,char *host,char *key, char *data, char
 	if (strncmp (ptr, "<value>", 7) == 0) 
 	{
 		/* parse one value */
-		char key_b64[MAX_STRING_LEN];
 		char data_b64[MAX_STRING_LEN];
 
-		memset(key_b64,0,sizeof(key_b64));
 		memset(data_b64,0,sizeof(data_b64));
 
-		xml_get_data(ptr, "key", key_b64, sizeof(key_b64)-1);
 		xml_get_data(ptr, "data", data_b64, sizeof(data_b64)-1);
 		xml_get_data(ptr, "timestamp", timestamp, maxlen-1);
 
-		memset(key,0,maxlen);
 		memset(data,0,maxlen);
 
-		str_base64_decode(key_b64, key, &i);
 		str_base64_decode(data_b64, data, &i);
 
-		zabbix_log (LOG_LEVEL_DEBUG, "Key64 = %s, Key=%s", key_b64, key);
 		zabbix_log (LOG_LEVEL_DEBUG, "Data64 = %s, Data=%s", data_b64, data);
 
 		ptr = strstr (ptr, "</value>");
@@ -287,19 +292,18 @@ static char* comms_get_xml_b64_value (const char* tag, const char* val)
 
 
 /* start new multi-request sequence */
-char* comms_start_multi_request (const char* host)
+char* comms_start_multi_request (const char* host, const char* key)
 {
-    return zbx_dsprintf (NULL, "<reqs>%s<values>", comms_get_xml_b64_value ("host", host));
+    return zbx_dsprintf (NULL, "<reqs>%s%s<values>", comms_get_xml_b64_value ("host", host), 
+                         comms_get_xml_b64_value ("key", key));
 }
 
 
 char* comms_append_multi_request (char* request,
-                                  const char* key,
                                   const char* data,
                                   unsigned long timestamp)
 {
-    return zbx_strdcatf (request, "<value>%s%s<timestamp>%lu</timestamp></value>", 
-                         comms_get_xml_b64_value ("key", key),
+    return zbx_strdcatf (request, "<value>%s<timestamp>%lu</timestamp></value>", 
                          comms_get_xml_b64_value ("data", data), timestamp);
 }
 

@@ -32,22 +32,23 @@ typedef struct {
 } active_buffer_item_t;
 
 
-typedef struct  {
-    int size;
-    active_buffer_item_t* item;
-} active_buffer_items_t;
-
 
 void init_active_buffer ();
 void free_active_buffer ();
 void update_active_buffer (ZBX_ACTIVE_METRIC* active);
 void store_in_active_buffer (const char* key, const char* value);
 int  active_buffer_is_empty ();
-active_buffer_items_t* take_active_buffer_items ();
-void free_active_buffer_items (active_buffer_items_t* items);
+active_buffer_item_t* take_active_buffer_item ();
+void free_active_buffer_item (active_buffer_item_t* item);
 
 
-active_buffer_items_t* get_buffer_checks_list ();
+typedef struct  {
+    int size;
+    char** keys;
+    int* refreshes;
+} active_buffer_checks_t;
 
+active_buffer_checks_t* get_buffer_checks_list ();
+void free_buffer_checks_list (active_buffer_checks_t* checks);
 
 #endif /* ZABBIX_ACTIVEBUF_H */
