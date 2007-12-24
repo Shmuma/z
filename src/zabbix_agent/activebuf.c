@@ -451,35 +451,38 @@ int  active_buffer_is_empty ()
 }
 
 
-active_buffer_items_t* take_active_buffer_items ()
+active_buffer_item_t* take_active_buffer_item ()
 {
-    active_buffer_items_t* items;
+    active_buffer_item_t* item = NULL;
     buffer_check_entry_t* e;
     int i, j, index;
     size_t ofs;
 
-    if (!buffer.active)
+    if (active_buffer_is_empty ())
         return NULL;
 
-    zabbix_log (LOG_LEVEL_DEBUG, "take_active_buffer_items ()");
-
+    zabbix_log (LOG_LEVEL_DEBUG, "take_active_buffer_item ()");
     zabbix_log (LOG_LEVEL_DEBUG, "Buffer size %d, items %d", buffer.size, buffer.items);
+    e = buffer.entries;
 
-    items = (active_buffer_items_t*)malloc (sizeof (active_buffer_items_t));
+    for (i = 0; i < buffer.size; i++, e++) {
+        if (!e->count)
+            continue;
 
-    items->size = buffer.size;
-    items->item = (active_buffer_item_t*)malloc (sizeof (active_buffer_item_t)*buffer.size);
+        item = (active_buffer_item_t*)malloc (sizeof (active_buffer_item_t));
 
-    for (i = 0; i < buffer.size; i++) {
-        e = buffer.entries + i;
+        if (!item) {
+            zabbix_log (LOG_LEVEL_WARNING, "Malloc failed");
+            return NULL;
+        }
 
         zabbix_log (LOG_LEVEL_DEBUG, "Entry %s, size %d", e->key, e->count);
         
-        items->item[i].key = strdup (e->key);
-        items->item[i].size = e->count;
-        items->item[i].refresh = e->refresh;
-        items->item[i].ts = (unsigned long*)malloc (sizeof (unsigned long) * e->count);
-        items->item[i].values = (char**)malloc (sizeof (char*) * e->count);
+        item->key = strdup (e->key);
+        item->size = e->count;
+        item->refresh = e->refresh;
+        item->ts = (unsigned long*)malloc (sizeof (unsigned long) * e->count);
+        item->values = (char**)malloc (sizeof (char*) * e->count);
 
         index = 0;
         ofs = e->beg_offset + buffer.header_size;
@@ -488,77 +491,98 @@ active_buffer_items_t* take_active_buffer_items ()
                 unsigned long ts;
                 char* val = (char*)malloc (e->sizes[j]-sizeof (ts));
 
+                /* we should add more debugging about this code */
                 fseek (buffer.file, ofs, SEEK_SET);
                 fread (&ts, sizeof (ts), 1, buffer.file);
                 fread (val, e->sizes[j]-sizeof (ts), 1, buffer.file);
 
-                items->item[i].ts[j] = ts;
-                items->item[i].values[j] = val;
+                item->ts[j] = ts;
+                item->values[j] = val;
 
                 ofs += e->sizes[j];
             }
 
         /* clean items after take */
-        buffer.entries[i].index = 0;
-        buffer.entries[i].count = 0;
+        e->count = e->index = 0;
+        break;
     }
 
     zabbix_log (LOG_LEVEL_DEBUG, "take_active_buffer_items () exit");
-    buffer.items = 0;
 
-    return items;
+    return item;
 }
 
 
 
-void free_active_buffer_items (active_buffer_items_t* items)
+void free_active_buffer_item (active_buffer_item_t* item)
 {
-    int i, j;
+    int i;
 
     if (!buffer.active)
         return;
 
-    for (i = 0; i < items->size; i++) {
-        for (j = 0; j < items->item[i].size; j++) 
-            free (items->item[i].values[j]);
-        free (items->item[i].values);
-        free (items->item[i].ts);
-    }
-
-    if (items->size)
-        free (items->item);
-    free (items);
+    for (i = 0; i < item->size; i++) 
+        free (item->values[i]);
+    free (item->values);
+    free (item->ts);
+    free (item);
 }
 
 
-active_buffer_items_t* get_buffer_checks_list ()
+active_buffer_checks_t* get_buffer_checks_list ()
 {
-    active_buffer_items_t* items;
-    buffer_check_entry_t* e;
+    active_buffer_checks_t* items;
     int i;
 
     if (!buffer.active)
         return NULL;
 
     zabbix_log (LOG_LEVEL_DEBUG, "get_buffer_checks_list ()");
-    zabbix_log (LOG_LEVEL_DEBUG, "get_buffer_checks_list () exit");
 
-    items = (active_buffer_items_t*)malloc (sizeof (active_buffer_items_t));
+    items = (active_buffer_checks_t*)malloc (sizeof (active_buffer_checks_t));
 
-    items->size = buffer.size;
-    items->item = (active_buffer_item_t*)malloc (sizeof (active_buffer_item_t)*buffer.size);
-
-    for (i = 0; i < buffer.size; i++) {
-        e = buffer.entries + i;
-
-        zabbix_log (LOG_LEVEL_DEBUG, "Entry %s, size %d", e->key, e->count);
-        
-        items->item[i].key = strdup (e->key);
-        items->item[i].size = 0;
-        items->item[i].refresh = e->refresh;
-        items->item[i].ts = NULL;
-        items->item[i].values = NULL;
+    if (!items) {
+        zabbix_log (LOG_LEVEL_WARNING, "Memory allocation error");
+        return NULL;
     }
 
+    items->size = buffer.size;
+    items->keys = (char**)malloc (sizeof (char*) * buffer.size);
+
+    if (!items->keys) {
+        zabbix_log (LOG_LEVEL_WARNING, "Memory allocation error");
+        free (items);
+        return NULL;
+    }
+
+    items->refreshes = (int*)malloc (sizeof (int) * buffer.size);
+
+    if (!items->refreshes) {
+        zabbix_log (LOG_LEVEL_WARNING, "Memory allocation error");
+        free (items->keys);
+        free (items);
+        return NULL;
+    }
+
+    for (i = 0; i < buffer.size; i++) {
+        items->keys[i] = strdup (buffer.entries[i].key);
+        items->refreshes[i] = buffer.entries[i].refresh;
+    }
+
+    zabbix_log (LOG_LEVEL_DEBUG, "get_buffer_checks_list () exit");
+
     return items;
+}
+
+
+void free_buffer_checks_list (active_buffer_checks_t* checks)
+{
+    if (!checks)
+        return;
+
+    if (checks->keys)
+        free (checks->keys);
+    if (checks->refreshes)
+        free (checks->refreshes);
+    free (checks);
 }
