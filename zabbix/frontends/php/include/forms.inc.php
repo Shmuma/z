@@ -1732,6 +1732,7 @@
 			$frmItem->AddVar("multiplier",$multiplier);
 		}
 
+		if( !is_numeric($formula)) $formula = 1;
 		if($multiplier == 1)
 		{
 			$frmItem->AddRow(S_CUSTOM_MULTIPLIER, new CTextBox("formula",$formula,40,$limited));
@@ -3445,8 +3446,8 @@ include_once 'include/discovery.inc.php';
 		$frmScr->AddItemToBottomRow(new CButton("save",S_SAVE));
 		if(isset($_REQUEST["screenid"]))
 		{
-			$frmScr->AddItemToBottomRow(SPACE);
-			$frmScr->AddItemToBottomRow(new CButton('clone',S_CLONE));
+			/* $frmScr->AddItemToBottomRow(SPACE);
+			$frmScr->AddItemToBottomRow(new CButton('clone',S_CLONE)); !!! TODO */
 			$frmScr->AddItemToBottomRow(SPACE);
 			$frmScr->AddItemToBottomRow(new CButtonDelete(S_DELETE_SCREEN_Q,
 				url_param("form").url_param("screenid")));
@@ -4017,11 +4018,11 @@ include_once 'include/discovery.inc.php';
 		$template_table->SetCellPadding(0);
 		$template_table->SetCellSpacing(0);
 
-		foreach($templates as $id => $name)
+		foreach($templates as $id => $temp_name)
 		{
-			$frmHost->AddVar('templates['.$id.']',$name);
+			$frmHost->AddVar('templates['.$id.']',$temp_name);
 			$template_table->AddRow(array(
-					$name,
+					$temp_name,
 					new CButton('unlink['.$id.']',S_UNLINK),
 					isset($original_templates[$id]) ? new CButton('unlink_and_clear['.$id.']',S_UNLINK_AND_CLEAR) : SPACE
 					)

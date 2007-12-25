@@ -165,14 +165,14 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 	int		now;
 	int		res = SUCCEED;
 
-	zabbix_log( LOG_LEVEL_DEBUG, "In evaluate_COUNT(param:%s)",
-		parameter);
-
 	char		*table = NULL;
 	char		table_ui64[] = "history_uint";
 	char		table_float[] = "history";
 	char		table_log[] = "history_log";
 	char		table_str[] = "history_str";
+
+	zabbix_log( LOG_LEVEL_DEBUG, "In evaluate_COUNT(param:%s)",
+		parameter);
 
 
 	switch(item->value_type)
@@ -609,7 +609,7 @@ static int evaluate_MAX(char *value,DB_ITEM *item,int parameter,int flag)
 	int		res = SUCCEED;
 	int		rows;
 	double		f;
-	double		max;
+	double		max = 0;
 
 	char		*table = NULL;
 	char		table_ui64[] = "history_uint";
@@ -734,7 +734,7 @@ static int evaluate_DELTA(char *value,DB_ITEM *item,int parameter, int flag)
 	int		res = SUCCEED;
 	int		rows;
 	double		f;
-	double		min,max;
+	double		min = 0,max = 0;
 
 	zbx_uint64_t	max_uint64=0,min_uint64=0;
 	zbx_uint64_t	l;

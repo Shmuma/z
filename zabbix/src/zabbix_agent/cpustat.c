@@ -75,7 +75,7 @@ int	init_cpu_collector(ZBX_CPUS_STAT_DATA *pcpus)
 		counter_path, 0, 
 		&pcpus->cpu[0].usage_couter)))
 	{
-		zabbix_log( LOG_LEVEL_ERR, "Unable to add performance counter \"%s\" to query: %s", strerror_from_module(status,"PDH.DLL"));
+		zabbix_log( LOG_LEVEL_ERR, "Unable to add performance counter \"%s\" to query: %s", counter_path, strerror_from_module(status,"PDH.DLL"));
 		return 2;
 	}
 
@@ -88,7 +88,7 @@ int	init_cpu_collector(ZBX_CPUS_STAT_DATA *pcpus)
 			counter_path,0,
 			&pcpus->cpu[i].usage_couter)))
 		{
-			zabbix_log( LOG_LEVEL_ERR, "Unable to add performance counter \"%s\" to query: %s", strerror_from_module(status,"PDH.DLL"));
+			zabbix_log( LOG_LEVEL_ERR, "Unable to add performance counter \"%s\" to query: %s", counter_path, strerror_from_module(status,"PDH.DLL"));
 			return 2;
 		}
 	}
@@ -110,7 +110,7 @@ int	init_cpu_collector(ZBX_CPUS_STAT_DATA *pcpus)
 	/* Prepare for CPU execution queue usage collection */
 	if (ERROR_SUCCESS != (status = PdhAddCounter(pcpus->pdh_query, counter_path, 0, &pcpus->queue_counter)))
 	{
-		zabbix_log( LOG_LEVEL_ERR, "Unable to add performance counter \"%s\" to query: %s", strerror_from_module(status,"PDH.DLL"));
+		zabbix_log( LOG_LEVEL_ERR, "Unable to add performance counter \"%s\" to query: %s", counter_path, strerror_from_module(status,"PDH.DLL"));
 		return 2;
 	}
 
@@ -245,26 +245,26 @@ static void	apply_cpustat(
 		time15	= 0;
 
 	zbx_uint64_t
-		idle,
-		idle1,
-		idle5,
-		idle15,
-		user,
-		user1,
-		user5,
-		user15,
-		system,
-		system1,
-		system5,
-		system15,
-		nice,
-		nice1,
-		nice5,
-		nice15,
-		all,
-		all1,
-		all5,
-		all15;
+		idle	= 0,
+		idle1	= 0,
+		idle5	= 0,
+		idle15	= 0,
+		user	= 0,
+		user1	= 0,
+		user5	= 0,
+		user15	= 0,
+		system	= 0,
+		system1	= 0,
+		system5	= 0,
+		system15= 0,
+		nice	= 0,
+		nice1	= 0,
+		nice5	= 0,
+		nice15	= 0,
+		all	= 0,
+		all1	= 0,
+		all5	= 0,
+		all15	= 0;
 
 
 	for(i=0; i < MAX_CPU_HISTORY; i++)

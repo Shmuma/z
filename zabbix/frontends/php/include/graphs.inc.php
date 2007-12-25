@@ -30,6 +30,17 @@
 		return $type;
 	}
 	
+	function	graph_item_drawtypes()
+	{
+		return array(
+				GRAPH_ITEM_DRAWTYPE_LINE,
+				GRAPH_ITEM_DRAWTYPE_FILLED_REGION,
+				GRAPH_ITEM_DRAWTYPE_BOLD_LINE,
+				GRAPH_ITEM_DRAWTYPE_DOT,
+				GRAPH_ITEM_DRAWTYPE_DASHED_LINE
+			    );
+	}
+
         function	graph_item_drawtype2str($drawtype,$type=null)
         {
 		if($type == GRAPH_ITEM_AGGREGATED) return '-';
@@ -69,13 +80,13 @@
 		
 	}
 
-	function 	get_graphs_by_hostid($hostid)
+	function 	&get_graphs_by_hostid($hostid)
 	{
 		return DBselect("select distinct g.* from graphs g, graphs_items gi, items i".
 			" where g.graphid=gi.graphid and gi.itemid=i.itemid and i.hostid=$hostid");
 	}
 
-	function	get_realhosts_by_graphid($graphid)
+	function	&get_realhosts_by_graphid($graphid)
 	{
 		$graph = get_graph_by_graphid($graphid);
 		if($graph["templateid"] != 0)
@@ -84,13 +95,13 @@
 		return get_hosts_by_graphid($graphid);
 	}
 
-	function 	get_hosts_by_graphid($graphid)
+	function 	&get_hosts_by_graphid($graphid)
 	{
 		return DBselect("select distinct h.* from graphs_items gi, items i, hosts h".
 			" where h.hostid=i.hostid and gi.itemid=i.itemid and gi.graphid=$graphid");
 	}
 
-	function	get_graphitems_by_graphid($graphid)
+	function	&get_graphitems_by_graphid($graphid)
 	{
 		return DBselect("select * from graphs_items where graphid=$graphid".
 			" order by itemid,drawtype,sortorder,color,yaxisside"); 
@@ -132,7 +143,7 @@
 		return	false;
 	}
 
-	function	get_graphs_by_templateid($templateid)
+	function	&get_graphs_by_templateid($templateid)
 	{
 		return DBselect("select * from graphs where templateid=$templateid");
 	}
@@ -435,7 +446,7 @@
 	 * Comments: !!! Don't forget sync code with C !!!                            *
 	 *                                                                            *
 	 ******************************************************************************/
-	function	delete_template_graphs($hostid, $templateid = null /* array format 'arr[id]=name' */, $unlink_mode = false)
+	function	delete_template_graphs($hostid, $templateid = null, $unlink_mode = false)
 	{
 		$db_graphs = get_graphs_by_hostid($hostid);
 		while($db_graph = DBfetch($db_graphs))
@@ -443,16 +454,13 @@
 			if($db_graph["templateid"] == 0)
 				continue;
 
-			if($templateid != null)
+			if( !is_null($templateid) )
 			{
-				$hosts = get_hosts_by_graphid($db_graph["templateid"]);
-				$tmp_host = DBfetch($hosts);
-				if(is_array($templateid))
-				{
-					if(!isset($templateid[$tmp_host["hostid"]]))
-						continue;
-				}
-				elseif($tmp_host["hostid"] != $templateid)
+				if( !is_array($templateid) ) $templateid=array($templateid);
+
+				$tmp_host = DBfetch(get_hosts_by_graphid($db_graph["templateid"]));
+
+				if( !in_array($tmp_host["hostid"], $templateid))
 					continue;
 			}
 
@@ -475,16 +483,16 @@
 	 * Comments: !!! Don't forget sync code with C !!!                            *
 	 *                                                                            *
 	 ******************************************************************************/
-	function	copy_template_graphs($hostid, $templateid = null /* array format 'arr[id]=name' */, $copy_mode = false)
+	function	copy_template_graphs($hostid, $templateid = null, $copy_mode = false)
 	{
 		if($templateid == null)
 		{
-			$templateid = get_templates_by_hostid($hostid);
+			$templateid = array_keys(get_templates_by_hostid($hostid));
 		}
 		
 		if(is_array($templateid))
 		{
-			foreach($templateid as $id => $name)
+			foreach($templateid as $id)
 				copy_template_graphs($hostid, $id, $copy_mode); // attention recursion
 			return;
 		}
@@ -564,7 +572,7 @@
 	function	navigation_bar_calc()
 	{
 //		$workingperiod = 3600;
-		if(!isset($_REQUEST["period"]))	$_REQUEST["period"]=3600;
+		if(!isset($_REQUEST["period"]))	$_REQUEST["period"]=ZBX_PERIOD_DEFAULT;
 		if(!isset($_REQUEST["from"]))	$_REQUEST["from"]=0;
 		if(!isset($_REQUEST["stime"]))	$_REQUEST["stime"]=null;
 
@@ -581,12 +589,12 @@
 		unset($_REQUEST["left"]);
 		unset($_REQUEST["right"]);
 
-		if($_REQUEST["from"] <= 0)		$_REQUEST["from"]	= 0;
-		if($_REQUEST["period"] <= 3600)		$_REQUEST["period"]	= 3600;
+		if($_REQUEST["from"] <= 0)			$_REQUEST["from"]	= 0;
+		if($_REQUEST["period"] <= ZBX_MIN_PERIOD)	$_REQUEST["period"]	= ZBX_MIN_PERIOD;
 
 		if(isset($_REQUEST["reset"]))
 		{
-			$_REQUEST["period"]	= 3600;
+			$_REQUEST["period"]	= ZBX_PERIOD_DEFAULT;
 			$_REQUEST["from"]	= 0;
 //			$workingperiod		= 3600;
 		}
@@ -597,7 +605,7 @@
 
 	function	navigation_bar($url,$ext_saved_request=NULL)
 	{
-		$saved_request = array("graphid","screenid","itemid","action","from","fullscreen");
+		$saved_request = array("screenid","itemid","action","from","fullscreen");
 
 		if(is_array($ext_saved_request))
 			$saved_request = array_merge($saved_request, $ext_saved_request);
@@ -608,10 +616,10 @@
 
 		$form->AddItem(S_PERIOD.SPACE);
 
-		$period = get_request('period', 3600);
+		$period = get_request('period',ZBX_PERIOD_DEFAULT);
 
 		if(in_array($period,array(3600,2*3600,4*3600,8*3600,12*3600,24*3600,7*24*3600,31*24*3600,365*24*3600)))
-			$custom_per = 3*3600;
+			$custom_per = ZBX_MIN_PERIOD;
 		else
 			$custom_per = $period;
 

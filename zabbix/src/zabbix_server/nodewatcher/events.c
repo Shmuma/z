@@ -67,8 +67,10 @@ static int process_node(int nodeid, int master_nodeid, zbx_uint64_t event_lastid
 	data = malloc(allocated);
 	memset(data,0,allocated);
 
-	zbx_snprintf_alloc(&data, &allocated, &offset, 128, "Events|%d|%d",
+	zbx_snprintf_alloc(&data, &allocated, &offset, 128, "Events%c%d%c%d",
+		ZBX_DM_DELIMITER,
 		CONFIG_NODEID,
+		ZBX_DM_DELIMITER,
 		nodeid);
 
 	result = DBselect("select eventid,source,object,objectid,clock,value,acknowledged from events where eventid>" ZBX_FS_UI64 " and " ZBX_COND_NODEID " order by eventid",
@@ -78,20 +80,26 @@ static int process_node(int nodeid, int master_nodeid, zbx_uint64_t event_lastid
 	{
 		ZBX_STR2UINT64(eventid,row[0])
 		found = 1;
-		zbx_snprintf_alloc(&data, &allocated, &offset, 1024, "\n%s|%s|%s|%s|%s|%s|%s",
+		zbx_snprintf_alloc(&data, &allocated, &offset, 1024, "\n%s%c%s%c%s%c%s%c%s%c%s%c%s",
 				row[0],
+				ZBX_DM_DELIMITER,
 				row[1],
+				ZBX_DM_DELIMITER,
 				row[2],
+				ZBX_DM_DELIMITER,
 				row[3],
+				ZBX_DM_DELIMITER,
 				row[4],
+				ZBX_DM_DELIMITER,
 				row[5],
+				ZBX_DM_DELIMITER,
 				row[6]);
 	}
 	if(found == 1)
 	{
 		zabbix_log( LOG_LEVEL_DEBUG, "Sending [%s]",
 			data);
-		if(send_to_node(master_nodeid, nodeid, data) == SUCCEED)
+		if(send_to_node("new events", master_nodeid, nodeid, data) == SUCCEED)
 		{
 			zabbix_log( LOG_LEVEL_DEBUG, "Updating nodes.event_lastid");
 			DBexecute("update nodes set event_lastid=" ZBX_FS_UI64 " where nodeid=%d",

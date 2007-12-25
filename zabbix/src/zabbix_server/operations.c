@@ -513,7 +513,8 @@ static zbx_uint64_t	add_discovered_host(zbx_uint64_t dhostid)
  ******************************************************************************/
 void	op_host_add(DB_EVENT *event)
 {
-	zbx_uint64_t	hostid, dhostid;
+	zbx_uint64_t	hostid;
+	zbx_uint64_t	dhostid = 0;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "In op_host_add()");
 
@@ -718,19 +719,23 @@ void	op_template_add(DB_EVENT *event, DB_ACTION *action, DB_OPERATION *operation
 	{
 		templateid = operation->objectid;
 
-		result = DBselect("select hosttemplateid hostgroupid from hosts_templates where templateid=" ZBX_FS_UI64 " and hostid=" ZBX_FS_UI64,
+		result = DBselect("select hosttemplateid from hosts_templates where templateid=" ZBX_FS_UI64 " and hostid=" ZBX_FS_UI64,
 			templateid,
 			hostid);
 		row = DBfetch(result);
 		if(!row || DBis_null(row[0]) == SUCCEED)
 		{
 			hosttemplateid = DBget_maxid("hosts_templates","hosttemplateid");
+			DBexecute("begin;");
+
 			DBexecute("insert into hosts_templates (hosttemplateid,hostid,templateid) values (" ZBX_FS_UI64 "," ZBX_FS_UI64 "," ZBX_FS_UI64 ")",
 				hosttemplateid,
 				hostid,
 				templateid);
 
 			DBsync_host_with_template(hostid, templateid);
+
+			DBexecute("commit;");
 		}
 		DBfree_result(result);
 	}
@@ -780,18 +785,22 @@ void	op_template_del(DB_EVENT *event, DB_ACTION *action, DB_OPERATION *operation
 	{
 		templateid = operation->objectid;
 
-		result = DBselect("select hosttemplateid hostgroupid from hosts_templates where templateid=" ZBX_FS_UI64 " and hostid=" ZBX_FS_UI64,
+		result = DBselect("select hosttemplateid from hosts_templates where templateid=" ZBX_FS_UI64 " and hostid=" ZBX_FS_UI64,
 			templateid,
 			hostid);
 
 		if( (row = DBfetch(result)) )
 		{
+			DBexecute("begin;");
+
 			DBdelete_template_elements(hostid, templateid, 0 /* not a unlink mode */);
 
 			DBexecute("delete from hosts_templates where "
 					"hostid=" ZBX_FS_UI64 " and templateid=" ZBX_FS_UI64,
 				hostid,
 				templateid);
+
+			DBexecute("commit;");
 		}
 		DBfree_result(result);
 	}

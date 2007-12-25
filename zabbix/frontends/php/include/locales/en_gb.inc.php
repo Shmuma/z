@@ -467,7 +467,7 @@
 	'S_COMPARE'=>				'Compare',
 
 //	Footer
-	'S_ZABBIX_VER'=>			'ZABBIX 1.4',
+	'S_ZABBIX_VER'=>			'ZABBIX 1.4.1',
 	'S_COPYRIGHT_BY'=>			'Copyright 2001-2007 by ',
 	'S_CONNECTED_AS'=>			'Connected as',
 	'S_SIA_ZABBIX'=>			'SIA Zabbix',
@@ -863,7 +863,7 @@
 	'S_MENU_HOSTS'=>			'HOSTS',
 	'S_MENU_ITEMS'=>			'ITEMS',
 	'S_MENU_AUDIT'=>			'AUDIT',
-	'S_SWITCH'=>				'Switch',
+	'S_SWITCH_NODE'=>			'Switch node',
 
 //	overview.php
 	'S_SELECT_GROUP_DOT_DOT_DOT'=>		'Select group ...',
@@ -1292,6 +1292,7 @@
 
 	'S_HELP'=>				'Help',
 	'S_PROFILE'=>				'Profile',
+	'S_GET_SUPPORT'=>			'Get support',
 	'S_MONITORING'=>			'Monitoring',
 	'S_INVENTORY'=>				'Inventory',
 	'S_QUEUE'=>				'Queue',

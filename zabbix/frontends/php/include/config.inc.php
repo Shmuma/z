@@ -136,6 +136,9 @@ require_once('include/classes/ctree.inc.php');
 	}
 	else
 	{
+		if(file_exists($ZBX_CONFIGURATION_FILE))
+			include $ZBX_CONFIGURATION_FILE;
+
 		define('ZBX_PAGE_NO_AUTHERIZATION', true);
 		define('ZBX_DISTRIBUTED', false);
 		$show_setup = true;
@@ -1836,7 +1839,6 @@ else if (document.getElementById)
 	function	get_cookie($name, $default_value=null)
 	{
 		global $_COOKIE;
-
 		if(isset($_COOKIE[$name]))	return $_COOKIE[$name];
 		// else
 		return $default_value;
@@ -1854,7 +1856,7 @@ else if (document.getElementById)
 	{
 		global $_COOKIE;
 
-		setcookie($name, $value, isset($time) ? $time : (time() + 3600));
+		setcookie($name, $value, isset($time) ? $time : (0));
 		$_COOKIE[$name] = $value;
 	}
 	
@@ -1868,10 +1870,7 @@ else if (document.getElementById)
 	 */
 	function	zbx_unsetcookie($name)
 	{
-		global $_COOKIE;
-		
-		setcookie($name, null, time() - 3600);
-		$_COOKIE[$name] = null;
+		zbx_setcookie($name, null, -99999);
 	}
 	
 	/* function:
@@ -1915,7 +1914,7 @@ else if (document.getElementById)
 	{
 		global $ZBX_PAGE_COOKIES;
 
-		$ZBX_PAGE_COOKIES[] = array($name, $value, isset($time) ? $time : (time() + 3600));
+		$ZBX_PAGE_COOKIES[] = array($name, $value, isset($time) ? $time : (0));
 	}
 
 	function	inarr_isset($keys, $array=null)

@@ -107,7 +107,6 @@ void	add_user_parameter(char *key,char *command)
 			commands[i].function = &EXECUTE_STR;
 			commands[i].main_param = strdup(command);
 			commands[i].test_param = 0;
-
 			commands = zbx_realloc(commands,(i+2)*sizeof(ZBX_METRIC));
 			commands[i+1].key=NULL;
 
@@ -275,8 +274,8 @@ int parse_command( /* return value: 0 - error; 1 - command without parameters; 2
 	if(param)
 		zbx_strlcpy(param, "", param_max_len);
 	
-	pl = strstr(localstr, "[");
-	pr = strstr(localstr, "]");
+	pl = strchr(localstr, '[');
+	pr = strrchr(localstr, ']');
 
 	if(pl > pr)
 		return 0;

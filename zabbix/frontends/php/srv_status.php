@@ -66,13 +66,16 @@ include_once "include/page_header.php";
 	} else {
 	
 		$query = 'SELECT DISTINCT s.serviceid, sl.servicedownid, sl_p.serviceupid as serviceupid, s.triggerid, '.
-			' s.name as caption, s.algorithm, t.description, s.sortorder, sl.linkid, s.showsla, s.goodsla, s.status '.
-				' FROM services s '.
-					' LEFT JOIN triggers t ON s.triggerid = t.triggerid '.
-					' LEFT JOIN services_links sl ON  s.serviceid = sl.serviceupid and NOT(sl.soft=0) '.
-					' LEFT JOIN services_links sl_p ON  s.serviceid = sl_p.servicedownid and sl_p.soft=0 '.
+				' s.name as caption, s.algorithm, t.description, s.sortorder, sl.linkid, s.showsla, s.goodsla, s.status '.
+			' FROM services s '.
+				' LEFT JOIN triggers t ON s.triggerid = t.triggerid '.
+				' LEFT JOIN services_links sl ON  s.serviceid = sl.serviceupid and NOT(sl.soft=0) '.
+				' LEFT JOIN services_links sl_p ON  s.serviceid = sl_p.servicedownid and sl_p.soft=0 '.
+				' LEFT JOIN functions f ON t.triggerid=f.triggerid '.
+				' LEFT JOIN items i ON f.itemid=i.itemid '.
 			' WHERE '.DBid2nodeid("s.serviceid").'='.$ZBX_CURNODEID.
-			' ORDER BY s.sortorder, sl.serviceupid, s.serviceid';
+			' AND (i.hostid is null or i.hostid not in ('.$denyed_hosts.')) '.
+			' ORDER BY s.sortorder, sl_p.serviceupid, s.serviceid';
 		
 		$result=DBSelect($query);
 		
@@ -160,7 +163,11 @@ include_once "include/page_header.php";
 			$services[$row['serviceid']]['childs'][] = array('id' => $row['servicedownid'], 'soft' => 1, 'linkid' => $row['linkid']);
 		}
 		
-		createShowServiceTree($services,0,$treeServ);	
+		$treeServ = array();
+		createShowServiceTree($services,$treeServ);	//return into $treeServ parametr
+		
+		//permission issue
+		$treeServ = del_empty_nodes($treeServ);
 		
 		echo '<script src="js/services.js" type="text/javascript"></script>';
 		

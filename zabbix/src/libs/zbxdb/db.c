@@ -126,35 +126,44 @@ int	zbx_db_connect(char *host, char *user, char *password, char *dbname, char *d
 	return ret;
 #endif
 #ifdef	HAVE_POSTGRESQL
-/*	conn = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName); */
-/*	conn = PQsetdb(NULL, NULL, NULL, NULL, CONFIG_DBNAME);*/
-	conn = PQsetdbLogin(host, NULL, NULL, NULL, dbname, user, password );
+	char *cport = NULL;
+
+	if( port )	cport = zbx_dsprintf(cport, "%i", port);
+
+	conn = PQsetdbLogin(host, cport, NULL, NULL, dbname, user, password );
+
+	zbx_free(cport);
 
 /* check to see that the backend connection was successfully made */
 	if (PQstatus(conn) != CONNECTION_OK)
 	{
-		zabbix_log(LOG_LEVEL_ERR, "Connection to database '%s' failed.", dbname);
+		zabbix_log(LOG_LEVEL_ERR, "Connection to database '%s' failed: %s", dbname, PQerrorMessage(conn));
 		ret = ZBX_DB_FAIL;
 	}
 
 	return ret;
 #endif
 #ifdef	HAVE_ORACLE
-	char    connect[MAX_STRING_LEN];
+	char    connect = NULL;
 
 	if (SQLO_SUCCESS != sqlo_init(SQLO_OFF, 1, 100))
 	{
 		zabbix_log(LOG_LEVEL_ERR, "Failed to init libsqlora8");
 		exit(FAIL);
 	}
-			        /* login */
-	zbx_snprintf(connect, sizeof(connect),"%s/%s@%s", user, password, dbname);
+
+	/* login */ /* TODO: how to use port??? */
+	connect = zbx_dsprintf(connect, "%s/%s@%s", user, password, dbname);
+
 	if (SQLO_SUCCESS != sqlo_connect(&oracle, connect))
 	{
 		printf("Cannot login with %s\n", connect);
 		zabbix_log(LOG_LEVEL_ERR, "Cannot login with %s", connect);
 		exit(FAIL);
 	}
+
+	zbx_free(connect);
+
 	sqlo_autocommit_on(oracle);
 
 	return ret;
@@ -333,8 +342,9 @@ int zbx_db_vexecute(const char *fmt, va_list args)
 	char	*sql = NULL;
 	int	ret = ZBX_DB_OK;
 
-	struct timeval tv;
-	suseconds_t    msec;
+/* suseconds_t is not defined under UP-UX */
+/*	struct timeval tv;
+	suseconds_t    msec;*/
 
 #ifdef	HAVE_POSTGRESQL
 	PGresult	*result;
@@ -343,8 +353,8 @@ int zbx_db_vexecute(const char *fmt, va_list args)
 	char *error=0;
 #endif
 
-	gettimeofday(&tv, NULL);
-	msec = tv.tv_usec;
+/*	gettimeofday(&tv, NULL);
+	msec = tv.tv_usec;*/
 
 	sql = zbx_dvsprintf(sql, fmt, args);
 
@@ -523,7 +533,7 @@ DB_ROW	zbx_db_fetch(DB_RESULT result)
 
 	if(result->fld_num > 0)
 	{
-		result->values = zbx_malloc(sizeof(char*) * result->fld_num);
+		result->values = zbx_malloc(result->values, sizeof(char*) * result->fld_num);
 		for(i = 0; i < result->fld_num; i++)
 		{
 			 result->values[i] = PQgetvalue(result->pg_result, result->cursor, i);
@@ -582,8 +592,9 @@ DB_RESULT zbx_db_vselect(const char *fmt, va_list args)
 	char	*sql = NULL;
 	DB_RESULT result;
 
-	struct timeval tv;
-	suseconds_t    msec;
+/* suseconds_t is not defined under HP=UX */
+/*	struct timeval tv;
+	suseconds_t    msec;*/
 
 #ifdef	HAVE_ORACLE
 	sqlo_stmt_handle_t sth;
@@ -593,8 +604,8 @@ DB_RESULT zbx_db_vselect(const char *fmt, va_list args)
 	char *error=NULL;
 #endif
 
-	gettimeofday(&tv, NULL);
-	msec = tv.tv_usec;
+/*	gettimeofday(&tv, NULL);
+	msec = tv.tv_usec;*/
 
 	sql = zbx_dvsprintf(sql, fmt, args);
 
@@ -632,7 +643,7 @@ DB_RESULT zbx_db_vselect(const char *fmt, va_list args)
 	}
 #endif
 #ifdef	HAVE_POSTGRESQL
-	result = zbx_malloc(sizeof(ZBX_PG_DB_RESULT));
+	result = zbx_malloc(NULL, sizeof(ZBX_PG_DB_RESULT));
 	result->pg_result = PQexec(conn,sql);
 	result->values = NULL;
 	result->cursor = 0;
@@ -671,7 +682,7 @@ DB_RESULT zbx_db_vselect(const char *fmt, va_list args)
 		php_sem_acquire(&sqlite_access);
 	}
 
-	result = zbx_malloc(sizeof(ZBX_SQ_DB_RESULT));
+	result = zbx_malloc(NULL, sizeof(ZBX_SQ_DB_RESULT));
 	result->curow = 0;
 
 lbl_get_table:

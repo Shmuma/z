@@ -20,8 +20,21 @@
 #ifndef ZABBIX_COMMON_H
 #define ZABBIX_COMMON_H
 
-#define SDI(msg)	fprintf(stderr, "%6li:DEBUG INFO: %s\n", zbx_get_thread_id(), msg); fflush(stderr);
-#define SDI2(msg,p1)	fprintf(stderr, "%6li:DEBUG INFO: " msg "\n", zbx_get_thread_id(), p1); fflush(stderr);
+#include "sysinc.h"
+
+#include "zbxtypes.h"
+
+#ifdef DEBUG
+#	include "threads.h"
+
+#	define SDI(msg)		fprintf(stderr, "%6li:DEBUG INFO: %s\n", zbx_get_thread_id(), msg); fflush(stderr)
+#	define SDI2(msg,p1)	fprintf(stderr, "%6li:DEBUG INFO: " msg "\n", zbx_get_thread_id(), p1); fflush(stderr)
+#	define zbx_dbg_assert(exp)	assert(exp)
+#else
+#	define SDI(msg)			((void)(0))
+#	define SDI2(msg,p1)		((void)(0))
+#	define zbx_dbg_assert(exp)	((void)(0))
+#endif
 
 #if defined(ENABLE_CHECK_MEMOTY)
 #	include "crtdbg.h"
@@ -67,10 +80,6 @@
 #	define CHECK_MEMORY(fncname, msg) ((void)0)
 #endif
 
-#include "sysinc.h"
-
-#include "zbxtypes.h"
-
 #ifndef va_copy
 #	if defined(__va_copy)
 #		define va_copy(d, s) __va_copy(d, s)
@@ -112,8 +121,8 @@
 #define OFF	0
 
 #define	APPLICATION_NAME	"ZABBIX Agent"
-#define	ZABBIX_REVDATE		"29 May 2007"
-#define	ZABBIX_VERSION		"1.4"
+#define	ZABBIX_REVDATE		"29 June 2007"
+#define	ZABBIX_VERSION		"1.4.1"
 
 #if defined(_WINDOWS)
 /*#	pragma warning (disable: 4100)*/
@@ -148,6 +157,8 @@
 	#define MAX_STRING_LEN	2048
 #endif
 #define MAX_BUF_LEN	65000
+
+#define ZBX_DM_DELIMITER	'\255'
 
 /* Item types */
 typedef enum
@@ -460,7 +471,9 @@ typedef enum
 #define strscpy(x,y) zbx_strlcpy(x,y,sizeof(x))
 #define strnscpy(x,y,n) zbx_strlcpy(x,y,n);
 
-void    *zbx_malloc(size_t size);
+#define	zbx_malloc(old, size) zbx_malloc2(__FILE__,__LINE__,old , size)
+
+void    *zbx_malloc2(char *filename, int line, void *old, size_t size);
 void    *zbx_realloc(void *src, size_t size);
 
 #define zbx_free(ptr) { if(ptr){ free(ptr); ptr = NULL; } }
@@ -513,6 +526,7 @@ int	is_uint(char *c);
 void	zbx_rtrim(char *str, const char *charlist);
 void	zbx_ltrim(register char *str, const char *charlist);
 void	lrtrim_spaces(char *c);
+void	compress_signs(char *str);
 void	ltrim_spaces(char *c);
 void	rtrim_spaces(char *c);
 void	delete_reol(char *c);
@@ -570,6 +584,7 @@ void	zbx_on_exit();
 int	get_nodeid_by_id(zbx_uint64_t id);
 
 int	int_in_list(char *list, int value);
+int	uint64_in_list(char *list, zbx_uint64_t value);
 int	ip_in_list(char *list, char *ip);
 
 int MAIN_ZABBIX_ENTRY(void);

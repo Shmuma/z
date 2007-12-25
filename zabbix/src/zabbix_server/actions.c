@@ -385,6 +385,7 @@ static int	check_action_condition(DB_EVENT *event, DB_CONDITION *condition)
 		result = DBselect("select dserviceid from dservices where type=%d and dserviceid=" ZBX_FS_UI64,
 			value_int,
 			event->objectid);
+		row = DBfetch(result);
 		if(condition->operator == CONDITION_OPERATOR_EQUAL)
 		{
 			if(row && DBis_null(row[0]) != SUCCEED)
@@ -565,7 +566,7 @@ static int	check_action_conditions(DB_EVENT *event, DB_ACTION *action)
 	result = DBselect("select conditionid,actionid,conditiontype,operator,value from conditions where actionid=" ZBX_FS_UI64 " order by conditiontype",
 		action->actionid);
 
-	while((row=DBfetch(result)))
+	while((row=DBfetch(result)) && (0 == exit))
 	{
 		num++;
 
@@ -624,7 +625,7 @@ static int	check_action_conditions(DB_EVENT *event, DB_ACTION *action)
 				}
 				break;
 			default:
-				zabbix_log( LOG_LEVEL_DEBUG, "End check_action_conditions (result:%d)",
+				zabbix_log( LOG_LEVEL_DEBUG, "End check_action_conditions (result:%s)",
 					(FAIL==ret)?"FALSE":"TRUE");
 				ret = FAIL;
 				break;
@@ -634,10 +635,10 @@ static int	check_action_conditions(DB_EVENT *event, DB_ACTION *action)
 	}
 	DBfree_result(result);
 
-	/* Ifnot conditions defined, return SUCCEED*/ 
+	/* If no conditions defined, return SUCCEED*/ 
 	if(num == 0)	ret = SUCCEED;
 
-	zabbix_log( LOG_LEVEL_DEBUG, "End check_action_conditions (result:%d)",
+	zabbix_log( LOG_LEVEL_DEBUG, "End check_action_conditions (result:%s)",
 		(FAIL==ret)?"FALSE":"TRUE");
 
 	return ret;
@@ -717,6 +718,7 @@ void	execute_operations(DB_EVENT *event, DB_ACTION *action)
 		zbx_free(operation.shortdata);
 		zbx_free(operation.longdata);
 	}
+	DBfree_result(result);
 }
 
 

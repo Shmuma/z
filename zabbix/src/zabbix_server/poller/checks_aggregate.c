@@ -23,7 +23,7 @@
 static	int	evaluate_one(double *result, int *num, char *grpfunc, char const *value_str, int valuetype)
 {
 	int	ret = SUCCEED;
-	double	value;
+	double	value = 0;
 
 	if(valuetype == ITEM_VALUE_TYPE_FLOAT)
 	{
@@ -192,6 +192,7 @@ static int	evaluate_aggregate(AGENT_RESULT *res,char *grpfunc, char *hostgroup, 
 			return FAIL;
 		}
 	}
+	DBfree_result(result);
 
 	if(num==0)
 	{

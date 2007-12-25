@@ -1193,7 +1193,7 @@ static void	DBdelete_template_applications(
 		{
 			tmp_hostid = 0;
 
-			db_tmp_hosts = DBselect("select applicationid,templateid,name from applications where hostid=" ZBX_FS_UI64, templateid);
+			db_tmp_hosts = DBselect("select hostid from applications where applicationid=" ZBX_FS_UI64, a_templateid);
 
 			if( (tmp_host_data = DBfetch(db_tmp_hosts) ))
 			{
@@ -1255,10 +1255,9 @@ static int	DBdb_save_application(
 	DB_ROW		element_data;
 	DB_ROW		host_data;
 
-	zbx_uint64_t
-		applicationid_new,
-		elementid,
-		db_hostid;
+	zbx_uint64_t	applicationid_new = 0,
+			elementid,
+			db_hostid;
 
 	char	*name_esc = NULL;
 
@@ -1517,7 +1516,7 @@ static int	DBupdate_item(
 
 	zbx_uint64_t
 		itemappid,
-		del_itemid,
+		del_itemid = 0,
 		chd_itemidm,
 		chd_hostid,
 		applications[ZBX_MAX_APPLICATIONS];
@@ -1690,6 +1689,9 @@ static int	DBupdate_item(
 		}
 		zbx_free(key_esc);
 	}
+
+	DBfree_result(db_hosts);
+
 	return result;
 }
 
@@ -2211,6 +2213,9 @@ static int	DBadd_event(
 				triggerid, ALERT_STATUS_NOT_SENT);
 		}
 	}
+
+	DBfree_result(db_events);
+
 	return result;
 }
 
@@ -2651,6 +2656,7 @@ static int	DBupdate_trigger(
 			str_esc = DBdyn_escape_string(short_expression);
 			sql = zbx_strdcatf(sql, " expression='%s',", str_esc);
 			zbx_free(str_esc);
+			zbx_free(short_expression);
 
 		}
 		if( description ) {
@@ -2941,7 +2947,9 @@ static int	DBcopy_trigger_to_host(
 
 					old_expression = new_expression;
 					new_expression = string_replace(old_expression, search, replace);
+
 					zbx_free(old_expression);
+					zbx_free(replace);
 				}
 				else
 				{
@@ -3232,7 +3240,7 @@ static int	DBadd_item_to_graph(
 					" show_work_period,show_triggers,graphtype from graphs"
 					" where graphid=" ZBX_FS_UI64, graphid);
 
-		if( (graph_data == DBfetch(db_graphs)) )
+		if( (graph_data = DBfetch(db_graphs)) )
 		{
 			db_elements = DBselect("select i.itemid from items i, hosts h, items i2 "
 				" where i2.itemid=" ZBX_FS_UI64 " and i.key=i2.key_ and i.hostid=h.hostid and h.templateid=i2.hostid", itemid);
