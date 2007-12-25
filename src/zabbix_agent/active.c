@@ -388,7 +388,7 @@ static int	send_history_values(
 
         zabbix_log (LOG_LEVEL_DEBUG, "in send_history_values()");
 
-	if( SUCCEED == (ret = zbx_tcp_connect(&s, host, port, CONFIG_TIMEOUT)) )
+	if( SUCCEED == (ret = zbx_tcp_connect(&s, host, port, CONFIG_TIMEOUT * values->size)) )
 	{
                 request = comms_start_multi_request (hostname, values->key);
 
