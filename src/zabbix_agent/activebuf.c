@@ -308,7 +308,7 @@ static int apply_new_entries ()
         }
 
         /* here we have estimation of our buffer space in minutes */
-        t = (CONFIG_ACTIVE_BUF_SIZE_MB * 1024UL*1024UL) / s;
+	t = (CONFIG_ACTIVE_BUF_SIZE_MB * 1024UL*1024UL) / s;
 
         zabbix_log (LOG_LEVEL_DEBUG, "apply_active_buffer: New buffer's estimation time to live is %lu minutes", t);
 
@@ -435,7 +435,8 @@ void store_in_active_buffer (const char* key, const char* value)
         e->index++;
         e->count++;
         e->index %= e->max_items;
-        zabbix_log (LOG_LEVEL_DEBUG, "New item properties: index %d, count: %d, beg: %lu, end: %lu", e->index, e->count, e->beg_offset, e->max_offset);
+        zabbix_log (LOG_LEVEL_DEBUG, "New item properties: index %d, count: %d, beg: %lu, end: %lu, ofs: %lu", 
+		    e->index, e->count, e->beg_offset, e->max_offset, ofs);
         buffer.items++;
         break;
     }
@@ -503,11 +504,14 @@ active_buffer_item_t* take_active_buffer_item ()
             }
 
         /* clean items after take */
+	buffer.items -= e->count;
         e->count = e->index = 0;
+	memset (e->sizes, 0, e->max_items * sizeof (unsigned short));
         break;
     }
 
     zabbix_log (LOG_LEVEL_DEBUG, "take_active_buffer_items () exit");
+    flush_buffer ();
 
     return item;
 }
