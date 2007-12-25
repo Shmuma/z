@@ -227,7 +227,8 @@
 		if($type == ITEM_TYPE_AGGREGATE)
 		{
 			/* grpfunc('group','key','itemfunc','numeric param') */
-			if(eregi('^((.)*)(\(\'((.)*)\'\,\'((.)*)\'\,\'((.)*)\'\,\'([0-9]+)\'\))$', $key, $arr))
+//			if(eregi('^((.)*)(\(\'((.)*)\'\,\'((.)*)\'\,\'((.)*)\'\,\'([0-9]+)\'\))$', $key, $arr))
+			if(eregi('^((.)*)(\[\"((.)*)\"\,\"((.)*)\"\,\"((.)*)\"\,\"([0-9]+)\"\])$', $key, $arr))
 			{
 				$g=$arr[1];
 				if(!in_array($g,array("grpmax","grpmin","grpsum","grpavg")))
@@ -251,7 +252,7 @@
 			}
 			else
 			{
-				error("Key does not match grpfunc('group','key','itemfunc','numeric param')");
+				error("Key does not match grpfunc[\"group\",\"key\",\"itemfunc\",\"numeric param\")");
 				return FALSE;
 			}
 		}
@@ -752,6 +753,12 @@
 		$result = delete_history_by_itemid($itemid, 1 /* use housekeeper */);
 		if(!$result)	return	$result;
 
+		DBexecute('delete from screens_items where resourceid='.$itemid.' and resourcetype in ('.
+					(implode(',',array(
+						SCREEN_RESOURCE_SIMPLE_GRAPH,
+						SCREEN_RESOURCE_PLAIN_TEXT)
+						)
+					).')');
 
 		$result = DBexecute("delete from items_applications where itemid=$itemid");
 		if(!$result)	return	$result;
@@ -828,7 +835,7 @@
 	 * Comments:
 	 *
 	 */
-	function get_items_data_overview($groupid, $nodeid)
+	function get_items_data_overview($groupid)
 	{
 		global	$USER_DETAILS;
 
@@ -846,7 +853,7 @@ COpt::profiling_start('prepare data');
 			' i.description, t.priority, i.valuemapid, t.value as tr_value, t.triggerid '.
 			' from hosts h,items i left join  functions f on f.itemid=i.itemid left join triggers t on t.triggerid=f.triggerid '.
 			$group_where.
-			' h.hostid in ('.get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, null, null, $nodeid).') '.
+			' h.hostid in ('.get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, null, null, get_current_nodeid()).') '.
 			' and h.status='.HOST_STATUS_MONITORED.' and h.hostid=i.hostid and i.status='.ITEM_STATUS_ACTIVE.
 			' order by i.description,i.itemid');
 
@@ -854,6 +861,7 @@ COpt::profiling_start('prepare data');
 		unset($hosts);
 		while($row = DBfetch($result))
 		{
+			$row['host'] = get_node_name_by_elid($row['hostid']).$row['host'];
 			$hosts[$row['host']] = $row['host'];
 			$items[item_description($row["description"],$row["key_"])][$row['host']] = array(
 				'itemid'	=> $row['itemid'],

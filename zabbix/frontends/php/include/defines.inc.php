@@ -124,6 +124,7 @@
 	define('CONDITION_OPERATOR_IN',		4);
 	define('CONDITION_OPERATOR_MORE_EQUAL',	5);
 	define('CONDITION_OPERATOR_LESS_EQUAL',	6);
+	define('CONDITION_OPERATOR_NOT_IN',	7);
 
 	define('HOST_STATUS_MONITORED',		0);
 	define('HOST_STATUS_NOT_MONITORED',	1);
@@ -187,6 +188,11 @@
 	define('GRAPH_ITEM_DRAWTYPE_DOT',		3);
 	define('GRAPH_ITEM_DRAWTYPE_DASHED_LINE',	4);
 
+	define('MAP_LINK_DRAWTYPE_LINE',		0);
+	define('MAP_LINK_DRAWTYPE_BOLD_LINE',		2);
+	define('MAP_LINK_DRAWTYPE_DOT',			3);
+	define('MAP_LINK_DRAWTYPE_DASHED_LINE',		4);
+
 	define('SERVICE_ALGORITHM_NONE',0);
 	define('SERVICE_ALGORITHM_MAX',1);
 	define('SERVICE_ALGORITHM_MIN',2);
@@ -194,6 +200,8 @@
 	define('TRIGGER_VALUE_FALSE',0);
 	define('TRIGGER_VALUE_TRUE',1);
 	define('TRIGGER_VALUE_UNKNOWN',2);
+	
+	define('TRIGGER_BLINK_PERIOD',1800);
 
 	define('TRIGGER_SEVERITY_NOT_CLASSIFIED',	0);
 	define('TRIGGER_SEVERITY_INFORMATION',		1);
@@ -379,7 +387,9 @@
 	define('SPACE',	'&nbsp;');
 	define('RARR',	'&rArr;');
 
-	define('ZBX_EREG_INTERNAL_NAMES', '([0-9a-zA-Z\_\.[:space:][.-.]\$]+)');
+	define('ZBX_EREG_SPACES', '([[:space:]]+){0,1}');
+	define('ZBX_EREG_INTERNAL_NAMES', '([0-9a-zA-Z_.[:space:][.-.]$]+)');
+	define('ZBX_EREG_KEY_NAME', '([0-9a-zA-Z_.,[.:.][:space:][.-.]$]+)');
 	define('ZBX_EREG_PARAMS', '([[:print:]]+){0,1}');
 	define('ZBX_EREG_SIGN', '([&|><=+*/#[.-.]])');
 	define('ZBX_EREG_NUMBER', '([[.-.]+]*[0-9]+[.]{0,1}[0-9]*[A-Z]{0,1})');
@@ -388,7 +398,7 @@
 	define('ZBX_EREG_DNS_FORMAT', '([0-9a-zA-Z\_\.\$[.-.]]+)');
 	define('ZBX_EREG_HOST_FORMAT', ZBX_EREG_INTERNAL_NAMES);
 	define('ZBX_EREG_NODE_FORMAT', ZBX_EREG_INTERNAL_NAMES);
-	define('ZBX_EREG_ITEM_KEY_FORMAT', '('.ZBX_EREG_INTERNAL_NAMES.'(\['.ZBX_EREG_PARAMS.'\]){0,1})');
+	define('ZBX_EREG_ITEM_KEY_FORMAT', '('.ZBX_EREG_KEY_NAME.'(\['.ZBX_EREG_PARAMS.'\]){0,1})');
 	define('ZBX_KEY_ID', 1);
 	define('ZBX_KEY_NAME_ID', 2);
 	define('ZBX_KEY_PARAM_ID', 4);

@@ -17,7 +17,7 @@
 ** Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 **/
 
-/* #define ZABBIX_TEST */
+/*#define ZABBIX_TEST*/
 
 #include "common.h"
 
@@ -48,6 +48,10 @@
 #include "utils/nodechange.h"
 
 #define       LISTENQ 1024
+
+#ifdef ZABBIX_TEST
+#include <time.h>
+#endif
 
 char *progname = NULL;
 char title_message[] = "ZABBIX Server (daemon)";
@@ -148,6 +152,8 @@ int	CONFIG_ENABLE_REMOTE_COMMANDS	= 0;
 
 int	CONFIG_NODEID			= 0;
 int	CONFIG_MASTER_NODEID		= 0;
+int	CONFIG_NODE_NOEVENTS		= 0;
+int	CONFIG_NODE_NOHISTORY		= 0;
 
 /* Global variable to control if we should write warnings to log[] */
 int	CONFIG_ENABLE_LOG		= 1;
@@ -208,6 +214,8 @@ void	init_config(void)
 		{"DBSocket",&CONFIG_DBSOCKET,0,TYPE_STRING,PARM_OPT,0,0},
 		{"DBPort",&CONFIG_DBPORT,0,TYPE_INT,PARM_OPT,1024,65535},
 		{"NodeID",&CONFIG_NODEID,0,TYPE_INT,PARM_OPT,0,65535},
+		{"NodeNoEvents",&CONFIG_NODE_NOEVENTS,0,TYPE_INT,PARM_OPT,0,1},
+		{"NodeNoHistory",&CONFIG_NODE_NOHISTORY,0,TYPE_INT,PARM_OPT,0,1},
 		{0}
 	};
 
@@ -386,7 +394,6 @@ void test_compress_signs()
 {
 
 #define ZBX_SIGN struct zbx_sign_t
-
 ZBX_SIGN
 {
         char	*str;
@@ -461,16 +468,156 @@ void test_db_connection(void)
 	DBclose();
 }
 
+void test_variable_argument_list(void)
+{
+//	char incorrect[] = "incorrect";
+//	char format_incorrect[] = "%s";
+	char correct[] = "correct";
+//	char format[] = "%s";
+
+	zabbix_log(LOG_LEVEL_CRIT, "%s", "correct");
+	zabbix_log(LOG_LEVEL_CRIT, "%s", correct);
+	zabbix_log(LOG_LEVEL_CRIT, "correct");
+/*
+	zabbix_log(LOG_LEVEL_CRIT, format, "correct");
+	zabbix_log(LOG_LEVEL_CRIT, format, correct);
+	zabbix_log(LOG_LEVEL_CRIT, incorrect);
+	zabbix_log(LOG_LEVEL_CRIT, format_incorrect);
+*/
+}
+
+void test_zbx_gethost(void)
+{
+        struct hostent* host;
+
+	char hostname[]="194.8.11.69";
+/*	char hostname[]="gobbo.caves.lv";*/
+
+	host = zbx_gethost_by_ip(hostname);
+
+	printf("Host1 [%s]\n", host->h_name);
+}
+
+void test_templates()
+{
+	DBconnect(ZBX_DB_CONNECT_EXIT);
+
+	DBsync_host_with_template(10096, 10004);
+	
+	DBclose();
+}
+
+void test_calc_timestamp()
+{
+#define ZBX_TEST_TIME struct zbx_test_time_t
+ZBX_TEST_TIME
+{
+        char	*line;
+        char	*format;
+        char	*expected;
+};
+
+ZBX_TEST_TIME expressions[]=
+{
+		{"2006/11/10 10:20:56 Long file record....",	"yyyy MM dd hh mm ss",	"2006/11/10 10:20:56"},
+		{"2007/01/02 11:22:33 Long file record....",	"yyyy MM dd hh mm ss",	"2007/01/02 11:22:33"},
+		{"2007/12/01 11:22:00 Long file record....",	"yyyy MM dd hh mm ss",	"2007/12/01 11:22:00"},
+		{"2000/01/01 00:00:00 Long file record....",	"yyyy MM dd hh mm ss",	"2000/01/01 00:00:00"},
+		{"2000/01/01 00:00:00 Long file record....",	"yyyy MM dd hh mm",	"2000/01/01 00:00:00"},
+		{NULL}
+};
+	int	i;
+	int	t;
+	time_t	time;
+	char	str_time[MAX_STRING_LEN];
+	struct	tm *local_time = NULL;
+
+	printf("-= Test calc_timestamp =-\n");
+
+	for(i=0;expressions[i].line!=NULL;i++)
+	{
+		calc_timestamp(expressions[i].line,&t, expressions[i].format);
+		time = (time_t)t;
+		local_time = localtime(&time);
+		strftime( str_time, MAX_STRING_LEN, "%Y/%m/%d %H:%M:%S", local_time );
+		printf("format [%s] expected [%s] got [%s]\n",
+			expressions[i].format,
+			expressions[i].expected,
+			str_time);
+		if(strcmp(expressions[i].expected, str_time)!=0)
+		{
+			printf("FAILED!\n");
+			exit(-1);
+		}
+	}
+	printf("Passed OK\n");
+}
+
+void	test_email()
+{
+	char str_error[0xFF];
+
+	if ( FAIL == send_email(
+			"test.com",
+			"test.com",
+			"test@test.com",
+			"test@test.com",
+			"This is a TEST message",
+			"Big message\r\n"
+			" 1 Line\n"
+			" 2 line\r\n"
+			" 3 Line\n"
+			" 4 Line\n"
+			" 5 Line\n"
+			" 6 Line\n"
+			" 7 Line\n"
+			" 8 Line\n"
+			" 9 Line\n"
+			" 10 Line\n\n\n"
+			" 11 Line\n"
+			" 12 Line\n"
+			" 13 Line\n"
+			" 14 Line\n"
+			" 15 Line\n"
+			" 16 Line\n"
+			" 17 Line\n\n\n"
+			" 18 Line\n",
+			str_error,
+			sizeof(str_error)
+			
+		  ) )
+		printf("ERROR: %s\n", str_error);
+	else
+		printf("OK\n");
+
+
+}
+
 void test()
 {
-	zabbix_set_log_level(LOG_LEVEL_DEBUG);
+
+	if(CONFIG_LOG_FILE == NULL)
+	{
+		zabbix_open_log(LOG_TYPE_UNDEFINED,LOG_LEVEL_DEBUG,NULL);
+	}
+	else
+	{
+		zabbix_open_log(LOG_TYPE_FILE,LOG_LEVEL_DEBUG,CONFIG_LOG_FILE);
+	}
+
+	zabbix_log( LOG_LEVEL_WARNING, "Starting zabbix_server. ZABBIX %s.", ZABBIX_VERSION);
 
 	printf("-= Test Started =-\n\n");
 
 /*	test_params();*/
 /*	test_compress_signs(); */
 /*	test_expressions(); */
-	test_db_connection();
+/*	test_db_connection(); */
+/*	test_variable_argument_list(); */
+/*	test_templates();*/
+/*	test_calc_timestamp();*/
+/*	test_zbx_gethost();*/
+	test_email();
 
 	printf("\n-= Test completed =-\n");
 }
@@ -546,17 +693,6 @@ int main(int argc, char **argv)
 	}
 
 #ifdef ZABBIX_TEST
-	if(CONFIG_LOG_FILE == NULL)
-	{
-		zabbix_open_log(LOG_TYPE_UNDEFINED,CONFIG_LOG_LEVEL,NULL);
-	}
-	else
-	{
-		zabbix_open_log(LOG_TYPE_FILE,CONFIG_LOG_LEVEL,CONFIG_LOG_FILE);
-	}
-
-	zabbix_log( LOG_LEVEL_WARNING, "Starting zabbix_server. ZABBIX %s.", ZABBIX_VERSION);
-
 	test();
 
 	zbx_on_exit();

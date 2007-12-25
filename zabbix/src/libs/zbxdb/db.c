@@ -194,7 +194,7 @@ int	zbx_db_connect(char *host, char *user, char *password, char *dbname, char *d
 #endif
 }
 
-int zbx_db_execute(const char *fmt, ...)
+int __zbx_zbx_db_execute(const char *fmt, ...)
 {
 	va_list args;
 	int ret;
@@ -206,7 +206,12 @@ int zbx_db_execute(const char *fmt, ...)
 	return ret;
 }
 
-static DB_RESULT zbx_db_select(const char *fmt, ...)
+#ifdef HAVE___VA_ARGS__
+#	define zbx_db_select(fmt, ...)	__zbx_zbx_db_select(ZBX_CONST_STRING(fmt), ##__VA_ARGS__)
+#else
+#	define zbx_db_select __zbx_zbx_db_select
+#endif /* HAVE___VA_ARGS__ */
+static DB_RESULT __zbx_zbx_db_select(const char *fmt, ...)
 {
 	va_list args;
 	DB_RESULT	result;
@@ -239,6 +244,9 @@ void	zbx_db_begin(void)
 #ifdef	HAVE_MYSQL
 	zbx_db_execute("%s","begin;");
 #endif
+#ifdef	HAVE_POSTGRESQL
+	zbx_db_execute("%s","begin;");
+#endif
 #ifdef	HAVE_SQLITE3
 	sqlite_transaction_started++;
 	
@@ -246,7 +254,7 @@ void	zbx_db_begin(void)
 	{
 		php_sem_acquire(&sqlite_access);
 
-		zbx_db_execute("begin;");
+		zbx_db_execute("%s","begin;");
 	}
 	else
 	{
@@ -273,7 +281,10 @@ void	zbx_db_begin(void)
 void zbx_db_commit(void)
 {
 #ifdef	HAVE_MYSQL
-	zbx_db_execute("commit;");
+	zbx_db_execute("%s","commit;");
+#endif
+#ifdef	HAVE_POSTGRESQL
+	zbx_db_execute("%s","commit;");
 #endif
 #ifdef	HAVE_SQLITE3
 
@@ -284,7 +295,7 @@ void zbx_db_commit(void)
 	
 	if(sqlite_transaction_started == 1)
 	{
-		zbx_db_execute("commit;");
+		zbx_db_execute("%s","commit;");
 
 		sqlite_transaction_started = 0;
 
@@ -312,6 +323,9 @@ void zbx_db_commit(void)
 void zbx_db_rollback(void)
 {
 #ifdef	HAVE_MYSQL
+	zbx_db_execute("rollback;");
+#endif
+#ifdef	HAVE_POSTGRESQL
 	zbx_db_execute("rollback;");
 #endif
 #ifdef	HAVE_SQLITE3

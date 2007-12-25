@@ -1,7 +1,7 @@
 <?php
 /*
 ** ZABBIX
-** Copyright (C) 2000-2005 SIA Zabbix
+** Copyright (C) 2000-2007 SIA Zabbix
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 <?php
 	require_once "maps.inc.php";
 	require_once "acknow.inc.php";
+	require_once "services.inc.php";
 
 	/*
 	 * Function: INIT_TRIGGER_EXPRESSION_STRUCTURES
@@ -73,7 +74,7 @@
 				ITEM_VALUE_TYPE_TEXT
 				),
 			);
-		$ZBX_TR_EXPR_ALLOWED_FUNCTIONS['count']	= array('args' => array( 0 => array('type' => 'sec','mandat' => true), 1 => array('type' => 'str') ),
+		$ZBX_TR_EXPR_ALLOWED_FUNCTIONS['count']	= array('args' => array( 0 => array('type' => 'sec','mandat' => true), 1 => array('type' => 'str'), 1=>array('type' => 'str') ),
 			'item_types' => array(
 				ITEM_VALUE_TYPE_FLOAT,
 				ITEM_VALUE_TYPE_UINT64,
@@ -98,6 +99,12 @@
 			'item_types' => array(
 				ITEM_VALUE_TYPE_FLOAT,
 				ITEM_VALUE_TYPE_UINT64
+				)
+			);
+		$ZBX_TR_EXPR_ALLOWED_FUNCTIONS['iregexp']= array('args' => array( 0 => array('type' => 'str','mandat' => true) ),
+			'item_types' => array(
+				ITEM_VALUE_TYPE_STR,
+				ITEM_VALUE_TYPE_LOG
 				)
 			);
 		$ZBX_TR_EXPR_ALLOWED_FUNCTIONS['last']	= array('args' => null,
@@ -161,6 +168,7 @@
 				ITEM_VALUE_TYPE_LOG
 				)
 			);
+		$ZBX_TR_EXPR_ALLOWED_FUNCTIONS['time']	= array('args' => null, 'item_types' => null );
 	}
 
 	INIT_TRIGGER_EXPRESSION_STRUCTURES();
@@ -259,6 +267,38 @@
 			return $str_val[$value];
 
 		return S_UNKNOWN;
+	}
+
+	/*
+	 * Function: get_trigger_priority
+	 *
+	 * Description: 
+	 *     retrive trigger's priority
+	 *     
+	 * Author: 
+	 *     Artem Suharev
+	 *
+	 * Comments:
+	 *
+	 */
+	
+	function get_trigger_priority($triggerid){
+		$sql = 'SELECT count(*) as count, priority '.
+				' FROM triggers '.
+				' WHERE triggerid='.$triggerid.
+					' AND status=0 '.
+					' AND value='.TRIGGER_VALUE_TRUE.
+				' GROUP BY priority';
+		
+		$rows = DBfetch(DBselect($sql));
+
+		if($rows && !is_null($rows['count']) && !is_null($rows['priority']) && ($rows['count'] > 0)){
+			$status = $rows['priority'];
+		}
+		else{
+			$status = 0;
+		}
+	return $status;
 	}
 
 	/*
@@ -362,7 +402,7 @@
 	 */
 	function	&get_hosts_by_expression($expression)
 	{
-		global $ZBX_CURNODEID, $ZBX_TR_EXPR_ALLOWED_MACROS, $ZBX_TR_EXPR_REPLACE_TO;
+		global $ZBX_TR_EXPR_ALLOWED_MACROS, $ZBX_TR_EXPR_REPLACE_TO;
 
 		$expr = $expression;
 
@@ -385,7 +425,7 @@
 
 		if(count($hosts) == 0) $hosts = array('0');
 
-		return DBselect('select distinct * from hosts where '.DBid2nodeid('hostid').'='.$ZBX_CURNODEID.
+		return DBselect('select distinct * from hosts where '.DBin_node('hostid', get_current_nodeid(false)).
 			' and host in ('.implode(',',$hosts).')');
 	}
 
@@ -491,7 +531,7 @@
 	 */
 	function	validate_expression($expression)
 	{
-		global $ZBX_CURNODEID, $ZBX_TR_EXPR_ALLOWED_MACROS, $ZBX_TR_EXPR_REPLACE_TO, $ZBX_TR_EXPR_ALLOWED_FUNCTIONS;
+		global $ZBX_TR_EXPR_ALLOWED_MACROS, $ZBX_TR_EXPR_REPLACE_TO, $ZBX_TR_EXPR_ALLOWED_FUNCTIONS;
 
 		if( empty($expression) )
 		{
@@ -518,7 +558,7 @@
 				
 				/* Check host */
 				$row=DBfetch(DBselect('select count(*) as cnt,min(status) as status,min(hostid) as hostid from hosts h where h.host='.zbx_dbstr($host).
-						' and '.DBid2nodeid('h.hostid').'='.$ZBX_CURNODEID
+						' and '.DBin_node('h.hostid', get_current_nodeid(false))
 					));
 				if($row['cnt']==0)
 				{
@@ -536,7 +576,7 @@
 				/* Check key */
 				if ( !($item = DBfetch(DBselect('select i.itemid,i.value_type from hosts h,items i where h.host='.zbx_dbstr($host).
 						' and i.key_='.zbx_dbstr($key).' and h.hostid=i.hostid '.
-						' and '.DBid2nodeid('h.hostid').'='.$ZBX_CURNODEID
+						' and '.DBin_node('h.hostid', get_current_nodeid(false))
 					))) )
 				{
 					error('No such monitored parameter ('.$key.') for host ('.$host.')');
@@ -614,12 +654,12 @@
 		/* Replace all calculations and numbers with '$ZBX_TR_EXPR_REPLACE_TO' */
 		$expt_number = '('.$ZBX_TR_EXPR_REPLACE_TO.'|'.ZBX_EREG_NUMBER.')';
 		$expt_term = '((\('.$expt_number.'\))|('.$expt_number.'))';
-		$expr_format = '(('.$expt_term.ZBX_EREG_SIGN.$expt_term.')|(\('.$expt_term.'\)))';
+		$expr_format = '(('.$expt_term.ZBX_EREG_SPACES.ZBX_EREG_SIGN.ZBX_EREG_SPACES.$expt_term.')|(\('.$expt_term.'\)))';
 		$expr_full_format = '((\('.$expr_format.'\))|('.$expr_format.'))';
 
 		while($res = ereg($expr_full_format.'([[:print:]]*)$', $expr, $arr))
 		{
-			$expr = substr($expr, 0, strpos($expr, $arr[1])).$ZBX_TR_EXPR_REPLACE_TO.$arr[54];
+			$expr = substr($expr, 0, strpos($expr, $arr[1])).$ZBX_TR_EXPR_REPLACE_TO.$arr[58];
 		}
 
 		if ( $ZBX_TR_EXPR_REPLACE_TO != $expr )
@@ -881,7 +921,7 @@
 							'history.php?action='.( $function_data["value_type"] ==0 ? 'showvalues' : 'showgraph').
 							'&itemid='.$function_data['itemid']);
 					
-						$exp .= $link->ToString().'.'.bold($function_data["function"].'(').$function_data["parameter"].bold(')');
+						$exp .= '{'.$link->ToString().'.'.bold($function_data["function"].'(').$function_data["parameter"].bold(')').'}';
 					}
 				}
 				else
@@ -1541,7 +1581,7 @@
 	 * Comments: !!! Don't forget sync code with C !!!
 	 *
 	 */
-	function	get_triggers_overview($groupid, $nodeid)
+	function	get_triggers_overview($groupid)
 	{
 		global $USER_DETAILS;
 
@@ -1556,13 +1596,15 @@
 		$result=DBselect('select distinct t.triggerid,t.description,t.value,t.priority,t.lastchange,h.hostid,h.host'.
 			' from hosts h,items i,triggers t, functions f '.$group_where.
 			' h.status='.HOST_STATUS_MONITORED.' and h.hostid=i.hostid and i.itemid=f.itemid and f.triggerid=t.triggerid'.
-			' and h.hostid in ('.get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, null, null, $nodeid).') '.
+			' and h.hostid in ('.get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, null, null, get_current_nodeid()).') '.
 			' and t.status='.TRIGGER_STATUS_ENABLED.' and i.status='.ITEM_STATUS_ACTIVE.
 			' order by t.description');
 		unset($triggers);
 		unset($hosts);
 		while($row = DBfetch($result))
 		{
+			$row['host'] = get_node_name_by_elid($row['hostid']).$row['host'];
+
 			$hosts[$row['host']] = $row['host'];
 			$triggers[$row['description']][$row['host']] = array(
 				'hostid'	=> $row['hostid'], 
