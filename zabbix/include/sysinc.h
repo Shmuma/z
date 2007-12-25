@@ -73,6 +73,10 @@
 #	include <ctype.h>
 #endif
 
+#ifdef HAVE_GRP_H
+#	include <grp.h>
+#endif
+
 #ifdef HAVE_SYS_TYPES_H
 #	include <sys/types.h>
 #endif
@@ -288,7 +292,9 @@
 
 #ifdef HAVE_GETOPT_H
 #	ifdef HAVE_GETOPT_LONG
-#		define _GNU_SOURCE
+#		if !defined(_GNU_SOURCE)
+#			define _GNU_SOURCE
+#		endif
 #		include <getopt.h>
 #	endif
 #endif

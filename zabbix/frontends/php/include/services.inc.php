@@ -107,7 +107,7 @@
 	}
 	
 	function	add_host_to_services($hostid, $serviceid){
-		$result = DBselect('SELECT distinct h.host,t.triggerid,t.description '.
+		$result = DBselect('SELECT distinct h.host,t.triggerid,t.description,t.expression '.
 							' FROM triggers t,hosts h,items i,functions f '.
 							' WHERE h.hostid='.$hostid.
 								' AND h.hostid=i.hostid '.
@@ -363,7 +363,7 @@
 		)
 	{
 			/* calculate period FROM '-1 week' to know period name for  $period_start */
-			for($curr = ($period_start - (7*24*36000)); $curr<=$period_end; $curr += 6*3600)
+			for($curr = ($period_start - (7*24*3600)); $curr<=$period_end; $curr += 6*3600)
 			{
 				$curr_date = getdate($curr);
 				$from_date = getdate($ts_from);
@@ -720,11 +720,7 @@ $dt = 0;
 		}
 	return ;
 	}
-	
-	function closeform(){
-		zbx_add_post_js('closeform();');
-	}
-	
+		
 	function del_empty_nodes($services){
 		do{
 			unset($retry);

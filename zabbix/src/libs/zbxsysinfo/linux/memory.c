@@ -151,6 +151,73 @@ static int	VM_MEMORY_FREE(const char *cmd, const char *param, unsigned flags, AG
 	}
 }
 
+static int      VM_MEMORY_PFREE(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
+{
+	AGENT_RESULT	result_tmp;
+	zbx_uint64_t	tot_val = 0;
+	zbx_uint64_t	free_val = 0;
+
+	assert(result);
+
+	init_result(result);
+	init_result(&result_tmp);
+
+	if(VM_MEMORY_TOTAL(cmd, param, flags, &result_tmp) != SYSINFO_RET_OK ||
+		!(result_tmp.type & AR_UINT64))
+			return  SYSINFO_RET_FAIL;
+	tot_val = result_tmp.ui64;
+
+	/* Check fot division by zero */
+	if(tot_val == 0)
+	{
+		free_result(&result_tmp);
+		return  SYSINFO_RET_FAIL;
+	}
+
+	if(VM_MEMORY_FREE(cmd, param, flags, &result_tmp) != SYSINFO_RET_OK ||
+		!(result_tmp.type & AR_UINT64))
+			return  SYSINFO_RET_FAIL;
+	free_val = result_tmp.ui64;
+
+	free_result(&result_tmp);
+
+	SET_DBL_RESULT(result, (100.0 * (double)free_val) / (double)tot_val);
+
+	return SYSINFO_RET_OK;
+}
+
+static int      VM_MEMORY_AVAILABLE(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
+{
+	AGENT_RESULT	result_tmp;
+	zbx_uint64_t	sum = 0;
+
+	assert(result);
+
+	init_result(result);
+
+	init_result(&result_tmp);
+	if(VM_MEMORY_FREE(cmd, param, flags, &result_tmp) != SYSINFO_RET_OK ||
+		!(result_tmp.type & AR_UINT64))
+			return  SYSINFO_RET_FAIL;
+	sum += result_tmp.ui64;
+
+	if(VM_MEMORY_BUFFERS(cmd, param, flags, &result_tmp) != SYSINFO_RET_OK ||
+		!(result_tmp.type & AR_UINT64))
+			return  SYSINFO_RET_FAIL;
+	sum += result_tmp.ui64;
+
+	if(VM_MEMORY_CACHED(cmd, param, flags, &result_tmp) != SYSINFO_RET_OK ||
+		!(result_tmp.type & AR_UINT64))
+			return  SYSINFO_RET_FAIL;
+	sum += result_tmp.ui64;
+
+	free_result(&result_tmp);
+
+	SET_UI64_RESULT(result, sum);
+
+	return SYSINFO_RET_OK;
+}
+
 int     VM_MEMORY_SIZE(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
 {
 #define MEM_FNCLIST struct mem_fnclist_s
@@ -163,10 +230,12 @@ MEM_FNCLIST
 	MEM_FNCLIST fl[] = 
 	{
 		{"free",	VM_MEMORY_FREE},
+		{"pfree",	VM_MEMORY_PFREE},
 		{"shared",	VM_MEMORY_SHARED},
 		{"total",	VM_MEMORY_TOTAL},
 		{"buffers",	VM_MEMORY_BUFFERS},
 		{"cached",	VM_MEMORY_CACHED},
+		{"available",	VM_MEMORY_AVAILABLE},
 		{0,	0}
 	};
         char    mode[MAX_STRING_LEN];

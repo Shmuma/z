@@ -206,9 +206,9 @@
 
 		foreach($gitems as $gitem)
 		{
-			if ( !($db_item = DBfetch(DBselect('select new.itemid from items new, items dest '.
+			if ( !($db_item = DBfetch(DBselect('select src.itemid from items src, items dest '.
 					       ' where dest.itemid='.$gitem['itemid'].
-					       ' and new.key_=dest.key_ and new.hostid='.$dest_hostid))) )
+					       ' and src.key_=dest.key_ and src.hostid='.$dest_hostid))) )
 			{
 
 				$item = get_item_by_itemid($gitem['itemid']);
@@ -790,7 +790,8 @@
 			array_push($saved_request,$ext_saved_request);
 
 		$form = new CForm($url);
-
+		$form->SetMethod('get');	
+		
 		$form->AddItem(S_PERIOD.SPACE);
 
 		$period = get_request('period',ZBX_PERIOD_DEFAULT);

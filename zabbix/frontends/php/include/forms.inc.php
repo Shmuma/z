@@ -647,11 +647,13 @@
 		{
 			$title = S_ACKNOWLEDGE_ALARM_BY;
 			$btn_txt = S_ACKNOWLEDGE;
+			$btn_txt2 = S_ACKNOWLEDGE.' '.S_AND_SYMB.' '.S_RETURN;
 		}
 		else
 		{
 			$title = S_ADD_COMMENT_BY;
 			$btn_txt = S_SAVE;
+			$btn_txt2 = S_SAVE.' '.S_AND_SYMB.' '.S_RETURN;
 		}
 
 		$frmMsg= new CFormTable($title." \"".$USER_DETAILS["alias"]."\"");
@@ -660,6 +662,7 @@
 
 		$frmMsg->AddRow(S_MESSAGE, new CTextArea("message","",80,6));
 
+		$frmMsg->AddItemToBottomRow(new CButton("saveandreturn",$btn_txt2));
 		$frmMsg->AddItemToBottomRow(new CButton("save",$btn_txt));
 		$frmMsg->AddItemToBottomRow(new CButtonCancel(url_param('eventid')));
 
@@ -870,10 +873,12 @@
 		$cmbLang->AddItem("de_de",S_GERMAN_DE);
 		$cmbLang->AddItem("it_it",S_ITALIAN_IT);
 		$cmbLang->AddItem("lv_lv",S_LATVIAN_LV);
+		$cmbLang->AddItem("pt_br",S_PORTUGUESE_PT);
 		$cmbLang->AddItem("ru_ru",S_RUSSIAN_RU);
 		$cmbLang->AddItem("sp_sp",S_SPANISH_SP);
 		$cmbLang->AddItem("sv_se",S_SWEDISH_SE);
 		$cmbLang->AddItem("ja_jp",S_JAPANESE_JP);
+		$cmbLang->AddItem("hu_hu",S_HUNGARY_HU);
 
 		$frmUser->AddRow(S_LANGUAGE, $cmbLang);
 
@@ -1472,6 +1477,8 @@
 		if(isset($_REQUEST["groupid"]))
 
 		$frmItem->AddVar("hostid",$_REQUEST["hostid"]);
+		$frmItem->AddVar('applications_visible',1);
+
 
 		$description	= get_request("description"	,"");
 		$key		= get_request("key"		,"");
@@ -2253,7 +2260,7 @@
 				$comments	= $trigger["comments"];
 				$url		= $trigger["url"];
 
-				$trigs=DBselect("select t.triggerid,t.description from triggers t,trigger_depends d".
+				$trigs=DBselect("select t.triggerid,t.description,t.expression from triggers t,trigger_depends d".
 					" where t.triggerid=d.triggerid_up and d.triggerid_down=".$_REQUEST["triggerid"]);
 				while($trig=DBfetch($trigs))
 				{
@@ -4014,7 +4021,14 @@ include_once 'include/discovery.inc.php';
 		else
 		{
 			$frmHost->AddRow(S_DNS_NAME,new CTextBox("dns",$dns,"40"));
-			$frmHost->AddRow(S_IP_ADDRESS,new CTextBox("ip",$ip,"15"));
+			if(defined('ZBX_HAVE_IPV6'))
+			{
+				$frmHost->AddRow(S_IP_ADDRESS,new CTextBox("ip",$ip,"39"));
+			}
+			else
+			{
+				$frmHost->AddRow(S_IP_ADDRESS,new CTextBox("ip",$ip,"15"));
+			}
 
 			$cmbConnectBy = new CComboBox('useip', $useip);
 			$cmbConnectBy->AddItem(0, S_DNS_NAME);

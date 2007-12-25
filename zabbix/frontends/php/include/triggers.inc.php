@@ -676,11 +676,12 @@
 		$expression, $description, $priority, $status,
 		$comments, $url, $deps=array(), $templateid=0)
 	{
+		
 		if( !validate_expression($expression) )
 			return false;
 
 		$triggerid=get_dbid("triggers","triggerid");
-
+		
 		$result=DBexecute("insert into triggers".
 			"  (triggerid,description,priority,status,comments,url,value,error,templateid)".
 			" values ($triggerid,".zbx_dbstr($description).",$priority,$status,".zbx_dbstr($comments).",".
@@ -711,6 +712,7 @@
 
 		$trig_hosts = get_hosts_by_triggerid($triggerid);
 		$trig_host = DBfetch($trig_hosts);
+		
 		if($result)
 		{
 			$msg = "Added trigger '".$description."'";
@@ -979,10 +981,15 @@
 				$function	= &$arr[ZBX_EXPRESSION_SIMPLE_EXPRESSION_ID + ZBX_SIMPLE_EXPRESSION_FUNCTION_NAME_ID];
 				$parameter	= &$arr[ZBX_EXPRESSION_SIMPLE_EXPRESSION_ID + ZBX_SIMPLE_EXPRESSION_FUNCTION_PARAM_ID];
 
-				$item = DBfetch(DBselect('select i.itemid from items i,hosts h'.
+				$item_res = DBselect('select i.itemid from items i,hosts h'.
 					' where i.key_='.zbx_dbstr($key).
 					' and h.host='.zbx_dbstr($host).
-					' and h.hostid=i.hostid'));
+					' and h.hostid=i.hostid');
+
+				while(($item = DBfetch($item_res)) && (!in_node($item['itemid']))){
+				}
+				
+				if(!$item) return null;
 
 				$item = $item["itemid"];
 
@@ -1025,13 +1032,194 @@
 		return	DBexecute("update triggers set status=$status where triggerid=$triggerid");
 	}
 
-	# "Processor load on {HOSTNAME} is 5" to "Processor load on www.sf.net is 5"
-	function	expand_trigger_description_by_data($row)
+	/*
+	 * Function: extract_numbers
+	 *
+	 * Description: 
+	 *     Extract from string numbers with prefixes (A-Z)
+	 *     
+	 * Author: 
+	 *     Eugene Grigorjev (eugene.grigorjev@zabbix.com)
+	 *
+	 * Comments: !!! Don't forget sync code with C !!!
+	 *
+	 */
+	function	extract_numbers($str)
+	{
+		$numbers = array();
+		while ( ereg(ZBX_EREG_NUMBER.'([[:print:]]*)', $str, $arr) ) {
+			$numbers[] = $arr[1];
+			$str = $arr[2];
+		}
+		return $numbers;
+	}
+
+	/*
+	 * Function: expand_trigger_description_constants
+	 *
+	 * Description: 
+	 *     substitute simple macros in data string with real values
+	 *     
+	 * Author: 
+	 *     Eugene Grigorjev (eugene.grigorjev@zabbix.com)
+	 *
+	 * Comments: !!! Don't forget sync code with C !!!
+	 *           replcae $1-9 macros
+	 *
+	 */
+	function	expand_trigger_description_constants($description, $row)
+	{
+		if($row && isset($row['expression']))
+		{
+			$numbers = extract_numbers(ereg_replace('(\{[0-9]+\})', 'function', $row['expression']));
+			$description = $row["description"];
+
+			for ( $i = 0; $i < 9; $i++ )
+			{
+				$description = 
+					str_replace(
+						'$'.($i+1),
+						isset($numbers[$i]) ? 
+							$numbers[$i] : 
+							'', 
+						$description
+						);
+			}
+		}
+
+		return $description;
+	}
+	/*
+	 * Function: expand_trigger_description_by_data
+	 *
+	 * Description: 
+	 *     substitute simple macros in data string with real values
+	 *     
+	 * Author: 
+	 *     Eugene Grigorjev (eugene.grigorjev@zabbix.com)
+	 *
+	 * Comments: !!! Don't forget sync code with C !!!
+	 *
+	 */
+	function	expand_trigger_description_by_data($row, $flag = ZBX_FLAG_TRIGGER)
 	{
 		if($row)
 		{
+			$description = expand_trigger_description_constants($row['description'], $row);
+
 			if(is_null($row["host"])) $row["host"] = "{HOSTNAME}";
-			$description = str_replace("{HOSTNAME}", $row["host"],$row["description"]);
+			$description = str_replace("{HOSTNAME}", $row["host"],$description);
+
+			if(strstr($description,"{ITEM.LASTVALUE}"))
+			{
+				$row2=DBfetch(DBselect('select i.lastvalue,i.itemid,i.value_type from items i, triggers t, functions f '.
+					' where i.itemid=f.itemid and f.triggerid=t.triggerid and '.
+					' t.triggerid='.$row["triggerid"]));
+
+				if($row2["value_type"]!=ITEM_VALUE_TYPE_LOG)
+				{
+					$description = str_replace("{ITEM.LASTVALUE}", $row2["lastvalue"],$description);
+				}
+				else
+				{
+					$row3=DBfetch(DBselect("select max(clock) as max from history_log where itemid=".$row2["itemid"]));
+					if($row3 && !is_null($row3["max"]))
+					{
+						$row4=DBfetch(DBselect("select value from history_log where itemid=".$row2["itemid"]." and clock=".$row3["max"]));
+						$description = str_replace("{ITEM.LASTVALUE}", $row4["value"],$description);
+					}
+				}
+			}
+			if(strstr($description,'{ITEM.VALUE}'))
+			{
+				$value=($flag==ZBX_FLAG_TRIGGER)?
+						trigger_get_func_value($row["expression"],ZBX_FLAG_TRIGGER,1,1):
+						trigger_get_func_value($row["expression"],ZBX_FLAG_EVENT,1,$row['clock']);
+				$description = str_replace("{ITEM.VALUE}",
+						$value,
+						$description);
+			}
+			if(strstr($description,'{ITEM.VALUE1}'))
+			{
+				$value=($flag==ZBX_FLAG_TRIGGER)?
+						trigger_get_func_value($row["expression"],ZBX_FLAG_TRIGGER,1,1):
+						trigger_get_func_value($row["expression"],ZBX_FLAG_EVENT,1,$row['clock']);
+				$description = str_replace("{ITEM.VALUE1}",
+						$value,
+						$description);
+			}
+			if(strstr($description,'{ITEM.VALUE2}'))
+			{
+				$value=($flag==ZBX_FLAG_TRIGGER)?
+						trigger_get_func_value($row["expression"],ZBX_FLAG_TRIGGER,2,1):
+						trigger_get_func_value($row["expression"],ZBX_FLAG_EVENT,2,$row['clock']);
+				$description = str_replace("{ITEM.VALUE2}",
+						$value,
+						$description);
+			}
+			if(strstr($description,'{ITEM.VALUE3}'))
+			{
+				$value=($flag==ZBX_FLAG_TRIGGER)?
+						trigger_get_func_value($row["expression"],ZBX_FLAG_TRIGGER,3,1):
+						trigger_get_func_value($row["expression"],ZBX_FLAG_EVENT,3,$row['clock']);
+				$description = str_replace("{ITEM.VALUE3}",
+						$value,
+						$description);
+			}
+			if(strstr($description,'{ITEM.VALUE4}'))
+			{
+				$value=($flag==ZBX_FLAG_TRIGGER)?
+						trigger_get_func_value($row["expression"],ZBX_FLAG_TRIGGER,4,1):
+						trigger_get_func_value($row["expression"],ZBX_FLAG_EVENT,4,$row['clock']);
+				$description = str_replace("{ITEM.VALUE4}",
+						$value,
+						$description);
+			}
+			if(strstr($description,'{ITEM.VALUE5}'))
+			{
+				$value=($flag==ZBX_FLAG_TRIGGER)?
+						trigger_get_func_value($row["expression"],ZBX_FLAG_TRIGGER,5,1):
+						trigger_get_func_value($row["expression"],ZBX_FLAG_EVENT,5,$row['clock']);
+				$description = str_replace("{ITEM.VALUE5}",
+						$value,
+						$description);
+			}
+			if(strstr($description,'{ITEM.VALUE6}'))
+			{
+				$value=($flag==ZBX_FLAG_TRIGGER)?
+						trigger_get_func_value($row["expression"],ZBX_FLAG_TRIGGER,6,1):
+						trigger_get_func_value($row["expression"],ZBX_FLAG_EVENT,6,$row['clock']);
+				$description = str_replace("{ITEM.VALUE6}",
+						$value,
+						$description);
+			}
+			if(strstr($description,'{ITEM.VALUE7}'))
+			{
+				$value=($flag==ZBX_FLAG_TRIGGER)?
+						trigger_get_func_value($row["expression"],ZBX_FLAG_TRIGGER,7,1):
+						trigger_get_func_value($row["expression"],ZBX_FLAG_EVENT,7,$row['clock']);
+				$description = str_replace("{ITEM.VALUE7}",
+						$value,
+						$description);
+			}
+			if(strstr($description,'{ITEM.VALUE8}'))
+			{
+				$value=($flag==ZBX_FLAG_TRIGGER)?
+						trigger_get_func_value($row["expression"],ZBX_FLAG_TRIGGER,8,1):
+						trigger_get_func_value($row["expression"],ZBX_FLAG_EVENT,8,$row['clock']);
+				$description = str_replace("{ITEM.VALUE8}",
+						$value,
+						$description);
+			}
+			if(strstr($description,'{ITEM.VALUE9}'))
+			{
+				$value=($flag==ZBX_FLAG_TRIGGER)?
+						trigger_get_func_value($row["expression"],ZBX_FLAG_TRIGGER,9,1):
+						trigger_get_func_value($row["expression"],ZBX_FLAG_EVENT,9,$row['clock']);
+				$description = str_replace("{ITEM.VALUE9}",
+						$value,
+						$description);
+			}
 		}
 		else
 		{
@@ -1044,7 +1232,7 @@
 	{
 		return expand_trigger_description_by_data(
 			DBfetch(
-				DBselect("select distinct t.description,h.host".
+				DBselect("select distinct t.description,h.host,t.expression,t.triggerid ".
 					" from triggers t left join functions f on t.triggerid=f.triggerid ".
 					" left join items i on f.itemid=i.itemid ".
 					" left join hosts h on i.hostid=h.hostid ".
@@ -1198,16 +1386,21 @@
 		$trig_hosts	= get_hosts_by_triggerid($triggerid);
 		$trig_host	= DBfetch($trig_hosts);
 
-		if(is_null($expression))
-		{
+		$event_to_unknown = false;		
+
+		if(is_null($expression)){
 			/* Restore expression */
 			$expression = explode_exp($trigger["expression"],0);
+		} 
+		else if($expression != explode_exp($trigger["expression"],0)){
+			$event_to_unknown = true;
 		}
-
+		
 		if ( !validate_expression($expression) )
 			return false;
 
 		$exp_hosts 	= get_hosts_by_expression($expression);
+		
 		if( $exp_hosts )
 		{
 			$chd_hosts	= get_hosts_by_templateid($trig_host["hostid"]);
@@ -1215,6 +1408,7 @@
 			if(DBfetch($chd_hosts))
 			{
 				$exp_host = DBfetch($exp_hosts);
+
 				$db_chd_triggers = get_triggers_by_templateid($triggerid);
 				while($db_chd_trigger = DBfetch($db_chd_triggers))
 				{
@@ -1225,6 +1419,7 @@
 						"{".$exp_host["host"].":",
 						"{".$chd_trig_host["host"].":",
 						$expression);
+
 				// recursion
 					update_trigger(
 						$db_chd_trigger["triggerid"],
@@ -1248,7 +1443,7 @@
 
 		$expression = implode_exp($expression,$triggerid); /* errors can be ignored cose function must return NULL */
 
-		add_event($triggerid,TRIGGER_VALUE_UNKNOWN);
+		if($event_to_unknown) add_event($triggerid,TRIGGER_VALUE_UNKNOWN);
 		reset_items_nextcheck($triggerid);
 
 		$sql="update triggers set";
@@ -1593,7 +1788,7 @@
 			$group_where = ' where';
 		}
 
-		$result=DBselect('select distinct t.triggerid,t.description,t.value,t.priority,t.lastchange,h.hostid,h.host'.
+		$result=DBselect('select distinct t.triggerid,t.description,t.expression,t.value,t.priority,t.lastchange,h.hostid,h.host'.
 			' from hosts h,items i,triggers t, functions f '.$group_where.
 			' h.status='.HOST_STATUS_MONITORED.' and h.hostid=i.hostid and i.itemid=f.itemid and f.triggerid=t.triggerid'.
 			' and h.hostid in ('.get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, null, null, get_current_nodeid()).') '.
@@ -1604,6 +1799,7 @@
 		while($row = DBfetch($result))
 		{
 			$row['host'] = get_node_name_by_elid($row['hostid']).$row['host'];
+			$row['description'] = expand_trigger_description_constants($row['description'], $row);
 
 			$hosts[$row['host']] = $row['host'];
 			$triggers[$row['description']][$row['host']] = array(
@@ -1896,4 +2092,124 @@
 		return $ret;
 	}
 
+	/*
+	 * Function: trigger_depenent_rec
+	 *
+	 * Description: 
+	 *     check if trigger depends on other triggers having status TRUE
+	 *     
+	 * Author: 
+	 *     Alexei Vladishev
+	 *
+	 * Comments: Recursive function
+	 *
+	 */
+	function	trigger_dependent_rec($triggerid,&$level)
+	{
+		$ret = FALSE;
+	
+		$level++;
+
+		/* Check for recursive loop */
+		if($level > 32)	return $ret;
+
+		$result = DBselect("select t.triggerid, t.value from trigger_depends d,triggers t where d.triggerid_down=$triggerid and d.triggerid_up=t.triggerid");
+		while($row = DBfetch($result))
+		{
+                	$triggerid_tmp = $row["triggerid"];
+                	$value_tmp = $row["value"];
+			if(TRIGGER_VALUE_TRUE == $value_tmp || trigger_dependent_rec($triggerid_tmp, $level))
+			{
+				$ret = TRUE;
+				break;
+			}
+		}
+
+		return $ret;
+	}
+
+	/*
+	 * Function: trigger_depenent 
+	 *
+	 * Description: 
+	 *     check if trigger depends on other triggers having status TRUE
+	 *     
+	 * Author: 
+	 *     Alexei Vladishev
+	 *
+	 * Comments:
+	 *
+	 */
+	function	trigger_dependent($triggerid)
+	{
+		$level = 0;
+		return trigger_dependent_rec($triggerid, $level);
+	}
+
+	/*
+	 * Function: trigger_get_N_functionid 
+	 *
+	 * Description: 
+	 *     get functionid of Nth function of trigger expression
+	 *     
+	 * Author: 
+	 *     Alexei Vladishev
+	 *
+	 * Comments:
+	 *
+	 */
+	function	trigger_get_N_functionid($expression, $function)
+	{
+		$result = NULL;
+
+		$arr=split('[\{\}]',$expression);
+		$num=1;
+		foreach($arr as $id)
+		{
+			if(is_numeric($id))
+			{
+				if($num == $function)
+				{
+					$result = $id;
+					break;
+				}
+				$num++;
+			}
+		}
+		return $result;
+	}
+
+	/*
+	 * Function: trigger_get_func_value 
+	 *
+	 * Description: 
+	 *     get historical value of Nth function of trigger expression
+	 *     flag:  ZBX_FLAG_EVENT - get value by clock, ZBX_FLAG_TRIGGR - get value by index
+	 *     ZBX_FLAG_TRIGGER, param: 0 - last value, 1 - prev, 2 - prev prev, etc     
+	 *     ZBX_FLAG_EVENT, param: event timestamp
+	 *     
+	 * Author: 
+	 *     Alexei Vladishev
+	 *
+	 * Comments:
+	 *
+	 */
+	function	trigger_get_func_value($expression, $flag, $function, $param)
+	{
+		$result = NULL;
+
+		$functionid=trigger_get_N_functionid($expression,$function);
+		if(isset($functionid))
+		{
+			$row=DBfetch(DBselect('select i.* from items i, functions f '.
+				' where i.itemid=f.itemid and f.functionid='.$functionid));
+			if($row)
+			{
+				$result=($flag == ZBX_FLAG_TRIGGER)?
+					item_get_history($row, $param):
+					item_get_history($row, 0, $param);
+			}
+		}
+		return $result;
+	}
 ?>

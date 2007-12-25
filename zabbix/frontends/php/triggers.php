@@ -1,7 +1,7 @@
 <?php
 /* 
 ** ZABBIX
-** Copyright (C) 2000-2005 SIA Zabbix
+** Copyright (C) 2000-2007 SIA Zabbix
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ include_once "include/page_header.php";
 		"groupid"=>	array(T_ZBX_INT, O_OPT,	 P_SYS,	DB_ID,NULL),
 		"hostid"=>	array(T_ZBX_INT, O_OPT,  P_SYS,	DB_ID,'isset({save})'),
 
-		"triggerid"=>	array(T_ZBX_INT, O_OPT,  P_SYS,	DB_ID,'{form}=="update"'),
+		"triggerid"=>	array(T_ZBX_INT, O_OPT,  P_SYS,	DB_ID,'(isset({form})&&({form}=="update"))'),
 
 		"copy_type"	=>array(T_ZBX_INT, O_OPT,	 P_SYS,	IN("0,1"),'isset({copy})'),
 		"copy_mode"	=>array(T_ZBX_INT, O_OPT,	 P_SYS,	IN("0"),NULL),
@@ -57,7 +57,7 @@ include_once "include/page_header.php";
 
 		"g_triggerid"=>	array(T_ZBX_INT, O_OPT,  NULL,	DB_ID, NULL),
 		"copy_targetid"=>	array(T_ZBX_INT, O_OPT,	NULL,	DB_ID, NULL),
-		"filter_groupid"=>	array(T_ZBX_INT, O_OPT, P_SYS,	DB_ID, 'isset({copy})&&{copy_type}==0'),
+		"filter_groupid"=>	array(T_ZBX_INT, O_OPT, P_SYS,	DB_ID, 'isset({copy})&&(isset({copy_type})&&({copy_type}==0))'),
 
 		"showdisabled"=>	array(T_ZBX_INT, O_OPT, P_SYS, IN("0,1"),	NULL),
 		
@@ -88,7 +88,7 @@ include_once "include/page_header.php";
 
 	$showdisabled = get_request("showdisabled", 0);
 
-	validate_group_with_host(PERM_READ_WRITE,array("allow_all_hosts","always_select_first_host","with_items"),
+	validate_group_with_host(PERM_READ_WRITE,array("allow_all_hosts","always_select_first_host","with_items","only_current_node"),
 		'web.last.conf.groupid', 'web.last.conf.hostid');
 ?>
 <?php
@@ -155,7 +155,7 @@ include_once "include/page_header.php";
 		$result = false;
 		
 		if($trigger_data = DBfetch(
-			DBselect("select distinct t.description,h.host".
+			DBselect("select distinct t.triggerid,t.description,t.expression,h.host".
 				" from triggers t left join functions f on t.triggerid=f.triggerid ".
 				" left join items i on f.itemid=i.itemid ".
 				" left join hosts h on i.hostid=h.hostid ".
@@ -303,7 +303,7 @@ include_once "include/page_header.php";
 ?>
 <?php
 	$r_form = new CForm();
-
+	$r_form->SetMethod('get');
 	$r_form->AddItem(array('[', 
 		new CLink($showdisabled ? S_HIDE_DISABLED_TRIGGERS : S_SHOW_DISABLED_TRIGGERS,
 			'triggers.php?showdisabled='.($showdisabled ? 0 : 1),'action'),
@@ -367,6 +367,7 @@ include_once "include/page_header.php";
 /* TABLE */
 		$form = new CForm('triggers.php');
 		$form->SetName('triggers');
+		$form->SetMethod('post');
 		$form->AddVar('hostid',$_REQUEST["hostid"]);
 
 		$table = new CTableInfo(S_NO_TRIGGERS_DEFINED);
@@ -433,9 +434,9 @@ include_once "include/page_header.php";
 			$deps = get_trigger_dependences_by_triggerid($row["triggerid"]);
 			if(count($deps) > 0)
 			{
-				$description[] = BR.BR."<strong>".S_DEPENDS_ON."</strong>".SPACE.BR;
+				$description[] = BR.BR."<strong>".S_DEPENDS_ON.":</strong>".SPACE.BR;
 				foreach($deps as $val)
-					$description[] = '['.$val.']'.expand_trigger_description($val).BR;
+					$description[] = expand_trigger_description($val).BR;
 
 				$description[] = BR;
 			}

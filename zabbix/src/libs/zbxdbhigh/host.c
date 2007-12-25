@@ -278,7 +278,7 @@ static int	DBget_service_status(
 
 	if( 0 != triggerid )
 	{
-		result = DBselect("select priority from triggers where trigerid=" ZBX_FS_UI64 " and status=0 and value=%d", triggerid, TRIGGER_VALUE_TRUE);
+		result = DBselect("select priority from triggers where triggerid=" ZBX_FS_UI64 " and status=0 and value=%d", triggerid, TRIGGER_VALUE_TRUE);
 		if( (row = DBfetch(result)) )
 		{
 			status = atoi(row[0]);
@@ -890,9 +890,9 @@ static void	__zbx_free_gitems(
 		ZBX_GRAPH_ITEMS **gitems
 	)
 {
-	if ( !*gitems )	return;
-
 	int i = 0;
+
+	if ( !*gitems )	return;
 
 	for ( i=0; (*gitems)[i].itemid != 0; i++ )
 		zbx_free((*gitems)[i].color);
@@ -970,9 +970,9 @@ static ZBX_GRAPH_ITEMS* DBget_same_graphitems_for_host(
 
 	for ( i=0; gitems[i].itemid != 0; i++ )
 	{
-		db_items = DBselect("select new.itemid from items new, items dest "
+		db_items = DBselect("select src.itemid from items src, items dest "
 				" where dest.itemid=" ZBX_FS_UI64
-				" and new.key_=dest.key_ and new.hostid=" ZBX_FS_UI64,
+				" and src.key_=dest.key_ and src.hostid=" ZBX_FS_UI64,
 				gitems[i].itemid, dest_hostid);
 
 		if ( (db_item_data = DBfetch(db_items)) )

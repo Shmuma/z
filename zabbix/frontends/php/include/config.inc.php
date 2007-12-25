@@ -254,9 +254,8 @@ require_once('include/classes/ctree.inc.php');
 		global	$ZBX_CURRENT_NODEID, $ZBX_CURRENT_SUBNODES, $ZBX_WITH_SUBNODES;
 
 		if ( !isset($ZBX_CURRENT_NODEID) )	init_nodes();
-
 		$result = ( is_show_subnodes($forse_with_subnodes) ? $ZBX_CURRENT_SUBNODES : $ZBX_CURRENT_NODEID );
-
+		
 		if ( !is_null($perm) )
 		{
 			global $USER_DETAILS;
@@ -400,8 +399,9 @@ require_once('include/classes/ctree.inc.php');
 	{
 		list($usec, $sec) = explode(" ",microtime()); 
 		return ((float)$usec + (float)$sec); 
-	} 
+	}
 
+	/* Do not forget to sync it with add_value_suffix in evalfunc.c! */ 
 	function	convert_units($value,$units)
 	{
 // Special processing for unix timestamps
@@ -600,7 +600,7 @@ require_once('include/classes/ctree.inc.php');
 
 	function	select_config()
 	{
-		$row=DBfetch(DBselect("select * from config"));
+		$row=DBfetch(DBselect("select * from config where ".DBin_node("configid", get_current_nodeid(false))));
 		if($row)
 		{
 			return	$row;
@@ -1802,6 +1802,17 @@ require_once('include/classes/ctree.inc.php');
 	{
 		return ($timestamp==0)?S_NEVER:date($format,$timestamp);
 	}
-		
 
+	function	encode_log($data)
+	{
+		if(defined('ZBX_LOG_ENCODING_DEFAULT') && function_exists('mb_convert_encoding'))
+		{
+			$new=mb_convert_encoding($data, S_HTML_CHARSET, ZBX_LOG_ENCODING_DEFAULT);
+		}
+		else
+		{
+			$new = $data;
+		}
+		return $new;
+	}
 ?>

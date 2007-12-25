@@ -45,7 +45,8 @@ int	get_value(DB_ITEM *item, AGENT_RESULT *result)
 
 	struct	sigaction phan;
 
-	zabbix_log(LOG_LEVEL_DEBUG, "In get_value()");
+	zabbix_log(LOG_LEVEL_DEBUG, "In get_value(key:%s)",
+		item->key);
 
 	phan.sa_handler = &child_signal_handler;
 	sigemptyset(&phan.sa_mask);
@@ -312,6 +313,10 @@ int get_values(void)
 	/* Do not stop when select is made by poller for unreachable hosts */
 	while((row=DBfetch(result))&&(stop==0 || poller_type == ZBX_POLLER_TYPE_UNREACHABLE))
 	{
+		/* This code is just to avoid compilation warining about use of uninitialized result2 */
+		result2 = result;
+		/* */
+
 		/* Poller for unreachable hosts */
 		if(poller_type == ZBX_POLLER_TYPE_UNREACHABLE)
 		{

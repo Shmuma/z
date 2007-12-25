@@ -260,10 +260,9 @@ void __zbx_zbx_snprintf_alloc(char **str, int *alloc_len, int *offset, int max_l
 
 	va_start(args, fmt);
 
-	if(*offset + max_len >= *alloc_len)
-	{
-		*str = zbx_realloc(*str, (*alloc_len)+64*max_len);
-		*alloc_len += 64*max_len;
+	if (*offset + max_len >= *alloc_len) {
+		*alloc_len += 2 * max_len;
+		*str = zbx_realloc(*str, *alloc_len);
 	}
 
 	*offset += zbx_vsnprintf(*str+*offset, max_len, fmt, args);
@@ -535,7 +534,7 @@ void	compress_signs(char *str)
 				}
 				else
 				{
-					len=strlen(str);
+					len = (int)strlen(str);
 					for(j=len;j>i;j--)	str[j]=str[j-1];
 					str[i]='+';
 					str[i+1]='N';
@@ -1109,6 +1108,319 @@ int	get_param(const char *param, int num, char *buf, int maxlen)
 	{
 		ret = 0;
 	}
+
+	return ret;
+}
+
+/******************************************************************************
+ *                                                                            *
+ * Function: zbx_num2hex                                                      *
+ *                                                                            *
+ * Purpose: convert parameter c (0-15) to hexadecimal value ('0'-'f')         *
+ *                                                                            *
+ * Parameters:                                                                *
+ * 	c - number 0-15                                                       *
+ *                                                                            *
+ * Return value:                                                              *
+ *      '0'-'f'                                                               *
+ *                                                                            *
+ * Author: Aleksander Vladishev                                               *
+ *                                                                            *
+ * Comments:                                                                  *
+ *                                                                            *
+ ******************************************************************************/
+char	zbx_num2hex(u_char c)
+{
+	if(c >= 10)
+		return c + 0x57; /* a-f */
+	else
+		return c + 0x30; /* 0-9 */
+}
+
+/******************************************************************************
+ *                                                                            *
+ * Function: zbx_hex2num                                                      *
+ *                                                                            *
+ * Purpose: convert hexit c ('0'-'9''a'-'f') to number (0-15)                 *
+ *                                                                            *
+ * Parameters:                                                                *
+ * 	c - char ('0'-'9''a'-'f')                                             *
+ *                                                                            *
+ * Return value:                                                              *
+ *      0-15                                                                  *
+ *                                                                            *
+ * Author: Aleksander Vladishev                                               *
+ *                                                                            *
+ * Comments:                                                                  *
+ *                                                                            *
+ ******************************************************************************/
+u_char	zbx_hex2num(char c)
+{
+	if(c >= 'a')
+		return c - 0x57; /* a-f */
+	else
+		return c - 0x30; /* 0-9 */
+}
+
+/******************************************************************************
+ *                                                                            *
+ * Function: zbx_binary2hex                                                   *
+ *                                                                            *
+ * Purpose: convert binary buffer input to hexadecimal string                 *
+ *                                                                            *
+ * Parameters:                                                                *
+ * 	input - binary data                                                   *
+ *	ilen - binaru data length                                             *
+ *	output - pointer to output buffer                                     *
+ *	olen - output buffer length                                           *
+ 	*                                                                            *
+ * Return value:                                                              *
+ *                                                                            *
+ * Author: Aleksander Vladishev                                               *
+ *                                                                            *
+ * Comments:                                                                  *
+ *                                                                            *
+ ******************************************************************************/
+void	zbx_binary2hex(const u_char *input, int ilen, char **output, int *olen)
+{
+	const u_char	*i = input;
+	char		*o;
+	int		len = (ilen * 2) + 1;
+
+	assert(input);
+	assert(output);
+	assert(*output);
+	assert(olen);
+
+	if(*olen < len)
+	{
+		*olen = len;
+		*output = zbx_realloc(*output, *olen);
+	}
+	o = *output;
+
+	while(i - input < ilen) {
+		*o++ = zbx_num2hex( (*i >> 4) & 0xf );
+		*o++ = zbx_num2hex( *i & 0xf );
+		i++;
+	}
+	*o = '\0';
+}
+
+/******************************************************************************
+ *                                                                            *
+ * Function: zbx_hex2binary                                                   *
+ *                                                                            *
+ * Purpose: convert hexadecimal string to binary buffer                       *
+ *                                                                            *
+ * Parameters:                                                                *
+ * 	io - hexadecimal string                                               *
+ *                                                                            *
+ * Return value:                                                              *
+ *	size of buffer                                                        *
+ *                                                                            *
+ * Author: Aleksander Vladishev                                               *
+ *                                                                            *
+ * Comments:                                                                  *
+ *                                                                            *
+ ******************************************************************************/
+int	zbx_hex2binary(char *io)
+{
+	const char	*i = io;
+	char		*o = io;
+	u_char		c;
+
+	assert(io);
+
+	while(*i != '\0') {
+		c = zbx_hex2num( *i++ ) << 4;
+		c += zbx_hex2num( *i++ );
+		*o++ = (char)c;
+	}
+	*o = '\0';
+
+	return (int)(o - io);
+}
+
+#ifdef HAVE_POSTGRESQL
+/******************************************************************************
+ *                                                                            *
+ * Function: zbx_pg_escape_bytea                                              *
+ *                                                                            *
+ * Purpose: converts from binary string to the null terminated escaped string *
+ *                                                                            *
+ * Transormations:                                                            *
+ *	'\0' [0x00] -> \\ooo (ooo is an octal number)                         *
+ *	'\'' [0x37] -> \'                                                     *
+ *	'\\' [0x5c] -> \\\\                                                   *
+ *	<= 0x1f || >= 0x7f -> \\ooo                                           *
+ *                                                                            *
+ * Parameters:                                                                *
+ *	input - null terminated hexadecimal string                            *
+ *	output - pointer to buffer                                            *
+ *	olen - length of returned buffer                                      *
+ *                                                                            *
+ * Return value:                                                              *
+ *                                                                            *
+ * Author: Aleksander Vladishev                                               *
+ *                                                                            *
+ * Comments:                                                                  *
+ *                                                                            *
+ ******************************************************************************/
+void	zbx_pg_escape_bytea(const u_char *input, int ilen, char **output, int *olen)
+{
+	const u_char	*i;
+	char		*o;
+	int		len;
+
+	assert(input);
+	assert(output);
+	assert(*output);
+	assert(olen);
+
+	len = 1; /* '\0' */
+	i = input;
+	while(i - input < ilen)
+	{
+		if(*i == '\0' || *i <= 0x1f || *i >= 0x7f)
+			len += 5;
+		else if(*i == '\'')
+			len += 2;
+		else if(*i == '\\')
+			len += 4;
+		else
+			len++;
+		i++;
+	}
+
+	if(*olen < len)
+	{
+		*olen = len;
+		*output = zbx_realloc(*output, *olen);
+	}
+	o = *output;
+	i = input;
+
+	while(i - input < ilen) {
+		if(*i == '\0' || *i <= 0x1f || *i >= 0x7f)
+		{
+			*o++ = '\\';
+			*o++ = '\\';
+			*o++ = ((*i >> 6) & 0x7) + 0x30;
+			*o++ = ((*i >> 3) & 0x7) + 0x30;
+			*o++ = (*i & 0x7) + 0x30;
+		}
+		else if (*i == '\'')
+		{
+			*o++ = '\\';
+			*o++ = '\'';
+		}
+		else if (*i == '\\')
+		{
+			*o++ = '\\';
+			*o++ = '\\';
+			*o++ = '\\';
+			*o++ = '\\';
+		}
+		else
+			*o++ = *i;
+		i++;
+	}
+	*o = '\0';
+}
+
+/******************************************************************************
+ *                                                                            *
+ * Function: zbx_pg_unescape_bytea                                            *
+ *                                                                            *
+ * Purpose: converts the null terminated string into binary buffer            *
+ *                                                                            *
+ * Transormations:                                                            *
+ *	\ooo == a byte whose value = ooo (ooo is an octal number)             *
+ *	\x   == x (x is any character)                                        *
+ *                                                                            *
+ * Parameters:                                                                *
+ *	io - null terminated string                                           *
+ *                                                                            *
+ * Return value: length of the binary buffer                                  *
+ *                                                                            *
+ * Author: Aleksander Vladishev                                               *
+ *                                                                            *
+ * Comments:                                                                  *
+ *                                                                            *
+ ******************************************************************************/
+int	zbx_pg_unescape_bytea(u_char *io)
+{
+	const u_char	*i = io;
+	u_char		*o = io;
+
+	assert(io);
+
+	while(*i != '\0') {
+		switch(*i)
+		{
+			case '\\':
+				i++;
+				if(*i == '\\')
+				{
+					*o++ = *i++;
+				}
+				else
+				{
+					if(*i >= 0x30 && *i <= 0x39 && *(i + 1) >= 0x30 && *(i + 1) <= 0x39 && *(i + 2) >= 0x30 && *(i + 2) <= 0x39)
+					{
+						*o = (*i++ - 0x30) << 6;
+						*o += (*i++ - 0x30) << 3;
+						*o++ += *i++ - 0x30;
+					}
+				}
+				break;
+
+			default:
+				*o++ = *i++;
+		}
+	}
+
+	return o - io;
+}
+#endif
+/******************************************************************************
+ *                                                                            *
+ * Function: zbx_get_next_field                                               *
+ *                                                                            *
+ * Purpose: return current field of characted separated string                *
+ *                                                                            *
+ * Parameters:                                                                *
+ *	line - null terminated, characret separated string                    *
+ *	output - output buffer (current field)                                *
+ *	olen - allocated output buffer size                                   *
+ *	separator - fields separator                                          *
+ *                                                                            *
+ * Return value: pointer to the next field                                    *
+ *                                                                            *
+ * Author: Aleksander Vladishev                                               *
+ *                                                                            *
+ * Comments:                                                                  *
+ *                                                                            *
+ ******************************************************************************/
+char	*zbx_get_next_field(const char *line, char **output, int *olen, char separator)
+{
+	char	*ret;
+	int	flen;
+
+	ret = strchr(line, separator);
+	if (ret) {
+		flen = (int)(ret - line);
+		ret++;
+	} else
+		flen = (int)strlen(line);
+
+	if (*olen < flen + 1) {
+		*olen = flen * 2;
+		*output = zbx_realloc(*output, *olen);
+	}
+	memcpy(*output, line, flen);
+	(*output)[flen] = '\0';
 
 	return ret;
 }

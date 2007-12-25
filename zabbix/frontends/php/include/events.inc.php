@@ -1,7 +1,7 @@
 <?php
 /*
 ** ZABBIX
-** Copyright (C) 2000-2005 SIA Zabbix
+** Copyright (C) 2000-2007 SIA Zabbix
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -36,6 +36,9 @@
 		$show_unknown = get_profile('web.events.show_unknown',0);
 		
 		$sql_from = $sql_cond = "";
+
+	        $availiable_groups= get_accessible_groups_by_user($USER_DETAILS,PERM_READ_LIST, null, null, get_current_nodeid());
+	        $availiable_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_LIST, null, null, get_current_nodeid());
 		
 		if($hostid > 0)
 		{
@@ -46,20 +49,41 @@
 			$sql_from = ", hosts_groups hg ";
 			$sql_cond = " and h.hostid=hg.hostid and hg.groupid=".$groupid;
 		}
-
-		if($show_unknown == 0){
-			$sql_cond.= ' AND e.value<>2 ';
+		else
+		{
+			$sql_from = ", hosts_groups hg ";
+			$sql_cond = " and h.hostid in (".$availiable_hosts.") ";
 		}
 	
-		$result = DBselect('SELECT DISTINCT t.triggerid,t.priority,t.description,h.host,e.clock,e.value '.
-			' FROM events e, triggers t, functions f, items i, hosts h '.$sql_from.
+//---
+		$trigger_list = '';
+		$sql = 'SELECT DISTINCT t.triggerid,t.priority,t.description,t.expression,h.host '.
+			' FROM triggers t, functions f, items i, hosts h '.$sql_from.
 			' WHERE '.DBin_node('t.triggerid').
-				' AND e.objectid=t.triggerid and e.object='.EVENT_OBJECT_TRIGGER.
 				' AND t.triggerid=f.triggerid and f.itemid=i.itemid '.
-				' AND i.hostid=h.hostid '.$sql_cond.' and h.status='.HOST_STATUS_MONITORED.
-			' ORDER BY e.clock DESC,h.host,t.priority,t.description,t.triggerid ',10*($start+$num)
-			);
-       
+				' AND i.hostid=h.hostid '.$sql_cond.
+				' AND h.status='.HOST_STATUS_MONITORED;
+							
+		$rez = DBselect($sql);
+		while($rowz = DBfetch($rez)){
+			$triggers[$rowz['triggerid']] = $rowz;
+			$trigger_list.=$rowz['triggerid'].',';
+		}
+
+		if(!empty($triggers)){
+			$trigger_list = '('.trim($trigger_list,',').')';
+			$sql_cond=($show_unknown == 0)?(' AND e.value<>'.TRIGGER_VALUE_UNKNOWN.' '):('');
+			
+			$sql = 'SELECT e.eventid, e.objectid as triggerid,e.clock,e.value '.
+					' FROM events e '.
+					' WHERE '.zbx_sql_mod('e.object',1000).'='.EVENT_OBJECT_TRIGGER.
+					  ' AND e.objectid IN '.$trigger_list.
+					  $sql_cond.
+					' ORDER BY e.eventid DESC';
+	
+			$result = DBselect($sql,10*($start+$num));
+		}
+		       
 		$table = new CTableInfo(S_NO_EVENTS_FOUND); 
 		$table->SetHeader(array(
 				S_TIME,
@@ -75,9 +99,10 @@
 		$col=0;
 		$skip = $start;
 
-		while(($row=DBfetch($result)) && ($col<$num)){
+		while(!empty($triggers) && ($col<$num) && ($row=DBfetch($result))){
 			
 			if($skip > 0){
+				if(($show_unknown == 0) && ($row['value'] == TRIGGER_VALUE_UNKNOWN)) continue;
 				$skip--;
 				continue;
 			}
@@ -93,7 +118,9 @@
 			else
 			{
 				$value=new CCol(S_UNKNOWN_BIG,"unknown");
-			}	
+			}
+			
+			$row = array_merge($triggers[$row['triggerid']],$row);
 			if(($show_unknown == 0) && (!event_initial_time($row,$show_unknown))) continue;
 				
 			$table->AddRow(array(
@@ -101,7 +128,7 @@
 				get_node_name_by_elid($row['triggerid']),
 				$hostid == 0 ? $row['host'] : null,
 				new CLink(
-					expand_trigger_description_by_data($row),
+					expand_trigger_description_by_data($row, ZBX_FLAG_EVENT),
 					"tr_events.php?triggerid=".$row["triggerid"],"action"
 					),
 				$value,
@@ -175,34 +202,70 @@
 		return $table;
 	}
 	
+/* function:
+ *     event_initial_time
+ *
+ * description:
+ *     returs 'true' if event is initial, otherwise false; 
+ *
+ * author: Aly
+ */
 function event_initial_time($row,$show_unknown=0){
-	$sql_cond=($show_unknown == 0)?' AND value<>2 ':'';
-
-	$events = array();
-	$res = DBselect('SELECT MAX(clock) as clock, value '.
-					' FROM events '.
-					' WHERE objectid='.$row['triggerid'].$sql_cond.
-						' AND clock < '.$row['clock'].
-					' GROUP BY value '.
-					' ORDER BY clock DESC');
-					
-	while($rows = DBfetch($res)){
-		$events[] = $rows;
-	}
+	$events = get_latest_events($row,$show_unknown);
+	
 	if(!empty($events) && ($events[0]['value'] == $row['value'])){
-
-		$clock = (count($events) > 1)?($events[1]['clock']):(0);
-		$res = DBselect('SELECT MIN(clock) as clock, value '.
-						' FROM events as e '.
-						' WHERE clock > '.$clock.$sql_cond.
-							' AND objectid='.$row['triggerid'].
-							' AND clock < '.$row['clock'].
-						' GROUP BY value');
-		while($rows = DBfetch($res)){
-			$rclock = $rows['clock'];
-		}
-		if($rclock != $row['clock']) return false;
+		return false;
 	}
 	return true;
+}
+
+function get_latest_events($row,$show_unknown=0){
+
+	$eventz = array();
+	$events = array();
+
+// SQL's are optimized that's why it's splited that way	
+// func MOD is used on object for forcing MySQL use different Index!!!
+
+/*******************************************/
+// Check for optimization after changing!  */
+/*******************************************/
+
+	$sql = 'SELECT e.eventid, e.value '.
+			' FROM events e '.
+			' WHERE e.objectid='.$row['triggerid'].
+				' AND e.eventid < '.$row['eventid'].
+				' AND '.zbx_sql_mod('e.object',1000).'='.EVENT_OBJECT_TRIGGER.   
+				' AND e.value='.TRIGGER_VALUE_FALSE.
+			' ORDER BY e.eventid DESC';
+	if($rez = DBfetch(DBselect($sql,1))) $eventz[] = $rez['eventid'];
+	
+	$sql = 'SELECT e.eventid, e.value '.
+			' FROM events e'.
+			' WHERE e.objectid='.$row['triggerid'].
+				' AND e.eventid < '.$row['eventid'].
+				' AND '.zbx_sql_mod('e.object',1000).'='.EVENT_OBJECT_TRIGGER.
+				' AND e.value='.TRIGGER_VALUE_TRUE.
+			' ORDER BY e.eventid DESC';
+	if($rez = DBfetch(DBselect($sql,1))) $eventz[] = $rez['eventid'];
+
+	if($show_unknown != 0){
+		$sql = 'SELECT e.eventid, e.value '.
+				' FROM events e'.
+				' WHERE e.objectid='.$row['triggerid'].
+					' AND e.eventid < '.$row['eventid'].
+					' AND '.zbx_sql_mod('e.object',1000).'='.EVENT_OBJECT_TRIGGER.
+					' AND e.value='.TRIGGER_VALUE_UNKNOWN.
+				' ORDER BY e.eventid DESC';
+		if($rez = DBfetch(DBselect($sql,1))) $eventz[] = $rez['eventid'];
+	}
+
+/*******************************************/
+
+	arsort($eventz);
+	foreach($eventz as $key => $value){
+		$events[] = array('eventid'=>$value,'value'=>$key);
+	}
+return $events;
 }
 ?>

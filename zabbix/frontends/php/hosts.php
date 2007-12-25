@@ -1,7 +1,7 @@
 <?php
 /* 
 ** ZABBIX
-** Copyright (C) 2000-2005 SIA Zabbix
+** Copyright (C) 2000-2007 SIA Zabbix
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -64,13 +64,13 @@ include_once "include/page_header.php";
 		"groups"=>	array(T_ZBX_INT, O_OPT,	P_SYS,	DB_ID, NULL),
 		"applications"=>array(T_ZBX_INT, O_OPT,	P_SYS,	DB_ID, NULL),
 /* host */
-		"hostid"=>	array(T_ZBX_INT, O_OPT,	P_SYS,  DB_ID,		'{config}==0&&{form}=="update"'),
-		"host"=>	array(T_ZBX_STR, O_OPT,	NULL,   NOT_EMPTY,	'({config}==0||{config}==3)&&isset({save})'),
-		"dns"=>		array(T_ZBX_STR, O_OPT,	NULL,	NULL,		'{config}==0&&isset({save})'),
-		"useip"=>	array(T_ZBX_STR, O_OPT, NULL,	IN('0,1'),	'{config}==0&&isset({save})'),
-		"ip"=>		array(T_ZBX_IP, O_OPT, NULL,	NULL,		'{config}==0&&isset({save})'),
-		"port"=>	array(T_ZBX_INT, O_OPT,	NULL,	BETWEEN(0,65535),'{config}==0&&isset({save})'),
-		"status"=>	array(T_ZBX_INT, O_OPT,	NULL,	IN("0,1,3"),	'{config}==0&&isset({save})'),
+		"hostid"=>	array(T_ZBX_INT, O_OPT,	P_SYS,  DB_ID,		'(isset({config})&&({config}==0))&&(isset({form})&&({form}=="update"))'),
+		"host"=>	array(T_ZBX_STR, O_OPT,	NULL,   NOT_EMPTY,	'isset({config})&&({config}==0||{config}==3)&&isset({save})'),
+		"dns"=>		array(T_ZBX_STR, O_OPT,	NULL,	NULL,		'(isset({config})&&({config}==0))&&isset({save})'),
+		"useip"=>	array(T_ZBX_STR, O_OPT, NULL,	IN('0,1'),	'(isset({config})&&({config}==0))&&isset({save})'),
+		"ip"=>		array(T_ZBX_IP, O_OPT, NULL,	NULL,		'(isset({config})&&({config}==0))&&isset({save})'),
+		"port"=>	array(T_ZBX_INT, O_OPT,	NULL,	BETWEEN(0,65535),'(isset({config})&&({config}==0))&&isset({save})'),
+		"status"=>	array(T_ZBX_INT, O_OPT,	NULL,	IN("0,1,3"),	'(isset({config})&&({config}==0))&&isset({save})'),
 
 		"newgroup"=>		array(T_ZBX_STR, O_OPT, NULL,   NULL,	NULL),
 		"templates"=>		array(T_ZBX_STR, O_OPT,	NULL,	NOT_EMPTY,	NULL),
@@ -89,13 +89,13 @@ include_once "include/page_header.php";
 		"location"=>	array(T_ZBX_STR, O_OPT, NULL,   NULL,	'isset({useprofile})'),
 		"notes"=>	array(T_ZBX_STR, O_OPT, NULL,   NULL,	'isset({useprofile})'),
 /* group */
-		"groupid"=>	array(T_ZBX_INT, O_OPT,	P_SYS,	DB_ID,		'{config}==1&&{form}=="update"'),
-		"gname"=>	array(T_ZBX_STR, O_OPT,	NULL,	NOT_EMPTY,	'{config}==1&&isset({save})'),
+		"groupid"=>	array(T_ZBX_INT, O_OPT,	P_SYS,	DB_ID,		'(isset({config})&&({config}==1))&&(isset({form})&&({form}=="update"))'),
+		"gname"=>	array(T_ZBX_STR, O_OPT,	NULL,	NOT_EMPTY,	'(isset({config})&&({config}==1))&&isset({save})'),
 
 /* application */
-		"applicationid"=>array(T_ZBX_INT,O_OPT,	P_SYS,	DB_ID,		'{config}==4&&{form}=="update"'),
-		"appname"=>	array(T_ZBX_STR, O_NO,	NULL,	NOT_EMPTY,	'{config}==4&&isset({save})'),
-		"apphostid"=>	array(T_ZBX_INT, O_OPT, NULL,	DB_ID.'{}>0',	'{config}==4&&isset({save})'),
+		"applicationid"=>array(T_ZBX_INT,O_OPT,	P_SYS,	DB_ID,		'(isset({config})&&({config}==4))&&(isset({form})&&({form}=="update"))'),
+		"appname"=>	array(T_ZBX_STR, O_NO,	NULL,	NOT_EMPTY,	'(isset({config})&&({config}==4))&&isset({save})'),
+		"apphostid"=>	array(T_ZBX_INT, O_OPT, NULL,	DB_ID.'{}>0',	'(isset({config})&&({config}==4))&&isset({save})'),
 		"apptemplateid"=>array(T_ZBX_INT,O_OPT,	NULL,	DB_ID,	NULL),
 
 /* actions */
@@ -123,7 +123,7 @@ include_once "include/page_header.php";
 	check_fields($fields);
 
 	if($_REQUEST["config"]==4)
-		validate_group_with_host(PERM_READ_WRITE,array("always_select_first_host"),'web.last.conf.groupid', 'web.last.conf.hostid');
+		validate_group_with_host(PERM_READ_WRITE,array("always_select_first_host","only_current_node"),'web.last.conf.groupid', 'web.last.conf.hostid');
 	elseif($_REQUEST["config"]==0 || $_REQUEST["config"]==3)
 		validate_group(PERM_READ_WRITE,array(),'web.last.conf.groupid');
 
@@ -508,12 +508,46 @@ include_once "include/page_header.php";
 		}
 		unset($_REQUEST["delete"]);
 	}
+	elseif(($_REQUEST["config"]==4) &&(isset($_REQUEST["activate"])||isset($_REQUEST["disable"]))){
+/* group operations */
+		$result = true;
+		$applications = get_request("applications",array());
+
+		foreach($applications as $id => $appid){
+	
+			$sql = 'SELECT ia.itemid,i.hostid,i.key_'.
+					' FROM items_applications ia '.
+					  ' LEFT JOIN items i ON ia.itemid=i.itemid '.
+					' WHERE ia.applicationid='.$appid.
+					  ' AND i.hostid='.$_REQUEST['hostid'].
+					  ' AND '.DBin_node('ia.applicationid');
+
+			$res_items = DBselect($sql);
+			while($item=DBfetch($res_items)){
+
+					if(isset($_REQUEST["activate"])){
+						if($result&=activate_item($item['itemid'])){
+							$host = get_host_by_hostid($item['hostid']);
+							add_audit(AUDIT_ACTION_UPDATE, AUDIT_RESOURCE_ITEM,S_ITEM.' ['.$item['key_'].'] ['.$id.'] '.S_HOST.' ['.$host['host'].'] '.S_ITEMS_ACTIVATED);
+						}
+					}
+					else{
+						if($result&=disable_item($item['itemid'])){
+							$host = get_host_by_hostid($item['hostid']);
+							add_audit(AUDIT_ACTION_UPDATE, AUDIT_RESOURCE_ITEM,S_ITEM." [".$item["key_"]."] [".$id."] ".S_HOST." [".$host['host']."] ".S_ITEMS_DISABLED);
+						}
+					}
+			}
+		}
+		(isset($_REQUEST["activate"]))?show_messages($result, S_ITEMS_ACTIVATED, null):show_messages($result, S_ITEMS_DISABLED, null);
+	}
 	
 	$available_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_WRITE,null,null,get_current_nodeid()); /* update available_hosts after ACTIONS */
 ?>
 <?php
 	$frmForm = new CForm();
-
+	$frmForm->SetMethod('get');
+	
 	$cmbConf = new CComboBox("config",$_REQUEST["config"],"submit()");
 	$cmbConf->AddItem(0,S_HOSTS);
 	$cmbConf->AddItem(3,S_TEMPLATES);
@@ -583,6 +617,8 @@ include_once "include/page_header.php";
 			}
 
 			$frmForm = new CForm();
+			$frmForm->SetMethod('get');
+
 			$frmForm->AddVar("config",$_REQUEST["config"]);
 			$frmForm->AddItem(S_GROUP.SPACE);
 			$frmForm->AddItem($cmbGroups);
@@ -593,6 +629,7 @@ include_once "include/page_header.php";
 			if(isset($_REQUEST["groupid"]) && $_REQUEST["groupid"]==0) unset($_REQUEST["groupid"]);
 
 			$form = new CForm();
+			
 			$form->SetName('hosts');
 			$form->AddVar("config",get_request("config",0));
 
@@ -770,6 +807,8 @@ include_once "include/page_header.php";
 			show_table_header(S_HOST_GROUPS_BIG);
 
 			$form = new CForm('hosts.php');
+			$form->SetMethod('get');
+			
 			$form->SetName('groups');
 			$form->AddVar("config",get_request("config",0));
 
@@ -780,6 +819,7 @@ include_once "include/page_header.php";
 						"CheckAll('".$form->GetName()."','all_groups');"),
 					SPACE,
 					S_NAME),
+				" # ",
 				S_MEMBERS));
 
 			$available_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_WRITE,null,null,get_current_nodeid());
@@ -796,11 +836,13 @@ include_once "include/page_header.php";
 					" and h.status not in (".HOST_STATUS_DELETED.") order by host");
 
 				$hosts = array();
+				$count = 0;
 				while($db_host=DBfetch($db_hosts)){
 					$style = $db_host["status"]==HOST_STATUS_MONITORED ? NULL: ( 
 						$db_host["status"]==HOST_STATUS_TEMPLATE ? "unknown" :
 						"on");
 					array_push($hosts,unpack_object(new CSpan($db_host["host"],$style)));
+					$count++;
 				}
 
 				$table->AddRow(array(
@@ -812,6 +854,7 @@ include_once "include/page_header.php";
 							"hosts.php?form=update&groupid=".$db_group["groupid"].
 							url_param("config"),'action')
 					),
+					$count,
 					implode(', ',$hosts)
 					));
 			}
@@ -872,7 +915,8 @@ include_once "include/page_header.php";
 		} else {
 	// Table HEADER
 			$form = new CForm();
-
+			$form->SetMethod('get');
+			
 			$cmbGroup = new CComboBox("groupid",$_REQUEST["groupid"],"submit();");
 			$cmbGroup->AddItem(0,S_ALL_SMALL);
 

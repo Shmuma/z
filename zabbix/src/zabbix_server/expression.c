@@ -585,6 +585,153 @@ int	evaluate(int *result, char *exp, char *error, int maxerrlen)
 
 /******************************************************************************
  *                                                                            *
+ * Function: extract_numbers                                                  *
+ *                                                                            *
+ * Purpose: Extract from string numbers with prefixes (A-Z)                   *
+ *                                                                            *
+ * Return value:                                                              *
+ *                                                                            *
+ * Author: Eugene Grigorjev                                                   *
+ *                                                                            *
+ * Comments: !!! Don't forget sync code with PHP !!!                          *
+ *           Use zbx_free_numbers to free allocated memory                    *
+ *                                                                            *
+ ******************************************************************************/
+static char**	extract_numbers(char *str, int *count)
+{
+	char *s = NULL;
+	char *e = NULL;
+
+	char **result = NULL;
+
+	int	dot_founded = 0;
+	int	len = 0;
+
+	assert(count);
+
+	*count = 0;
+
+	/* find start of number */
+	for ( s = str; *s; s++)
+	{
+		if ( !isdigit(*s) ) {
+			continue; /* for s */
+		}
+
+		if ( s != str && '{' == *(s-1) ) {
+			/* skip functions '{65432}' */
+			s = strchr(s, '}');
+			continue; /* for s */
+		}
+
+		dot_founded = 0;
+		/* find end of number */
+		for ( e = s; *e; e++ )
+		{
+			if ( isdigit(*e) ) {
+				continue; /* for e */
+			}
+			else if ( '.' == *e && !dot_founded ) {
+				dot_founded = 1;
+				continue; /* for e */
+			}
+			else if ( *e >= 'A' && *e <= 'Z' )
+			{
+				e++;
+			}
+			break; /* for e */
+		}
+
+		/* number founded */
+		len = e - s;
+		(*count)++;
+		result = zbx_realloc(result, sizeof(char*) * (*count));
+		result[(*count)-1] = zbx_malloc(NULL, len + 1);
+		memcpy(result[(*count)-1], s, len);
+		result[(*count)-1][len] = '\0';
+
+		s = e;
+	}
+
+	return result;
+}
+
+static void	zbx_free_numbers(char ***numbers, int count)
+{
+	register int i = 0;
+
+	if ( !numbers ) return;
+	if ( !*numbers ) return;
+
+	for ( i = 0; i < count; i++ )
+	{
+		zbx_free((*numbers)[i]);
+	}
+
+	zbx_free(*numbers);
+}
+
+/******************************************************************************
+ *                                                                            *
+ * Function: expand_trigger_description_constants                             *
+ *                                                                            *
+ * Purpose: substitute simple macros in data string with real values          *
+ *                                                                            *
+ * Parameters: data - trigger description                                     *
+ *                                                                            *
+ * Return value:                                                              *
+ *                                                                            *
+ * Author: Eugene Grigorjev                                                   *
+ *                                                                            *
+ * Comments: !!! Don't forget sync code with PHP !!!                          *
+ *           replcae ONLY $1-9 macros NOT {HOSTNAME}                          *
+ *                                                                            *
+ ******************************************************************************/
+static void	expand_trigger_description_constants(
+		char **data,
+		zbx_uint64_t triggerid
+	)
+{
+	DB_RESULT db_trigger;
+	DB_ROW	db_trigger_data;
+
+	char	**numbers = NULL;
+	int	numbers_cnt = 0;
+
+	int	i = 0;
+
+	char	*new_str = NULL;
+
+	char	replace[3] = "$0";
+
+	db_trigger = DBselect("select expression from triggers where triggerid=" ZBX_FS_UI64, triggerid);
+
+	if ( (db_trigger_data = DBfetch(db_trigger)) ) {
+
+		numbers = extract_numbers(db_trigger_data[0], &numbers_cnt);
+
+		for ( i = 0; i < 9; i++ )
+		{
+			replace[1] = '0' + i + 1;
+			new_str = string_replace(
+					*data,
+					replace, 
+					i < numbers_cnt ? 
+						numbers[i] :
+						""
+					);
+			zbx_free(*data);
+			*data = new_str;
+		}
+
+		zbx_free_numbers(&numbers, numbers_cnt);
+	}
+
+	DBfree_result(db_trigger);
+}
+
+/******************************************************************************
+ *                                                                            *
  * Function: substitute_simple_macros                                         *
  *                                                                            *
  * Purpose: substitute simple macros in data string with real values          *
@@ -607,6 +754,7 @@ int	evaluate(int *result, char *exp, char *error, int maxerrlen)
 #define MVAR_HOST_NAME			"{HOSTNAME}"
 #define MVAR_IPADDRESS			"{IPADDRESS}"
 #define MVAR_TIME			"{TIME}"
+#define MVAR_ITEM_LASTVALUE		"{ITEM.LASTVALUE}"
 #define MVAR_ITEM_NAME			"{ITEM.NAME}"
 #define MVAR_TRIGGER_COMMENT		"{TRIGGER.COMMENT}"
 #define MVAR_TRIGGER_ID			"{TRIGGER.ID}"
@@ -640,6 +788,8 @@ void	substitute_simple_macros(DB_EVENT *event, DB_ACTION *action, char **data, i
 		*str_out = NULL,
 		*replace_to = NULL;
 
+	char	tmp[MAX_STRING_LEN];
+
 	int	var_len;
 
 	time_t  now;
@@ -656,6 +806,10 @@ void	substitute_simple_macros(DB_EVENT *event, DB_ACTION *action, char **data, i
 		*data);
 
 	if('\0' == *data[0]) return;
+
+	if ( macro_type & MACRO_TYPE_TRIGGER_DESCRIPTION ) {
+		expand_trigger_description_constants(data, event->objectid);
+	}
 
 	pl = *data;
 	while((pr = strchr(pl, '{')))
@@ -695,14 +849,14 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 			var_len = strlen(MVAR_PROFILE_DEVICETYPE);
 
 			result = DBselect("select distinct p.devicetype from triggers t, functions f,items i, hosts h, hosts_profiles p"
-				" where t.triggerid=%d and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
+				" where t.triggerid=" ZBX_FS_UI64 " and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
 				event->objectid);
 
 			row = DBfetch(result);
 
 			if(!row || DBis_null(row[0])==SUCCEED)
 			{
-				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.DEVECETYPE in substitute_simple_macros. Triggerid [%d]",
+				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.DEVECETYPE in substitute_simple_macros. Triggerid [" ZBX_FS_UI64 "]",
 					event->objectid);
 
 				replace_to = zbx_dsprintf(replace_to, "%s",
@@ -721,14 +875,14 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 			var_len = strlen(MVAR_PROFILE_NAME);
 
 			result = DBselect("select distinct p.name from triggers t, functions f,items i, hosts h, hosts_profiles p"
-				" where t.triggerid=%d and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
+				" where t.triggerid=" ZBX_FS_UI64 " and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
 				event->objectid);
 
 			row = DBfetch(result);
 
 			if(!row || DBis_null(row[0])==SUCCEED)
 			{
-				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.NAME in substitute_simple_macros. Triggerid [%d]",
+				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.NAME in substitute_simple_macros. Triggerid [" ZBX_FS_UI64 "]",
 					event->objectid);
 
 				replace_to = zbx_dsprintf(replace_to, "%s",
@@ -747,14 +901,14 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 			var_len = strlen(MVAR_PROFILE_OS);
 
 			result = DBselect("select distinct p.os from triggers t, functions f,items i, hosts h, hosts_profiles p"
-				" where t.triggerid=%d and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
+				" where t.triggerid=" ZBX_FS_UI64 " and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
 				event->objectid);
 
 			row = DBfetch(result);
 
 			if(!row || DBis_null(row[0])==SUCCEED)
 			{
-				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.OS in substitute_simple_macros. Triggerid [%d]",
+				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.OS in substitute_simple_macros. Triggerid [" ZBX_FS_UI64 "]",
 					event->objectid);
 
 				replace_to = zbx_dsprintf(replace_to, "%s",
@@ -773,14 +927,14 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 			var_len = strlen(MVAR_PROFILE_SERIALNO);
 
 			result = DBselect("select distinct p.serialno from triggers t, functions f,items i, hosts h, hosts_profiles p"
-				" where t.triggerid=%d and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
+				" where t.triggerid=" ZBX_FS_UI64 " and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
 				event->objectid);
 
 			row = DBfetch(result);
 
 			if(!row || DBis_null(row[0])==SUCCEED)
 			{
-				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.SERIALNO in substitute_simple_macros. Triggerid [%d]",
+				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.SERIALNO in substitute_simple_macros. Triggerid [" ZBX_FS_UI64 "]",
 					event->objectid);
 
 				replace_to = zbx_dsprintf(replace_to, "%s",
@@ -799,14 +953,14 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 			var_len = strlen(MVAR_PROFILE_TAG);
 
 			result = DBselect("select distinct p.tag from triggers t, functions f,items i, hosts h, hosts_profiles p"
-				" where t.triggerid=%d and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
+				" where t.triggerid=" ZBX_FS_UI64 " and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
 				event->objectid);
 
 			row = DBfetch(result);
 
 			if(!row || DBis_null(row[0])==SUCCEED)
 			{
-				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.TAG in substitute_simple_macros. Triggerid [%d]",
+				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.TAG in substitute_simple_macros. Triggerid [" ZBX_FS_UI64 "]",
 					event->objectid);
 
 				replace_to = zbx_dsprintf(replace_to, "%s",
@@ -825,14 +979,14 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 			var_len = strlen(MVAR_PROFILE_MACADDRESS);
 
 			result = DBselect("select distinct p.macaddress from triggers t, functions f,items i, hosts h, hosts_profiles p"
-				" where t.triggerid=%d and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
+				" where t.triggerid=" ZBX_FS_UI64 " and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
 				event->objectid);
 
 			row = DBfetch(result);
 
 			if(!row || DBis_null(row[0])==SUCCEED)
 			{
-				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.MACADDRESS in substitute_simple_macros. Triggerid [%d]",
+				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.MACADDRESS in substitute_simple_macros. Triggerid [" ZBX_FS_UI64 "]",
 					event->objectid);
 
 				replace_to = zbx_dsprintf(replace_to, "%s",
@@ -851,14 +1005,14 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 			var_len = strlen(MVAR_PROFILE_HARDWARE);
 
 			result = DBselect("select distinct p.hardware from triggers t, functions f,items i, hosts h, hosts_profiles p"
-				" where t.triggerid=%d and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
+				" where t.triggerid=" ZBX_FS_UI64 " and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
 				event->objectid);
 
 			row = DBfetch(result);
 
 			if(!row || DBis_null(row[0])==SUCCEED)
 			{
-				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.HARDWARE in substitute_simple_macros. Triggerid [%d]", 
+				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.HARDWARE in substitute_simple_macros. Triggerid [" ZBX_FS_UI64 "]", 
 					event->objectid);
 
 				replace_to = zbx_dsprintf(replace_to, "%s",
@@ -877,14 +1031,14 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 			var_len = strlen(MVAR_PROFILE_SOFTWARE);
 
 			result = DBselect("select distinct p.software from triggers t, functions f,items i, hosts h, hosts_profiles p"
-				" where t.triggerid=%d and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
+				" where t.triggerid=" ZBX_FS_UI64 " and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
 				event->objectid);
 
 			row = DBfetch(result);
 
 			if(!row || DBis_null(row[0])==SUCCEED)
 			{
-				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.SOFTWARE in substitute_simple_macros. Triggerid [%d]",
+				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.SOFTWARE in substitute_simple_macros. Triggerid [" ZBX_FS_UI64 "]",
 					event->objectid);
 
 				replace_to = zbx_dsprintf(replace_to, "%s",
@@ -903,14 +1057,14 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 			var_len = strlen(MVAR_PROFILE_CONTACT);
 
 			result = DBselect("select distinct p.contact from triggers t, functions f,items i, hosts h, hosts_profiles p"
-				" where t.triggerid=%d and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
+				" where t.triggerid=" ZBX_FS_UI64 " and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
 				event->objectid);
 
 			row = DBfetch(result);
 
 			if(!row || DBis_null(row[0])==SUCCEED)
 			{
-				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.CONTACT in substitute_simple_macros. Triggerid [%d]",
+				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.CONTACT in substitute_simple_macros. Triggerid [" ZBX_FS_UI64 "]",
 					event->objectid);
 
 				replace_to = zbx_dsprintf(replace_to, "%s",
@@ -929,14 +1083,14 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 			var_len = strlen(MVAR_PROFILE_LOCATION);
 
 			result = DBselect("select distinct p.location from triggers t, functions f,items i, hosts h, hosts_profiles p"
-				" where t.triggerid=%d and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
+				" where t.triggerid=" ZBX_FS_UI64 " and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
 				event->objectid);
 
 			row = DBfetch(result);
 
 			if(!row || DBis_null(row[0])==SUCCEED)
 			{
-				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.LOCATION in substitute_simple_macros. Triggerid [%d]",
+				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.LOCATION in substitute_simple_macros. Triggerid [" ZBX_FS_UI64 "]",
 					event->objectid);
 
 				replace_to = zbx_dsprintf(replace_to, "%s",
@@ -955,14 +1109,14 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 			var_len = strlen(MVAR_PROFILE_NOTES);
 
 			result = DBselect("select distinct p.notes from triggers t, functions f,items i, hosts h, hosts_profiles p"
-				" where t.triggerid=%d and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
+				" where t.triggerid=" ZBX_FS_UI64 " and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid and p.hostid=h.hostid", 
 				event->objectid);
 
 			row = DBfetch(result);
 
 			if(!row || DBis_null(row[0])==SUCCEED)
 			{
-				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.NOTES in substitute_simple_macros. Triggerid [%d]",
+				zabbix_log( LOG_LEVEL_DEBUG, "No PROFILE.NOTES in substitute_simple_macros. Triggerid [" ZBX_FS_UI64 "]",
 					event->objectid);
 
 				replace_to = zbx_dsprintf(replace_to, "%s",
@@ -1020,12 +1174,43 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 
 				replace_to = zbx_dsprintf(replace_to, "%s",
 					STR_UNKNOWN_VARIABLE);
-zabbix_log( LOG_LEVEL_WARNING, "ALEX");
 			}
 			else
 			{
 				replace_to = zbx_dsprintf(replace_to, "%s",
 					row[0]);
+			}
+
+			DBfree_result(result);
+		}
+		else if(macro_type & (MACRO_TYPE_MESSAGE_SUBJECT | MACRO_TYPE_MESSAGE_BODY | MACRO_TYPE_TRIGGER_DESCRIPTION) &&
+			strncmp(pr, MVAR_ITEM_LASTVALUE, strlen(MVAR_ITEM_LASTVALUE)) == 0)
+		{
+			var_len = strlen(MVAR_ITEM_LASTVALUE);
+
+			result = DBselect("select distinct i.lastvalue,i.units,i.value_type"
+				" from triggers t, functions f,items i, hosts h"
+				" where t.triggerid=" ZBX_FS_UI64 " and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid",
+				event->objectid);
+
+			row=DBfetch(result);
+
+			if(!row || DBis_null(row[0])==SUCCEED)
+			{
+				zabbix_log( LOG_LEVEL_DEBUG, "No ITEM.LASTVALUE in substitute_simple_macros. Triggerid [" ZBX_FS_UI64 "]",
+					event->objectid);
+
+				replace_to = zbx_dsprintf(replace_to, "%s",
+					STR_UNKNOWN_VARIABLE);
+			}
+			else
+			{
+				strscpy(tmp, row[0]);
+
+				add_value_suffix(tmp, sizeof(tmp), row[1], atoi(row[2]));
+
+				replace_to = zbx_dsprintf(replace_to, "%s",
+					tmp);
 			}
 
 			DBfree_result(result);

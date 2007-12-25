@@ -32,7 +32,7 @@ include_once "include/page_header.php";
 <?php
 //		VAR			TYPE	OPTIONAL FLAGS	VALIDATION	EXCEPTION
 	$fields=array(
-		"druleid"=>	array(T_ZBX_INT, O_OPT,  P_SYS,	DB_ID,		'{form}=="update"'),
+		"druleid"=>	array(T_ZBX_INT, O_OPT,  P_SYS,	DB_ID,		'isset({form})&&{form}=="update"'),
 		"name"=>	array(T_ZBX_STR, O_OPT,  null,	NOT_EMPTY,	'isset({save})'),
 		"iprange"=>	array(T_ZBX_IP_RANGE, O_OPT,  null,	NOT_EMPTY,	'isset({save})'),
 		"delay"=>	array(T_ZBX_INT, O_OPT,	 null,	null, 		'isset({save})'),
@@ -179,6 +179,8 @@ include_once "include/page_header.php";
 <?php
 /* header */
 	$form = new CForm();
+	$form->SetMethod('get');
+	
 	$form->AddItem(new CButton('form', S_CREATE_RULE));
 	show_table_header(S_CONFIGURATION_OF_DISCOVERY_BIG, $form);
 	echo BR;

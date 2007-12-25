@@ -39,7 +39,7 @@ include_once "include/page_header.php";
 		"copy_type"	=>array(T_ZBX_INT, O_OPT,	 P_SYS,	IN("0,1"),'isset({copy})'),
 		"copy_mode"	=>array(T_ZBX_INT, O_OPT,	 P_SYS,	IN("0"),NULL),
 
-		"graphid"=>	array(T_ZBX_INT, O_OPT,	 P_SYS,	DB_ID,			'{form}=="update"'),
+		"graphid"=>	array(T_ZBX_INT, O_OPT,	 P_SYS,	DB_ID,			'(isset({form})&&({form}=="update"))'),
 		"name"=>	array(T_ZBX_STR, O_OPT,  NULL,	NOT_EMPTY,		'isset({save})'),
 		"width"=>	array(T_ZBX_INT, O_OPT,	 NULL,	BETWEEN(0,65535),	'isset({save})'),
 		"height"=>	array(T_ZBX_INT, O_OPT,	 NULL,	BETWEEN(0,65535),	'isset({save})'),
@@ -59,7 +59,7 @@ include_once "include/page_header.php";
 
 		"group_graphid"=>	array(T_ZBX_INT, O_OPT,	NULL,	DB_ID, NULL),
 		"copy_targetid"=>	array(T_ZBX_INT, O_OPT,	NULL,	DB_ID, NULL),
-		"filter_groupid"=>	array(T_ZBX_INT, O_OPT, P_SYS,	DB_ID, 'isset({copy})&&{copy_type}==0'),
+		"filter_groupid"=>	array(T_ZBX_INT, O_OPT, P_SYS,	DB_ID, 'isset({copy})&&(isset({copy_type})&&({copy_type}==0))'),
 /* actions */
 		"add_item"=>		array(T_ZBX_STR, O_OPT, P_SYS|P_ACT,	NULL,	NULL),
 		"delete_item"=>		array(T_ZBX_STR, O_OPT, P_SYS|P_ACT,	NULL,	NULL),
@@ -77,7 +77,7 @@ include_once "include/page_header.php";
 
 	check_fields($fields);
 
-	validate_group_with_host(PERM_READ_WRITE,array("allow_all_hosts","always_select_first_host"),
+	validate_group_with_host(PERM_READ_WRITE,array("allow_all_hosts","always_select_first_host","only_current_node"),
 		'web.last.conf.groupid', 'web.last.conf.hostid');
 ?>
 <?php
@@ -249,6 +249,8 @@ include_once "include/page_header.php";
 ?>
 <?php
 	$form = new CForm();
+	$form->SetMethod('get');
+	
 	$form->AddItem(new CButton("form",S_CREATE_GRAPH));
 
 	show_table_header(S_CONFIGURATION_OF_GRAPHS_BIG,$form);
@@ -276,7 +278,8 @@ include_once "include/page_header.php";
 		}
 
 		$r_form = new CForm();
-
+		$r_form->SetMethod('get');
+		
 		$cmbGroup = new CComboBox("groupid",$_REQUEST["groupid"],"submit()");
 		$cmbHosts = new CComboBox("hostid",$_REQUEST["hostid"],"submit()");
 
@@ -345,7 +348,7 @@ include_once "include/page_header.php";
 		{
 			$result = DBselect("select distinct g.* from graphs g left join graphs_items gi on g.graphid=gi.graphid ".
 				" left join items i on gi.itemid=i.itemid ".
-				' while '.DBin_node('g.graphid').
+				' where '.DBin_node('g.graphid').
 				" and ( i.hostid not in (".$denyed_hosts.")  OR i.hostid is NULL )".
 				" order by g.name, g.graphid");
 		}

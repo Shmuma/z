@@ -42,7 +42,7 @@ include_once "include/page_header.php";
 		"groupid"=>	array(T_ZBX_INT, O_OPT,	 P_SYS,	DB_ID,null),
 		"hostid"=>	array(T_ZBX_INT, O_OPT,  P_SYS,	DB_ID,'isset({form})||isset({save})'),
 
-		"httptestid"=>	array(T_ZBX_INT, O_NO,	 P_SYS,	DB_ID,'{form}=="update"'),
+		"httptestid"=>	array(T_ZBX_INT, O_NO,	 P_SYS,	DB_ID,'(isset({form})&&({form}=="update"))'),
 		"application"=>	array(T_ZBX_STR, O_OPT,  null,	NOT_EMPTY,'isset({save})'),
 		"name"=>	array(T_ZBX_STR, O_OPT,  null,	NOT_EMPTY.KEY_PARAM(),'isset({save})'),
 		"delay"=>	array(T_ZBX_INT, O_OPT,  null,  BETWEEN(0,86400),'isset({save})'),
@@ -333,7 +333,8 @@ include_once "include/page_header.php";
 	$_REQUEST['steps'] = array_merge(get_request('steps',array())); /* reinitialize keys */
 
 	$form = new CForm();
-
+	$form->SetMethod('get');
+	
 	$form->AddVar("hostid",$_REQUEST["hostid"]);
 
 	$form->AddItem(new CButton("form",S_CREATE_SCENARIO));
@@ -350,6 +351,7 @@ include_once "include/page_header.php";
 
 // Table HEADER
 		$form = new CForm();
+		$form->SetMethod('get');
 		
 		$form->AddItem(array('[', 
 			new CLink($showdisabled ? S_HIDE_DISABLED_SCENARIOS: S_SHOW_DISABLED_SCENARIOS,

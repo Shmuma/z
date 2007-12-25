@@ -36,6 +36,7 @@ extern	int	CONFIG_DBPORT;
 extern	int	CONFIG_NODEID;
 extern	int	CONFIG_MASTER_NODEID;
 extern	int	CONFIG_NODE_NOHISTORY;
+extern  int     CONFIG_REFRESH_UNSUPPORTED;
 
 typedef enum {
 	GRAPH_TYPE_NORMAL = 0,
@@ -103,7 +104,7 @@ typedef enum {
 #define	MAX_HOST_HOST_LEN	64
 
 #define	MAX_ITEM_KEY_LEN	255
-#define	MAX_ITEM_IP_LEN		15
+#define	MAX_ITEM_IP_LEN		39
 #define	MAX_ITEM_SNMP_COMMUNITY_LEN	64
 #define	MAX_ITEM_SNMP_OID_LEN	255
 
@@ -124,7 +125,7 @@ typedef enum {
 #define HOST_HOST_LEN_MAX		HOST_HOST_LEN+1
 #define HOST_DNS_LEN			64
 #define HOST_DNS_LEN_MAX		HOST_DNS_LEN+1
-#define HOST_IP_LEN			15
+#define HOST_IP_LEN			39
 #define HOST_IP_LEN_MAX			HOST_IP_LEN+1
 #define HOST_ERROR_LEN			128
 #define HOST_ERROR_LEN_MAX		HOST_ERROR_LEN+1
@@ -495,7 +496,7 @@ void	DBupdate_host_availability(zbx_uint64_t hostid,int available,int clock,char
 int	DBupdate_item_status_to_notsupported(zbx_uint64_t itemid, char *error);
 int	DBadd_trend(zbx_uint64_t itemid, double value, int clock);
 int	DBadd_history(zbx_uint64_t itemid, double value, int clock);
-int	DBadd_history_log(zbx_uint64_t itemid, char *value, int clock, int timestamp, char *source, int severity);
+int	DBadd_history_log(zbx_uint64_t id, zbx_uint64_t itemid, char *value, int clock, int timestamp, char *source, int severity);
 int	DBadd_history_str(zbx_uint64_t itemid, char *value, int clock);
 int	DBadd_history_text(zbx_uint64_t itemid, char *value, int clock);
 int	DBadd_history_uint(zbx_uint64_t itemid, zbx_uint64_t value, int clock);

@@ -32,6 +32,7 @@ typedef enum {
 	typedef int ZBX_SOCKET;
 #endif /* SOCKET || _WINDOWS */
 
+
 typedef struct sockaddr_in ZBX_SOCKADDR;
 
 typedef enum
@@ -44,6 +45,10 @@ typedef enum
 
 typedef struct zbx_sock
 {
+#if defined(HAVE_IPV6)
+	ZBX_SOCKET	sockets[FD_SETSIZE];
+	int		num_socks;
+#endif /* HAVE_IPV6 */
 	ZBX_SOCKET	socket;
 	ZBX_SOCKET	socket2;
 	char		buf_stat[ZBX_STAT_BUF_LEN];
@@ -51,6 +56,7 @@ typedef struct zbx_sock
 	zbx_buf_type_t	buf_type;
 	unsigned char accepted;
 	char		*error;
+	int		timeout;
 } zbx_sock_t;
 
 char*	zbx_tcp_strerror(void);
@@ -59,11 +65,11 @@ int	zbx_tcp_error(void);
 struct hostent	*zbx_gethost(const char *hostname);
 
 #if !defined(_WINDOWS)
-struct hostent  *zbx_gethost_by_ip(const char *ip);
+void zbx_gethost_by_ip(const char *ip, char *host, size_t hostlen);
 #endif /* WINDOWS */
 
 void	zbx_tcp_init(zbx_sock_t *s, ZBX_SOCKET o);
-int     zbx_tcp_connect(zbx_sock_t *s, const char *ip, unsigned short port);
+int     zbx_tcp_connect(zbx_sock_t *s, const char *ip, unsigned short port, int timeout);
 
 #define ZBX_TCP_NEW_PROTOCOL	0x01
 

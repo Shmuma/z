@@ -39,7 +39,7 @@
 			$this->tableclass = 'formtable';
 
 			if( null == $method ){
-				$method = 'get';
+				$method = 'post';
 			}
 
 			if( null == $form_variable ){
@@ -146,7 +146,6 @@
 										),
 										$class);
 			}
-			
 			array_push($this->center_items, $item1);
 		}
 		

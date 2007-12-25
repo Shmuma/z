@@ -161,6 +161,9 @@ int	CONFIG_ENABLE_LOG		= 1;
 /* From table config */
 int	CONFIG_REFRESH_UNSUPPORTED	= 0;
 
+/* Zabbix server sturtup time */
+int     CONFIG_SERVER_STARTUP_TIME      = 0;
+
 /******************************************************************************
  *                                                                            *
  * Function: init_config                                                      *
@@ -218,6 +221,8 @@ void	init_config(void)
 		{"NodeNoHistory",&CONFIG_NODE_NOHISTORY,0,TYPE_INT,PARM_OPT,0,1},
 		{0}
 	};
+
+	CONFIG_SERVER_STARTUP_TIME = time(NULL);
 
 
 	parse_cfg_file(CONFIG_FILE,cfg);
@@ -488,14 +493,13 @@ void test_variable_argument_list(void)
 
 void test_zbx_gethost(void)
 {
-        struct hostent* host;
+/*        struct hostent* host;
 
 	char hostname[]="194.8.11.69";
-/*	char hostname[]="gobbo.caves.lv";*/
 
 	host = zbx_gethost_by_ip(hostname);
 
-	printf("Host1 [%s]\n", host->h_name);
+	printf("Host1 [%s]\n", host->h_name);*/
 }
 
 void test_templates()
@@ -507,14 +511,15 @@ void test_templates()
 	DBclose();
 }
 
+/*
 void test_calc_timestamp()
 {
 #define ZBX_TEST_TIME struct zbx_test_time_t
 ZBX_TEST_TIME
 {
-        char	*line;
-        char	*format;
-        char	*expected;
+	char	*line;
+	char	*format;
+	char	*expected;
 };
 
 ZBX_TEST_TIME expressions[]=
@@ -552,16 +557,18 @@ ZBX_TEST_TIME expressions[]=
 	}
 	printf("Passed OK\n");
 }
-
+*/
+/*
 void	test_email()
 {
-	char str_error[0xFF];
+	char str_error[MAX_STRING_LEN];
 
+	alarm(5);
 	if ( FAIL == send_email(
-			"test.com",
-			"test.com",
-			"test@test.com",
-			"test@test.com",
+			"mail.apollo.lv",
+			"",
+			"",
+			"",
 			"This is a TEST message",
 			"Big message\r\n"
 			" 1 Line\n"
@@ -589,8 +596,259 @@ void	test_email()
 		printf("ERROR: %s\n", str_error);
 	else
 		printf("OK\n");
+	alarm(0);
+
+}
+*/
+
+/*
+void test_extract_numbers(void)
+{
+	char simple_expression[] = "{44444444}>0&{4444}<=12K&(123*12K>999)|({444}&{4}>(12314-3213))";
+
+	char	**numbers;
+	int	count, i;
+
+	printf("PARSE: %s\n", simple_expression);
+
+	numbers = extract_numbers(simple_expression, &count);
+
+	printf("FOUNDED: %i numbers\n", count);
+
+	for ( i = 0; i < count; i++ )
+	{
+		printf("%i: %s\n", i, numbers[i]);
+	}
+
+	zbx_free_numbers(&numbers, count);
+}
+*/
+/*
+void test_trigger_description()
+{
+	char *data = NULL;
+
+	DBconnect(ZBX_DB_CONNECT_EXIT);
+
+	data = strdup("!!!test $0 $1 $2 $3 $5 $6 $7 $8 $9 $10 $11");
+
+	printf("Descriptioni (before): [%s]\n", data); 
+
+	expand_trigger_description_simple(&data, 100000000012896);
+
+	printf("Description  (after) : [%s]\n", data); 
+
+	zbx_free(data);
+	
+	DBclose();
+}
+*/
+
+void test_zbx_tcp_connect(void)
+{
+#define ZBX_TEST_TCP_CONNECT struct zbx_test_tcp_connect_t
+ZBX_TEST_TCP_CONNECT
+{
+        char           *hostname;
+        unsigned short  port;
+};
+
+ZBX_TEST_TCP_CONNECT expressions[]=
+{
+	{"127.0.00.1",   80},
+	{"www.iscentrs.lv",	80},/*81.198.60.94*/
+	{"81.171.84.52",	80},
+	{"64.233.183.103",	80},/*nf-in-f103.google.com*/
+	{"::1",   80},
+	{"::1",   22},
+	{"12fc::5",	80},
+	{"192.168.3.5",	80},
+	{NULL}
+};
+
+	int		i;
+	zbx_sock_t	s;
+	char		host[MAX_STRING_LEN];
+	char		ip_list[] = "81.171.84.52,nf-in-f103.google.com,127.000.0.1";
+
+	for(i = 0; expressions[i].hostname != NULL; i ++)
+	{
+		zbx_gethost_by_ip(expressions[i].hostname, host, sizeof(host));
+		printf("[%25s]:%-5d %-30s ", expressions[i].hostname, expressions[i].port, host);
+
+		alarm(5);
+		switch(zbx_tcp_connect(&s, expressions[i].hostname, expressions[i].port)) 
+		{
+			case SUCCEED : 
+				printf("Succeed");
+
+				if(FAIL == zbx_tcp_check_security(&s, ip_list, 0))
+				{
+					printf(" \n%s", zbx_tcp_strerror());
+				}
+				zbx_tcp_close(&s);
+				break;
+			case FAIL    : 
+				printf("Fail %s\n", zbx_tcp_strerror());
+				break;
+		}
+		alarm(0);
+		printf("\n");
+	}
+}
+/*
+static void test_child_signal_handler(int sig)
+{
+	printf( "sdfsdfsdfsf" );
+}
+*/
+
+void test_ip_in_list()
+{
+#define ZBX_TEST_IP struct zbx_test_ip_t
+ZBX_TEST_IP
+{
+	char	*list;
+	char	*ip;
+	int	result;
+};
+
+ZBX_TEST_IP expressions[]=
+{
+		{"10.0.0.1-29",						"10.0.0.30",		FAIL},
+		{"192.168.0.1-255,192.168.1.1-255",			"192.168.2.201",	FAIL},
+		{"172.16.0.0,172.16.0.1,172.16.0.2,172.16.0.44-250",	"172.16.0.201",		SUCCEED},
+		{"172.31.255.43-55",					"172.31.255.47",	SUCCEED},
+		{"86.57.15.94",						"86.57.15.95",		FAIL},
+		{"86.57.15.94",						"86.57.15.94",		SUCCEED},
+#if defined(HAVE_IPV6)
+		{"2312:333::32-64,12fc::1-fffc",			"12fc::ffff",		FAIL},
+		{"2312:333::32-64,12fc::1-fffc",			"2312:333::44",		SUCCEED},
+		{"::a:b:a,::a:b:b,::a:b:c-e",				"::a:b:f",		FAIL},
+		{"192.168.200.1,::a:b:a,::a:b:b,::a:b:c-e,10.0.0.2",	"::a:b:d",		SUCCEED},
+		{"192.168.200.1,::a:b:a,::a:b:b,::a:b:c-e,10.0.0.2",	"10.0.0.2",		SUCCEED},
+		{"192.168.200.1,::a:b:a,::a:b:b,::a:b:c-,10.0.0.2",	"::a:b:d",		FAIL},
+		{"a:b:c::-f",						"a:b:c::3",		SUCCEED},
+#endif /*HAVE_IPV6*/
+		{NULL}
+};
+	int	i;
+	int	result;
+	char    list[MAX_STRING_LEN];
+
+	printf("-= Test ip_in_list =-\n");
+
+	for(i=0;expressions[i].list!=NULL;i++)
+	{
+		strcpy(list, expressions[i].list);
+		result = ip_in_list(list, expressions[i].ip);
+			
+		printf("list [%50s] ip [%20s] expected [%7s] got [%7s]\n",
+			expressions[i].list,
+			expressions[i].ip,
+			expressions[i].result == SUCCEED ? "SUCCEED" : "FAIL",
+			result == SUCCEED ? "SUCCEED" : "FAIL");
+		if(expressions[i].result!=result)
+		{
+			printf("FAILED!\n");
+			exit(-1);
+		}
+	}
+	printf("Passed OK\n");
+}
+
+void test_binary2hex()
+{
+#define ZBX_TEST_HEX struct zbx_test_hex_t
+ZBX_TEST_HEX
+{
+	char	*bin;
+	char	*hex;
+};
+
+ZBX_TEST_HEX expressions[]=
+{
+	{"a", "61"},
+	{"abcd", "61626364"},
+	{"abcdefghijk^^^", "6162636465666768696a6b5e5e5e"},
+	{"abcdefghijk***", "6162636465666768696a6b2a2a2a"},
+	{"\xffwabcdefghijkTUVabcdefghijk", "ff776162636465666768696a6b5455566162636465666768696a6b"},
+	{NULL}
+};
+	int	len, ilen;
+	int	i;
+	char	*buffer = NULL, tmp[MAX_STRING_LEN];
+
+	printf("-= Test binary_to_hex =-\n");
+
+	len = 1024;
+	buffer = zbx_malloc(buffer, len);
+	for(i = 0; expressions[i].bin != NULL; i++)
+	{
+		ilen = strlen(expressions[i].bin);
+		zbx_binary2hex((u_char *)expressions[i].bin, ilen, &buffer, &len);
+		printf("bin [%s] hex [%s] got [%s] [%s]\n",
+			expressions[i].bin,
+			expressions[i].hex,
+			buffer,
+			(strcmp(expressions[i].hex, buffer) == 0 ? "SUCCEED" : "FAIL"));
+		if(strcmp(expressions[i].hex, buffer) != 0)
+		{
+			printf("FAILED!\n");
+			exit(-1);
+		}
+
+		strcpy(tmp, expressions[i].hex);
+		zbx_hex2binary(tmp);
+		printf("hex [%s] bin [%s] got [%s] [%s]\n",
+			expressions[i].hex,
+			expressions[i].bin,
+			tmp,
+			(strcmp(expressions[i].bin, tmp) == 0 ? "SUCCEED" : "FAIL"));
+		if(strcmp(expressions[i].bin, tmp) != 0)
+		{
+			printf("FAILED!\n");
+			exit(-1);
+		}
+	}
+	printf("Passed OK\n");
+}
+
+void test_zbx_get_next_field()
+{
+	char	input[] = {"?11111.;?222222222222222222.;?333333333333.;?4444444444444444."};
+	char	*ptr, *buffer = NULL;
+	int	len;
+
+	printf("-= Test binary_to_hex =-\n");
+
+	len = 1;
+	buffer = zbx_malloc(buffer, len);
+	ptr = input;
 
 
+	ptr = zbx_get_next_field( ptr, &buffer, &len, ';');
+printf("test_zbx_get_next_field() (1) [input:%s] [buffer:%s]\n", ptr, buffer);
+	ptr = zbx_get_next_field( ptr, &buffer, &len, ';');
+printf("test_zbx_get_next_field() (2) [input:%s] [buffer:%s]\n", ptr, buffer);
+	ptr = zbx_get_next_field( ptr, &buffer, &len, ';');
+printf("test_zbx_get_next_field() (3) [input:%s] [buffer:%s]\n", ptr, buffer);
+	ptr = zbx_get_next_field( ptr, &buffer, &len, ';');
+printf("test_zbx_get_next_field() (4) [input:%s] [buffer:%s]\n", ptr, buffer);
+}
+
+void test_regexp()
+{
+	int len;
+
+	if(zbx_regexp_match("A  B C A", "(B+.*C+)|(C+.*B+)", &len) != NULL)
+	{
+		printf("Matched\n");
+	}
+	else
+	{
+		printf("Not matched\n");
+	}
 }
 
 void test()
@@ -617,7 +875,14 @@ void test()
 /*	test_templates();*/
 /*	test_calc_timestamp();*/
 /*	test_zbx_gethost();*/
-	test_email();
+/*	test_email(); */
+/*	test_extract_numbers(); */
+/*	test_trigger_description(); */
+/*	test_zbx_tcp_connect( );*/
+/*	test_ip_in_list(); */
+/*	test_binary2hex();*/
+/*	test_zbx_get_next_field();*/
+	test_regexp();
 
 	printf("\n-= Test completed =-\n");
 }
@@ -693,6 +958,18 @@ int main(int argc, char **argv)
 	}
 
 #ifdef ZABBIX_TEST
+/*	struct sigaction  phan;
+
+	phan.sa_handler = test_child_signal_handler;
+	sigemptyset(&phan.sa_mask);
+	phan.sa_flags = 0;
+
+	sigaction(SIGINT,       &phan, NULL);
+	sigaction(SIGQUIT,      &phan, NULL);
+	sigaction(SIGTERM,      &phan, NULL);
+	sigaction(SIGPIPE,      &phan, NULL);
+	sigaction(SIGCHLD,      &phan, NULL);
+*/
 	test();
 
 	zbx_on_exit();
@@ -742,18 +1019,21 @@ int MAIN_ZABBIX_ENTRY(void)
 #else
 	zabbix_log( LOG_LEVEL_WARNING, "Jabber notifications:   NO");
 #endif
+#ifdef	HAVE_IPV6
+	zabbix_log( LOG_LEVEL_WARNING, "IPv6 support:          YES");
+#else
+	zabbix_log( LOG_LEVEL_WARNING, "IPv6 support:           NO");
+#endif
+
 	zabbix_log( LOG_LEVEL_WARNING, "**************************");
 
 	DBconnect(ZBX_DB_CONNECT_EXIT);
 
 	result = DBselect("select refresh_unsupported from config where " ZBX_COND_NODEID,
 		LOCAL_NODE("configid"));
-	row = DBfetch(result);
 
-	if( (row != NULL) && DBis_null(row[0]) != SUCCEED)
-	{
+	if (NULL != (row = DBfetch(result)) && DBis_null(row[0]) != SUCCEED)
 		CONFIG_REFRESH_UNSUPPORTED = atoi(row[0]);
-	}
 	DBfree_result(result);
 
 	result = DBselect("select masterid from nodes where nodeid=%d",

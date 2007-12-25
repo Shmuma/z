@@ -288,12 +288,12 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value,char *lastl
 	DBescape_string(server, server_esc, MAX_STRING_LEN);
 	DBescape_string(key, key_esc, MAX_STRING_LEN);
 
-	result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.host='%s' and i.key_='%s' and i.status=%d and i.type in (%d,%d) and" ZBX_COND_NODEID,
+	result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.host='%s' and i.key_='%s' and i.status in (%d,%d) and i.type in (%d,%d) and" ZBX_COND_NODEID,
 		ZBX_SQL_ITEM_SELECT,
 		HOST_STATUS_MONITORED,
 		server_esc,
 		key_esc,
-		ITEM_STATUS_ACTIVE,
+		ITEM_STATUS_ACTIVE, ITEM_STATUS_NOTSUPPORTED,
 		ITEM_TYPE_TRAPPER,
 		ITEM_TYPE_ZABBIX_ACTIVE,
 		LOCAL_NODE("h.hostid"));
@@ -302,7 +302,7 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value,char *lastl
 
 	if(!row)
 	{
-
+		DBfree_result(result);
 		return FAIL;
 /*
 		zabbix_log( LOG_LEVEL_DEBUG, "Before checking autoregistration for [%s]",
@@ -425,20 +425,20 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 		item->value_type,
 		value->type);
 
-	if(value->type & AR_UINT64)
-		zabbix_log( LOG_LEVEL_DEBUG, "In add_history(%d,UINT64:" ZBX_FS_UI64 ")",
+	if (value->type & AR_UINT64)
+		zabbix_log( LOG_LEVEL_DEBUG, "In add_history(itemid:"ZBX_FS_UI64",UINT64:"ZBX_FS_UI64")",
 			item->itemid,
 			value->ui64);
-	if(value->type & AR_STRING)
-		zabbix_log( LOG_LEVEL_DEBUG, "In add_history(%d,STRING:%s)",
+	if (value->type & AR_STRING)
+		zabbix_log( LOG_LEVEL_DEBUG, "In add_history(itemid:"ZBX_FS_UI64",STRING:%s)",
 			item->itemid,
 			value->str);
-	if(value->type & AR_DOUBLE)
-		zabbix_log( LOG_LEVEL_DEBUG, "In add_history(%d,DOUBLE:" ZBX_FS_DBL ")",
+	if (value->type & AR_DOUBLE)
+		zabbix_log( LOG_LEVEL_DEBUG, "In add_history(itemid:"ZBX_FS_UI64",DOUBLE:"ZBX_FS_DBL")",
 			item->itemid,
 			value->dbl);
-	if(value->type & AR_TEXT)
-		zabbix_log( LOG_LEVEL_DEBUG, "In add_history(%d,TEXT:[%s])",
+	if (value->type & AR_TEXT)
+		zabbix_log( LOG_LEVEL_DEBUG, "In add_history(itemid:"ZBX_FS_UI64",TEXT:[%s])",
 			item->itemid,
 			value->text);
 
@@ -523,7 +523,7 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 		else if(item->value_type==ITEM_VALUE_TYPE_LOG)
 		{
 			if(GET_STR_RESULT(value))
-				DBadd_history_log(item->itemid,value->str,now,item->timestamp,item->eventlog_source,item->eventlog_severity);
+				DBadd_history_log(0, item->itemid,value->str,now,item->timestamp,item->eventlog_source,item->eventlog_severity);
 			DBexecute("update items set lastlogsize=%d where itemid=" ZBX_FS_UI64,
 				item->lastlogsize,
 				item->itemid);

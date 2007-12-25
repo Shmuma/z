@@ -54,8 +54,7 @@ include_once "include/page_header.php";
 		"filter_task"=>	array(T_ZBX_STR, O_OPT,	 null,	
 			IN(FILTER_TAST_SHOW.','.FILTER_TAST_HIDE.','.FILTER_TAST_MARK.','.FILTER_TAST_INVERT_MARK), null),
 		"filter"=>	array(T_ZBX_STR, O_OPT,	 null,	null, null),
-		"mark_color"=>	array(T_ZBX_STR, O_OPT,	 null,	
-			IN(MARK_COLOR_RED.','.MARK_COLOR_GREEN.','.MARK_COLOR_BLUE), null),
+		"mark_color"=>	array(T_ZBX_STR, O_OPT,	 null,	IN(MARK_COLOR_RED.','.MARK_COLOR_GREEN.','.MARK_COLOR_BLUE), null),
 		
 		"cmbloglist"=>	array(T_ZBX_INT, O_OPT,	 null,	DB_ID, null),
 
@@ -192,6 +191,8 @@ include_once "include/page_header.php";
 		}
 
 		$form = new CForm();
+		$form->SetMethod('get');
+		
 		$form->AddVar("itemid",$_REQUEST["itemid"]);
 
 		if($_REQUEST["action"]!="showlatest")
@@ -254,6 +255,8 @@ include_once "include/page_header.php";
 				$mark_color = get_request("mark_color",0);
 
 				$r_header = new CForm();
+				$r_header->SetMethod('get');
+				
 				$r_header->AddVar("action",$_REQUEST["action"]);
 				$r_header->AddVar("from",$_REQUEST["from"]);
 				$r_header->AddVar("period",$_REQUEST["period"]);
@@ -402,7 +405,8 @@ include_once "include/page_header.php";
 					);
 
 				$row["value"] = trim($row["value"],"\r\n");
-				array_push($new_row,htmlspecialchars($row["value"]));
+//				array_push($new_row,htmlspecialchars($row["value"]));
+				array_push($new_row,htmlspecialchars(encode_log($row["value"])));
 
 				if(!isset($_REQUEST["plaintext"]))
 				{

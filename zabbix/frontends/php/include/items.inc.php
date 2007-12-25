@@ -423,13 +423,15 @@
 
 		DBexecute("update items set lastlogsize=0 where itemid=$itemid and key_<>".zbx_dbstr($key));
 
-		$result = DBexecute("delete from items_applications where itemid=$itemid");
-		foreach($applications as $appid)
-		{
-			$itemappid=get_dbid("items_applications","itemappid");
-			DBexecute("insert into items_applications (itemappid,itemid,applicationid) values($itemappid,".$itemid.",".$appid.")");
+		if(isset($_REQUEST['applications_visible'])){	
+			$result = DBexecute("delete from items_applications where itemid=$itemid");
+			foreach($applications as $appid)
+			{
+				$itemappid=get_dbid("items_applications","itemappid");
+				DBexecute("insert into items_applications (itemappid,itemid,applicationid) values($itemappid,".$itemid.",".$appid.")");
+			}
 		}
-
+		
 		$result=DBexecute(
 			"update items set description=".zbx_dbstr($description).",key_=".zbx_dbstr($key).",".
 			"hostid=$hostid,delay=$delay,history=$history,nextcheck=0,type=$type,status=".$status.','.
@@ -492,7 +494,8 @@
 					"trends"		=> array('template' => 1 , 'httptest' => 1),
 					"logtimefmt"		=> array(),
 					"valuemapid"		=> array('httptest' => 1),
-					"delay_flex"		=> array());
+					"delay_flex"		=> array()
+					);
 
 		$item_data = get_item_by_itemid($itemid);
 
@@ -676,12 +679,10 @@
 
 	# Activate Item
 
-	function	activate_item($itemid)
-	{
+	function	activate_item($itemid){
 		 // first update status for child items
 		$db_tmp_items = DBselect("select itemid, hostid from items where templateid=$itemid");
-		while($db_tmp_item = DBfetch($db_tmp_items))
-		{
+		while($db_tmp_item = DBfetch($db_tmp_items)){
 		// recursion
 			activate_item($db_tmp_item["itemid"]);
 		}
@@ -1056,7 +1057,23 @@ COpt::profiling_stop('prepare table');
 	
 	function	format_lastvalue($db_item)
 	{
-		if(isset($db_item["lastvalue"]))
+		if($db_item["value_type"] == ITEM_VALUE_TYPE_LOG)
+		{
+			$row=DBfetch(DBselect("select max(id) as max from history_log where itemid=".$db_item["itemid"]));
+
+			if($row && !is_null($row['max']))
+			{
+				$row2=DBfetch(DBselect("select value from history_log where id=".$row["max"]));
+				$lastvalue=nbsp(htmlspecialchars(substr($row2["value"],0,20)));
+				if(strlen($db_item["lastvalue"]) > 20)
+					$lastvalue .= " ...";
+			}
+			else
+			{
+				$lastvalue="-";
+			}
+		}
+		else if(isset($db_item["lastvalue"]))
 		{
 			if($db_item["value_type"] == ITEM_VALUE_TYPE_FLOAT)
 			{
@@ -1070,11 +1087,15 @@ COpt::profiling_stop('prepare table');
 			{
 				$lastvalue="...";
 			}
+			else if($db_item["value_type"] == ITEM_VALUE_TYPE_STR)
+			{
+					$lastvalue=nbsp(htmlspecialchars(substr($db_item["lastvalue"],0,20)));
+					if(strlen($db_item["lastvalue"]) > 20)
+						$lastvalue .= " ...";
+			}
 			else
 			{
-				$lastvalue=nbsp(htmlspecialchars(substr($db_item["lastvalue"],0,20)));
-				if(strlen($db_item["lastvalue"]) > 20)
-					$lastvalue .= " ...";
+				$lastvalue="Unknown value type";
 			}
 			if($db_item["valuemapid"] > 0);
 				$lastvalue = replace_value_by_map($lastvalue, $db_item["valuemapid"]);
@@ -1085,5 +1106,73 @@ COpt::profiling_stop('prepare table');
 			$lastvalue = "-";
 		}
 		return $lastvalue;
+	}
+
+	/*
+	 * Function: item_get_history
+	 *
+	 * Description:
+	 *     Get value from history
+	 *
+	 * Peremeters:
+	 *     itemid - item ID
+	 *     index  - 0 - last value, 1 - prev value, 2 - prev prev, and so on
+	 *     if index=0, clock is used
+	 *
+	 * Author:
+	 *     Alexei Vladishev
+	 *
+	 * Comments:
+	 *
+	 */
+	function	item_get_history($db_item,$index = 1, $clock = 0)
+	{
+		$value = NULL;
+
+		switch($db_item["value_type"])
+		{
+		case	ITEM_VALUE_TYPE_FLOAT:
+			$table = "history";
+			break;
+		case	ITEM_VALUE_TYPE_UINT64:
+			$table = "history_uint";
+			break;
+		case	ITEM_VALUE_TYPE_TEXT:
+			$table = "history_text";
+			break;
+		case	ITEM_VALUE_TYPE_STR:
+			$table = "history_str";
+			break;
+		case	ITEM_VALUE_TYPE_LOG:
+		default:
+			$table = "history_log";
+			break;
+		}
+		if($index == 0)
+		{
+			$sql="select value from $table where itemid=".$db_item["itemid"]." and clock<=$clock order by clock desc";
+			$result = DBselect($sql, 1);
+			$row = DBfetch(DBselect($sql, 1));
+			if($row)
+			{
+				$value = $row["value"];
+			}
+		}
+		else
+		{
+			$sql="select value from $table where itemid=".$db_item["itemid"]." order by clock desc";
+			$result = DBselect($sql, $index);
+			$num=1;
+			while($row = DBfetch($result))
+			{
+				if($num == $index)
+				{
+					$value = $row["value"];
+					break;
+				}
+				$num++;
+			}
+		}
+		return $value;
 	}
 ?>

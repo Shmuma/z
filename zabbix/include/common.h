@@ -121,11 +121,12 @@
 #define OFF	0
 
 #define	APPLICATION_NAME	"ZABBIX Agent"
-#define	ZABBIX_REVDATE		"20 August 2007"
-#define	ZABBIX_VERSION		"1.4.2"
+#define	ZABBIX_REVDATE		"25 August 2007"
+#define	ZABBIX_VERSION		"1.4.3"
 
 #if defined(_WINDOWS)
 /*#	pragma warning (disable: 4100)*/
+#	pragma warning (disable: 4996) /* warning C4996: <function> was declared deprecated */
 #endif /* _WINDOWS */
 
 #ifndef HAVE_GETOPT_LONG
@@ -535,6 +536,14 @@ int	get_param(const char *param, int num, char *buf, int maxlen);
 int	num_param(const char *param);
 int	calculate_item_nextcheck(zbx_uint64_t itemid, int item_type, int delay, char *delay_flex, time_t now);
 int	check_time_period(const char *period, time_t now);
+void	zbx_binary2hex(const u_char *input, int ilen, char **output, int *olen);
+int     zbx_hex2binary(char *io);
+void	zbx_hex2octal(const char *input, char **output, int *olen);
+#ifdef HAVE_POSTGRESQL
+void	zbx_pg_escape_bytea(const u_char *input, int ilen, char **output, int *olen);
+int	zbx_pg_unescape_bytea(u_char *io);
+#endif
+char    *zbx_get_next_field(const char *line, char **output, int *olen, char separator);
 
 #ifdef HAVE___VA_ARGS__
 #	define zbx_setproctitle(fmt, ...) __zbx_zbx_setproctitle(ZBX_CONST_STRING(fmt), ##__VA_ARGS__)
@@ -627,7 +636,9 @@ int	get_nodeid_by_id(zbx_uint64_t id);
 int	int_in_list(char *list, int value);
 int	uint64_in_list(char *list, zbx_uint64_t value);
 int	ip_in_list(char *list, char *ip);
-
+#ifdef HAVE_IPV6
+int	expand_ipv6(const char *ip, char *str, size_t str_len );
+#endif /* HAVE_IPV6 */
 int MAIN_ZABBIX_ENTRY(void);
 
 zbx_uint64_t	zbx_letoh_uint64(

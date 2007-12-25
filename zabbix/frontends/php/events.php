@@ -78,27 +78,9 @@ include_once "include/page_header.php";
 	$source = get_request('source', EVENT_SOURCE_TRIGGERS);
 
 	$r_form = new CForm();
-	$r_form->AddOption('name','events_menu');
-
-	if($source == EVENT_SOURCE_TRIGGERS){
-		$chkbox = new CCheckBox('sh_unknown',
-							(($show_unknown == 0)?'no':'yes'),
-							'create_var("events_menu", "show_unknown", '.(($show_unknown == 0)?'1':'0').', true)'
-							);
-		$r_form->AddItem(array(S_SHOW_UNKNOWN, SPACE, $chkbox, SPACE, SPACE));
-	}
+	$r_form->SetMethod('get');
 	
-	if($allow_discovery)
-	{
-		$cmbSource = new CComboBox('source', $source, 'submit()');
-		$cmbSource->AddItem(EVENT_SOURCE_TRIGGERS, S_TRIGGER);
-		$cmbSource->AddItem(EVENT_SOURCE_DISCOVERY, S_DISCOVERY);
-		$r_form->AddItem(array(S_SOURCE, SPACE, $cmbSource));
-	}
-	show_table_header(S_HISTORY_OF_EVENTS_BIG,$r_form);
-	echo BR;
-
-	$r_form = new CForm();
+	$r_form->AddOption('name','events_menu');
 
 	if($source == EVENT_SOURCE_DISCOVERY)
 	{
@@ -115,14 +97,14 @@ include_once "include/page_header.php";
 
 		$cmbGroup->AddItem(0,S_ALL_SMALL);
 		
+	        $availiable_groups= get_accessible_groups_by_user($USER_DETAILS,PERM_READ_LIST, null, null, get_current_nodeid());
 		$availiable_hosts = get_accessible_hosts_by_user($USER_DETAILS, PERM_READ_LIST, null, null, get_current_nodeid());
 
-		$result=DBselect('SELECT DISTINCT g.groupid,g.name '.
-			' FROM groups g, hosts_groups hg, hosts h, items i '.
-			' WHERE h.hostid in ('.$availiable_hosts.') '.
-				' AND hg.groupid=g.groupid AND h.status='.HOST_STATUS_MONITORED.
-				' AND h.hostid=i.hostid AND hg.hostid=h.hostid '.
-			' ORDER BY g.name');
+	        $result=DBselect("select distinct g.groupid,g.name from groups g, hosts_groups hg, hosts h, items i ".
+	                " where g.groupid in (".$availiable_groups.") ".
+	                " and hg.groupid=g.groupid and h.status=".HOST_STATUS_MONITORED.
+	                " and h.hostid=i.hostid and hg.hostid=h.hostid and i.status=".ITEM_STATUS_ACTIVE.
+	                " order by g.name");
 
 		while($row=DBfetch($result))
 		{
@@ -166,6 +148,19 @@ include_once "include/page_header.php";
 		$r_form->AddItem(array(SPACE.S_HOST.SPACE,$cmbHosts));
 	}
 	
+	if($allow_discovery)
+	{
+		$cmbSource = new CComboBox('source', $source, 'submit()');
+		$cmbSource->AddItem(EVENT_SOURCE_TRIGGERS, S_TRIGGER);
+		$cmbSource->AddItem(EVENT_SOURCE_DISCOVERY, S_DISCOVERY);
+		$r_form->AddItem(array(S_SOURCE, SPACE, $cmbSource));
+	}
+	show_table_header(S_HISTORY_OF_EVENTS_BIG.SPACE.date("[H:i:s]",time()),$r_form);
+//	echo BR;
+
+	$r_form = new CForm();
+	$r_form->SetMethod('get');
+	
 	$r_form->AddVar('start',$_REQUEST['start']);
 
 	$btnPrev = new CButton("prev","<< Prev ".PAGE_SIZE);
@@ -178,7 +173,21 @@ include_once "include/page_header.php";
 		$btnNext->SetEnabled('no');
 	$r_form->AddItem($btnNext);
 	
-	show_table_header(S_EVENTS_BIG,$r_form);
+	$l_form = new CForm();
+	$l_form->SetMethod('get');
+	
+	if($source == EVENT_SOURCE_TRIGGERS){
+		$link = array('[', 
+			new CLink($show_unknown!=1?S_SHOW_UNKNOWN:S_HIDE_UNKNOWN,
+				"events.php?show_unknown=".($show_unknown!=1?'1':'0')
+			), 
+			']'.SPACE
+		);
+		
+		$l_form->AddItem(array($link, SPACE, SPACE));
+	}
+	
+	show_table_header($l_form,$r_form);
 
         $table->Show();
 ?>

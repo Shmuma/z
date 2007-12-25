@@ -30,9 +30,10 @@
 #define ZBX_FLAG_SEC			0
 #define ZBX_FLAG_VALUES			1
 
-extern	int	CONFIG_NODEID;
+extern  int     CONFIG_SERVER_STARTUP_TIME;
 
 int	evaluate_function(char *value,DB_ITEM *item,char *function,char *parameter);
 int	evaluate_function2(char *value,char *host,char *key,char *function,char *parameter);
+int	add_value_suffix(char *value, int max_len, char *units, int value_type);
 
 #endif

@@ -188,6 +188,7 @@
 //	acknow.php
 	'S_ACKNOWLEDGES'=>			'Acknowledges',
 	'S_ACKNOWLEDGE'=>			'Acknowledge',
+	'S_RETURN'=>				'Return',
 	'S_ACKNOWLEDGE_ALARM_BY'=>		'Acknowledge alarm by',
 	'S_ADD_COMMENT_BY'=>			'Add comment by',
 	'S_COMMENT_ADDED'=>			'Comment added',
@@ -283,6 +284,7 @@
 	'S_AND_OR_BIG'=>			'AND / OR',
 	'S_AND_BIG'=>				'AND',
 	'S_AND'=>				'and',
+	'S_AND_SYMB'=>			'&',
 	'S_OR_BIG'=>				'OR',
 	'S_OR'=>				'or',
 	'S_TYPE_OF_CALCULATION'=>		'Type of calculation',
@@ -295,6 +297,7 @@
 	'S_NOT_LIKE_SMALL'=>			'not like',
 	'S_IN_SMALL'=>				'in',
 	'S_NOT_IN_SMALL'=>			'not in',
+	'S_RETRIES_LEFT'=>			'Retries left',
 
 //	alarms.php
 	'S_ALARMS'=>				'Alarms',
@@ -474,7 +477,7 @@
 	'S_COMPARE'=>				'Compare',
 
 //	Footer
-	'S_ZABBIX_VER'=>			'ZABBIX 1.4.2',
+	'S_ZABBIX_VER'=>			'ZABBIX 1.4.3',
 	'S_COPYRIGHT_BY'=>			'Copyright 2001-2007 by ',
 	'S_CONNECTED_AS'=>			'Connected as',
 	'S_SIA_ZABBIX'=>			'SIA Zabbix',
@@ -546,6 +549,7 @@
 	'S_LOCAL'=>				'Local',
 	'S_SOURCE'=>				'Source',
 	'S_SHOW_UNKNOWN'=>			'Show unknown',
+	'S_HIDE_UNKNOWN'=>			'Hide unknown',
 
 	'S_SHOW_SELECTED'=>			'Show selected',
 	'S_HIDE_SELECTED'=>			'Hide selectede',
@@ -992,11 +996,11 @@
 	'S_EDIT'=>				'Edit',
 	'S_DIMENSION_COLS_ROWS'=>		'Dimension (cols x rows)',
 
-	'S_SLIDESHOWS'=>			'Slideshows',
-	'S_SLIDESHOW'=>				'Slideshow',
-	'S_CONFIGURATION_OF_SLIDESHOWS_BIG'=>	'CONFIGURATION OF SLIDESHOWS',
-	'S_SLIDESHOWS_BIG'=>			'SLIDESHOWS',
-	'S_NO_SLIDESHOWS_DEFINED'=>		'No slideshows defined',
+	'S_SLIDESHOWS'=>			'Slide shows',
+	'S_SLIDESHOW'=>				'Slide show',
+	'S_CONFIGURATION_OF_SLIDESHOWS_BIG'=>	'CONFIGURATION OF SLIDE SHOWS',
+	'S_SLIDESHOWS_BIG'=>			'SLIDE SHOWS',
+	'S_NO_SLIDESHOWS_DEFINED'=>		'No slide shows defined',
 	'S_COUNT_OF_SLIDES'=>			'Count of slides',
 	'S_NO_SLIDES_DEFINED'=>			'No slides defined',
 	'S_SLIDES'=>				'Slides',
@@ -1024,9 +1028,9 @@
 
 	'S_STYLE'=>				'Style',
 	'S_VERTICAL'=>				'Vertical',
-	'S_HORISONTAL'=>			'Horisontal',
+	'S_HORISONTAL'=>			'Horizontal',
 
-	'S_HORISONTAL_ALIGN'=>			'Horisontal align',
+	'S_HORISONTAL_ALIGN'=>			'Horizontal align',
 	'S_LEFT'=>				'Left',
 	'S_CENTER'=>				'Center',
 	'S_RIGHT'=>				'Right',
@@ -1282,11 +1286,13 @@
 	'S_ITALIAN_IT'=>			'Italian (IT)',
 	'S_LATVIAN_LV'=>			'Latvian (LV)',
 	'S_RUSSIAN_RU'=>			'Russian (RU)',
+	'S_PORTUGUESE_PT'=>			'Portuguese (PT)',
 	'S_SPANISH_SP'=>			'Spanish (SP)',
 	'S_SWEDISH_SE'=>			'Swedish (SE)',
 	'S_JAPANESE_JP'=>			'Japanese (JP)',
 	'S_CHINESE_CN'=>			'Chinese (CN)',
 	'S_DUTCH_NL'=>				'Dutch (NL)',
+	'S_HUNGARY_HU'=>			'Hungary (HU)',
 
 //	index.php
 	'S_ZABBIX_BIG'=>			'ZABBIX',
