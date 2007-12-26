@@ -50,7 +50,7 @@ static void	init_active_metrics()
 		zabbix_log(LOG_LEVEL_WARNING, "Metrics are already initialised.");
 	}
 
-        init_active_buffer ();
+	init_active_buffer ();
 }
 
 static void	disable_all_metrics()
@@ -93,7 +93,7 @@ static void	free_active_metrics(void)
 	zbx_free(active_metrics);
 	active_metrics = NULL;
 
-        free_active_buffer ();
+	free_active_buffer ();
 }
 
 static int	get_min_nextcheck()
@@ -279,7 +279,7 @@ static int	get_active_checks(
 			if( SUCCEED == (ret = zbx_tcp_recv_ext(&s, &buf, ZBX_TCP_READ_UNTIL_CLOSE)) )
 			{
 				parse_list_of_checks(buf);
-                                update_active_buffer(active_metrics);
+				update_active_buffer(active_metrics);
 			}
 		}
 	}
@@ -371,32 +371,47 @@ static int	send_value(
 
 
 
+/******************************************************************************
+ *                                                                            *
+ * Function: send_history_values                                              *
+ *                                                                            *
+ * Purpose: Send bunch of values of to ZABBIX server                          *
+ *                                                                            *
+ * Parameters: host - IP or Hostname of ZABBIX server                         *
+ *             port - port of ZABBIX server                                   *
+ *             hostname - name of host in ZABBIX database                     *
+ *             values - structure with values and timestamps                  *
+ *                                                                            *
+ * Return value: returns SUCCEED on succesfull parsing,                       *
+ *               FAIL on other cases                                          *
+ *                                                                            *
+ * Author: Max Lapan                                                          *
+ *                                                                            *
+ * Comments:                                                                  *
+ *                                                                            *
+ ******************************************************************************/
 static int	send_history_values(
 		const char		*host,
 		unsigned short		port,
 		const char		*hostname,
-                active_buffer_item_t*	values
+		active_buffer_item_t*	values
 	)
 {
-	zbx_sock_t	s;
+	zbx_sock_t s;
+	char *buf = NULL, *request = NULL;
+	int ret, i;
 
-	char
-		*buf = NULL,
-		*request = NULL;
+	zabbix_log (LOG_LEVEL_DEBUG, "in send_history_values()");
 
-	int		ret, i;
-
-        zabbix_log (LOG_LEVEL_DEBUG, "in send_history_values()");
-
+	/* Because we may have lot of items to process by server, we should increase timeout apropriately. */
 	if( SUCCEED == (ret = zbx_tcp_connect(&s, host, port, CONFIG_TIMEOUT * values->size)) )
 	{
-                request = comms_start_multi_request (hostname, values->key);
+		request = comms_start_multi_request (hostname, values->key);
 
-                for (i = 0; i < values->size; i++)
-                    request = comms_append_multi_request (request, values->values[i], 
-                                                          values->ts[i]);
-            
-            	request = comms_finish_multi_request (request);
+		for (i = 0; i < values->size; i++)
+			request = comms_append_multi_request (request, values->values[i], values->ts[i]);
+
+		request = comms_finish_multi_request (request);
 
 		zabbix_log(LOG_LEVEL_DEBUG, "XML before sending [%s]",request);
 
@@ -628,22 +643,24 @@ static int	process_active_checks(char *server, unsigned short port)
 						NULL
 					);
 
-                                /* if send failed, store value in buffer */
-                                if (send_err != SUCCEED) {
-                                    store_in_active_buffer (active_metrics[i].key, *pvalue);
-                                }
-                                else {
-                                    /* if we have something to send, perform send and clear buffer */
-                                    if (!active_buffer_is_empty ()) {
-                                        active_buffer_item_t* item = take_active_buffer_item ();
+				/* if send failed, store value in buffer */
+				if (send_err != SUCCEED)
+					store_in_active_buffer (active_metrics[i].key, *pvalue);
+				else
+				{
+					/* if we have something to send, perform send and clear buffer */
+					if (!active_buffer_is_empty ())
+					{
+						active_buffer_item_t* item = take_active_buffer_item ();
 
-                                        if (item) {
-                                            send_history_values (server, port, CONFIG_HOSTNAME, item);
-                                            free_active_buffer_item (item);
-                                        }
-                                    }
-                                }
-				
+						if (item)
+						{
+							send_history_values (server, port, CONFIG_HOSTNAME, item);
+							free_active_buffer_item (item);
+						}
+					}
+				}
+
 				if( 0 == strcmp(*pvalue,"ZBX_NOTSUPPORTED") )
 				{
 					active_metrics[i].status = ITEM_STATUS_NOTSUPPORTED;
@@ -698,20 +715,22 @@ ZBX_THREAD_ENTRY(active_checks_thread, args)
 
 	init_active_metrics();
 
-	if (get_active_checks(activechk_args.host, activechk_args.port) != SUCCEED) {
-            active_buffer_checks_t* items;
-            int i;
+	if (get_active_checks (activechk_args.host, activechk_args.port) != SUCCEED)
+	{
+		active_buffer_checks_t* items;
+		int i;
 
-            zabbix_log (LOG_LEVEL_WARNING, "Active checks receive failed, trying to obtain them from local cache");
+		zabbix_log (LOG_LEVEL_WARNING, "Active checks receive failed, trying to obtain them from local cache");
 
-            items = get_buffer_checks_list ();
+		items = get_buffer_checks_list ();
 
-            if (items) {
-                zabbix_log (LOG_LEVEL_WARNING, "Got %d checks from local cache", items->size);
-                for (i = 0; i < items->size; i++)
-                    add_check(items->keys[i], items->refreshes[i], 0);                    
-                free_buffer_checks_list (items);
-            }
+		if (items)
+		{
+			zabbix_log (LOG_LEVEL_WARNING, "Got %d checks from local cache", items->size);
+			for (i = 0; i < items->size; i++)
+				add_check(items->keys[i], items->refreshes[i], 0);
+			free_buffer_checks_list (items);
+		}
         }
 
 	nextrefresh = (int)time(NULL) + CONFIG_REFRESH_ACTIVE_CHECKS;
