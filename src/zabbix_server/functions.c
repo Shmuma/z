@@ -267,7 +267,7 @@ void	calc_timestamp(char *line,int *timestamp, char *format)
  *                                                                            *
  ******************************************************************************/
 int	process_data(zbx_sock_t *sock,char *server,char *key,char *value,char *lastlogsize, char *timestamp,
-                     char *source, char *severity, char* when)
+		char *source, char *severity, char* when)
 {
 	AGENT_RESULT	agent;
 
@@ -282,8 +282,8 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value,char *lastl
 		server,
 		key,
 		value,
-                lastlogsize,
-                when);
+		lastlogsize,
+		when);
 
 	init_result(&agent);
 
@@ -380,16 +380,16 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value,char *lastl
 
 		if(set_result_type(&agent, item.value_type, value) == SUCCEED)
 		{
-                    time_t ts = 0;
+			time_t ts = 0;
 
-                    if (when)
-                        ts = atoi (when);
+			if (when)
+				ts = atoi (when);
 
-                    process_new_value(&item,&agent, ts);
+			process_new_value(&item,&agent, ts);
 
-                    /* if we inserting historical value, don't update triggers */
-                    if (!ts)
-                        update_triggers(item.itemid);
+			/* if we inserting historical value, don't update triggers */
+			if (!ts)
+				update_triggers(item.itemid);
 		}
 		else
 		{
@@ -782,12 +782,12 @@ void	process_new_value(DB_ITEM *item, AGENT_RESULT *value, time_t timestamp)
 	time_t 	now;
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In process_new_value(%s@%lu)",
-                    item->key, timestamp);
+		item->key, timestamp);
 
-        if (!timestamp)
-            now = time(NULL);
-        else
-            now = timestamp;
+	if (!timestamp)
+		now = time(NULL);
+	else
+		now = timestamp;
 
 	if( ITEM_MULTIPLIER_USE == item->multiplier )
 	{

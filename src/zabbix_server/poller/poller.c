@@ -354,7 +354,7 @@ int get_values(void)
 		if(res == SUCCEED )
 		{
 
-                    process_new_value(&item,&agent, 0);
+			process_new_value(&item,&agent, 0);
 
 /*			if(HOST_STATUS_UNREACHABLE == item.host_status)*/
 			if(HOST_AVAILABLE_TRUE != item.host_available)

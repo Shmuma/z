@@ -1,4 +1,4 @@
-/* 
+/*
 ** ZABBIX
 ** Copyright (C) 2000-2005 SIA Zabbix
 **
@@ -24,8 +24,8 @@
 #include "activebuf.h"
 
 
-extern int      CONFIG_ACTIVE_BUF_SIZE_MB;
-extern char     *CONFIG_ACTIVE_BUF_FILE;
+extern int	CONFIG_ACTIVE_BUF_SIZE_MB;
+extern char	*CONFIG_ACTIVE_BUF_FILE;
 
 static const unsigned int buffer_signature = 0x3ABBB0FF;
 
@@ -35,7 +35,6 @@ static const unsigned int entry_size_estimation = 36;
 /* This defines after which amount of items interval of added items in buffer after which buffer is flushed */
 #define FLUSH_EVERY_ITEMS 10
 static int flush_counter;
-
 
 
 typedef struct {
@@ -171,9 +170,9 @@ void update_active_buffer (ZBX_ACTIVE_METRIC* active)
         return;
 
     zabbix_log (LOG_LEVEL_DEBUG, "update_active_buffer");
-    
+
     buffer.new_entries = active;
-    
+
     if (!buffer.items)
         if (!apply_new_entries ())
             deactivate_buffer ();
@@ -282,7 +281,7 @@ static int apply_new_entries ()
         return 1;
 
     /* get amount of active checks */
-    count = i = 0; 
+    count = i = 0;
     while (buffer.new_entries[i++].key)
         count++;
 
@@ -393,7 +392,8 @@ void store_in_active_buffer (const char* key, const char* value)
             continue;
 
         e = buffer.entries+i;
-        zabbix_log (LOG_LEVEL_DEBUG, "Item found. It's %d-th item. Count: %d, It has index %d, beg: %lu, end: %lu", i, e->count, e->index, e->beg_offset, e->max_offset);
+        zabbix_log (LOG_LEVEL_DEBUG, "Item found. It's %d-th item. Count: %d, It has index %d, beg: %lu, end: %lu", 
+                    i, e->count, e->index, e->beg_offset, e->max_offset);
 
         /* find space to store our value */
         ofs = e->beg_offset;
@@ -440,7 +440,7 @@ void store_in_active_buffer (const char* key, const char* value)
         buffer.items++;
         break;
     }
-    
+
     if (++flush_counter == FLUSH_EVERY_ITEMS)
         flush_buffer ();
 }
@@ -478,7 +478,7 @@ active_buffer_item_t* take_active_buffer_item ()
         }
 
         zabbix_log (LOG_LEVEL_DEBUG, "Entry %s, size %d", e->key, e->count);
-        
+
         item->key = strdup (e->key);
         item->size = e->count;
         item->refresh = e->refresh;
@@ -525,7 +525,7 @@ void free_active_buffer_item (active_buffer_item_t* item)
     if (!buffer.active)
         return;
 
-    for (i = 0; i < item->size; i++) 
+    for (i = 0; i < item->size; i++)
         free (item->values[i]);
     free (item->values);
     free (item->ts);

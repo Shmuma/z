@@ -151,31 +151,30 @@ int	comms_parse_response(char *xml,char *host,char *key, char *data, char *lastl
 }
 
 
-/* 
-   performs iterative parse of multi-response buffer
+/*
+  performs iterative parse of multi-response buffer
 
-   Sample usage code:
+  Sample usage code:
 
-   void* token = NULL;
-
-   while (comms_parse_response (..., &token) == SUCCEED) 
-       process_data;
+  void* token = NULL;
+  while (comms_parse_response (..., &token) == SUCCEED)
+      process_data;
  */
-int comms_parse_multi_response (char *xml,char *host,char *key, char *data, char *lastlogsize, char *timestamp,
-                                char *source, char *severity, int maxlen, void** token)
+int	comms_parse_multi_response (char *xml,char *host,char *key, char *data, char *lastlogsize, char *timestamp,
+		char *source, char *severity, int maxlen, void** token)
 {
 	char* ptr = (char*)*token;
 	int res = SUCCEED;
 	int i;
-	
+
 	zabbix_log (LOG_LEVEL_DEBUG, "comms_parse_multi_response: started");
-	
+
 	/* if token is NULL, skip <reqs> tag and obtain hostname and key value */
-	if (!ptr) 
+	if (!ptr)
 	{
 		char host_b64[MAX_STRING_LEN];
 		char key_b64[MAX_STRING_LEN];
-		
+
 		if (strncmp (xml, "<reqs>", 6))
 			return FAIL;
 		ptr = xml+6;
@@ -191,7 +190,7 @@ int comms_parse_multi_response (char *xml,char *host,char *key, char *data, char
 
 		str_base64_decode(host_b64, host, &i);
 		str_base64_decode(key_b64, key, &i);
-		
+
 		zabbix_log (LOG_LEVEL_DEBUG, "Host64 = %s, Host=%s", host_b64, host);
 		zabbix_log (LOG_LEVEL_DEBUG, "Key64 = %s, Key=%s", key_b64, key);
 
@@ -202,7 +201,7 @@ int comms_parse_multi_response (char *xml,char *host,char *key, char *data, char
 			return FAIL;
         }
 
-	if (strncmp (ptr, "<value>", 7) == 0) 
+	if (strncmp (ptr, "<value>", 7) == 0)
 	{
 		/* parse one value */
 		char data_b64[MAX_STRING_LEN];
@@ -219,7 +218,7 @@ int comms_parse_multi_response (char *xml,char *host,char *key, char *data, char
 		zabbix_log (LOG_LEVEL_DEBUG, "Data64 = %s, Data=%s", data_b64, data);
 
 		ptr = strstr (ptr, "</value>");
-		if (!ptr) 
+		if (!ptr)
 		{
 			zabbix_log (LOG_LEVEL_DEBUG, "Not found </value> tag");
 			res = FAIL;
@@ -227,7 +226,7 @@ int comms_parse_multi_response (char *xml,char *host,char *key, char *data, char
 		else
 			ptr += 8;
         }
-	else 
+	else
 	{
 		zabbix_log (LOG_LEVEL_DEBUG, "Not found <value> tag");
 		res = FAIL;
@@ -279,38 +278,35 @@ void    *zbx_malloc2(char *filename, int line, void *old, size_t size)
 }
 
 
-
-static char* comms_get_xml_b64_value (const char* tag, const char* val)
+static char*	comms_get_xml_b64_value (const char* tag, const char* val)
 {
-    char data_b64[ZBX_MAX_B64_LEN];
+	char data_b64[ZBX_MAX_B64_LEN];
 
-    data_b64[0] = '\0';
-    str_base64_encode(val, data_b64, (int)strlen(val));
-    
-    return zbx_strdcatf(NULL, "<%s>%s</%s>", tag, data_b64, tag);
+	data_b64[0] = '\0';
+	str_base64_encode(val, data_b64, (int)strlen(val));
+
+	return zbx_strdcatf(NULL, "<%s>%s</%s>", tag, data_b64, tag);
 }
 
 
 /* start new multi-request sequence */
-char* comms_start_multi_request (const char* host, const char* key)
+char*	comms_start_multi_request (const char* host, const char* key)
 {
-    return zbx_dsprintf (NULL, "<reqs>%s%s<values>", comms_get_xml_b64_value ("host", host), 
-                         comms_get_xml_b64_value ("key", key));
+	return zbx_dsprintf (NULL, "<reqs>%s%s<values>", comms_get_xml_b64_value ("host", host), 
+		comms_get_xml_b64_value ("key", key));
 }
 
 
-char* comms_append_multi_request (char* request,
-                                  const char* data,
-                                  unsigned long timestamp)
+char*	comms_append_multi_request (char* request, const char* data, unsigned long timestamp)
 {
-    return zbx_strdcatf (request, "<value>%s<timestamp>%lu</timestamp></value>", 
-                         comms_get_xml_b64_value ("data", data), timestamp);
+	return zbx_strdcatf (request, "<value>%s<timestamp>%lu</timestamp></value>", 
+			comms_get_xml_b64_value ("data", data), timestamp);
 }
 
 
-char* comms_finish_multi_request (char* request)
+char*	comms_finish_multi_request (char* request)
 {
-    return zbx_strdcat (request, "</values><reqs>");
+	return zbx_strdcat (request, "</values><reqs>");
 }
 
 
