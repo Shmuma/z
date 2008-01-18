@@ -614,6 +614,7 @@
 	'S_DNS'=>				'DNS',
 	'S_IP'=>				'IP',
 	'S_PORT'=>				'Port',
+	'S_SITE'=>				'Site',
 	'S_MONITORED'=>				'Monitored',
 	'S_NOT_MONITORED'=>			'Not monitored',
 	'S_UNREACHABLE'=>			'Unreachable',

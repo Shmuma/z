@@ -640,6 +640,7 @@ include_once "include/page_header.php";
 				$show_only_tmp ? NULL : S_DNS,
 				$show_only_tmp ? NULL : S_IP,
 				$show_only_tmp ? NULL : S_PORT,
+				$show_only_tmp ? NULL : S_SITE,
 				S_TEMPLATES,
 				$show_only_tmp ? NULL : S_STATUS,
 				$show_only_tmp ? NULL : S_AVAILABILITY,
@@ -647,15 +648,15 @@ include_once "include/page_header.php";
 				S_ACTIONS
 				));
 		
-			$sql="select h.* from";
+			$sql="select h.*,s.name as site_name from";
 			if(isset($_REQUEST["groupid"]))
 			{
-				$sql .= " hosts h,hosts_groups hg where";
+				$sql .= " hosts h, hosts_groups hg, sites s where";
 				$sql .= " hg.groupid=".$_REQUEST["groupid"]." and hg.hostid=h.hostid and";
-			} else  $sql .= " hosts h where";
+			} else  $sql .= " hosts h, sites s where";
 			$sql .=	" h.hostid in (".$available_hosts.") ".
 				$status_filter.
-				" order by h.host";
+				" and h.siteid = s.siteid order by h.host";
 
 			$result=DBselect($sql);
 		
@@ -682,6 +683,7 @@ include_once "include/page_header.php";
 					$status = NULL;
 					$available = NULL;
 					$error = NULL;
+					$site = NULL;
 				}
 				else
 				{
@@ -719,6 +721,7 @@ include_once "include/page_header.php";
 					if($row["error"] == "")	$error = new CCol(SPACE,"off");
 					else			$error = new CCol($row["error"],"on");
 
+					$site = $row["site_name"];
 				}
 
 				$popup_menu_actions = array(
@@ -775,6 +778,7 @@ include_once "include/page_header.php";
 					$dns,
 					$ip,
 					$port,
+					$site,
 					implode(', ',$templates),
 					$status,
 					$available,
