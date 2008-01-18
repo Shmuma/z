@@ -3912,6 +3912,7 @@ include_once 'include/discovery.inc.php';
 		$location	= get_request("location","");
 		$notes		= get_request("notes","");
 
+		$siteid		= get_request("siteid","0");
 		$templates	= get_request("templates",array());
 		$clear_templates = get_request('clear_templates',array());
 
@@ -3938,6 +3939,7 @@ include_once 'include/discovery.inc.php';
 			$useip	= $db_host["useip"];
 			$dns	= $db_host["dns"];
 			$ip	= $db_host["ip"];
+			$siteid = $db_host["siteid"];
 
 // add groups
 			$db_groups=DBselect("select distinct groupid from hosts_groups where hostid=".$_REQUEST["hostid"].
@@ -4041,9 +4043,11 @@ include_once 'include/discovery.inc.php';
 		{
 			$port = "10050";
 			$status = HOST_STATUS_TEMPLATE;
+			$siteid = "0";
 
 			$frmHost->AddVar("port",$port);
 			$frmHost->AddVar("status",$status);
+			$frmHost->AddVar("siteid",$siteid);
 		}
 		else
 		{
@@ -4053,6 +4057,14 @@ include_once 'include/discovery.inc.php';
 			$cmbStatus->AddItem(HOST_STATUS_MONITORED,	S_MONITORED);
 			$cmbStatus->AddItem(HOST_STATUS_NOT_MONITORED,	S_NOT_MONITORED);
 			$frmHost->AddRow(S_STATUS,$cmbStatus);	
+
+			$cmbSite = new CComboBox("siteid",$siteid);
+			$db_sites = DBselect ("select siteid, name from sites order by siteid");
+			while ($db_site = DBfetch ($db_sites))
+			{
+				$cmbSite->AddItem ($db_site["siteid"], $db_site["name"]);
+			}
+			$frmHost->AddRow(S_SITE, $cmbSite);
 		}
 
 		$template_table = new CTable();

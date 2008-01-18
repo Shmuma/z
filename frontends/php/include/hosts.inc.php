@@ -182,7 +182,7 @@ require_once "include/items.inc.php";
 	 *
 	 *     NOTE: templates = array(id => name, id2 => name2, ...)
 	 */
-	function	db_save_host($host,$port,$status,$useip,$dns,$ip,$templates,$hostid=null)
+	function	db_save_host($host,$port,$status,$useip,$dns,$ip,$siteid,$templates,$hostid=null)
 	{
 		if( !eregi('^'.ZBX_EREG_HOST_FORMAT.'$', $host) )
 		{
@@ -211,9 +211,9 @@ require_once "include/items.inc.php";
 		{
 			$hostid = get_dbid("hosts","hostid");
 			$result = DBexecute("insert into hosts".
-				" (hostid,host,port,status,useip,dns,ip,disable_until,available)".
+				" (hostid,host,port,status,useip,dns,ip,disable_until,available,siteid)".
 				" values ($hostid,".zbx_dbstr($host).",$port,$status,$useip,".zbx_dbstr($dns).",".zbx_dbstr($ip).",0,"
-				.HOST_AVAILABLE_UNKNOWN.")");
+				.HOST_AVAILABLE_UNKNOWN."$siteid)");
 		}
 		else
 		{
@@ -224,7 +224,7 @@ require_once "include/items.inc.php";
 			}
 
 			$result = DBexecute("update hosts set host=".zbx_dbstr($host).",".
-				"port=$port,useip=$useip,dns=".zbx_dbstr($dns).",ip=".zbx_dbstr($ip)." where hostid=$hostid");
+				"port=$port,useip=$useip,dns=".zbx_dbstr($dns).",ip=".zbx_dbstr($ip).",siteid=$siteid where hostid=$hostid");
 
 			update_host_status($hostid, $status);
 		}
@@ -254,9 +254,9 @@ require_once "include/items.inc.php";
 	 *
 	 *     NOTE: templates = array(id => name, id2 => name2, ...)
 	 */
-	function	add_host($host,$port,$status,$useip,$dns,$ip,$templates,$newgroup,$groups)
+	function	add_host($host,$port,$status,$useip,$dns,$ip,$siteid,$templates,$newgroup,$groups)
 	{
-		$hostid = db_save_host($host,$port,$status,$useip,$dns,$ip,$templates);
+		$hostid = db_save_host($host,$port,$status,$useip,$dns,$ip,$siteid,$templates);
 		if(!$hostid)
 			return $hostid;
 		else
@@ -286,7 +286,7 @@ require_once "include/items.inc.php";
 	 *
 	 *     NOTE: templates = array(id => name, id2 => name2, ...)
 	 */
-	function	update_host($hostid,$host,$port,$status,$useip,$dns,$ip,$templates,$newgroup,$groups)
+	function	update_host($hostid,$host,$port,$status,$useip,$dns,$ip,$siteid,$templates,$newgroup,$groups)
 	{
 		$old_templates = get_templates_by_hostid($hostid);
 		$unlinked_templates = array_diff($old_templates, $templates);
@@ -299,7 +299,7 @@ require_once "include/items.inc.php";
 
 		$new_templates = array_diff($templates, $old_templates);
 
-		$result = db_save_host($host,$port,$status,$useip,$dns,$ip,$new_templates,$hostid);
+		$result = db_save_host($host,$port,$status,$useip,$dns,$ip,$siteid,$new_templates,$hostid);
 		if(!$result)
 			return $result;
 

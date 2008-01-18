@@ -73,6 +73,7 @@ include_once "include/page_header.php";
 		"status"=>	array(T_ZBX_INT, O_OPT,	NULL,	IN("0,1,3"),	'(isset({config})&&({config}==0))&&isset({save})'),
 
 		"newgroup"=>		array(T_ZBX_STR, O_OPT, NULL,   NULL,	NULL),
+		"siteid"=>	array(T_ZBX_INT, O_OPT, NULL,	DB_ID,	NULL),
 		"templates"=>		array(T_ZBX_STR, O_OPT,	NULL,	NOT_EMPTY,	NULL),
 		"clear_templates"=>	array(T_ZBX_INT, O_OPT,	NULL,	DB_ID,	NULL),
 
@@ -190,7 +191,7 @@ include_once "include/page_header.php";
 
 			$result = update_host($_REQUEST["hostid"],
 				$_REQUEST["host"],$_REQUEST["port"],$_REQUEST["status"],$useip,$_REQUEST["dns"],
-				$_REQUEST["ip"],$templates,$_REQUEST["newgroup"],$groups);
+				$_REQUEST["ip"],$_REQUEST["siteid"],$templates,$_REQUEST["newgroup"],$groups);
 
 			$msg_ok 	= S_HOST_UPDATED;
 			$msg_fail 	= S_CANNOT_UPDATE_HOST;
@@ -200,7 +201,7 @@ include_once "include/page_header.php";
 		} else {
 			$hostid = add_host(
 				$_REQUEST["host"],$_REQUEST["port"],$_REQUEST["status"],$useip,$_REQUEST["dns"],
-				$_REQUEST["ip"],$templates,$_REQUEST["newgroup"],$groups);
+				$_REQUEST["ip"],$_REQUEST["siteid"],$templates,$_REQUEST["newgroup"],$groups);
 
 			$msg_ok 	= S_HOST_ADDED;
 			$msg_fail 	= S_CANNOT_ADD_HOST;
