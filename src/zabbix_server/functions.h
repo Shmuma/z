@@ -25,10 +25,17 @@
 #include "db.h"
 #include "sysinfo.h"
 
+/* filter used in SQL queries. Sites table (s alias) and hosts table
+   (h alias) must be joined for this to work */
+#define ZBX_COND_SITE " s.siteid = h.siteid and %s "
+
+const char* getSiteCondition ();
+
 void    update_triggers (zbx_uint64_t itemid);
 void	update_functions(DB_ITEM *item);
 int	process_data(zbx_sock_t *sock,char *server,char *key, char *value,char *lastlogsize,char *timestamp,
 			char *source, char *severity);
 void	process_new_value(DB_ITEM *item, AGENT_RESULT *value);
+
 
 #endif

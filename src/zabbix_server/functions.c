@@ -29,6 +29,9 @@
 #include "functions.h"
 #include "expression.h"
 
+extern char* CONFIG_SERVER_SITE;
+
+
 /******************************************************************************
  *                                                                            *
  * Function: update_functions                                                 *
@@ -805,4 +808,34 @@ void	process_new_value(DB_ITEM *item, AGENT_RESULT *value)
 	add_history(item, value, now);
 	update_item(item, value, now);
 	update_functions( item );
+}
+
+/*
+   Routine retuns condition equation for ZBX_COND_SITE macro.
+
+   If CONFIG_SERVER_SITE is not null, it returns "s.name = 'CONFIG_SERVER_SITE'",
+   otherwise, it return true value "1=1"
+
+   Author: Max Lapan <max.lapan@gmail.com>
+ */
+const char* getSiteCondition ()
+{
+	static char exprBuffer[256] = { 0 };
+
+	if (CONFIG_SERVER_SITE)
+	{
+		if (!exprBuffer[0])
+		{
+			if (strlen (CONFIG_SERVER_SITE) > sizeof (exprBuffer)-12)
+			{
+				zabbix_log (LOG_LEVEL_ERR, "getSiteCondition: Config file value in ServerSite is too large");
+				return "1=1";
+			}
+			else
+				zbx_snprintf (exprBuffer, sizeof (exprBuffer), "s.name = '%s'", CONFIG_SERVER_SITE);
+		}
+		return exprBuffer;
+	}
+	else
+		return "1=1";
 }
