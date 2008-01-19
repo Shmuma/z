@@ -71,11 +71,12 @@ void main_timer_loop()
 #endif
 	*/
 
-		result = DBselect("select distinct %s, functions f where h.hostid=i.hostid and h.status=%d and i.status=%d and f.function in ('nodata','date','dayofweek','time','now') and i.itemid=f.itemid and" ZBX_COND_NODEID,
+		result = DBselect("select distinct %s, functions f where h.hostid=i.hostid and h.status=%d and i.status=%d and f.function in ('nodata','date','dayofweek','time','now') and i.itemid=f.itemid and" ZBX_COND_NODEID " and " ZBX_COND_SITE,
 			ZBX_SQL_ITEM_SELECT,
 			HOST_STATUS_MONITORED,
 			ITEM_STATUS_ACTIVE,
-			LOCAL_NODE("h.hostid"));
+			LOCAL_NODE("h.hostid"),
+			getSiteCondition ());
 
 		while((row=DBfetch(result)))
 		{

@@ -113,25 +113,27 @@ static int process_value(char *key, char *host, AGENT_RESULT *value)
 	/* IP address? */
 	if(is_ip(host) == SUCCEED)
 	{
-		result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.ip='%s' and i.key_='%s' and i.status=%d and i.type=%d and" ZBX_COND_NODEID,
+		result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.ip='%s' and i.key_='%s' and i.status=%d and i.type=%d and" ZBX_COND_NODEID " and " ZBX_COND_SITE,
 			ZBX_SQL_ITEM_SELECT,
 			HOST_STATUS_MONITORED,
 			host,
 			key,
 			ITEM_STATUS_ACTIVE,
 			ITEM_TYPE_SIMPLE,
-			LOCAL_NODE("h.hostid"));
+			LOCAL_NODE("h.hostid"),
+			getSiteCondition ());
 	}
 	else
 	{
-		result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.dns='%s' and i.key_='%s' and i.status=%d and i.type=%d and" ZBX_COND_NODEID,
+		result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.dns='%s' and i.key_='%s' and i.status=%d and i.type=%d and" ZBX_COND_NODEID " and " ZBX_COND_SITE,
 			ZBX_SQL_ITEM_SELECT,
 			HOST_STATUS_MONITORED,
 			host,
 			key,
 			ITEM_STATUS_ACTIVE,
 			ITEM_TYPE_SIMPLE,
-			LOCAL_NODE("h.hostid"));
+			LOCAL_NODE("h.hostid"),
+			getSiteCondition ());
 	}
 	row=DBfetch(result);
 

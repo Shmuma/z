@@ -291,7 +291,7 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value,char *lastl
 	DBescape_string(server, server_esc, MAX_STRING_LEN);
 	DBescape_string(key, key_esc, MAX_STRING_LEN);
 
-	result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.host='%s' and i.key_='%s' and i.status in (%d,%d) and i.type in (%d,%d) and" ZBX_COND_NODEID,
+	result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.host='%s' and i.key_='%s' and i.status in (%d,%d) and i.type in (%d,%d) and" ZBX_COND_NODEID " and " ZBX_COND_SITE,
 		ZBX_SQL_ITEM_SELECT,
 		HOST_STATUS_MONITORED,
 		server_esc,
@@ -299,7 +299,8 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value,char *lastl
 		ITEM_STATUS_ACTIVE, ITEM_STATUS_NOTSUPPORTED,
 		ITEM_TYPE_TRAPPER,
 		ITEM_TYPE_ZABBIX_ACTIVE,
-		LOCAL_NODE("h.hostid"));
+		LOCAL_NODE("h.hostid"),
+		getSiteCondition ());
 
 	row=DBfetch(result);
 

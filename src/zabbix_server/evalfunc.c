@@ -21,6 +21,7 @@
 #include "db.h"
 #include "log.h"
 #include "zlog.h"
+#include "functions.h"
 
 #include "evalfunc.h"
 
@@ -1792,11 +1793,12 @@ int evaluate_function2(char *value,char *host,char *key,char *function,char *par
 	DBescape_string(host, host_esc, MAX_STRING_LEN);
 	DBescape_string(key, key_esc, MAX_STRING_LEN);
 
-	result = DBselect("select %s where h.host='%s' and h.hostid=i.hostid and i.key_='%s' and" ZBX_COND_NODEID,
+	result = DBselect("select %s where h.host='%s' and h.hostid=i.hostid and i.key_='%s' and" ZBX_COND_NODEID " and " ZBX_COND_SITE,
 		ZBX_SQL_ITEM_SELECT,
 		host_esc,
 		key_esc,
-		LOCAL_NODE("h.hostid"));
+		LOCAL_NODE("h.hostid"),
+		getSiteCondition ());
 
 	row = DBfetch(result);
 
