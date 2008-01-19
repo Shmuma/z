@@ -24,6 +24,74 @@ require_once "include/profiles.inc.php";
 require_once "include/triggers.inc.php";
 require_once "include/items.inc.php";
 
+/* SITES functions */
+	function	add_site($name, $descr)
+	{
+		return db_save_site($name, $descr);
+	}
+
+	function	update_site($siteid, $name, $descr)
+	{
+		return db_save_site($name, $descr, $siteid);
+	}
+
+	function	delete_site($siteid)
+	{
+		$db_count = DBselect ("select count(*) as hosts from hosts where siteid = $siteid");
+		$count = DBfetch ($db_count);
+		$site = get_site_by_siteid ($siteid);
+		if ($count['hosts'] > 0)
+		{
+			error ("Cannot delete site '".$site["name"]."' it has associated nodes");
+			return false;
+		}
+
+		return DBexecute("delete from sites where siteid=$siteid");
+	}
+
+	/*
+	 * Function: db_save_site
+	 *
+	 * Description:
+	 *     Add new or update site
+	 *
+	 * Author:
+	 *     Max Lapan (max.lapan@gmail.com)
+	 *
+	 * Comments:
+	 *
+	 */
+	function	db_save_site($name, $descr, $siteid=null)
+	{
+		if(!is_string($name) || !is_string($descr)){
+			error("incorrect parameters for 'db_save_site'");
+			return false;
+		}
+
+		if($siteid==null)
+			$result = DBselect("select * from sites where name=".zbx_dbstr($name));
+		else
+			$result = DBselect("select * from sites where name=".zbx_dbstr($name).
+				" and siteid<>$siteid");
+
+		if(DBfetch($result))
+		{
+			error("Site '$name' already exists");
+			return false;
+		}
+		if($siteid==null)
+		{
+			$siteid=get_dbid("sites","siteid");
+			if(!DBexecute("insert into sites (siteid,name,description) values (".$siteid.",".zbx_dbstr($name).",".zbx_dbstr($descr).")"))
+				return false;
+			return $siteid;
+
+		}
+		else
+			return DBexecute("update sites set name=".zbx_dbstr($name).", description=".zbx_dbstr($descr)." where siteid=$siteid");
+	}
+
+
 /* HOST GROUP functions */
 	function	add_host_to_group($hostid, $groupid)
 	{
@@ -490,6 +558,18 @@ require_once "include/items.inc.php";
 			return $row;
 		}
 		error("No host groups with groupid=[$groupid]");
+		return  false;
+	}
+
+	function	get_site_by_siteid($siteid)
+	{
+		$result=DBselect("select * from sites where siteid=".$siteid);
+		$row=DBfetch($result);
+		if($row)
+		{
+			return $row;
+		}
+		error("No sites with siteid=[$siteid]");
 		return  false;
 	}
 

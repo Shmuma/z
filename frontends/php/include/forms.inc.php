@@ -4231,6 +4231,56 @@ include_once 'include/discovery.inc.php';
 		$frmHostG->Show();
 	}
 
+	# Insert form for Sites
+	function	insert_sites_form()
+	{
+		global $_REQUEST;
+		global $USER_DETAILS;
+
+		$frm_title = S_SITE;
+		if(isset($_REQUEST["siteid"]))
+		{
+			$site = get_site_by_siteid($_REQUEST["siteid"]);
+			$frm_title = S_SITE." \"".$site["name"]."\"";
+		}
+		if(isset($_REQUEST["siteid"]) && !isset($_REQUEST["form_refresh"]))
+		{
+			$name=$site["name"];
+			$descr=$site["description"];
+		}
+		else
+		{
+			$name=get_request("sitename","");
+			$descr=get_request("sitedescr","");
+		}
+		$frmSite = new CFormTable($frm_title,"hosts.php");
+		$frmSite->SetHelp("web.sites.php");
+		$frmSite->AddVar("config",get_request("config",5));
+		if(isset($_REQUEST["siteid"]))
+		{
+			$frmSite->AddVar("siteid",$_REQUEST["siteid"]);
+		}
+
+		$frmSite->AddRow(S_SITE_NAME,new CTextBox("sitename",$name,30));
+		$frmSite->AddRow(S_SITE_DESCR,new CTextBox("sitedescr",$descr,30));
+
+		$frmSite->AddItemToBottomRow(new CButton("save",S_SAVE));
+		if(isset($_REQUEST["siteid"]))
+		{
+			$frmSite->AddItemToBottomRow(SPACE);
+			$frmSite->AddItemToBottomRow(new CButton("clone",S_CLONE));
+			$frmSite->AddItemToBottomRow(SPACE);
+			$frmSite->AddItemToBottomRow(
+				new CButtonDelete("Delete selected site?",
+					url_param("form").url_param("config").url_param("siteid")
+				)
+			);
+		}
+		$frmSite->AddItemToBottomRow(SPACE);
+		$frmSite->AddItemToBottomRow(new CButtonCancel(url_param("config")));
+		$frmSite->Show();
+	}
+
 	# Insert host profile ReadOnly form
 	function	insert_host_profile_form()
 	{

@@ -56,12 +56,13 @@ include_once "include/page_header.php";
 <?php
 //		VAR			TYPE	OPTIONAL FLAGS	VALIDATION	EXCEPTION
 	$fields=array(
-		// 0 - hosts; 1 - groups; 2 - linkages; 3 - templates; 4 - applications
-		"config"=>	array(T_ZBX_INT, O_OPT,	P_SYS,	IN("0,1,2,3,4"),	NULL), 
+		// 0 - hosts; 1 - groups; 2 - linkages; 3 - templates; 4 - applications; 5 - sites
+		"config"=>	array(T_ZBX_INT, O_OPT,	P_SYS,	IN("0,1,2,3,4,5"),	NULL), 
 
 /* ARAYS */
 		"hosts"=>	array(T_ZBX_INT, O_OPT,	P_SYS,	DB_ID, NULL),
 		"groups"=>	array(T_ZBX_INT, O_OPT,	P_SYS,	DB_ID, NULL),
+		"sites"=>	array(T_ZBX_INT, O_OPT,	P_SYS,	DB_ID, NULL),
 		"applications"=>array(T_ZBX_INT, O_OPT,	P_SYS,	DB_ID, NULL),
 /* host */
 		"hostid"=>	array(T_ZBX_INT, O_OPT,	P_SYS,  DB_ID,		'(isset({config})&&({config}==0))&&(isset({form})&&({form}=="update"))'),
@@ -98,6 +99,11 @@ include_once "include/page_header.php";
 		"appname"=>	array(T_ZBX_STR, O_NO,	NULL,	NOT_EMPTY,	'(isset({config})&&({config}==4))&&isset({save})'),
 		"apphostid"=>	array(T_ZBX_INT, O_OPT, NULL,	DB_ID.'{}>0',	'(isset({config})&&({config}==4))&&isset({save})'),
 		"apptemplateid"=>array(T_ZBX_INT,O_OPT,	NULL,	DB_ID,	NULL),
+
+/* sites */
+		"siteid"=>	array(T_ZBX_INT, O_OPT, P_SYS,	DB_ID,		'(isset({config})&&({config}==5))&&(isset({form})&&({form}=="update"))'),
+		"sitename"=>	array(T_ZBX_STR, O_OPT,	NULL,	NOT_EMPTY,	'(isset({config})&&({config}==5))&&isset({save})'),
+		"sitedescr"=>	array(T_ZBX_STR, O_OPT,	NULL,	NOT_EMPTY,	'(isset({config})&&({config}==5))&&isset({save})'),
 
 /* actions */
 		"activate"=>	array(T_ZBX_STR, O_OPT, P_SYS|P_ACT, NULL, NULL),	
@@ -542,6 +548,75 @@ include_once "include/page_header.php";
 		}
 		(isset($_REQUEST["activate"]))?show_messages($result, S_ITEMS_ACTIVATED, null):show_messages($result, S_ITEMS_DISABLED, null);
 	}
+
+/****** ACTIONS FOR SITES **********/
+/* CLONE SITE */
+	if($_REQUEST["config"]==5 && isset($_REQUEST["clone"]) && isset($_REQUEST["siteid"]))
+	{
+		unset($_REQUEST["siteid"]);
+		$_REQUEST["form"] = "clone";
+	}
+	elseif($_REQUEST["config"]==5 && isset($_REQUEST["save"]))
+	{
+		if(isset($_REQUEST["siteid"]))
+		{
+			$siteid = $_REQUEST["siteid"];
+			$result = update_site($siteid, $_REQUEST["sitename"], $_REQUEST["sitedescr"]);
+			$action 	= AUDIT_ACTION_UPDATE;
+			$msg_ok		= S_SITE_UPDATED;
+			$msg_fail	= S_CANNOT_UPDATE_SITE;
+		} else {
+			$siteid = add_site($_REQUEST["sitename"], $_REQUEST["sitedescr"]);
+			$action 	= AUDIT_ACTION_ADD;
+			$msg_ok		= S_SITE_ADDED;
+			$msg_fail	= S_CANNOT_ADD_SITE;
+			$result = $siteid;
+		}
+		show_messages($result, $msg_ok, $msg_fail);
+		if($result){
+			add_audit($action,AUDIT_RESOURCE_SITE,S_SITE." [".$_REQUEST["sitename"]."] [".$siteid."]");
+			unset($_REQUEST["form"]);
+		}
+		unset($_REQUEST["save"]);
+	}
+	if($_REQUEST["config"]==5&&isset($_REQUEST["delete"]))
+	{
+		if(isset($_REQUEST["siteid"])){
+			$result = false;
+			if($site = get_site_by_siteid($_REQUEST["siteid"]))
+			{
+				$result = delete_site($_REQUEST["siteid"]);
+			}
+
+			if($result){
+				add_audit(AUDIT_ACTION_DELETE,AUDIT_RESOURCE_SITE,
+					S_SITE." [".$site["name"]." ] [".$site["description"]." ] [".$site['siteid']."]");
+			}
+
+			unset($_REQUEST["form"]);
+
+			show_messages($result, S_SITE_DELETED, S_CANNOT_DELETE_SITE);
+			unset($_REQUEST["siteid"]);
+		} else {
+/* group operations */
+			$result = 0;
+			$sites = get_request("sites",array());
+
+			$db_sites=DBselect('select siteid, name, description from sites');
+			while($db_site=DBfetch($db_sites))
+			{
+				if(!in_array($db_site["siteid"],$sites)) continue;
+
+				if(!delete_site($db_site["siteid"])) continue
+				$result = 1;
+
+				add_audit(AUDIT_ACTION_DELETE,AUDIT_RESOURCE_SITE,
+					S_SITE." [".$db_site["name"]." ] [".$db_site["description"]." ] [".$db_site['siteid']."]");
+			}
+			show_messages($result, S_SITE_DELETED, S_CANNOT_DELETE_SITE);
+		}
+		unset($_REQUEST["delete"]);
+	}
 	
 	$available_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_WRITE,null,null,get_current_nodeid()); /* update available_hosts after ACTIONS */
 ?>
@@ -555,6 +630,7 @@ include_once "include/page_header.php";
 	$cmbConf->AddItem(1,S_HOST_GROUPS);
 	$cmbConf->AddItem(2,S_TEMPLATE_LINKAGE);
 	$cmbConf->AddItem(4,S_APPLICATIONS);
+	$cmbConf->AddItem(5,S_SITES);
 
 	switch($_REQUEST["config"]){
 		case 0:
@@ -571,6 +647,9 @@ include_once "include/page_header.php";
 		case 4: 
 			$btn = new CButton("form",S_CREATE_APPLICATION);
 			$frmForm->AddVar("hostid",get_request("hostid",0));
+			break;
+		case 5:
+			$btn = new CButton("form",S_CREATE_SITE);
 			break;
 		case 2: 
 			break;
@@ -1015,6 +1094,59 @@ include_once "include/page_header.php";
 				SPACE,
 				new CButtonQMessage('delete',S_DELETE_SELECTED,S_DELETE_SELECTED_APPLICATIONS_Q)
 			)));
+			$form->AddItem($table);
+			$form->Show();
+		}
+	}
+	elseif($_REQUEST["config"]==5)
+	{
+		if(isset($_REQUEST["form"]))
+		{
+			insert_sites_form(get_request("siteid",NULL));
+		} else {
+			show_table_header(S_SITES_BIG);
+
+			$form = new CForm('hosts.php');
+			$form->SetMethod('get');
+
+			$form->SetName('sites');
+			$form->AddVar("config",get_request("config",0));
+
+			$table = new CTableInfo(S_NO_SITES_DEFINED);
+
+			$table->setHeader(array(
+				array(	new CCheckBox("all_sites",NULL,
+						"CheckAll('".$form->GetName()."','all_sites');"),
+					SPACE,
+					S_NAME),
+				S_MEMBERS,
+				S_DESCRIPTION));
+
+			$db_sites = DBselect("select siteid,name,description ".
+					     " from sites order by siteid");
+
+			while ($db_site = DBfetch ($db_sites))
+			{
+			    $db_scount = DBselect ("select count(*) as members from hosts where siteid = ".$db_site["siteid"]);
+			    $members = DBfetch ($db_scount);
+
+			    $table->AddRow (array(
+				    array(
+						new CCheckBox("sites[]",NULL,NULL,$db_site["siteid"]),
+						SPACE,
+						new CLink(
+							$db_site["name"],
+							"hosts.php?form=update&siteid=".$db_site["siteid"].
+							url_param("config"),'action')
+				    ),
+				    $members["members"],
+				    $db_site["description"]));
+			}
+
+			$table->SetFooter(new CCol(array(
+				new CButtonQMessage('delete',S_DELETE_SELECTED,S_DELETE_SELECTED_SITES_Q)
+			)));
+
 			$form->AddItem($table);
 			$form->Show();
 		}
