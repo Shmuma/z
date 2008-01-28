@@ -20,6 +20,7 @@
 --
 -- Dumping data for table `config`
 --
+set define off
 
 INSERT INTO config VALUES (1,365,365,600,'1-5,00:00-24:00',7);
 
@@ -6602,3 +6603,5 @@ INSERT INTO sysmaps VALUES (2,'Local network',980,200,0,2,0);
 --
 
 INSERT INTO sysmaps_elements VALUES (2,2,10017,0,19,19,19,'ZABBIX Server',NULL,100,100,'');
+commit;
+
