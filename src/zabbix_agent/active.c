@@ -404,7 +404,7 @@ static int	send_history_values(
 	zabbix_log (LOG_LEVEL_DEBUG, "in send_history_values()");
 
 	/* Because we may have lot of items to process by server, we should increase timeout apropriately. */
-	if( SUCCEED == (ret = zbx_tcp_connect(&s, host, port, CONFIG_TIMEOUT * values->size)) )
+	if( SUCCEED == (ret = zbx_tcp_connect(&s, host, port, CONFIG_TIMEOUT * values->size, NULL)) )
 	{
 		request = comms_start_multi_request (hostname, values->key);
 
