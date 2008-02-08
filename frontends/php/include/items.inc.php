@@ -860,21 +860,30 @@ COpt::profiling_start('prepare data');
 
 		unset($items);
 		unset($hosts);
+		// get rid of warnings about $triggers undefined
+		$items = array();
 		while($row = DBfetch($result))
 		{
+			$descr = item_description($row["description"],$row["key_"]);
 			$row['host'] = get_node_name_by_elid($row['hostid']).$row['host'];
 			$hosts[$row['host']] = $row['host'];
-			$items[item_description($row["description"],$row["key_"])][$row['host']] = array(
-				'itemid'	=> $row['itemid'],
-				'value_type'	=> $row['value_type'],
-				'lastvalue'	=> $row['lastvalue'],
-				'units'		=> $row['units'],
-				'description'	=> $row['description'],
-				'valuemapid'    => $row['valuemapid'],
-				'severity'	=> $row['priority'],
-				'tr_value'	=> $row['tr_value'],
-				'triggerid'	=> $row['triggerid']
+
+			if (!array_key_exists($descr, $items) ||
+			    !array_key_exists($row['host'], $items[$descr]) ||
+			    ($items[$descr][$row['host']]['severity'] < $row['priority']))
+			{
+				$items[$descr][$row['host']] = array(
+					'itemid'	=> $row['itemid'],
+					'value_type'	=> $row['value_type'],
+					'lastvalue'	=> $row['lastvalue'],
+					'units'		=> $row['units'],
+					'description'	=> $row['description'],
+					'valuemapid'    => $row['valuemapid'],
+					'severity'	=> $row['priority'],
+					'tr_value'	=> $row['tr_value'],
+					'triggerid'	=> $row['triggerid']
 				);
+			}
 		}
 		if(!isset($hosts))
 		{
