@@ -868,9 +868,18 @@ COpt::profiling_start('prepare data');
 			$row['host'] = get_node_name_by_elid($row['hostid']).$row['host'];
 			$hosts[$row['host']] = $row['host'];
 
-			if (!array_key_exists($descr, $items) ||
-			    !array_key_exists($row['host'], $items[$descr]) ||
-			    ($items[$descr][$row['host']]['severity'] < $row['priority']))
+			// A little tricky check for attempt to overwite active trigger (value=1) with
+			// inactive or active trigger with lower priority.
+			$val = 0;
+
+			if (array_key_exists($descr, $items) &&
+			    array_key_exists($row['host'], $items[$descr]))
+			{
+				$prio = $items[$descr][$row['host']]['severity'];
+				$val  = $items[$descr][$row['host']]['tr_value'];
+			}
+
+			if ($val == 0 || ($row['tr_value'] == 1 && $prio < $row['priority']))
 			{
 				$items[$descr][$row['host']] = array(
 					'itemid'	=> $row['itemid'],
