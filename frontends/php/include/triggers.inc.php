@@ -1805,11 +1805,18 @@
 
 			$hosts[$row['host']] = $row['host'];
 
-			// if we already have an item, check for trigger's priority before overwrite
-			// (we won't overwrite triggers with higher priority)
-			if (!array_key_exists($row['description'], $triggers) ||
-			    !array_key_exists($row['host'], $triggers[$row['description']]) ||
-			    ($triggers[$row['description']][$row['host']]['priority'] < $row['priority']))
+			// A little tricky check for attempt to overwite active trigger (value=1) with
+			// inactive or active trigger with lower priority.
+			$val = 0;
+
+			if (array_key_exists($row['description'], $triggers) &&
+			    array_key_exists($row['host'], $triggers[$row['description']]))
+			{
+				$prio = $triggers[$row['description']][$row['host']]['priority'];
+				$val  = $triggers[$row['description']][$row['host']]['value'];
+			}
+
+			if ($val == 0 || ($row['value'] == 1 && $prio < $row['priority']))
 			{
 				$triggers[$row['description']][$row['host']] = array(
 					'hostid'	=> $row['hostid'],
