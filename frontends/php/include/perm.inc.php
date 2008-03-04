@@ -152,15 +152,27 @@
 COpt::counter_up('perm_host['.$userid.','.$perm.','.$perm_mode.','.$perm_res.','.$nodeid.']');
 COpt::counter_up('perm');
 
-		$where = array();
+		$where = '';
 
-		if ( !is_null($nodeid) )	array_push($where, DBin_node('h.hostid', $nodeid));
+		if ( !is_null($nodeid) )	$where .= ' and '.DBin_node('h.hostid', $nodeid);
 	
-		if(is_array($hostid))	array_push($where, ' h.hostid in ('.implode(',', $hostid).') ');
-		elseif(isset($hostid))	array_push($where, ' h.hostid in ('.$hostid.') ');
+		if(is_array($hostid))	$where .= ' and h.hostid in ('.implode(',', $hostid).') ';
+		elseif(isset($hostid))	$where .= ' and h.hostid in ('.$hostid.') ';
 
-		if(count($where)) 	$where = ' where '.implode(' and ',$where);
-		else			$where = '';
+		$sql = 'select distinct n.nodeid,n.name as node_name,h.hostid,h.host '.
+			' from hosts h left join hosts_groups hg on hg.hostid=h.hostid '.
+			' left join nodes n on '.DBid2nodeid('h.hostid').'=n.nodeid '.
+			' where h.hostid>0 '.$where.' group by h.hostid,n.nodeid,n.name,h.host '.
+			' order by n.name,n.nodeid, h.host';
+
+		$db_hosts = DBselect($sql);
+		$hosts = array();
+		while($host_data = DBfetch($db_hosts))
+		{
+			$host_data['userid'] = NULL;
+			$host_data['permission'] = NULL;
+			$hosts[$host_data['hostid']] = $host_data;
+		}
 	
 		$sql = 'select distinct n.nodeid,n.name as node_name,h.hostid,h.host, min(r.permission) as permission,ug.userid '.
 			' from hosts h left join hosts_groups hg on hg.hostid=h.hostid '.
@@ -168,13 +180,14 @@ COpt::counter_up('perm');
 			' left join rights r on r.id=g.groupid and r.type='.RESOURCE_TYPE_GROUP.
 			' left join users_groups ug on ug.usrgrpid=r.groupid and ug.userid='.$userid.
 			' left join nodes n on '.DBid2nodeid('h.hostid').'=n.nodeid '.
-			$where.' group by h.hostid,n.nodeid,n.name,h.host,ug.userid '.
+			' where ug.userid='.$userid.$where.' group by h.hostid,n.nodeid,n.name,h.host,ug.userid '.
 			' order by n.name,n.nodeid, h.host, permission desc, userid desc';
 
 		$db_hosts = DBselect($sql);
-
-		$processed = array();
 		while($host_data = DBfetch($db_hosts))
+			$hosts[$host_data['hostid']] = $host_data;
+
+		foreach ($hosts as $host_data)
 		{
 //			It seems that host details are not required by the logic
 //			$host_data += DBfetch(DBselect('select * from hosts where hostid='.$host_data['hostid']));
@@ -184,9 +197,6 @@ COpt::counter_up('perm');
 			/* if no rights defined used node rights */
 			if( (is_null($host_data['permission']) || is_null($host_data['userid'])) )
 			{
-				if( isset($processed[$host_data['hostid']]) )
-					continue;
-
 				if(!isset($nodes))
 				{
 					$nodes = get_accessible_nodes_by_user($user_data,
@@ -198,15 +208,13 @@ COpt::counter_up('perm');
 					$host_data['permission'] = $nodes[$host_data['nodeid']]['permission'];
 			}
 
-			$processed[$host_data['hostid']] = true;
-
 			if(eval('return ('.$host_data["permission"].' '.perm_mode2comparator($perm_mode).' '.$perm.')? 0 : 1;'))
 				continue;
 
 			$result[$host_data['hostid']] = eval('return '.$resdata.';');
 		}
 
-		unset($processed, $host_data, $db_hosts);
+		unset($host_data, $db_hosts);
 
 		if($perm_res == PERM_RES_STRING_LINE) 
 		{
