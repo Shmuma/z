@@ -581,9 +581,6 @@ DB_ROW	zbx_db_fetch(DB_RESULT result)
 #ifdef	HAVE_ORACLE
 	int res;
 
-	/* EOF */
-	if(!result)	return NULL;
-
 	res = sqlo_fetch(result, 1);
 
 	if(SQLO_SUCCESS == res)

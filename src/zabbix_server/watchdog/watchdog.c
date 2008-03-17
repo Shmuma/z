@@ -181,15 +181,13 @@ void main_watchdog_loop()
 	CONFIG_ENABLE_LOG = 0;
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
-
 	init_config();
+	DBclose();
 
 	for(;;)
 	{
 		ping_database();
 		sleep(60);
 	}
-
 	/* We will never reach this point */
-	DBclose();
 }
