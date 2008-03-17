@@ -99,18 +99,15 @@ static int process_node(int nodeid, int master_nodeid, zbx_uint64_t event_lastid
 	{
 		zabbix_log( LOG_LEVEL_DEBUG, "Sending [%s]",
 			data);
-		/* Do not send events for current node if CONFIG_NODE_NOEVENTS is set */
-		if( ((CONFIG_NODE_NOEVENTS !=0) && (CONFIG_NODEID == nodeid)) ||
-			send_to_node("new events", master_nodeid, nodeid, data) == SUCCEED)
+		if(send_to_node("new events", master_nodeid, nodeid, data) == SUCCEED)
 		{
-			zabbix_log( LOG_LEVEL_DEBUG, "Updating nodes.event_lastid");
-			DBexecute("update nodes set event_lastid=" ZBX_FS_UI64 " where nodeid=%d",
-				eventid,
-				nodeid);
+			zabbix_log( LOG_LEVEL_DEBUG, "Updating ids.event_send_lastid");
+			DBexecute("update ids set nextid=" ZBX_FS_UI64 " where table_name='events' and field_name='event_send_lastid'",
+				eventid);
 		}
 		else
 		{
-			zabbix_log( LOG_LEVEL_DEBUG, "Not updating nodes.event_lastid");
+			zabbix_log( LOG_LEVEL_DEBUG, "Not updating ids.event_send_lastid");
 		}
 	}
 	DBfree_result(result);
@@ -138,7 +135,7 @@ void main_eventsender()
 {
 	DB_RESULT	result;
 	DB_ROW		row;
-	zbx_uint64_t	lastid;
+	zbx_uint64_t	lastid = 0;
 	int		nodeid;
 	int		master_nodeid;
 
@@ -148,17 +145,14 @@ void main_eventsender()
 
 	master_nodeid = get_master_node(CONFIG_NODEID);
 
-	if(master_nodeid != 0)
+	if(CONFIG_MASTER_IP)
 	{
-		result = DBselect("select nodeid,event_lastid from nodes");
+		result = DBselect("select nextid from ids where table_name='events' and field_name='event_send_lastid'");
+		row = DBfetch(result);
+		if(row)
+			ZBX_STR2UINT64(lastid,row[0]);
 
-		while((row = DBfetch(result)))
-		{
-			nodeid=atoi(row[0]);
-			ZBX_STR2UINT64(lastid,row[1])
-
-			process_node(nodeid, master_nodeid, lastid);
-		}
+		process_node(0, 0, lastid);
 		DBfree_result(result);
 	}
 

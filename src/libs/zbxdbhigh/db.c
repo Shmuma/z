@@ -1051,14 +1051,11 @@ int	DBadd_history(zbx_uint64_t itemid, double value, int clock)
 
 	DBadd_trend(itemid, value, clock);
 
-	if((CONFIG_NODE_NOHISTORY == 0) && (CONFIG_MASTER_NODEID>0))
-	{
 		DBexecute("insert into history_sync (nodeid,clock,itemid,value) values (%d,%d," ZBX_FS_UI64 "," ZBX_FS_DBL ")",
 			get_nodeid_by_id(itemid),
 			clock,
 			itemid,
 			value);
-	}
 
 	return SUCCEED;
 }
@@ -1074,14 +1071,11 @@ int	DBadd_history_uint(zbx_uint64_t itemid, zbx_uint64_t value, int clock)
 
 	DBadd_trend(itemid, (double)value, clock);
 
-	if((CONFIG_NODE_NOHISTORY == 0) && (CONFIG_MASTER_NODEID>0))
-	{
 		DBexecute("insert into history_uint_sync (nodeid,clock,itemid,value) values (%d,%d," ZBX_FS_UI64 "," ZBX_FS_UI64 ")",
 			get_nodeid_by_id(itemid),
 			clock,
 			itemid,
 			value);
-	}
 
 	return SUCCEED;
 }
@@ -1098,14 +1092,11 @@ int	DBadd_history_str(zbx_uint64_t itemid, char *value, int clock)
 		itemid,
 		value_esc);
 
-	if((CONFIG_NODE_NOHISTORY == 0) && (CONFIG_MASTER_NODEID>0))
-	{
 		DBexecute("insert into history_str_sync (nodeid,clock,itemid,value) values (%d,%d," ZBX_FS_UI64 ",'%s')",
 			get_nodeid_by_id(itemid),
 			clock,
 			itemid,
 			value_esc);
-	}
 
 	return SUCCEED;
 }

@@ -59,6 +59,10 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 /* Request for list of active checks */
 	if(strncmp(s,"ZBX_GET_ACTIVE_CHECKS", strlen("ZBX_GET_ACTIVE_CHECKS")) == 0)
 	{
+		if (CONFIG_SERVER_MODE != NULL &&
+		   (strcasecmp(CONFIG_SERVER_MODE, "master") == 0))
+			return ret;
+
 		line=strtok(s,"\n");
 		host=strtok(NULL,"\n");
 		if(host == NULL)

@@ -323,6 +323,7 @@ int main_nodewatcher_loop()
 
 		DBconnect(ZBX_DB_CONNECT_NORMAL);
 
+#if 0
 		if(lastrun + 120 < start)
 		{
 
@@ -337,6 +338,7 @@ int main_nodewatcher_loop()
 
 			lastrun = start;
 		}
+#endif
 		/* Send new events to master node */
 		main_eventsender();
 

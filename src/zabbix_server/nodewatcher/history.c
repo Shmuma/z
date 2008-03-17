@@ -61,11 +61,6 @@ static int process_node_history_log(int nodeid, int master_nodeid)
 		nodeid,
 		master_nodeid);
 
-	/* Do not send history for current node if CONFIG_NODE_NOHISTORY is set */
-	if((CONFIG_NODE_NOHISTORY != 0) && (CONFIG_NODEID == nodeid))
-		return SUCCEED;
-
-
 	data = zbx_malloc(data, allocated);
 	hex = zbx_malloc(hex, hex_allocated);
 
@@ -206,8 +201,7 @@ static int process_node_history_str(int nodeid, int master_nodeid)
 	if(found == 1)
 	{
 		/* Do not send history for current node if CONFIG_NODE_NOHISTORY is set */
-		if( ((CONFIG_NODE_NOHISTORY !=0) && (CONFIG_NODEID == nodeid)) ||
-			send_to_node("new history_str", master_nodeid, nodeid, data) == SUCCEED)
+		if(send_to_node("new history_str", master_nodeid, nodeid, data) == SUCCEED)
 		{
 			DBexecute("delete from history_str_sync where nodeid=%d and id<=" ZBX_FS_UI64,
 				nodeid,
@@ -290,8 +284,7 @@ static int process_node_history_uint(int nodeid, int master_nodeid)
 	if(found == 1)
 	{
 		/* Do not send history for current node if CONFIG_NODE_NOHISTORY is set */
-		if( ((CONFIG_NODE_NOHISTORY !=0) && (CONFIG_NODEID == nodeid)) ||
-			send_to_node("new history_uint", master_nodeid, nodeid, data) == SUCCEED)
+		if(send_to_node("new history_uint", master_nodeid, nodeid, data) == SUCCEED)
 		{
 			DBexecute("delete from history_uint_sync where nodeid=%d and id<=" ZBX_FS_UI64,
 				nodeid,
@@ -380,8 +373,7 @@ static int process_node_history(int nodeid, int master_nodeid)
 		zabbix_log( LOG_LEVEL_DEBUG, "Sending [%s]",
 			data);
 		/* Do not send history for current node if CONFIG_NODE_NOHISTORY is set */
-		if( ((CONFIG_NODE_NOHISTORY !=0) && (CONFIG_NODEID == nodeid)) ||
-			send_to_node("new history", master_nodeid, nodeid, data) == SUCCEED)
+		if(send_to_node("new history", master_nodeid, nodeid, data) == SUCCEED)
 		{
 			DBexecute("delete from history_sync where nodeid=%d and id<=" ZBX_FS_UI64,
 				nodeid,
@@ -459,16 +451,9 @@ void main_historysender()
 
 	master_nodeid = get_master_node(CONFIG_NODEID);
 
-	if(master_nodeid)
+	if(CONFIG_MASTER_IP)
 	{
-		result = DBselect("select nodeid from nodes where nodeid<>%d", master_nodeid);
-
-		while((row = DBfetch(result)))
-		{
-			nodeid=atoi(row[0]);
-			process_node(nodeid, master_nodeid);
-		}
-		DBfree_result(result);
+			process_node(0, 0);
 	}
 
 	DBcommit();

@@ -55,47 +55,31 @@ int send_to_node(char *name, int dest_nodeid, int nodeid, char *data)
 	zbx_sock_t	sock;
 	char		*answer;
 
-	zabbix_log( LOG_LEVEL_WARNING, "NODE %d: Sending %s of node %d to node %d datalen %d",
-		CONFIG_NODEID,
+	zabbix_log( LOG_LEVEL_WARNING, "NODE: Sending %s to node %s:%d datalen %d",
 		name,
-		nodeid,
-		dest_nodeid,
+		CONFIG_MASTER_IP, CONFIG_MASTER_PORT,
 		strlen(data));
 /*	zabbix_log( LOG_LEVEL_WARNING, "Data [%s]", data);*/
 
-	result = DBselect("select ip, port from nodes where nodeid=%d",
-		dest_nodeid);
-	row = DBfetch(result);
-	if(!row)
+	if( FAIL == zbx_tcp_connect(&sock, CONFIG_MASTER_IP, CONFIG_MASTER_PORT, 0))
 	{
-		DBfree_result(result);
-		zabbix_log( LOG_LEVEL_WARNING, "Node [%d] is unknown",
-			dest_nodeid);
-		return FAIL;
-	}
-	zbx_strlcpy(ip,row[0],sizeof(ip));
-	port=atoi(row[1]);
-	DBfree_result(result);
-
-	if( FAIL == zbx_tcp_connect(&sock, ip, port, 0, NULL))
-	{
-		zabbix_log(LOG_LEVEL_DEBUG, "Unable to connect to Node [%d] error: %s", dest_nodeid, zbx_tcp_strerror());
+		zabbix_log(LOG_LEVEL_DEBUG, "Unable to connect to Node [%s:%d] error: %s", CONFIG_MASTER_IP, CONFIG_MASTER_PORT, zbx_tcp_strerror());
 		return  FAIL;
 	}
 
 
 	if( FAIL == zbx_tcp_send(&sock, data))
 	{
-		zabbix_log( LOG_LEVEL_WARNING, "Error while sending data to Node [%d]",
-			dest_nodeid);
+		zabbix_log( LOG_LEVEL_WARNING, "Error while sending data to Node [%s:%d]",
+			CONFIG_MASTER_IP, CONFIG_MASTER_PORT);
 		zbx_tcp_close(&sock);
 		return  FAIL;
 	}
 
 	if( FAIL == zbx_tcp_recv(&sock, &answer))
 	{
-		zabbix_log( LOG_LEVEL_WARNING, "Error while receiving answer from Node [%d]",
-			dest_nodeid);
+		zabbix_log( LOG_LEVEL_WARNING, "Error while receiving answer from Node [%s:%d]",
+			CONFIG_MASTER_IP, CONFIG_MASTER_PORT);
 		zbx_tcp_close(&sock);
 		return  FAIL;
 	}

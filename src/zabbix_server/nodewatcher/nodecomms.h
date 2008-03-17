@@ -20,6 +20,9 @@
 #ifndef ZABBIX_NODECOMMS_H
 #define ZABBIX_NODECOMMS_H
 
+extern char *CONFIG_MASTER_IP;
+extern int CONFIG_MASTER_PORT;
+
 int send_to_node(char *name,int dest_nodeid, int nodeid, char *data);
 
 #endif
