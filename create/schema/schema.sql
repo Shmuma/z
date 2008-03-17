@@ -386,8 +386,16 @@ FIELD		|disable_until	|t_integer	|'0'	|NOT NULL	|0
 FIELD		|error		|t_varchar(128)	|''	|NOT NULL	|ZBX_SYNC
 FIELD		|available	|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|errors_from	|t_integer	|'0'	|NOT NULL	|0
+FIELD		|siteid		|t_id		|'0'	|NOT NULL	|0
 INDEX		|1		|host
 INDEX		|2		|status
+INDEX		|3		|siteid
+
+TABLE|sites|siteid|ZBX_SYNC
+FIELD		|siteid		|t_id		|'0'	|NOT NULL	|ZBX_SYNC
+FIELD		|name		|t_varchar(64)	|''	|NOT NULL	|ZBX_SYNC
+FIELD		|description	|t_varchar(255)	|''	|NOT NULL	|ZBX_SYNC
+INDEX		|1		|name
 
 TABLE|hosts_groups|hostgroupid|ZBX_SYNC
 FIELD		|hostgroupid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC
