@@ -17,18 +17,37 @@
 ** Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 **/
 
-#ifndef ZABBIX_FUNCTIONS_H
-#define ZABBIX_FUNCTIONS_H
+#ifndef ZABBIX_ACTIVEBUF_H
+#define ZABBIX_ACTIVEBUF_H
 
-#include "common.h"
-#include "comms.h"
-#include "db.h"
-#include "sysinfo.h"
+#include "zbxconf.h"
+#include "active.h"
 
-void    update_triggers (zbx_uint64_t itemid);
-void	update_functions(DB_ITEM *item);
-int	process_data(zbx_sock_t *sock,char *server,char *key, char *value,char *lastlogsize,char *timestamp,
-                     char *source, char *severity, char* when);
-void	process_new_value(DB_ITEM *item, AGENT_RESULT *value, time_t timestamp);
 
-#endif
+typedef struct {
+    char* key;
+    int size, refresh;
+    unsigned long* ts;
+    char** values;
+} active_buffer_item_t;
+
+
+typedef struct  {
+    int size;
+    active_buffer_item_t* item;
+} active_buffer_items_t;
+
+
+void init_active_buffer ();
+void free_active_buffer ();
+void update_active_buffer (ZBX_ACTIVE_METRIC* active);
+void store_in_active_buffer (const char* key, const char* value);
+int  active_buffer_is_empty ();
+active_buffer_items_t* take_active_buffer_items ();
+void free_active_buffer_items (active_buffer_items_t* items);
+
+
+active_buffer_items_t* get_buffer_checks_list ();
+
+
+#endif /* ZABBIX_ACTIVEBUF_H */

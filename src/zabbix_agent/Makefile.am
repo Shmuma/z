@@ -30,6 +30,7 @@ zabbix_agent_LDADD = $(agents_ldadd)
 
 zabbix_agentd_SOURCES = \
 	active.c active.h \
+	activebuf.c activebuf.h \
 	stats.c stats.h \
 	cpustat.c cpustat.h \
 	diskdevices.c diskdevices.h \

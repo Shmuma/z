@@ -31,6 +31,8 @@ extern int	CONFIG_REFRESH_ACTIVE_CHECKS;
 extern char	*CONFIG_LISTEN_IP;
 extern int	CONFIG_LOG_LEVEL;
 extern char	CONFIG_LOG_UNRES_SYMB;
+extern int      CONFIG_ACTIVE_BUF_SIZE_MB;
+extern char     *CONFIG_ACTIVE_BUF_FILE;
 
 void    load_config();
 void    load_user_parameters(void);
