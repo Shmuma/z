@@ -170,6 +170,9 @@
 		function SetFooter($value=NULL,$class=NULL){
 			if(is_null($class)) $class = $this->footerClass;
 
+      if ($this->rownum > 0) {
+        $this->AddRow(new CCol("<strong>" . S_TOTAL . "</strong>: " . $this->rownum . " " . strtolower(S_ROWS) . ".", "ccol"));
+      }
 			$this->footer = $this->PrepareRow($value,$class);;
 		}
 
