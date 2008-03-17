@@ -171,7 +171,7 @@ static ZBX_THREAD_ENTRY(send_value, args)
 	signal( SIGALRM, send_signal_handler );
 #endif /* NOT _WINDOWS */
 	
-	if (SUCCEED == (tcp_ret = zbx_tcp_connect(&sock, sentdval_args->server, sentdval_args->port, SENDER_TIMEOUT))) {
+	if (SUCCEED == (tcp_ret = zbx_tcp_connect(&sock, sentdval_args->server, sentdval_args->port, SENDER_TIMEOUT, NULL))) {
 		tosend = comms_create_request(sentdval_args->hostname, sentdval_args->key, sentdval_args->key_value,
 			NULL, NULL, NULL, NULL);
 

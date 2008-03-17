@@ -190,7 +190,7 @@ int	check_ntp(char *host, unsigned short port, int *value_int)
 
 	*value_int = 0;
 
-	if (SUCCEED == (ret = zbx_tcp_connect(&s, host, port, 0))) {
+	if (SUCCEED == (ret = zbx_tcp_connect(&s, host, port, 0, NULL))) {
 		make_packet(&data);
 
 		pack_ntp((unsigned char*)packet, sizeof(packet), &data);
