@@ -18,6 +18,12 @@
 --
 
 --
+-- Dumping data for table `ids`
+--
+
+INSERT INTO `ids` VALUES (0,'events','event_send_lastid',0);
+
+--
 -- Dumping data for table `config`
 --
 set define off
