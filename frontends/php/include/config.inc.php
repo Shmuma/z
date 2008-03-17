@@ -387,12 +387,12 @@ require_once('include/classes/ctree.inc.php');
 		return $val;
 	}
 	
-	function mem2str($size)
+	function mem2str($size, $decpoints = 6)
 	{
 		$prefix = 'B';
 		if($size > 1048576) {	$size = $size/1048576;	$prefix = 'M'; }
 		elseif($size > 1024) {	$size = $size/1024;	$prefix = 'K'; }
-		return round($size, 6).$prefix;
+		return round($size, $decpoints).$prefix;
 	}
 
 	function getmicrotime()

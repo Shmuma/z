@@ -782,6 +782,8 @@
 	'S_ORIGINAL'=>				'Original',
 	'S_NEW_FLEXIBLE_INTERVAL'=>		'New flexible interval',
 	'S_FLEXIBLE_INTERVALS'=>		'Flexible intervals (sec)',
+  'S_APPROX_HISTORY_SIZE'=>   'Approx. history size',
+  'S_APPROX_TRENDS_SIZE'=>   'Approx. trends size',
 
 //	events.php
 	'S_LATEST_EVENTS'=>			'Latest events',

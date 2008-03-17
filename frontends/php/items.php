@@ -23,6 +23,8 @@
 	require_once "include/hosts.inc.php";
 	require_once "include/items.inc.php";
 	require_once "include/forms.inc.php";
+  
+  require_once "include/dbstat.inc.php";
 
         $page["title"] = "S_CONFIGURATION_OF_ITEMS";
         $page["file"] = "items.php";
@@ -745,8 +747,11 @@ include_once "include/page_header.php";
 			S_ERROR));
 
 		$from_tables['i'] = 'items i'; /* NOTE: must be added as last element to use left join */
+    
+  	$query_history_size = 0;
+  	$query_trends_size = 0;
 
-		$db_items = DBselect('select distinct th.host as template_host,th.hostid as template_hostid, h.host, i.* '.
+    $db_items = DBselect('select distinct th.host as template_host,th.hostid as template_hostid, h.host, i.* '.
 			' from '.implode(',', $from_tables).
 			' left join items ti on i.templateid=ti.itemid left join hosts th on ti.hostid=th.hostid '.
 			' where '.implode(' and ', $where_case).' order by h.host,i.description,i.key_,i.itemid');
@@ -790,15 +795,37 @@ include_once "include/page_header.php";
 
 			$applications = $show_applications ? implode(', ', get_applications_by_itemid($db_item["itemid"], 'name')) : null;
 
-			$chkBox = new CCheckBox("group_itemid[]",null,null,$db_item["itemid"]);
+      $row_history_size =
+        $ROW_SIZE["HISTORY"][$db_item["value_type"]] *
+        $db_item["history"] *
+        3600 * 24 /
+        $db_item["delay"];
+      $query_history_size = $query_history_size + $row_history_size;
+
+      if ($db_item["value_type"] == ITEM_VALUE_TYPE_UINT64 ||
+        $db_item["value_type"] == ITEM_VALUE_TYPE_FLOAT) {
+
+        $row_trends_size =
+          $ROW_SIZE["TRENDS"] *
+          $db_item["trends"] *
+          3600 * 24 /
+          3600
+        ;
+      }
+      else {
+        $row_trends_size = 0;
+      }
+      $query_trends_size = $query_trends_size + $row_trends_size;
+			
+      $chkBox = new CCheckBox("group_itemid[]",null,null,$db_item["itemid"]);
 			//if($db_item["templateid"] > 0) $chkBox->SetEnabled(false);
 			$table->AddRow(array(
 				$show_host ? $db_item['host'] : null,
 				array($chkBox, $description),
 				$db_item["key_"],
 				$db_item["delay"],
-				$db_item["history"],
-				$db_item["trends"],
+				$db_item["history"] . " (" . mem2str($row_history_size, 0) .")",
+				$db_item["trends"] . " (" . mem2str($row_trends_size, 0) . ")",
 				item_type2str($db_item['type']),
 				$status,
 				$applications,
@@ -822,8 +849,13 @@ include_once "include/page_header.php";
 		$table->SetFooter(new CCol($footerButtons));
 
 		$form->AddItem($table);
-		$form->Show();
 
+  	$table_sum  = new CTableInfo();
+    $table_sum->AddRow(new CCol("<strong>" . S_APPROX_HISTORY_SIZE . "</strong>: " . mem2str($query_history_size, 0) . " (+/- 10%)", "ccol"));
+    $table_sum->AddRow(new CCol("<strong>" . S_APPROX_TRENDS_SIZE . "</strong>: " . mem2str($query_trends_size, 0) . " (+/- 10%)", "ccol"));
+  	$form->AddItem($table_sum);
+
+		$form->Show();
 	}
 
 	if(isset($_REQUEST["form"]) && (in_array($_REQUEST["form"],array(S_CREATE_ITEM,"update","clone")) ||
