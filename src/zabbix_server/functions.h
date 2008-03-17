@@ -34,8 +34,8 @@ const char* getSiteCondition ();
 void    update_triggers (zbx_uint64_t itemid);
 void	update_functions(DB_ITEM *item);
 int	process_data(zbx_sock_t *sock,char *server,char *key, char *value,char *lastlogsize,char *timestamp,
-			char *source, char *severity);
-void	process_new_value(DB_ITEM *item, AGENT_RESULT *value);
+		char *source, char *severity, char* when);
+void	process_new_value(DB_ITEM *item, AGENT_RESULT *value, time_t timestamp);
 
 
 #endif

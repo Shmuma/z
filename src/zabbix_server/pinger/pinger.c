@@ -146,7 +146,7 @@ static int process_value(char *key, char *host, AGENT_RESULT *value)
 	DBget_item_from_db(&item,row);
 
 	DBbegin();
-	process_new_value(&item,value);
+	process_new_value(&item,value, 0);
 	update_triggers(item.itemid);
 	DBcommit();
  

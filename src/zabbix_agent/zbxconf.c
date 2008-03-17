@@ -53,6 +53,8 @@ int	CONFIG_REFRESH_ACTIVE_CHECKS	= 120;
 char	*CONFIG_LISTEN_IP		= NULL;
 int	CONFIG_LOG_LEVEL		= LOG_LEVEL_INFORMATION;
 char	CONFIG_LOG_UNRES_SYMB		= 0;
+int	CONFIG_ACTIVE_BUF_SIZE_MB	= 0;
+char	*CONFIG_ACTIVE_BUF_FILE		= NULL;
 
 
 void    load_config()
@@ -83,6 +85,9 @@ void    load_config()
 		{"AllowRoot",		&CONFIG_ALLOW_ROOT,		0,TYPE_INT,	PARM_OPT,0,1},
 		
 		{"LogUnresolvedSymbols",&CONFIG_LOG_UNRES_SYMB,		0,	TYPE_STRING,PARM_OPT,0,1},
+
+                {"ActiveChecksBufSize",	&CONFIG_ACTIVE_BUF_SIZE_MB,	0,	TYPE_INT,	PARM_OPT, 0, 10240},
+                {"ActiveChecksBufFile",	&CONFIG_ACTIVE_BUF_FILE,	0,	TYPE_STRING,	PARM_OPT, 0, 0},
 		
 		{0}
 	};

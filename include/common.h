@@ -619,6 +619,16 @@ char*	comms_create_request(
 int	comms_parse_response(char *xml,char *host,char *key, char *data, char *lastlogsize, char *timestamp,
 	       char *source, char *severity, int maxlen);
 
+int	comms_parse_multi_response (char *xml,char *host,char *key, char *data,
+		char *lastlogsize, char *timestamp, char *source,
+		char *severity, int maxlen, void** token);
+
+char*	comms_start_multi_request (const char* host, const char* key);
+
+char*	comms_append_multi_request (char* request, const char* data, unsigned long timestamp);
+
+char*	comms_finish_multi_request (char* request);
+
 int 	parse_command(const char *command, char *cmd, int cmd_max_len, char *param, int param_max_len);
 
 /* Regular expressions */

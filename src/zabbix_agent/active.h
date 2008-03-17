@@ -25,6 +25,7 @@
 extern char	*CONFIG_HOSTNAME;
 extern int	CONFIG_REFRESH_ACTIVE_CHECKS;
 
+
 #define MAX_LINES_PER_SECOND	10
 
 typedef struct zbx_active_metric_type

@@ -259,6 +259,7 @@ void	calc_timestamp(char *line,int *timestamp, char *format)
  *             key - item's key                                               *
  *             value - new value of server:key                                *
  *             lastlogsize - if key=log[*], last size of log file             *
+ *             when - timestamp in unix format. If NULL, latest value         *
  *                                                                            *
  * Return value: SUCCEED - new value processed sucesfully                     *
  *               FAIL - otherwise                                             *
@@ -269,7 +270,7 @@ void	calc_timestamp(char *line,int *timestamp, char *format)
  *                                                                            *
  ******************************************************************************/
 int	process_data(zbx_sock_t *sock,char *server,char *key,char *value,char *lastlogsize, char *timestamp,
-			char *source, char *severity)
+		char *source, char *severity, char* when)
 {
 	AGENT_RESULT	agent;
 
@@ -280,11 +281,12 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value,char *lastl
 	char	server_esc[MAX_STRING_LEN];
 	char	key_esc[MAX_STRING_LEN];
 
-	zabbix_log( LOG_LEVEL_DEBUG, "In process_data([%s],[%s],[%s],[%s])",
+	zabbix_log( LOG_LEVEL_DEBUG, "In process_data([%s],[%s],[%s],[%s],[%s])",
 		server,
 		key,
 		value,
-		lastlogsize);
+		lastlogsize,
+		when);
 
 	init_result(&agent);
 
@@ -382,8 +384,16 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value,char *lastl
 
 		if(set_result_type(&agent, item.value_type, value) == SUCCEED)
 		{
-			process_new_value(&item,&agent);
-			update_triggers(item.itemid);
+			time_t ts = 0;
+
+			if (when)
+				ts = atoi (when);
+
+			process_new_value(&item,&agent, ts);
+
+			/* if we inserting historical value, don't update triggers */
+			if (!ts)
+				update_triggers(item.itemid);
 		}
 		else
 		{
@@ -764,20 +774,24 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
  *                                                                            *
  * Parameters: item - item data                                               *
  *             value - new value of the item                                  *
+ *             timestamp - timestamp of item to insert (used by history)      *
  *                                                                            *
  * Author: Alexei Vladishev                                                   *
  *                                                                            *
  * Comments: for trapper poller process                                       *
  *                                                                            *
  ******************************************************************************/
-void	process_new_value(DB_ITEM *item, AGENT_RESULT *value)
+void	process_new_value(DB_ITEM *item, AGENT_RESULT *value, time_t timestamp)
 {
 	time_t 	now;
 
-	zabbix_log( LOG_LEVEL_DEBUG, "In process_new_value(%s)",
-		item->key);
+	zabbix_log( LOG_LEVEL_DEBUG, "In process_new_value(%s@%lu)",
+		item->key, timestamp);
 
-	now = time(NULL);
+	if (!timestamp)
+		now = time(NULL);
+	else
+		now = timestamp;
 
 	if( ITEM_MULTIPLIER_USE == item->multiplier )
 	{

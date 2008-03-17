@@ -73,6 +73,8 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 /* Process information sent by zabbix_sender */
 	else
 	{
+		key = NULL;
+
 		/* Node data exchange? */
 		if(strncmp(s,"Data",4) == 0)
 		{
@@ -120,11 +122,34 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 		{
 			zabbix_log( LOG_LEVEL_DEBUG, "XML received [%s]", s);
 
-			comms_parse_response(s,host_dec,key_dec,value_dec,lastlogsize,timestamp,source,severity,sizeof(host_dec)-1);
+			if (strncmp (s, "<req>", 5) == 0)
+			{
+				comms_parse_response(s,host_dec,key_dec,value_dec,lastlogsize,timestamp,source,severity,sizeof(host_dec)-1);
+				server=host_dec;
+				value_string=value_dec;
+				key=key_dec;
+			}
 
-			server=host_dec;
-			value_string=value_dec;
-			key=key_dec;
+			if (strncmp (s, "<reqs>", 6) == 0)
+			{
+				void* token = NULL;
+
+				DBbegin();
+				while (comms_parse_multi_response (s,host_dec,key_dec,value_dec,lastlogsize,timestamp,source,severity,
+							sizeof(host_dec)-1, &token) == SUCCEED) 
+				{
+					server = host_dec;
+					value_string = value_dec;
+					key = key_dec;
+					/* insert history value. It doesn't support  */
+					ret = process_data(sock,server,key,value_string, NULL, NULL, NULL, NULL, timestamp);
+					if (ret != SUCCEED)
+						break;
+				}
+				DBcommit();
+
+				key = NULL;
+			}
 		}
 		else
 		{
@@ -158,9 +183,12 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 		}
 		zabbix_log( LOG_LEVEL_DEBUG, "Value [%s]", value_string);
 
-		DBbegin();
-		ret=process_data(sock,server,key,value_string,lastlogsize,timestamp,source,severity);
-		DBcommit();
+		if (key)
+		{
+			DBbegin();
+			ret=process_data(sock,server,key,value_string,lastlogsize,timestamp,source,severity, NULL);
+			DBcommit();
+		}
 		
 		if( zbx_tcp_send_raw(sock, SUCCEED == ret ? "OK" : "NOT OK") != SUCCEED)
 		{

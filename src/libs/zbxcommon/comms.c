@@ -150,6 +150,100 @@ int	comms_parse_response(char *xml,char *host,char *key, char *data, char *lastl
 	return ret;
 }
 
+
+/*
+  performs iterative parse of multi-response buffer
+
+  Sample usage code:
+
+  void* token = NULL;
+  while (comms_parse_response (..., &token) == SUCCEED)
+      process_data;
+ */
+int	comms_parse_multi_response (char *xml,char *host,char *key, char *data, char *lastlogsize, char *timestamp,
+		char *source, char *severity, int maxlen, void** token)
+{
+	char* ptr = (char*)*token;
+	int res = SUCCEED;
+	int i;
+
+	zabbix_log (LOG_LEVEL_DEBUG, "comms_parse_multi_response: started");
+
+	/* if token is NULL, skip <reqs> tag and obtain hostname and key value */
+	if (!ptr)
+	{
+		char host_b64[MAX_STRING_LEN];
+		char key_b64[MAX_STRING_LEN];
+
+		if (strncmp (xml, "<reqs>", 6))
+			return FAIL;
+		ptr = xml+6;
+
+		memset(host_b64, 0, sizeof(host_b64));
+		memset(key_b64,0,sizeof(key_b64));
+
+		xml_get_data(ptr, "host", host_b64, sizeof(host_b64)-1);
+		xml_get_data(ptr, "key", key_b64, sizeof(key_b64)-1);
+
+		memset(host, 0, maxlen);
+		memset(key,0,maxlen);
+
+		str_base64_decode(host_b64, host, &i);
+		str_base64_decode(key_b64, key, &i);
+
+		zabbix_log (LOG_LEVEL_DEBUG, "Host64 = %s, Host=%s", host_b64, host);
+		zabbix_log (LOG_LEVEL_DEBUG, "Key64 = %s, Key=%s", key_b64, key);
+
+		ptr = strstr (ptr, "<values>");
+		if (ptr)
+			ptr += 8;
+		else
+			return FAIL;
+        }
+
+	if (strncmp (ptr, "<value>", 7) == 0)
+	{
+		/* parse one value */
+		char data_b64[MAX_STRING_LEN];
+
+		memset(data_b64,0,sizeof(data_b64));
+
+		xml_get_data(ptr, "data", data_b64, sizeof(data_b64)-1);
+		xml_get_data(ptr, "timestamp", timestamp, maxlen-1);
+
+		memset(data,0,maxlen);
+
+		str_base64_decode(data_b64, data, &i);
+
+		zabbix_log (LOG_LEVEL_DEBUG, "Data64 = %s, Data=%s", data_b64, data);
+
+		ptr = strstr (ptr, "</value>");
+		if (!ptr)
+		{
+			zabbix_log (LOG_LEVEL_DEBUG, "Not found </value> tag");
+			res = FAIL;
+		}
+		else
+			ptr += 8;
+        }
+	else
+	{
+		zabbix_log (LOG_LEVEL_DEBUG, "Not found <value> tag");
+		res = FAIL;
+	}
+
+	*token = ptr;
+
+	if (res == SUCCEED)
+		zabbix_log (LOG_LEVEL_DEBUG, "parsed ok. Data: host=%s, key=%s, val=%s, timestamp=%s", host, key, data, timestamp);
+	else
+		zabbix_log (LOG_LEVEL_DEBUG, "parse error");
+
+	zabbix_log (LOG_LEVEL_DEBUG, "comms_parse_multi_response: started");
+	return res;
+}
+
+
 void    *zbx_malloc2(char *filename, int line, void *old, size_t size)
 {
 	register int max_attempts;
@@ -182,6 +276,39 @@ void    *zbx_malloc2(char *filename, int line, void *old, size_t size)
 	/* Program will never reach this point. */
 	return ptr;
 }
+
+
+static char*	comms_get_xml_b64_value (const char* tag, const char* val)
+{
+	char data_b64[ZBX_MAX_B64_LEN];
+
+	data_b64[0] = '\0';
+	str_base64_encode(val, data_b64, (int)strlen(val));
+
+	return zbx_strdcatf(NULL, "<%s>%s</%s>", tag, data_b64, tag);
+}
+
+
+/* start new multi-request sequence */
+char*	comms_start_multi_request (const char* host, const char* key)
+{
+	return zbx_dsprintf (NULL, "<reqs>%s%s<values>", comms_get_xml_b64_value ("host", host), 
+		comms_get_xml_b64_value ("key", key));
+}
+
+
+char*	comms_append_multi_request (char* request, const char* data, unsigned long timestamp)
+{
+	return zbx_strdcatf (request, "<value>%s<timestamp>%lu</timestamp></value>", 
+			comms_get_xml_b64_value ("data", data), timestamp);
+}
+
+
+char*	comms_finish_multi_request (char* request)
+{
+	return zbx_strdcat (request, "</values><reqs>");
+}
+
 
 /******************************************************************************
  *                                                                            *
