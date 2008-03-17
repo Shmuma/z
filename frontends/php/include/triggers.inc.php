@@ -1796,18 +1796,35 @@
 			' order by t.description');
 		unset($triggers);
 		unset($hosts);
+		// get rid of warnings about $triggers undefined
+		$triggers = array();
 		while($row = DBfetch($result))
 		{
 			$row['host'] = get_node_name_by_elid($row['hostid']).$row['host'];
 			$row['description'] = expand_trigger_description_constants($row['description'], $row);
 
 			$hosts[$row['host']] = $row['host'];
-			$triggers[$row['description']][$row['host']] = array(
-				'hostid'	=> $row['hostid'], 
-				'triggerid'	=> $row['triggerid'], 
-				'value'		=> $row['value'], 
-				'lastchange'	=> $row['lastchange'],
-				'priority'	=> $row['priority']);
+
+			// A little tricky check for attempt to overwite active trigger (value=1) with
+			// inactive or active trigger with lower priority.
+			$val = 0;
+
+			if (array_key_exists($row['description'], $triggers) &&
+			    array_key_exists($row['host'], $triggers[$row['description']]))
+			{
+				$prio = $triggers[$row['description']][$row['host']]['priority'];
+				$val  = $triggers[$row['description']][$row['host']]['value'];
+			}
+
+			if ($val == 0 || ($row['value'] == 1 && $prio < $row['priority']))
+			{
+				$triggers[$row['description']][$row['host']] = array(
+					'hostid'	=> $row['hostid'],
+					'triggerid'	=> $row['triggerid'],
+					'value'		=> $row['value'],
+					'lastchange'	=> $row['lastchange'],
+					'priority'	=> $row['priority']);
+			}
 		}
 		if(!isset($hosts))
 		{
