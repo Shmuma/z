@@ -920,6 +920,7 @@
 	'S_NUMBER_OF_TRIGGERS_SHORT'=>		'Triggers (e/d)[t/u/f]',
 	'S_NUMBER_OF_ITEMS'=>			'Number of items (monitored/disabled/not supported)[trapper]',
 	'S_NUMBER_OF_ITEMS_SHORT'=>		'Items (m/d/n)[t]',
+  'S_NUMBER_OF_ITEMS_PER_SECOND' => 'Number of monitored items per second',
 	'S_NUMBER_OF_USERS'=>			'Number of users (online)',
 	'S_NUMBER_OF_USERS_SHORT'=>		'Users (online)',
 	'S_NUMBER_OF_HOSTS'=>			'Number of hosts (monitored/not monitored/templates/deleted)',
