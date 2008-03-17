@@ -54,6 +54,10 @@ include_once "include/page_header.php";
 		new CSpan($status["items_count_disabled"],"on"),"/",
 		new CSpan($status["items_count_not_supported"],"unknown"),
 		")[".$status["items_count_trapper"]."]")));
+
+  $row=DBfetch(DBselect("select sum(1/delay) as sum from items where status = 0"));
+  $table->AddRow(array(S_NUMBER_OF_ITEMS_PER_SECOND, round($row["sum"], 0)));
+
 	$table->AddRow(array(S_NUMBER_OF_TRIGGERS,array($status["triggers_count"].
 		"(".$status["triggers_count_enabled"]."/".$status["triggers_count_disabled"].")"."[",
 		new CSpan($status["triggers_count_on"],"on"),"/",
