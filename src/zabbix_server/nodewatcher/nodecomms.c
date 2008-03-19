@@ -61,7 +61,7 @@ int send_to_node(char *name, int dest_nodeid, int nodeid, char *data)
 		strlen(data));
 /*	zabbix_log( LOG_LEVEL_WARNING, "Data [%s]", data);*/
 
-	if( FAIL == zbx_tcp_connect(&sock, CONFIG_MASTER_IP, CONFIG_MASTER_PORT, 0))
+	if( FAIL == zbx_tcp_connect(&sock, CONFIG_MASTER_IP, CONFIG_MASTER_PORT, 0, NULL))
 	{
 		zabbix_log(LOG_LEVEL_DEBUG, "Unable to connect to Node [%s:%d] error: %s", CONFIG_MASTER_IP, CONFIG_MASTER_PORT, zbx_tcp_strerror());
 		return  FAIL;
