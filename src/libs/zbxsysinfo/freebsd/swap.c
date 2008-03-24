@@ -17,6 +17,14 @@
 ** Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 **/
 
+#include <sys/types.h>
+#include <sys/vmmeter.h>
+
+#ifdef HAVE_KVM_H
+    #include <unistd.h>
+    #include <kvm.h>
+#endif
+
 #include "common.h"
 
 #include "sysinfo.h"
@@ -92,6 +100,34 @@ point them all to the same buffer */
 
 static int	SYSTEM_SWAP_FREE(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
 {
+#ifdef HAVE_KVM_H
+	kvm_t *kd;
+	int page_size, nfree = 0;
+	struct kvm_swap swap[1];
+
+	assert(result);
+
+        init_result(result);
+
+	page_size = getpagesize();
+
+	if ((kd = kvm_open(NULL, NULL, NULL, O_RDONLY, "kvm_open")) == NULL)
+    	    return SYSINFO_RET_FAIL;
+
+	if (kvm_getswapinfo(kd, swap, 1, 0) == -1) {
+		kvm_close(kd);
+		return SYSINFO_RET_FAIL;
+	}
+
+	if((kvm_close(kd)) == -1)
+		return SYSINFO_RET_FAIL;
+
+	if (swap[0].ksw_total > 0)
+	        nfree = ((swap[0].ksw_total - swap[0].ksw_used) * page_size);
+
+	SET_UI64_RESULT(result, (zbx_uint64_t) nfree);
+	return SYSINFO_RET_OK;
+#endif
 #ifdef HAVE_SYSINFO_FREESWAP
 	struct sysinfo info;
 
@@ -137,6 +173,34 @@ static int	SYSTEM_SWAP_FREE(const char *cmd, const char *param, unsigned flags, 
 
 static int	SYSTEM_SWAP_TOTAL(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
 {
+#ifdef HAVE_KVM_H
+	kvm_t *kd;
+	int page_size, ntotal = 0;
+	struct kvm_swap swap[1];
+
+	assert(result);
+
+        init_result(result);
+
+	page_size = getpagesize();
+
+	if ((kd = kvm_open(NULL, NULL, NULL, O_RDONLY, "kvm_open")) == NULL)
+    	    return SYSINFO_RET_FAIL;
+
+	if (kvm_getswapinfo(kd, swap, 1, 0) == -1) {
+		kvm_close(kd);
+		return SYSINFO_RET_FAIL;
+	}
+
+	if((kvm_close(kd)) == -1)
+		return SYSINFO_RET_FAIL;
+
+	if (swap[0].ksw_total > 0)
+	        ntotal = (swap[0].ksw_total * page_size);
+
+	SET_UI64_RESULT(result, (zbx_uint64_t) ntotal);
+	return SYSINFO_RET_OK;
+#endif
 #ifdef HAVE_SYSINFO_TOTALSWAP
 	struct sysinfo info;
 
@@ -355,15 +419,140 @@ int     OLD_SWAP(const char *cmd, const char *param, unsigned flags, AGENT_RESUL
         return ret;
 }
 
+#ifdef HAVE_KVM_H
+int	get_swap_io(zbx_uint64_t *swapin,
+                    zbx_uint64_t *pgswapin,
+                    zbx_uint64_t *swapout,
+                    zbx_uint64_t *pgswapout)
+{
+	kvm_t *kd;
+	struct vmmeter sum;
+	struct nlist nlst[] = { { "_cnt" }, { 0 } };
+
+	if ((kd = kvm_open(NULL, NULL, NULL, O_RDONLY, "kvm_open")) == NULL)
+    	    return SYSINFO_RET_FAIL;
+
+	(void) kvm_nlist(kd, nlst);
+	if (nlst[0].n_type == 0)
+	{
+		kvm_close(kd);
+		return SYSINFO_RET_FAIL;
+	}
+
+	if (kvm_read(kd, nlst[0].n_value, (char *) (&sum), sizeof(sum)) != sizeof(sum))
+	{
+		kvm_close(kd);
+		return SYSINFO_RET_FAIL;
+	}
+	
+	if(kvm_close(kd) == -1)
+		return SYSINFO_RET_FAIL;
+	
+	if(swapin)
+		(*swapin)    = (zbx_uint64_t) sum.v_swapin;
+	if(pgswapin)
+		(*pgswapin)  = (zbx_uint64_t) sum.v_swappgsin;
+	if(swapout)
+		(*swapout)   = (zbx_uint64_t) sum.v_swapout;
+	if(pgswapout)
+		(*pgswapout) = (zbx_uint64_t) sum.v_swappgsout;
+	
+	return SYSINFO_RET_OK;
+}
+#endif
+
 int	SYSTEM_SWAP_IN(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
 {
-    /* in this moment this function for this platform unsupported */
-    return	SYSINFO_RET_FAIL;
+#ifdef HAVE_KVM_H
+	int  ret = SYSINFO_RET_FAIL;
+	char swapdev[MAX_STRING_LEN];
+	char mode[MAX_STRING_LEN];
+	zbx_uint64_t value;
+
+	assert(result);
+
+        init_result(result);
+
+	if(num_param(param) > 2)
+		return SYSINFO_RET_FAIL;
+
+	if(get_param(param, 1, swapdev, sizeof(swapdev)) != 0)
+		return SYSINFO_RET_FAIL;
+
+	if(swapdev[0] == '\0')
+		zbx_snprintf(swapdev, sizeof(swapdev), "all");
+
+	if(strncmp(swapdev, "all", sizeof(swapdev)))
+		return SYSINFO_RET_FAIL;
+
+	if(get_param(param, 2, mode, sizeof(mode)) != 0)
+		mode[0] = '\0';
+
+	if(mode[0] == '\0')
+		zbx_snprintf(mode, sizeof(mode), "pages");
+
+	if(strcmp(mode,"count") == 0)
+		ret = get_swap_io(&value, NULL, NULL, NULL);
+	else if(strcmp(mode,"pages") == 0)
+		ret = get_swap_io(NULL, &value, NULL, NULL);
+	else
+		return SYSINFO_RET_FAIL;
+
+	if(ret != SYSINFO_RET_OK)
+		return ret;
+
+	SET_UI64_RESULT(result, value);
+	return SYSINFO_RET_OK;
+#else
+	/* in this moment this function for this platform unsupported */
+	return SYSINFO_RET_FAIL;
+#endif
 }
 
 int	SYSTEM_SWAP_OUT(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
 {
-    /* in this moment this function for this platform unsupported */
-    return	SYSINFO_RET_FAIL;
-}
+#ifdef HAVE_KVM_H
+	int  ret = SYSINFO_RET_FAIL;
+	char swapdev[MAX_STRING_LEN];
+	char mode[MAX_STRING_LEN];
+	zbx_uint64_t value;
 
+	assert(result);
+
+        init_result(result);
+
+	if(num_param(param) > 2)
+		return SYSINFO_RET_FAIL;
+
+	if(get_param(param, 1, swapdev, sizeof(swapdev)) != 0)
+		return SYSINFO_RET_FAIL;
+
+	if(swapdev[0] == '\0')
+		zbx_snprintf(swapdev, sizeof(swapdev), "all");
+
+	if(strncmp(swapdev, "all", sizeof(swapdev)))
+		return SYSINFO_RET_FAIL;
+
+	if(get_param(param, 2, mode, sizeof(mode)) != 0)
+		mode[0] = '\0';
+
+	if(mode[0] == '\0')
+		zbx_snprintf(mode, sizeof(mode), "pages");
+
+	if(strcmp(mode,"count") == 0)
+		ret = get_swap_io(NULL, NULL, &value, NULL);
+	else if(strcmp(mode,"pages") == 0)
+		ret = get_swap_io(NULL, NULL, NULL, &value);
+	else
+		return SYSINFO_RET_FAIL;
+
+	if(ret != SYSINFO_RET_OK)
+		return ret;
+
+	SET_UI64_RESULT(result, value);
+	return SYSINFO_RET_OK;
+#else
+	/* in this moment this function for this platform unsupported */
+	return SYSINFO_RET_FAIL;
+#endif
+}
