@@ -281,7 +281,7 @@ require_once "include/items.inc.php";
 			$result = DBexecute("insert into hosts".
 				" (hostid,host,port,status,useip,dns,ip,disable_until,available,siteid)".
 				" values ($hostid,".zbx_dbstr($host).",$port,$status,$useip,".zbx_dbstr($dns).",".zbx_dbstr($ip).",0,"
-				.HOST_AVAILABLE_UNKNOWN."$siteid)");
+				.HOST_AVAILABLE_UNKNOWN.",$siteid)");
 		}
 		else
 		{
