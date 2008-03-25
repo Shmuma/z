@@ -714,26 +714,18 @@ include_once "include/page_header.php";
 			$form->AddVar("config",get_request("config",0));
 
 			$table = new CTableInfo(S_NO_HOSTS_DEFINED);
-			if ($show_only_tmp)
-				$table->setHeader(array(
-					array(new CCheckBox("all_hosts",NULL,"CheckAll('".$form->GetName()."','all_hosts');"),
-						SPACE.S_NAME),
-					S_TEMPLATES,
-					S_ACTIONS
-				));
-			else
-				$table->setHeader(array(
-					array(new CCheckBox("all_hosts",NULL,"CheckAll('".$form->GetName()."','all_hosts');"),
-						SPACE.S_NAME),
-					S_DNS,
-					S_IP,
-					S_PORT,
-					S_SITE,
-					S_TEMPLATES,
-					S_STATUS,
-					S_AVAILABILITY,
-					S_ERROR,
-					S_ACTIONS
+			$table->setHeader(array(
+				array(new CCheckBox("all_hosts",NULL,"CheckAll('".$form->GetName()."','all_hosts');"),
+					SPACE.S_NAME),
+				$show_only_tmp ? NULL : S_DNS,
+				$show_only_tmp ? NULL : S_IP,
+				$show_only_tmp ? NULL : S_PORT,
+				$show_only_tmp ? NULL : S_SITE,
+				S_TEMPLATES,
+				$show_only_tmp ? NULL : S_STATUS,
+				$show_only_tmp ? NULL : S_AVAILABILITY,
+				$show_only_tmp ? NULL : S_ERROR,
+				S_ACTIONS
 				));
 		
 			$sql="select h.*,s.name as site_name from";
@@ -861,38 +853,27 @@ include_once "include/page_header.php";
 
 				$show = new CLink(S_SELECT, '#', 'action', $mnuActions->GetOnActionJS());
 
-				if ($show_only_tmp)
-					$table->addRow(array(
-						$host,
-						implode(', ',$templates),
-						$show));
-				else
-					$table->addRow(array(
-						$host,
-						$dns,
-						$ip,
-						$port,
-						$site,
-						implode(', ',$templates),
-						$status,
-						$available,
-						$error,
-						$show));
+				$table->addRow(array(
+					$host,
+					$dns,
+					$ip,
+					$port,
+					$site,
+					implode(', ',$templates),
+					$status,
+					$available,
+					$error,
+					$show));
 			}
 
-			if ($show_only_tmp)
-				$footerButtons = array(
-					new CButtonQMessage('delete',S_DELETE_SELECTED,S_DELETE_SELECTED_HOSTS_Q),
-					new CButtonQMessage('delete_and_clear',S_DELETE_SELECTED_WITH_LINKED_ELEMENTS,S_DELETE_SELECTED_HOSTS_Q)
-				);
-			else
-				$footerButtons = array(
-					new CButtonQMessage('activate',S_ACTIVATE_SELECTED,S_ACTIVATE_SELECTED_HOSTS_Q),
-					SPACE,
-					new CButtonQMessage('disable',S_DISABLE_SELECTED,S_DISABLE_SELECTED_HOSTS_Q),
-					SPACE,
-					new CButtonQMessage('delete',S_DELETE_SELECTED,S_DELETE_SELECTED_HOSTS_Q),
-					NULL,
+			$footerButtons = array(
+				$show_only_tmp ? NULL : new CButtonQMessage('activate',S_ACTIVATE_SELECTED,S_ACTIVATE_SELECTED_HOSTS_Q),
+				$show_only_tmp ? NULL : SPACE,
+				$show_only_tmp ? NULL : new CButtonQMessage('disable',S_DISABLE_SELECTED,S_DISABLE_SELECTED_HOSTS_Q),
+				$show_only_tmp ? NULL : SPACE,
+				new CButtonQMessage('delete',S_DELETE_SELECTED,S_DELETE_SELECTED_HOSTS_Q),
+				$show_only_tmp ? SPACE : NULL,
+				$show_only_tmp ? new CButtonQMessage('delete_and_clear',S_DELETE_SELECTED_WITH_LINKED_ELEMENTS,S_DELETE_SELECTED_HOSTS_Q) : NULL
 				);
 			$table->SetFooter(new CCol($footerButtons));
 
