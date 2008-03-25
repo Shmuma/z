@@ -6609,5 +6609,11 @@ INSERT INTO sysmaps VALUES (2,'Local network',980,200,0,2,0);
 --
 
 INSERT INTO sysmaps_elements VALUES (2,2,10017,0,19,19,19,'ZABBIX Server',NULL,100,100,'');
-commit;
 
+--
+-- Dumping data for table `sites`
+--
+
+INSERT INTO sites VALUES (0,'Default site','Default site description');
+
+commit;
