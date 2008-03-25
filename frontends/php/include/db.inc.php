@@ -418,7 +418,7 @@ COpt::savesqlrequest($query);
 				{
 					$result = array();
 					$keys = (array_keys($row));
-					foreach ($keys as $k)		$result[strtolower($k)] = $row[$k];
+					foreach ($keys as $k)		$result[strtolower($k)] = is_null ($row[$k]) ? "" : $row[$k];
 				} 
 				break;
 			case "SQLITE3":
