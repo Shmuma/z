@@ -285,14 +285,14 @@
 			" (itemid,description,key_,hostid,delay,history,nextcheck,status,type,".
 			"snmp_community,snmp_oid,value_type,trapper_hosts,snmp_port,units,multiplier,".
 			"delta,snmpv3_securityname,snmpv3_securitylevel,snmpv3_authpassphrase,".
-			"snmpv3_privpassphrase,formula,trends,logtimefmt,valuemapid,delay_flex,templateid)".
+			"snmpv3_privpassphrase,formula,trends,logtimefmt,valuemapid,delay_flex,templateid,siteid)".
 			" values ($itemid,".zbx_dbstr($description).",".zbx_dbstr($key).",$hostid,$delay,$history,0,
 			$status,$type,".zbx_dbstr($snmp_community).",".zbx_dbstr($snmp_oid).",$value_type,".
 			zbx_dbstr($trapper_hosts).",$snmp_port,".zbx_dbstr($units).",$multiplier,$delta,".
 			zbx_dbstr($snmpv3_securityname).",$snmpv3_securitylevel,".
 			zbx_dbstr($snmpv3_authpassphrase).",".zbx_dbstr($snmpv3_privpassphrase).",".
 			zbx_dbstr($formula).",$trends,".zbx_dbstr($logtimefmt).",$valuemapid,".
-			zbx_dbstr($delay_flex).",$templateid)");
+			zbx_dbstr($delay_flex).",$templateid,".$host["siteid"].")");
 
 		if(!$result)
 			return $result;
@@ -444,7 +444,7 @@
 			"snmpv3_privpassphrase=".zbx_dbstr($snmpv3_privpassphrase).",".
 			"formula=".zbx_dbstr($formula).",trends=$trends,logtimefmt=".zbx_dbstr($logtimefmt).",".
 			"valuemapid=$valuemapid,delay_flex=".zbx_dbstr($delay_flex).",".
-			"templateid=$templateid where itemid=$itemid");
+			"templateid=$templateid, siteid=".$host["siteid"]." where itemid=$itemid");
 		if($result)
 		{
 			info("Item '".$host["host"].":$key' updated");
