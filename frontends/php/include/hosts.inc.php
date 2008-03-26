@@ -291,8 +291,18 @@ require_once "include/items.inc.php";
 				return false;
 			}
 
-			$result = DBexecute("update hosts set host=".zbx_dbstr($host).",".
-				"port=$port,useip=$useip,dns=".zbx_dbstr($dns).",ip=".zbx_dbstr($ip).",siteid=$siteid where hostid=$hostid");
+			if (!($result = DBexecute("update hosts set host=".zbx_dbstr($host).",".
+				"port=$port,useip=$useip,dns=".zbx_dbstr($dns).",ip=".zbx_dbstr($ip).",siteid=$siteid where hostid=$hostid")))
+			{
+				error("Unable to update host '$host'");
+				return false;
+			}
+
+			if (!($result = DBexecute("update items set siteid=$siteid where hostid=$hostid")))
+			{
+				error("Unable to update items for '$host'");
+				return false;
+			}
 
 			update_host_status($hostid, $status);
 		}
