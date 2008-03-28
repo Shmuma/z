@@ -24,13 +24,14 @@
 #include "db.h"
 #include "log.h"
 #include "zlog.h"
+#include "hfs.h"
 
 #include "evalfunc.h"
 #include "functions.h"
 #include "expression.h"
 
 extern char* CONFIG_SERVER_SITE;
-
+extern char* CONFIG_HFS_PATH;
 
 /******************************************************************************
  *                                                                            *
@@ -470,7 +471,10 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 				}
 				else if(item->value_type==ITEM_VALUE_TYPE_FLOAT)
 				{
-					if(GET_DBL_RESULT(value))
+				    if(GET_DBL_RESULT(value))
+					if (CONFIG_HFS_PATH)
+						HFSadd_history (CONFIG_HFS_PATH, item->itemid,value->dbl,now);
+					else
 						DBadd_history(item->itemid,value->dbl,now);
 				}
 			}
