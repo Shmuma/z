@@ -22,7 +22,8 @@
 #include "common.h"
 
 
-void HFSadd_history (const char* hfs_base_dir, zbx_uint64_t itemid, double value, int clock);
+void HFSadd_history (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, double value, int clock);
+void HFSadd_history_uint (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, unsigned long long value, int clock);
 
 
 #endif
