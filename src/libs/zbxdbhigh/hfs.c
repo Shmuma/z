@@ -275,7 +275,7 @@ static zbx_uint64_t get_count_generic (const char* hfs_base_dir, zbx_uint64_t it
 	from = get_next_data_ts (from);
     }
 
-    zabbix_log(LOG_LEVEL_CRIT, "get_count_generic (%s, %llu) = %llu (rejected %llu)", hfs_base_dir, itemid, res, inv);
+    zabbix_log(LOG_LEVEL_DEBUG, "get_count_generic (%s, %llu) = %llu (rejected %llu)", hfs_base_dir, itemid, res, inv);
 
     return res;
 }
@@ -297,11 +297,11 @@ zbx_uint64_t HFS_get_count_u64_eq (const char* hfs_base_dir, zbx_uint64_t itemid
 {
     int eq_predicate (void* a, void* b)
     {
-	zabbix_log(LOG_LEVEL_CRIT, "eq_pred (%llu, %llu)", *(zbx_uint64_t*)a, *(zbx_uint64_t*)b);
+	zabbix_log(LOG_LEVEL_DEBUG, "eq_pred (%llu, %llu)", *(zbx_uint64_t*)a, *(zbx_uint64_t*)b);
 	return simple_predicate (a, b) && (*(zbx_uint64_t*)a == *(zbx_uint64_t*)b);
     }
 
-    zabbix_log(LOG_LEVEL_CRIT, "HFS_get_count_u64_eq (%s, %llu, %llu)", hfs_base_dir, itemid, value);
+    zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_count_u64_eq (%s, %llu, %llu)", hfs_base_dir, itemid, value);
     return get_count_generic (hfs_base_dir, itemid, from, &value, &eq_predicate);
 }
 
