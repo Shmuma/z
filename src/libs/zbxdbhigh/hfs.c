@@ -268,7 +268,7 @@ static zbx_uint64_t get_count_generic (const char* hfs_base_dir, zbx_uint64_t it
 	if (fd >= 0) {
 	    lseek (fd, ofs, SEEK_SET);
 	    while (read (fd, &value, sizeof (value)) > 0) {
-		if (predicate (val, &value))
+		if (predicate (&value, val))
 		    res++;
 		else
 		    inv++;
@@ -291,26 +291,13 @@ static zbx_uint64_t get_count_generic (const char* hfs_base_dir, zbx_uint64_t it
 
 static int simple_predicate (void* a, void* b)
 {
-    return *(zbx_uint64_t*)b != (zbx_uint64_t)0xffffffffffffffffLLU;
+    return *(zbx_uint64_t*)a != (zbx_uint64_t)0xffffffffffffffffLLU;
 }
 
 
 zbx_uint64_t HFS_get_count (const char* hfs_base_dir, zbx_uint64_t itemid, int from)
 {
     return get_count_generic (hfs_base_dir, itemid, from, NULL, &simple_predicate);
-}
-
-
-zbx_uint64_t HFS_get_count_u64_eq (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
-{
-    int eq_predicate (void* a, void* b)
-    {
-	zabbix_log(LOG_LEVEL_DEBUG, "eq_pred (%llu, %llu)", *(zbx_uint64_t*)a, *(zbx_uint64_t*)b);
-	return simple_predicate (a, b) && (*(zbx_uint64_t*)a == *(zbx_uint64_t*)b);
-    }
-
-    zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_count_u64_eq (%s, %llu, %llu)", hfs_base_dir, itemid, value);
-    return get_count_generic (hfs_base_dir, itemid, from, &value, &eq_predicate);
 }
 
 
@@ -419,4 +406,136 @@ static off_t find_meta_ofs (int time, hfs_meta_t* meta)
 static int get_next_data_ts (int ts)
 {
     return (ts / 1000000+1) * 1000000;
+}
+
+
+zbx_uint64_t HFS_get_count_u64_eq (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
+{
+    int predicate (void* a, void* b)
+    {
+	return simple_predicate (a, b) && (*(zbx_uint64_t*)a == *(zbx_uint64_t*)b);
+    }
+
+    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+}
+
+
+zbx_uint64_t HFS_get_count_u64_ne (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
+{
+    int predicate (void* a, void* b)
+    {
+	return simple_predicate (a, b) && (*(zbx_uint64_t*)a != *(zbx_uint64_t*)b);
+    }
+
+    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+}
+
+
+zbx_uint64_t HFS_get_count_u64_gt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
+{
+    int predicate (void* a, void* b)
+    {
+	return simple_predicate (a, b) && (*(zbx_uint64_t*)a > *(zbx_uint64_t*)b);
+    }
+
+    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+}
+
+
+zbx_uint64_t HFS_get_count_u64_lt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
+{
+    int predicate (void* a, void* b)
+    {
+	return simple_predicate (a, b) && (*(zbx_uint64_t*)a < *(zbx_uint64_t*)b);
+    }
+
+    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+}
+
+
+zbx_uint64_t HFS_get_count_u64_ge (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
+{
+    int predicate (void* a, void* b)
+    {
+	return simple_predicate (a, b) && (*(zbx_uint64_t*)a >= *(zbx_uint64_t*)b);
+    }
+
+    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+}
+
+
+zbx_uint64_t HFS_get_count_u64_le (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
+{
+    int predicate (void* a, void* b)
+    {
+	return simple_predicate (a, b) && (*(zbx_uint64_t*)a <= *(zbx_uint64_t*)b);
+    }
+
+    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+}
+
+
+zbx_uint64_t HFS_get_count_float_eq (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value)
+{
+    int predicate (void* a, void* b)
+    {
+	return simple_predicate (a, b) && (*(double*)a+0.00001 > *(double*)b) && (*(double*)a-0.00001 < *(double*)b);
+    }
+
+    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+}
+
+
+zbx_uint64_t HFS_get_count_float_ne (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value)
+{
+    int predicate (void* a, void* b)
+    {
+	return simple_predicate (a, b) && ((*(double*)a+0.00001 < *(double*)b) || (*(double*)a-0.00001 > *(double*)b));
+    }
+
+    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+}
+
+
+zbx_uint64_t HFS_get_count_float_gt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value)
+{
+    int predicate (void* a, void* b)
+    {
+	return simple_predicate (a, b) && (*(double*)a > *(double*)b);
+    }
+
+    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+}
+
+
+zbx_uint64_t HFS_get_count_float_lt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value)
+{
+    int predicate (void* a, void* b)
+    {
+	return simple_predicate (a, b) && (*(double*)a < *(double*)b);
+    }
+
+    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+}
+
+
+zbx_uint64_t HFS_get_count_float_ge (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value)
+{
+    int predicate (void* a, void* b)
+    {
+	return simple_predicate (a, b) && (*(double*)a >= *(double*)b);
+    }
+
+    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+}
+
+
+zbx_uint64_t HFS_get_count_float_le (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value)
+{
+    int predicate (void* a, void* b)
+    {
+	return simple_predicate (a, b) && (*(double*)a <= *(double*)b);
+    }
+
+    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
 }
