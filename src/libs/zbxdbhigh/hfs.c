@@ -43,6 +43,8 @@ static hfs_meta_t* read_meta (const char* hfs_base_dir, zbx_uint64_t itemid, tim
 static void free_meta (hfs_meta_t* meta);
 static char* get_name (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock, int meta);
 static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len);
+static off_t find_meta_ofs (int time, hfs_meta_t* meta);
+static int get_next_data_ts (int ts);
 
 
 /*
@@ -223,10 +225,54 @@ static int make_directories (const char* path)
 unsigned long long HFS_get_count (const char* hfs_base_dir, zbx_uint64_t itemid, int from)
 {
     int p_a, p_b;
+    char *p_meta, *p_data;
+    hfs_meta_t* meta;
+    off_t ofs;
+    int fd;
+    unsigned long long val, res = 0;
 
-    zabbix_log(LOG_LEVEL_CRIT, "HFS_get_count (%s, %llu, %u)", hfs_base_dir, itemid, from);
+    zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_count (%s, %llu, %u)", hfs_base_dir, itemid, from);
 
-    return 0;
+    while (1) {
+	p_meta = get_name (hfs_base_dir, itemid, from, 1);
+
+	meta = read_meta (hfs_base_dir, itemid, from);
+	
+	if (!meta)
+	    break;
+
+	if (!meta->blocks) {
+	    free_meta (meta);
+	    break;
+	}
+
+	ofs = find_meta_ofs (from, meta);
+
+	zabbix_log(LOG_LEVEL_DEBUG, "Offset for TS %u is %llu", from, ofs);
+
+	/* open data file and count amount of valid items */
+	p_data = get_name (hfs_base_dir, itemid, from, 0);
+	fd = open (p_data, O_RDONLY);
+	
+	if (fd >= 0) {
+	    lseek (fd, ofs, SEEK_SET);
+	    while (read (fd, &val, sizeof (val)) > 0) {
+		if (val != (unsigned long long)0xffffffffffffffff)
+		    res++;
+	    }
+	    close (fd);
+	}
+
+	free_meta (meta);
+	free (p_meta);
+	free (p_data);
+
+	from = get_next_data_ts (from);
+    }
+
+    zabbix_log(LOG_LEVEL_CRIT, "HFS_get_count (%s, %llu) = %llu", hfs_base_dir, itemid, res);
+
+    return res;
 }
 
 
@@ -250,7 +296,7 @@ static hfs_meta_t* read_meta (const char* hfs_base_dir, zbx_uint64_t itemid, tim
 
     /* if we have no file, create empty one */
     if (!f) {
-	zabbix_log(LOG_LEVEL_CRIT, "file open failed: %s", path);
+	zabbix_log(LOG_LEVEL_DEBUG, "file open failed: %s", path);
 	res->blocks = 0;
 	res->last_delay = 0;
 	res->meta = NULL;
@@ -307,3 +353,30 @@ static char* get_name (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clo
     return res;
 }
 
+
+static off_t find_meta_ofs (int time, hfs_meta_t* meta)
+{
+    int i;
+    int f = 0;
+
+    for (i = 0; i < meta->blocks; i++) {
+	if (!f) {
+	    f = (meta->meta[i].end > time);
+	    if (!f)
+		continue;
+	}
+
+	if (meta->meta[i].start > time)
+	    return meta->meta[i].ofs;
+
+	return meta->meta[i].ofs + sizeof (double) * (time - meta->meta[i].start) / meta->meta[i].delay;
+    }
+
+    return (off_t)(-1);
+}
+
+
+static int get_next_data_ts (int ts)
+{
+    return (ts / 1000000+1) * 1000000;
+}
