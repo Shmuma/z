@@ -22,8 +22,12 @@
 #include "log.h"
 #include "zlog.h"
 #include "functions.h"
+#include "hfs.h"
 
 #include "evalfunc.h"
+
+extern char* CONFIG_HFS_PATH;
+
 
 /******************************************************************************
  *                                                                            *
@@ -158,6 +162,7 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 {
 	DB_RESULT	result;
 	DB_ROW	row;
+	int		hfs_mode = 0;
 
 	char		period[MAX_STRING_LEN+1];
 	char		op[MAX_STRING_LEN+1];
@@ -179,8 +184,18 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 
 	switch(item->value_type)
 	{
-		case ITEM_VALUE_TYPE_FLOAT:	table = table_float;	break;
-		case ITEM_VALUE_TYPE_UINT64:	table = table_ui64;	break;
+		case ITEM_VALUE_TYPE_FLOAT:	
+			if (!CONFIG_HFS_PATH)
+				table = table_float;	
+			else
+				hfs_mode = 1;
+			break;
+		case ITEM_VALUE_TYPE_UINT64:
+			if (!CONFIG_HFS_PATH)
+				table = table_ui64;	
+			else
+				hfs_mode = 1;
+			break;
 		case ITEM_VALUE_TYPE_LOG:	table = table_log;	break;
 		case ITEM_VALUE_TYPE_STR:	table = table_str;	break;
 		default:
@@ -195,11 +210,14 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 	}
 	if(get_param(parameter, 2, cmp, MAX_STRING_LEN) != 0)
 	{
-		result = DBselect("select count(value) from %s where clock>%d and itemid=" ZBX_FS_UI64,
-			table,
-			now-atoi(period),
-			item->itemid);
-		
+		if (!table) {
+			zbx_snprintf (value, MAX_STRING_LEN, "%llu", HFS_get_count (CONFIG_HFS_PATH, item->itemid, now-atoi(period)));
+		}
+		else
+			result = DBselect("select count(value) from %s where clock>%d and itemid=" ZBX_FS_UI64,
+				table,
+				now-atoi(period),
+				item->itemid);
 	}
 	else
 	{
@@ -312,19 +330,21 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 		}
 	}
 
-
-	row = DBfetch(result);
-
-	if(!row || DBis_null(row[0])==SUCCEED)
+	if (!hfs_mode) 
 	{
-		zabbix_log(LOG_LEVEL_DEBUG, "Result for COUNT is empty" );
-		res = FAIL;
+		row = DBfetch(result);
+
+		if(!row || DBis_null(row[0])==SUCCEED)
+		{
+			zabbix_log(LOG_LEVEL_DEBUG, "Result for COUNT is empty" );
+			res = FAIL;
+		}
+		else
+		{
+			strcpy(value,row[0]);
+		}
+		DBfree_result(result);
 	}
-	else
-	{
-		strcpy(value,row[0]);
-	}
-	DBfree_result(result);
 
 	zabbix_log( LOG_LEVEL_DEBUG, "End evaluate_COUNT");
 
