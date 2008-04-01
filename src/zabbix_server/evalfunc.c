@@ -211,7 +211,7 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 	if(get_param(parameter, 2, cmp, MAX_STRING_LEN) != 0)
 	{
 		if (!table) {
-			zbx_snprintf (value, MAX_STRING_LEN, "%llu", HFS_get_count (CONFIG_HFS_PATH, item->itemid, now-atoi(period)));
+			zbx_snprintf (value, MAX_STRING_LEN, "%llu", HFS_get_count (CONFIG_HFS_PATH, item->itemid, now-atoi(period)+1));
 		}
 		else
 			result = DBselect("select count(value) from %s where clock>%d and itemid=" ZBX_FS_UI64,
