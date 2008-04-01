@@ -60,7 +60,7 @@ function TODO($msg) { echo "TODO: ".$msg.BR; }  // DEBUG INFO!!!
 	require_once("include/classes/ciframe.inc.php");
 	require_once("include/classes/cpumenu.inc.php");
 	require_once("include/classes/graph.inc.php");
-require_once('include/classes/ctree.inc.php');
+	require_once('include/classes/ctree.inc.php');
 
 // Include Tactical Overview modules
 
@@ -71,7 +71,6 @@ require_once('include/classes/ctree.inc.php');
 	include_once("include/classes/cserverinfo.mod.php");
 	include_once("include/classes/cflashclock.mod.php");
 
-	require_once 	"include/db.inc.php";
 	require_once 	"include/perm.inc.php";
 	require_once 	"include/audit.inc.php";
 	require_once 	"include/js.inc.php";
@@ -103,7 +102,8 @@ require_once('include/classes/ctree.inc.php');
 	if(file_exists($ZBX_CONFIGURATION_FILE) && !isset($_COOKIE['ZBX_CONFIG']))
 	{
 		include $ZBX_CONFIGURATION_FILE;
-
+		require_once 	"include/db.inc.php";
+		
 		$error = '';
 		if(!DBconnect($error))
 		{
@@ -137,14 +137,18 @@ require_once('include/classes/ctree.inc.php');
 	}
 	else
 	{
-		if(file_exists($ZBX_CONFIGURATION_FILE))
+		if(file_exists($ZBX_CONFIGURATION_FILE)){
 			include $ZBX_CONFIGURATION_FILE;
-
+		}
+		
+		require_once("include/db.inc.php");
+		
 		define('ZBX_PAGE_NO_AUTHERIZATION', true);
 		define('ZBX_DISTRIBUTED', false);
 		$show_setup = true;
 	}
-
+	
+	
 	if(!defined('ZBX_PAGE_NO_AUTHERIZATION'))
 	{
 		check_authorisation();
@@ -223,11 +227,11 @@ require_once('include/classes/ctree.inc.php');
 			{
 				for ( 	$curr_node = &$node_data;
 					$curr_node['masterid'] != 0 &&
-					$curr_node['masterid'] != $ZBX_CURRENT_NODEID;
+					(bccomp($curr_node['masterid'] , $ZBX_CURRENT_NODEID) != 0);
 					$curr_node = &$ZBX_NODES[$curr_node['masterid']]
 				);
 
-				if ( $curr_node['masterid'] == $ZBX_CURRENT_NODEID )
+				if (bccomp($curr_node['masterid'],$ZBX_CURRENT_NODEID) == 0 )
 				{
 					$ZBX_CURRENT_SUBNODES[$nodeid] = $nodeid;
 				}
@@ -304,6 +308,26 @@ require_once('include/classes/ctree.inc.php');
 		include_once "include/page_footer.php";
 	}
 
+	function uint_in_array($needle,$haystack){
+		foreach($haystack as $id => $value)
+			if(bccomp($needle,$value) == 0) return true;
+	return false;
+	}
+
+	function str_in_array($needle,$haystack,$strict=false){
+		if(is_array($needle)){
+			return in_array($needle,$haystack,$strict);
+		}
+		else if($strict){
+			foreach($haystack as $id => $value) 
+				if($needle === $value) return true;
+		}
+		else{
+			foreach($haystack as $id => $value)
+				if(strcmp($needle,$value) == 0) return true;
+		}
+	return false;
+	}
 
 	function zbx_stripslashes($value){
 		if(is_array($value)){
@@ -351,7 +375,7 @@ require_once('include/classes/ctree.inc.php');
 		$ZBX_MESSAGES = null;
 	}
 
-	function &asort_by_key(&$array, $key)
+	function asort_by_key(&$array, $key)
 	{
 		if(!is_array($array)) {
 			error('Incorrect type of asort_by_key');
@@ -359,7 +383,7 @@ require_once('include/classes/ctree.inc.php');
 		}
 		$key = htmlspecialchars($key);
 		uasort($array, create_function('$a,$b', 'return $a[\''.$key.'\'] - $b[\''.$key.'\'];'));
-		return $array;
+	return $array;
 	}
 
 	function fatal_error($msg)
@@ -1670,9 +1694,7 @@ require_once('include/classes/ctree.inc.php');
 	 *
 	 * author: Eugene Grigorjev
 	 */
-	function	get_cookie($name, $default_value=null)
-	{
-		global $_COOKIE;
+	function	get_cookie($name, $default_value=null){
 		if(isset($_COOKIE[$name]))	return $_COOKIE[$name];
 		// else
 		return $default_value;
@@ -1686,10 +1708,7 @@ require_once('include/classes/ctree.inc.php');
 	 *
 	 * author: Eugene Grigorjev
 	 */
-	function	zbx_setcookie($name, $value, $time=null)
-	{
-		global $_COOKIE;
-
+	function	zbx_setcookie($name, $value, $time=null){
 		setcookie($name, $value, isset($time) ? $time : (0));
 		$_COOKIE[$name] = $value;
 	}

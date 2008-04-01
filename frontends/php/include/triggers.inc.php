@@ -358,29 +358,13 @@
 	 * Comments:
 	 *
 	 */
-	function	&get_triggers_by_hostid($hostid, $show_mixed = "yes")
-	{
-		$db_triggers = DBselect("select distinct t.* from triggers t, functions f, items i".
-			" where i.hostid=$hostid and f.itemid=i.itemid and f.triggerid=t.triggerid");
-
-		if($show_mixed == "yes")
-			return $db_triggers;
-
-		$triggers = array();
-		while($db_trigger = DBfetch($db_triggers))
-		{
-			$db_hosts = get_hosts_by_triggerid($db_trigger["triggerid"]);
-			if(DBfetch($db_hosts))
-			{
-				array_push($triggers,$db_trigger["triggerid"]);
-			}
-		}
-		$sql = "select distinct * from triggers where triggerid=0";
-		foreach($triggers as $triggerid)
-		{
-			$sql .= " or triggerid=$triggerid";
-		}
-		return DBselect($sql);
+	function	&get_triggers_by_hostid($hostid){
+		$db_triggers = DBselect('SELECT DISTINCT t.* '.
+								' FROM triggers t, functions f, items i '.
+								' WHERE i.hostid='.$hostid.
+									' AND f.itemid=i.itemid '.
+									' AND f.triggerid=t.triggerid');
+	return $db_triggers;
 	}
 
 	function	&get_triggers_by_templateid($triggerid)
@@ -593,7 +577,7 @@
 				$fnc_valid = &$ZBX_TR_EXPR_ALLOWED_FUNCTIONS[$function];
 
 				if ( is_array($fnc_valid['item_types']) &&
-					!in_array($item['value_type'], $fnc_valid['item_types']))
+					!uint_in_array($item['value_type'], $fnc_valid['item_types']))
 				{
 					$allowed_types = array();
 					foreach($fnc_valid['item_types'] as $type)
@@ -790,13 +774,23 @@
 				get_trigger_dependences_by_triggerid($triggerid),
 				$hostid);
 
-		$host_triggers = get_triggers_by_hostid($hostid, "no");
-		while($host_trigger = DBfetch($host_triggers))
-		{
-			if($host_trigger["templateid"] != 0)				continue;
-			if(cmp_triggers($triggerid, $host_trigger["triggerid"]))	continue;
-
+		$sql='SELECT t2.triggerid, t2.expression '.
+				' FROM triggers t2, functions f1, functions f2, items i1, items i2 '.
+				' WHERE f1.triggerid='.$triggerid.
+					' AND i1.itemid=f1.itemid '.
+					' AND f2.function=f1.function '.
+					' AND f2.parameter=f1.parameter '.
+					' AND i2.itemid=f2.itemid '.
+					' AND i2.key_=i1.key_ '.
+					' AND i2.hostid='.$hostid.
+					' AND t2.triggerid=f2.triggerid '.
+					' AND t2.templateid=0 ';
+		
+		$host_triggers = DBSelect($sql);
+		while($host_trigger = DBfetch($host_triggers)){
+			if(cmp_triggers_exressions($triggerid, $host_trigger["triggerid"]))	continue;
 			// link not linked trigger with same expression
+			
 			return update_trigger(
 				$host_trigger["triggerid"],
 				NULL,	// expression
@@ -809,14 +803,13 @@
 				$copy_mode ? 0 : $triggerid);
 		}
 
-		$newtriggerid=get_dbid("triggers","triggerid");
+		$newtriggerid=get_dbid('triggers','triggerid');
 
-		$result = DBexecute("insert into triggers".
-			" (triggerid,description,priority,status,comments,url,value,expression,templateid)".
-			" values ($newtriggerid,".zbx_dbstr($trigger["description"]).",".$trigger["priority"].",".
-			$trigger["status"].",".zbx_dbstr($trigger["comments"]).",".
-			zbx_dbstr($trigger["url"]).",2,'{???:???}',".
-			($copy_mode ? 0 : $triggerid).")");
+		$result = DBexecute('INSERT INTO triggers'.
+					' (triggerid,description,priority,status,comments,url,value,expression,templateid)'.
+				' VALUES ('.$newtriggerid.','.zbx_dbstr($trigger['description']).','.$trigger['priority'].','.
+					$trigger["status"].','.zbx_dbstr($trigger["comments"]).','.
+					zbx_dbstr($trigger["url"]).",2,'{???:???}',".($copy_mode ? 0 : $triggerid).')');
 
 		if(!$result)
 			return $result;
@@ -1244,7 +1237,7 @@
 	function	expand_trigger_description($triggerid)
 	{
 		$description=expand_trigger_description_simple($triggerid);
-		$description=stripslashes(htmlspecialchars($description));
+		$description=htmlspecialchars($description);
 
 		return $description;
 	}
@@ -1499,7 +1492,7 @@
                 $db_hosts = get_hosts_by_expression($expression);
 		while($host_data = DBfetch($db_hosts))
 		{
-			if(!in_array($host_data['hostid'], $accessible_hosts)) return false;
+			if(!uint_in_array($host_data['hostid'], $accessible_hosts)) return false;
 		}
 
 		return true;
@@ -1605,12 +1598,44 @@
 		}
 		return	TRUE;
 	}
+	
+	/*
+	 * Function: cmp_triggers_exressions
+	 *
+	 * Description: 
+	 * 		Warning: function compares ONLY expressions,there is no check on functions and items
+	 *     
+	 * Author: 
+	 *     Aly
+	 *
+	 * Comments: 
+	 *
+	 */
+	function	cmp_triggers_exressions($triggerid1, $triggerid2)	// compare EXPRESSION !!!
+	{
+		$trig1 = get_trigger_by_triggerid($triggerid1);
+		$trig2 = get_trigger_by_triggerid($triggerid2);
+
+		$trig_fnc1 = get_functions_by_triggerid($triggerid1);
+		$expr1 = $trig1["expression"];
+		while($fnc1 = DBfetch($trig_fnc1)){
+			$trig_fnc2 = get_functions_by_triggerid($triggerid2);
+			while($fnc2 = DBfetch($trig_fnc2)){
+				$expr1 = str_replace(
+					"{".$fnc1["functionid"]."}",
+					"{".$fnc2["functionid"]."}",
+					$expr1);
+				break;
+			}
+		}
+		return strcmp($expr1,$trig2["expression"]);
+	}
 
 	/*
 	 * Function: cmp_triggers
 	 *
 	 * Description: 
-	 *     compate triggers by expression
+	 *     compare triggers by expression
 	 *     
 	 * Author: 
 	 *     Eugene Grigorjev (eugene.grigorjev@zabbix.com)
@@ -1675,7 +1700,7 @@
                                 $db_tmp_hosts = get_hosts_by_triggerid($trigger["templateid"]);
 				$tmp_host = DBfetch($db_tmp_hosts);
 
-				if( !in_array($tmp_host["hostid"], $templateid) )
+				if( !uint_in_array($tmp_host["hostid"], $templateid) )
 					continue;
                         }
 
@@ -1801,7 +1826,7 @@
 			$row['host'] = get_node_name_by_elid($row['hostid']).$row['host'];
 			$row['description'] = expand_trigger_description_constants($row['description'], $row);
 
-			$hosts[$row['host']] = $row['host'];
+			$hosts[strtolower($row['host'])] = $row['host'];
 			$triggers[$row['description']][$row['host']] = array(
 				'hostid'	=> $row['hostid'], 
 				'triggerid'	=> $row['triggerid'], 
@@ -1813,7 +1838,7 @@
 		{
 			return $table;
 		}
-		sort($hosts);
+		ksort($hosts);
 
 		$header=array(new CCol(S_TRIGGERS,'center'));
 		foreach($hosts as $hostname)
@@ -1831,6 +1856,7 @@
 
 				unset($tr_ov_menu);
 				$ack = null;
+				unset($style);
 				if(isset($trhosts[$hostname]))
 				{
 					unset($ack_menu);
@@ -1994,7 +2020,7 @@
 		}
 
 		$result=DBselect('select clock,value from events where objectid='.$triggerid.' and object='.EVENT_OBJECT_TRIGGER
-			.' and clock>='.$min.' and clock<='.$max);
+			.' and clock>='.$min.' and clock<='.$max.' order by clock asc');
 
 		$state		= -1;
 		$true_time	= 0;

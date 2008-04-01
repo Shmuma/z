@@ -91,7 +91,7 @@ function insert_showhint_javascript(){
 	if(defined('SHOW_HINT_SCRIPT_INSERTTED')) return;
 	define('SHOW_HINT_SCRIPT_INSERTTED', 1);
 	
-	echo '<script type"text/javascript" src="js/showhint.js"></script>';	
+	echo '<script type="text/javascript" src="js/showhint.js"></script>';	
 }
 
 function Redirect($url,$timeout=null){
@@ -106,6 +106,18 @@ function Redirect($url,$timeout=null){
 	}
 	echo '</script>';
 }
+
+function simple_js_redirect($url,$timeout=null){
+	echo '<script language="JavaScript" type="text/javascript">';
+	if( is_numeric($timeout) ) { 
+		echo 'setTimeout(\'window.location="'.$url.'"\','.($timeout*1000).')';
+	} 
+	else {
+		echo 'window.location = "'.$url.'";';
+	}
+	echo '</script>';
+}
+
 
 function	play_sound($filename){
 

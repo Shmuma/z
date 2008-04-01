@@ -17,7 +17,6 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 **/
-	require_once 	"include/db.inc.php";
 ?>
 <?php
 	function	detect_node_type($node_data)
@@ -25,8 +24,8 @@
 		global $ZBX_CURMASTERID;
 
 		if($node_data['nodeid'] == get_current_nodeid(false))		$node_type = ZBX_NODE_LOCAL;
-		else if($node_data['nodeid'] == $ZBX_CURMASTERID)		$node_type = ZBX_NODE_MASTER;
-		else if($node_data['masterid'] == get_current_nodeid(false))	$node_type = ZBX_NODE_REMOTE;
+		else if(bccomp($node_data['nodeid'] ,$ZBX_CURMASTERID)==0)		$node_type = ZBX_NODE_MASTER;
+		else if(bccomp($node_data['masterid'], get_current_nodeid(false))==0)	$node_type = ZBX_NODE_REMOTE;
 		else $node_type = -1;
 
 		return $node_type;

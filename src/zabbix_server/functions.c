@@ -68,6 +68,7 @@ void	update_functions(DB_ITEM *item)
 		function.parameter=row[1];
 		ZBX_STR2UINT64(function.itemid,row[2]);
 /*		function.itemid=atoi(row[2]); */
+/*		It is not required to check lastvalue for NULL here */
 		lastvalue=row[3];
 
 		zabbix_log( LOG_LEVEL_DEBUG, "ItemId:" ZBX_FS_UI64 " Evaluating %s(%s)",
@@ -85,7 +86,7 @@ void	update_functions(DB_ITEM *item)
 		if (ret == SUCCEED)
 		{
 			/* Update only if lastvalue differs from new one */
-			if( (lastvalue == NULL) || (strcmp(lastvalue,value) != 0))
+			if( DBis_null(lastvalue)==SUCCEED || (strcmp(lastvalue,value) != 0))
 			{
 				DBescape_string(value,value_esc,MAX_STRING_LEN);
 				DBexecute("update functions set lastvalue='%s' where itemid=" ZBX_FS_UI64 " and function='%s' and parameter='%s'",
@@ -524,9 +525,6 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 		{
 			if(GET_STR_RESULT(value))
 				DBadd_history_log(0, item->itemid,value->str,now,item->timestamp,item->eventlog_source,item->eventlog_severity);
-			DBexecute("update items set lastlogsize=%d where itemid=" ZBX_FS_UI64,
-				item->lastlogsize,
-				item->itemid);
 		}
 		else if(item->value_type==ITEM_VALUE_TYPE_TEXT)
 		{
@@ -576,11 +574,20 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 			DBescape_string(value->str, value_esc, sizeof(value_esc));
 		}
 
-		DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,lastvalue='%s',lastclock=%d where itemid=" ZBX_FS_UI64,
-			calculate_item_nextcheck(item->itemid, item->type, item->delay, item->delay_flex, now),
-			value_esc,
-			(int)now,
-			item->itemid);
+		if (item->value_type == ITEM_VALUE_TYPE_LOG) {
+			DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,lastvalue='%s',lastclock=%d,lastlogsize=%d where itemid=" ZBX_FS_UI64,
+				calculate_item_nextcheck(item->itemid, item->type, item->delay, item->delay_flex, now),
+				value_esc,
+				(int)now,
+				item->lastlogsize,
+				item->itemid);
+		} else {
+			DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,lastvalue='%s',lastclock=%d where itemid=" ZBX_FS_UI64,
+				calculate_item_nextcheck(item->itemid, item->type, item->delay, item->delay_flex, now),
+				value_esc,
+				(int)now,
+				item->itemid);
+		}
 	}
 	/* Logic for delta as speed of change */
 	else if(item->delta == ITEM_STORE_SPEED_PER_SECOND)

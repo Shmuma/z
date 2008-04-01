@@ -73,7 +73,8 @@
 					}
 					break;
 				case "ORACLE":
-					$DB = ocilogon($DB_USER, $DB_PASSWORD, $DB_DATABASE);
+					$DB = ociplogon($DB_USER, $DB_PASSWORD, $DB_DATABASE);
+/*					$DB = ocilogon($DB_USER, $DB_PASSWORD, $DB_DATABASE);*/
 					//$DB = ocilogon($DB_USER, $DB_PASSWORD, "(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=$DB_SERVER)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=$DB_DATABASE)))");
 					if(!$DB)
 					{
@@ -437,15 +438,43 @@ COpt::savesqlrequest($query);
 	
 
 /* string value prepearing */
-if(isset($DB_TYPE) && $DB_TYPE == "ORACLE") {	
-	function	zbx_dbstr($var)	{
+/* string value prepearing */
+if(isset($DB_TYPE) && $DB_TYPE == "ORACLE") {
+	function zbx_dbstr($var)	{
 		return "'".ereg_replace('\'','\'\'',$var)."'";	
 	}
-} else {			
-	function	zbx_dbstr($var)	{
-		return "'".addslashes($var)."'";
+	
+	function zbx_dbcast_2bigint($field){
+		return ' CAST('.$field.' AS NUMBER(20)) ';
 	}
 }
+else if(isset($DB_TYPE) && $DB_TYPE == "MYSQL") {
+	function zbx_dbstr($var)	{
+		return "'".mysql_real_escape_string($var)."'";
+	}
+	
+	function zbx_dbcast_2bigint($field){
+		return ' CAST('.$field.' AS UNSIGNED) ';
+	}
+}
+else if(isset($DB_TYPE) && $DB_TYPE == "POSTGRESQL") {
+	function zbx_dbstr($var)	{
+		return "'".pg_escape_string($var)."'";
+	}
+	
+	function zbx_dbcast_2bigint($field){
+		return ' CAST('.$field.' AS BIGINT) ';
+	}
+}
+else {			
+	function zbx_dbstr($var)	{
+		return "'".addslashes($var)."'";
+	}
+	
+	function zbx_dbcast_2bigint($field){
+		return ' CAST('.$field.' AS BIGINT) ';
+	}
+} 
 
 	function	zbx_dbconcat($params)
 	{
@@ -540,7 +569,7 @@ if(isset($DB_TYPE) && $DB_TYPE == "ORACLE") {
 			fatal_error('Incorrect type of "nodes" for "in_node". Passed ['.gettype($nodes).']');
 		}
 
-		return in_array(id2nodeid($id_var), $nodes);
+		return uint_in_array(id2nodeid($id_var), $nodes);
 	}
 
 	function	get_dbid($table,$field)
@@ -579,7 +608,7 @@ if(isset($DB_TYPE) && $DB_TYPE == "ORACLE") {
 			else
 			{
 				$ret1 = $row["nextid"];
-				if(($ret1 < $min) || ($ret1 >= $max)) {
+				if((bccomp($ret1,$min) < 0) || !(bccomp($ret1,$max) < 0)) {
 					DBexecute("delete from ids where nodeid=$nodeid and table_name='$table' and field_name='$field'");
 					continue;
 				}

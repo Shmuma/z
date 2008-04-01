@@ -54,13 +54,14 @@ void	zbx_db_close(void)
 	conn = NULL;
 #endif
 #ifdef	HAVE_ORACLE
-	sqlo_finish(oracle);
+	if (SQLO_SUCCESS != sqlo_finish(oracle))
+		zabbix_log(LOG_LEVEL_ERR, "Cannot finish ORACLE session");
 #endif
 #ifdef	HAVE_SQLITE3
 	sqlite_transaction_started = 0;
 	sqlite3_close(conn);
 	conn = NULL;
-	php_sem_remove(&sqlite_access);
+/*	php_sem_remove(&sqlite_access);*/
 #endif
 }
 
@@ -155,27 +156,38 @@ int	zbx_db_connect(char *host, char *user, char *password, char *dbname, char *d
 	return ret;
 #endif
 #ifdef	HAVE_ORACLE
-	char	*connect = NULL;
+	char	connect[MAX_STRING_LEN];
 
-	if (SQLO_SUCCESS != sqlo_init(SQLO_OFF, 1, 100))
-	{
+	if (SQLO_SUCCESS != sqlo_init(SQLO_OFF, 1, 100)) {
 		zabbix_log(LOG_LEVEL_ERR, "Failed to init libsqlora8");
-		exit(FAIL);
+
+		ret = ZBX_DB_FAIL;
 	}
 
-	/* login */ /* TODO: how to use port??? */
-	connect = zbx_dsprintf(connect, "%s/%s@%s", user, password, dbname);
+	if (ZBX_DB_OK == ret) {
+		zbx_strlcpy(connect, user, sizeof(connect));
 
-	if (SQLO_SUCCESS != sqlo_connect(&oracle, connect))
-	{
-		printf("Cannot login with %s\n", connect);
-		zabbix_log(LOG_LEVEL_ERR, "Cannot login with %s", connect);
-		exit(FAIL);
+		if (password && *password) {
+			zbx_strlcat(connect, "/", sizeof(connect));
+			zbx_strlcat(connect, password, sizeof(connect));
+
+			if (dbname && *dbname) {
+				zbx_strlcat(connect, "@", sizeof(connect));
+				zbx_strlcat(connect, dbname, sizeof(connect));
+			}
+		}
+
+		/* login */ /* TODO: how to use port??? */
+		if (SQLO_SUCCESS != sqlo_connect(&oracle, connect)) {
+			zabbix_log(LOG_LEVEL_ERR, "Cannot login with %s",
+					connect);
+
+			ret = ZBX_DB_FAIL;
+		}
 	}
 
-	zbx_free(connect);
-
-	sqlo_autocommit_on(oracle);
+	if (ZBX_DB_OK == ret)
+		sqlo_autocommit_on(oracle);
 
 	return ret;
 #endif
@@ -193,11 +205,11 @@ int	zbx_db_connect(char *host, char *user, char *password, char *dbname, char *d
 	/* Do not return SQLITE_BUSY immediately, wait for N ms */
 	sqlite3_busy_timeout(conn, 60*1000);
 
-	if(ZBX_MUTEX_ERROR == php_sem_get(&sqlite_access, dbname))
+/*	if(ZBX_MUTEX_ERROR == php_sem_get(&sqlite_access, dbname))
 	{
 		zbx_error("Unable to create mutex for sqlite");
 		exit(FAIL);
-	}
+	}*/
 
 	sqlite_transaction_started = 0;
 
@@ -460,14 +472,19 @@ lbl_exec:
 	{
 		if(ret == SQLITE_BUSY) goto lbl_exec; /* attention deadlock!!! */
 		
-		zabbix_log( LOG_LEVEL_ERR, "Query::%s",sql);
+		zabbix_log(LOG_LEVEL_ERR, "Query::%s",sql);
 		zabbix_log(LOG_LEVEL_ERR, "Query failed [%i]:%s", ret, error);
 		sqlite3_free(error);
-		if(!sqlite_transaction_started)
+/*		if(!sqlite_transaction_started)
 		{
 			php_sem_release(&sqlite_access);
-		}
-		ret = FAIL;
+		}*/
+		ret = ZBX_DB_FAIL;
+	}
+
+	if(ret == ZBX_DB_OK)
+	{
+		ret = sqlite3_changes(conn);
 	}
 
 	if(!sqlite_transaction_started)
@@ -580,9 +597,6 @@ DB_ROW	zbx_db_fetch(DB_RESULT result)
 #endif
 #ifdef	HAVE_ORACLE
 	int res;
-
-	/* EOF */
-	if(!result)	return NULL;
 
 	res = sqlo_fetch(result, 1);
 

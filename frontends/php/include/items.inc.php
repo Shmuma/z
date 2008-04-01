@@ -231,7 +231,7 @@
 			if(eregi('^((.)*)(\[\"((.)*)\"\,\"((.)*)\"\,\"((.)*)\"\,\"([0-9]+)\"\])$', $key, $arr))
 			{
 				$g=$arr[1];
-				if(!in_array($g,array("grpmax","grpmin","grpsum","grpavg")))
+				if(!str_in_array($g,array("grpmax","grpmin","grpsum","grpavg")))
 				{
 					error("Group function [$g] is not one of [grpmax,grpmin,grpsum,grpavg]");
 					return FALSE;
@@ -242,7 +242,7 @@
 				$g=$arr[6];
 				// Item function
 				$g=$arr[8];
-				if(!in_array($g,array("last", "min", "max", "avg", "sum","count")))
+				if(!str_in_array($g,array("last", "min", "max", "avg", "sum","count")))
 				{
 					error("Item function [$g] is not one of [last, min, max, avg, sum,count]");
 					return FALSE;
@@ -552,7 +552,7 @@
 
 				$db_tmp_item = get_item_by_itemid($db_item["templateid"]);
 
-				if ( !in_array($db_tmp_item["hostid"], $templateid) )
+				if ( !uint_in_array($db_tmp_item["hostid"], $templateid) )
 					continue;
 			}
 
@@ -863,7 +863,7 @@ COpt::profiling_start('prepare data');
 		while($row = DBfetch($result))
 		{
 			$row['host'] = get_node_name_by_elid($row['hostid']).$row['host'];
-			$hosts[$row['host']] = $row['host'];
+			$hosts[strtolower($row['host'])] = $row['host'];
 			$items[item_description($row["description"],$row["key_"])][$row['host']] = array(
 				'itemid'	=> $row['itemid'],
 				'value_type'	=> $row['value_type'],
@@ -881,7 +881,7 @@ COpt::profiling_start('prepare data');
 			return $table;
 		}
 
-		sort($hosts);
+		ksort($hosts);
 COpt::profiling_stop('prepare data');
 COpt::profiling_start('prepare table');
 		$header=array(new CCol(S_ITEMS,'center'));
@@ -1116,8 +1116,7 @@ COpt::profiling_stop('prepare table');
 	 *
 	 * Peremeters:
 	 *     itemid - item ID
-	 *     index  - 0 - last value, 1 - prev value, 2 - prev prev, and so on
-	 *     if index=0, clock is used
+	 *     last  - 0 - last value (clock is used), 1 - last value
 	 *
 	 * Author:
 	 *     Alexei Vladishev
@@ -1125,7 +1124,7 @@ COpt::profiling_stop('prepare table');
 	 * Comments:
 	 *
 	 */
-	function	item_get_history($db_item,$index = 1, $clock = 0)
+	function	item_get_history($db_item, $last = 1, $clock = 0)
 	{
 		$value = NULL;
 
@@ -1148,29 +1147,24 @@ COpt::profiling_stop('prepare table');
 			$table = "history_log";
 			break;
 		}
-		if($index == 0)
+		if ($last == 0)
 		{
-			$sql="select value from $table where itemid=".$db_item["itemid"]." and clock<=$clock order by clock desc";
-			$result = DBselect($sql, 1);
+			$sql = "select value from $table where itemid=".$db_item["itemid"]." and clock=$clock";
 			$row = DBfetch(DBselect($sql, 1));
 			if($row)
-			{
 				$value = $row["value"];
-			}
 		}
 		else
 		{
-			$sql="select value from $table where itemid=".$db_item["itemid"]." order by clock desc";
-			$result = DBselect($sql, $index);
-			$num=1;
-			while($row = DBfetch($result))
+			$sql = "select max(clock) as clock from $table where itemid=".$db_item["itemid"];
+			$row = DBfetch(DBselect($sql));
+			if ($row && !is_null($row["clock"]))
 			{
-				if($num == $index)
-				{
+				$clock = $row["clock"];
+				$sql = "select value from $table where itemid=".$db_item["itemid"]." and clock=$clock";
+				$row = DBfetch(DBselect($sql, 1));
+				if($row)
 					$value = $row["value"];
-					break;
-				}
-				$num++;
 			}
 		}
 		return $value;

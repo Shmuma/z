@@ -121,8 +121,13 @@
 #define OFF	0
 
 #define	APPLICATION_NAME	"ZABBIX Agent"
-#define	ZABBIX_REVDATE		"17 December 2007"
-#define	ZABBIX_VERSION		"1.4.4"
+#define	ZABBIX_REVDATE		"25 March 2008"
+#define	ZABBIX_VERSION		"1.4.5"
+
+#if defined(_WINDOWS)
+extern char ZABBIX_SERVICE_NAME[64];
+extern char ZABBIX_EVENT_SOURCE[64];
+#endif /* _WINDOWS */
 
 #if defined(_WINDOWS)
 /*#	pragma warning (disable: 4100)*/
@@ -458,7 +463,7 @@ typedef enum
 #define	AGENT_TIMEOUT	3
 
 #define	SENDER_TIMEOUT		5
-#define	TRAPPER_TIMEOUT		5
+#define	ZABBIX_TRAPPER_TIMEOUT	300
 #define	SNMPTRAPPER_TIMEOUT	5
 
 #ifndef MAX
@@ -517,6 +522,16 @@ typedef enum
 	ZBX_TASK_STOP_SERVICE,
 	ZBX_TASK_CHANGE_NODEID
 } zbx_task_t;
+
+#define ZBX_TASK_FLAG_MULTIPLE_AGENTS 0x01
+
+#define ZBX_TASK_EX struct zbx_task_ex
+ZBX_TASK_EX
+{
+	zbx_task_t	task;
+	int		flags;
+};
+
 
 char *string_replace(char *str, char *sub_str1, char *sub_str2);
 

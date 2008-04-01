@@ -125,7 +125,7 @@ include_once "include/page_header.php";
 
 	$allowed_item_types = array(ITEM_TYPE_ZABBIX,ITEM_TYPE_SIMPLE,ITEM_TYPE_INTERNAL,ITEM_TYPE_AGGREGATE);
 
-	if(isset($_REQUEST['itemtype']) && !in_array($_REQUEST['itemtype'], $allowed_item_types))
+	if(isset($_REQUEST['itemtype']) && !str_in_array($_REQUEST['itemtype'], $allowed_item_types))
 			unset($_REQUEST['itemtype']);
 
 	check_fields($fields);
@@ -185,12 +185,12 @@ include_once "include/page_header.php";
 	if($real_hosts)
 		array_push($validation_param, "real_hosts");
 		
-	if(in_array($srctbl,array("triggers","logitems","items")))
+	if(str_in_array($srctbl,array("triggers","logitems","items")))
 	{
 		array_push($validation_param, "always_select_first_host");
 		validate_group_with_host(PERM_READ_LIST,$validation_param);
 	}
-	elseif(in_array($srctbl,array('hosts','templates','host_templates')))
+	elseif(str_in_array($srctbl,array('hosts','templates','host_templates')))
 	{
 		validate_group(PERM_READ_LIST,$validation_param);
 	}
@@ -202,12 +202,12 @@ include_once "include/page_header.php";
 
 	if(isset($only_hostid))
 	{
-		if(!isset($_REQUEST["hostid"]) || $_REQUEST["hostid"]!=$only_hostid) access_deny();
+		if(!isset($_REQUEST["hostid"]) || (bccomp($_REQUEST["hostid"], $only_hostid) != 0)) access_deny();
 		$hostid = $only_hostid;
 	}
 	else
 	{
-		if(in_array($srctbl,array("hosts","host_group","triggers","logitems","items",'applications','screens')))
+		if(str_in_array($srctbl,array("hosts","host_group","triggers","logitems","items",'applications','screens')))
 		{
 			if(ZBX_DISTRIBUTED)
 			{
@@ -217,7 +217,7 @@ include_once "include/page_header.php";
 				while($node_data = DBfetch($db_nodes))
 				{
 					$cmbNode->AddItem($node_data['nodeid'], $node_data['name']);
-					if($nodeid == $node_data['nodeid']) $ok = true;
+					if((bccomp($nodeid , $node_data['nodeid']) == 0)) $ok = true;
 				}
 				$frmTitle->AddItem(array(SPACE,S_NODE,SPACE,$cmbNode));
 			}
@@ -225,7 +225,7 @@ include_once "include/page_header.php";
 		if(!isset($ok)) $nodeid = get_current_nodeid();
 		unset($ok);
 		
-		if(in_array($srctbl,array('hosts','templates','triggers','logitems','items','applications','host_templates')))
+		if(str_in_array($srctbl,array('hosts','templates','triggers','logitems','items','applications','host_templates')))
 		{
 			$groupid = get_request("groupid",get_profile("web.popup.groupid",0));
 			
@@ -241,14 +241,14 @@ include_once "include/page_header.php";
 			while($group = DBfetch($db_groups))
 			{
 				$cmbGroups->AddItem($group["groupid"],$group["name"]);
-				if($groupid == $group["groupid"]) $ok = true;
+				if((bccomp($groupid , $group["groupid"]) == 0)) $ok = true;
 			}
 			$frmTitle->AddItem(array(S_GROUP,SPACE,$cmbGroups));
 			update_profile("web.popup.groupid",$groupid);
 			if(!isset($ok) || $groupid == 0) unset($groupid);
 			unset($ok);
 		}
-		if(in_array($srctbl,array("help_items")))
+		if(str_in_array($srctbl,array("help_items")))
 		{
 			$itemtype = get_request("itemtype",get_profile("web.popup.itemtype",0));
 			$cmbTypes = new CComboBox("itemtype",$itemtype,"submit()");
@@ -256,7 +256,7 @@ include_once "include/page_header.php";
 				$cmbTypes->AddItem($type, item_type2str($type));
 			$frmTitle->AddItem(array(S_TYPE,SPACE,$cmbTypes));
 		}
-		if(in_array($srctbl,array("triggers","logitems","items",'applications')))
+		if(str_in_array($srctbl,array("triggers","logitems","items",'applications')))
 		{
 			$hostid = get_request("hostid",get_profile("web.popup.hostid",0));
 			$cmbHosts = new CComboBox("hostid",$hostid,"submit()");
@@ -283,7 +283,7 @@ include_once "include/page_header.php";
 			while($host = DBfetch($db_hosts))
 			{
 				$cmbHosts->AddItem($host["hostid"],$host["host"]);
-				if($hostid == $host["hostid"]) $ok = true;
+				if(bccomp($hostid , $host["hostid"]) == 0) $ok = true;
 			}
 			$frmTitle->AddItem(array(SPACE,S_HOST,SPACE,$cmbHosts));
 			update_profile("web.popup.hostid",$hostid);
@@ -291,7 +291,7 @@ include_once "include/page_header.php";
 			unset($ok);
 		}
 
-		if(in_array($srctbl,array("triggers","hosts")))
+		if(str_in_array($srctbl,array("triggers","hosts")))
 		{
 			$btnEmpty = new CButton("empty",S_EMPTY,
 				get_window_opener($dstfrm, $dstfld1, 0).
@@ -471,7 +471,7 @@ include_once "include/page_header.php";
 		$form->AddItem($table);
 		$form->Show();
 	}
-	elseif(in_array($srctbl,array("host_group")))
+	elseif(str_in_array($srctbl,array("host_group")))
 	{
 		$accessible_groups	= get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY);
 
@@ -494,7 +494,7 @@ include_once "include/page_header.php";
 		}
 		$table->Show();
 	}
-	elseif(in_array($srctbl,array('host_templates')))
+	elseif(str_in_array($srctbl,array('host_templates')))
 	{
 		$table = new CTableInfo(S_NO_TEMPLATES_DEFINED);
 		$table->SetHeader(array(S_NAME));

@@ -207,7 +207,8 @@ if(isset($_REQUEST['pservices'])){
 					' LEFT JOIN services_links sl ON s.serviceid=sl.servicedownid '.
 				' WHERE (i.hostid IS null OR i.hostid NOT IN ('.$denyed_hosts.')) '.
 					' AND '.DBin_node('s.serviceid').
-					' AND s.serviceid NOT IN ('.$childs_str.$service['serviceid'].') order by s.sortorder,s.name';
+					' AND s.serviceid NOT IN ('.$childs_str.$service['serviceid'].') '.
+				' ORDER BY s.sortorder,s.name';
 	} else {
 		$query = 'SELECT DISTINCT s.* '.
 			' FROM services s '.
@@ -284,8 +285,8 @@ if(isset($_REQUEST['cservices'])){
 					' LEFT JOIN items i on f.itemid=i.itemid '.
 					' LEFT JOIN services_links sl on s.serviceid=sl.servicedownid '.
 				' WHERE (i.hostid is null or i.hostid not in ('.$denyed_hosts.')) '.
-				' AND '.DBin_node('s.serviceid').
-				' AND s.serviceid NOT IN ('.$childs_str.$service['serviceid'].') '.
+					' AND '.DBin_node('s.serviceid').
+					' AND s.serviceid NOT IN ('.$childs_str.$service['serviceid'].') '.
 				' ORDER BY s.sortorder,s.name';
 		
 	} else {
@@ -296,7 +297,7 @@ if(isset($_REQUEST['cservices'])){
 					' LEFT JOIN items i on f.itemid=i.itemid '.
 					' LEFT JOIN services_links sl on s.serviceid=sl.servicedownid '.
 				' WHERE (i.hostid is null or i.hostid not in ('.$denyed_hosts.')) '.
-				' AND '.DBin_node('s.serviceid').
+					' AND '.DBin_node('s.serviceid').
 				' ORDER BY s.sortorder,s.name';
 	}
 	
@@ -361,7 +362,7 @@ if(isset($_REQUEST['sform'])){
 		while($new_service_time['to'] && ($new_service_time['to'] <= $new_service_time['from'])) $new_service_time['to'] += 7*24*3600;
 
 
-		if($new_service_time['to'] && !in_array($_REQUEST['service_times'], $new_service_time))
+		if($new_service_time['to'] && !str_in_array($_REQUEST['service_times'], $new_service_time))
 			array_push($_REQUEST['service_times'],$new_service_time);
 	} elseif(isset($_REQUEST["del_service_times"]) && isset($_REQUEST["rem_service_times"])){
 		$_REQUEST["service_times"] = get_request("service_times",array());
@@ -396,7 +397,7 @@ if(isset($_REQUEST['sform'])){
 				'to'=>		$db_stime['ts_to'],
 				'note'=>	$db_stime['note']
 				);
-			if(in_array($stime, $service_times)){
+			if(str_in_array($stime, $service_times)){
 				continue;
 			}
 			array_push($service_times, $stime);
@@ -441,7 +442,7 @@ if(isset($_REQUEST['sform'])){
 				'triggerid' => $db_service_data["triggerid"],
 				'soft' => $db_service_data['soft']
 			);
-			if(in_array($child,	$childs)){
+			if(str_in_array($child,	$childs)){
 				continue;
 			}
 			array_push($childs,$child);

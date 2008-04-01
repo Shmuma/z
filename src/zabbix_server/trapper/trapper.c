@@ -182,16 +182,16 @@ void	process_trapper_child(zbx_sock_t *sock)
 	gettimeofday(&tv, NULL);
 	msec = tv.tv_usec;*/
 
-/*	alarm(CONFIG_TIMEOUT);*/
+	alarm(ZABBIX_TRAPPER_TIMEOUT);
 
 	if(zbx_tcp_recv(sock, &data) != SUCCEED)
 	{
-/*		alarm(0);*/
+		alarm(0);
 		return;
 	}
 
 	process_trap(sock, data, sizeof(data));
-/*	alarm(0);*/
+	alarm(0);
 
 /*	gettimeofday(&tv, NULL);
 	zabbix_log( LOG_LEVEL_DEBUG, "Trap processed in " ZBX_FS_DBL " seconds",
@@ -200,9 +200,16 @@ void	process_trapper_child(zbx_sock_t *sock)
 
 void	child_trapper_main(int i, zbx_sock_t *s)
 {
+	struct	sigaction phan;
+
 	zabbix_log( LOG_LEVEL_DEBUG, "In child_trapper_main()");
 
 	zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Trapper]", i);
+
+	phan.sa_handler = child_signal_handler;
+	sigemptyset(&phan.sa_mask);
+	phan.sa_flags = 0;
+	sigaction(SIGALRM, &phan, NULL);
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 

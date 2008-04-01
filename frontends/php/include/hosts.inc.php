@@ -592,20 +592,20 @@ require_once "include/items.inc.php";
 		
 		$first_hostid_in_group = 0;
 
-		$allow_all_hosts = (in_array("allow_all_hosts",$options)) ? 1 : 0;
-		$always_select_first_host = in_array("always_select_first_host",$options) ? 1 : 0;
-		$only_current_node = in_array("only_current_node",$options) ? 1 : 0;
+		$allow_all_hosts = (str_in_array("allow_all_hosts",$options)) ? 1 : 0;
+		$always_select_first_host = str_in_array("always_select_first_host",$options) ? 1 : 0;
+		$only_current_node = str_in_array("only_current_node",$options) ? 1 : 0;
 
-		if(in_array("monitored_hosts",$options))
+		if(str_in_array("monitored_hosts",$options))
 			$with_host_status = " and h.status=".HOST_STATUS_MONITORED;
-		elseif(in_array('real_hosts',$options))
+		elseif(str_in_array('real_hosts',$options))
 			$with_host_status = " and h.status<>".HOST_STATUS_TEMPLATE;
 		else
 			$with_host_status = "";
 
-		if(in_array("with_monitored_items",$options)){
+		if(str_in_array("with_monitored_items",$options)){
 			$item_table = ",items i";	$with_items = " and h.hostid=i.hostid and i.status=".ITEM_STATUS_ACTIVE;
-		}else if(in_array("with_items",$options)){
+		}else if(str_in_array("with_items",$options)){
 			$item_table = ",items i";	$with_items = " and h.hostid=i.hostid";
 		} else {
 			$item_table = "";
@@ -695,8 +695,8 @@ require_once "include/items.inc.php";
 			}
 		}
 		
-		$group_correct	= ($groupid == $a_groupid) ? 1 : 0;
-		$host_correct	= ($hostid == $a_hostid) ? 1 : 0;
+		$group_correct	= (bccomp($groupid ,$a_groupid)==0) ? 1 : 0;
+		$host_correct	= (bccomp($hostid ,$a_hostid)==0) ? 1 : 0;
 		return array(
 			"groupid"	=> $groupid,
 			"group_correct"	=> $group_correct,
@@ -740,7 +740,7 @@ require_once "include/items.inc.php";
 			}
 		}
 
-		if(in_array("always_select_first_host",$options) && $_REQUEST["hostid"] == 0 && $_REQUEST["groupid"] != 0)
+		if(uint_in_array("always_select_first_host",$options) && $_REQUEST["hostid"] == 0 && $_REQUEST["groupid"] != 0)
 			$_REQUEST["hostid"] = -1;
 
 		$result = get_correct_group_and_host($_REQUEST["groupid"],$_REQUEST["hostid"], $perm, $options);
@@ -822,7 +822,7 @@ require_once "include/items.inc.php";
 
 		$host = get_host_by_hostid($hostid);
 		
-		if($applicationid==null)
+		if(is_null($applicationid))
 		{
 			$applicationid_new = get_dbid("applications","applicationid");
 			if($result = DBexecute("insert into applications (applicationid,name,hostid,templateid)".
@@ -839,7 +839,7 @@ require_once "include/items.inc.php";
 
 		if(!$result)	return $result;
 
-		if($applicationid==null)
+		if(is_null($applicationid))
 		{// create application for childs
 			$applicationid = $applicationid_new;
 
@@ -1030,7 +1030,7 @@ require_once "include/items.inc.php";
 				unset($skip);
 				if( ($tmp_app_data = get_application_by_applicationid($db_app["templateid"])) )
 				{
-					if( !in_array($tmp_app_data["hostid"], $templateid) )
+					if( !uint_in_array($tmp_app_data["hostid"], $templateid) )
 					{
 						$skip = true;
 						break;

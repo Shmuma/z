@@ -1534,7 +1534,7 @@ void	DBvacuum(void)
 void    DBescape_string(const char *str, char *to, int maxlen)
 {  /* NOTE: sync changes with 'DBdyn_escape_string' */
 	register int     i=0, ptr=0;
-#ifdef  HAVE_ORACLE
+#if defined(HAVE_ORACLE) || defined(HAVE_SQLITE3)
 #	define ZBX_DB_ESC_CH	'\''
 #else /* not HAVE_ORACLE */
 #	define ZBX_DB_ESC_CH	'\\'
@@ -1547,7 +1547,7 @@ void    DBescape_string(const char *str, char *to, int maxlen)
 		if( str[i] == '\r' ) continue;
 
 		if(	( str[i] == '\'' ) 
-#ifndef	HAVE_ORACLE
+#if !defined(HAVE_ORACLE) && !defined(HAVE_SQLITE3)
 			|| ( str[i] == '\\' )
 #endif /* not HAVE_ORACLE */
 		)
@@ -1788,35 +1788,44 @@ zbx_uint64_t DBget_maxid(char *tablename, char *fieldname)
 		if (NULL == row) {
 			DBfree_result(result);
 
-			result = DBselect("select max(%3$s) from %4$s where %3$s>="ZBX_FS_UI64" and %3$s<="ZBX_FS_UI64,
-				min,
-				max,
+			result = DBselect("select max(%s) from %s where %s between " ZBX_FS_UI64 " and " ZBX_FS_UI64,
 				fieldname,
-				tablename);
+				tablename,
+				fieldname,
+				min,
+				max);
+
 			row = DBfetch(result);
 			if(!row || SUCCEED == DBis_null(row[0]) || !*row[0])
 				ret1 = min;
 			else {
 				ZBX_STR2UINT64(ret1, row[0]);
 				if(ret1 >= max) {
-					zabbix_log(LOG_LEVEL_CRIT, "DBget_maxid: Maximum number of id's was exceeded [table:%s, field:%s, id:"ZBX_FS_UI64"]", tablename, fieldname, ret1);
+					zabbix_log(LOG_LEVEL_CRIT, "DBget_maxid: Maximum number of id's was exceeded"
+							" [table:%s, field:%s, id:" ZBX_FS_UI64 "]",
+							tablename,
+							fieldname,
+							ret1);
+
 					exit(FAIL);
 				}
 			}
 			DBfree_result(result);
 
-			dbres = DBexecute("insert into ids (nodeid,table_name,field_name,nextid) values (%d,'%s','%s',"ZBX_FS_UI64")",
-				CONFIG_NODEID,
-				tablename,
-				fieldname,
-				ret1);
+			dbres = DBexecute("insert into ids (nodeid,table_name,field_name,nextid)"
+					" values (%d,'%s','%s'," ZBX_FS_UI64 ")",
+					CONFIG_NODEID,
+					tablename,
+					fieldname,
+					ret1);
 
 			if (dbres < ZBX_DB_OK) {
 				/* reshenie problemi nevidimosti novoj zapisi, sozdannoj v parallel'noj tranzakcii */
-				DBexecute("update ids set nextid=nextid+1 where nodeid=%d and table_name='%s' and field_name='%s'",
-					CONFIG_NODEID,
-					tablename,
-					fieldname);
+				DBexecute("update ids set nextid=nextid+1 where nodeid=%d and table_name='%s'"
+						" and field_name='%s'",
+						CONFIG_NODEID,
+						tablename,
+						fieldname);
 			}
 			continue;
 		} else {
