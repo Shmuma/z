@@ -229,10 +229,14 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 		/* ITEM_VALUE_TYPE_UINT64 */
 		if( (item->value_type == ITEM_VALUE_TYPE_UINT64) && (strcmp(op,"eq") == 0))
 		{
-			result = DBselect("select count(value) from history_uint where clock>%d and value=" ZBX_FS_UI64 " and itemid=" ZBX_FS_UI64,
-				now-atoi(period),
-				zbx_atoui64(cmp_esc),
-				item->itemid);
+			if (!table)
+				zbx_snprintf (value, MAX_STRING_LEN, "%llu", HFS_get_count_u64_eq (CONFIG_HFS_PATH, item->itemid, 
+							now-atoi(period)+1, zbx_atoui64(cmp_esc)));
+			else
+				result = DBselect("select count(value) from history_uint where clock>%d and value=" ZBX_FS_UI64 " and itemid=" ZBX_FS_UI64,
+					now-atoi(period),
+					zbx_atoui64(cmp_esc),
+					item->itemid);
 		}
 		else if( (item->value_type == ITEM_VALUE_TYPE_UINT64) && (strcmp(op,"ne") == 0))
 		{

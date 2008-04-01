@@ -36,6 +36,8 @@ typedef struct hfs_meta {
     hfs_meta_item_t* meta;
 } hfs_meta_t;
 
+typedef int (*pred_fn_t) (void*, void*);
+
 
 static hfs_meta_t* read_meta (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock);
 static void free_meta (hfs_meta_t* meta);
@@ -43,7 +45,7 @@ static char* get_name (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clo
 static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len);
 static off_t find_meta_ofs (int time, hfs_meta_t* meta);
 static int get_next_data_ts (int ts);
-/* static unsigned long long get_count_generic (const char* hfs_base_dir, zbx_uint64_t itemid, int from, ); */
+static zbx_uint64_t get_count_generic (const char* hfs_base_dir, zbx_uint64_t itemid, int from, void* val, pred_fn_t pred);
 
 
 /*
@@ -123,7 +125,7 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
 	
 	/* fill missing values with FFs */
 	if (clock - ip->end - delay > delay) {
-	    lseek (fd, ip->ofs + ((ip->end - ip->start - delay)/ip->delay)*len, SEEK_SET);
+	    lseek (fd, ip->ofs + ((ip->end - ip->start)/ip->delay)*len, SEEK_SET);
 	    zabbix_log(LOG_LEVEL_DEBUG, "HFS: there are gaps of size %d items (%d bytes per item)", (clock - ip->end - delay) / delay, len);
 	    
 	    for (i = 0; i < (clock - ip->end - delay) / delay; i++)
@@ -158,10 +160,10 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
 /*
   Routine adds uint64 value to HistoryFS storage.
 */
-void HFSadd_history_uint (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, unsigned long long value, int clock)
+void HFSadd_history_uint (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, int clock)
 {
     zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_history()");
-    store_value (hfs_base_dir, itemid, clock, delay, &value, sizeof (unsigned long long));
+    store_value (hfs_base_dir, itemid, clock, delay, &value, sizeof (zbx_uint64_t));
 }
 
 
@@ -223,16 +225,16 @@ static int make_directories (const char* path)
 /*
   Routine calculates amount of items stored since timestamp
 */
-unsigned long long HFS_get_count (const char* hfs_base_dir, zbx_uint64_t itemid, int from)
+static zbx_uint64_t get_count_generic (const char* hfs_base_dir, zbx_uint64_t itemid, int from, void* val, pred_fn_t predicate)
 {
     int p_a, p_b;
     char *p_meta, *p_data;
     hfs_meta_t* meta;
     off_t ofs;
     int fd;
-    unsigned long long val, res = 0, inv = 0;
+    zbx_uint64_t value, res = 0, inv = 0;
 
-    zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_count (%s, %llu, %u)", hfs_base_dir, itemid, from);
+    zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_count_generic (%s, %llu, %u)", hfs_base_dir, itemid, from);
 
     while (1) {
 	p_meta = get_name (hfs_base_dir, itemid, from, 1);
@@ -257,10 +259,8 @@ unsigned long long HFS_get_count (const char* hfs_base_dir, zbx_uint64_t itemid,
 	
 	if (fd >= 0) {
 	    lseek (fd, ofs, SEEK_SET);
-	    while (read (fd, &val, sizeof (val)) > 0) {
-		zabbix_log(LOG_LEVEL_DEBUG, "Data %llu", val);
-		
-		if (val != (unsigned long long)0xffffffffffffffffLLU)
+	    while (read (fd, &value, sizeof (value)) > 0) {
+		if (predicate (val, &value))
 		    res++;
 		else
 		    inv++;
@@ -275,9 +275,34 @@ unsigned long long HFS_get_count (const char* hfs_base_dir, zbx_uint64_t itemid,
 	from = get_next_data_ts (from);
     }
 
-    zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_count (%s, %llu) = %llu (%llu)", hfs_base_dir, itemid, res, inv);
+    zabbix_log(LOG_LEVEL_CRIT, "get_count_generic (%s, %llu) = %llu (rejected %llu)", hfs_base_dir, itemid, res, inv);
 
     return res;
+}
+
+
+static int simple_predicate (void* a, void* b)
+{
+    return *(zbx_uint64_t*)b != (zbx_uint64_t)0xffffffffffffffffLLU;
+}
+
+
+zbx_uint64_t HFS_get_count (const char* hfs_base_dir, zbx_uint64_t itemid, int from)
+{
+    return get_count_generic (hfs_base_dir, itemid, from, NULL, &simple_predicate);
+}
+
+
+zbx_uint64_t HFS_get_count_u64_eq (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
+{
+    int eq_predicate (void* a, void* b)
+    {
+	zabbix_log(LOG_LEVEL_CRIT, "eq_pred (%llu, %llu)", *(zbx_uint64_t*)a, *(zbx_uint64_t*)b);
+	return simple_predicate (a, b) && (*(zbx_uint64_t*)a == *(zbx_uint64_t*)b);
+    }
+
+    zabbix_log(LOG_LEVEL_CRIT, "HFS_get_count_u64_eq (%s, %llu, %llu)", hfs_base_dir, itemid, value);
+    return get_count_generic (hfs_base_dir, itemid, from, &value, &eq_predicate);
 }
 
 
