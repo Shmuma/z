@@ -66,6 +66,7 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
     int fd;
     int i, j, r;
     unsigned char v = 0xff;
+    off_t size, ofs;
 
     zabbix_log(LOG_LEVEL_DEBUG, "HFS: store_value()");
 
@@ -122,18 +123,25 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
 	ip = meta->meta + (meta->blocks-1);
 	
 	fd = open (p_data, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+	size = lseek (fd, 0, SEEK_END);
+	lseek (fd, 0, SEEK_SET);
 	
 	/* fill missing values with FFs */
-	if (clock - ip->end - delay > delay) {
-	    lseek (fd, ip->ofs + ((ip->end - ip->start)/ip->delay)*len, SEEK_SET);
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS: check for gaps. Now %d, last %d, delay %d, delta %d", clock, ip->end, delay, clock - ip->end);
+	
+	if (clock - ip->end >= delay*2) {
+	    ofs = lseek (fd, ip->ofs + ((ip->end - ip->start + 2*ip->delay)/ip->delay)*len, SEEK_SET);
 	    zabbix_log(LOG_LEVEL_DEBUG, "HFS: there are gaps of size %d items (%d bytes per item)", (clock - ip->end - delay) / delay, len);
+	    zabbix_log(LOG_LEVEL_DEBUG, "HFS gaps: cur %u, size %u", ofs, size);
 	    
-	    for (i = 0; i < (clock - ip->end - delay) / delay; i++)
+	    for (i = 0; i < (clock - ip->end - ip->delay) / delay; i++)
 		for (j = 0; j < len; j++)
 		    write (fd, &v, sizeof (v));
 	}
-	else
-	    lseek (fd, ip->ofs + ((clock - ip->start)/ip->delay)*len, SEEK_SET);
+	else {
+	    ofs = lseek (fd, ip->ofs + ((clock - ip->start + ip->delay)/ip->delay)*len, SEEK_SET);
+	    zabbix_log(LOG_LEVEL_DEBUG, "HFS: cur %u, size %u", ofs, size);
+	}
 
 	write (fd, value, len);
 	close (fd);
