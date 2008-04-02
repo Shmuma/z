@@ -20,6 +20,10 @@
 #include "log.h"
 #include "hfs.h"
 
+# ifndef ULLONG_MAX
+#  define ULLONG_MAX    18446744073709551615ULL
+# endif
+
 static int make_directories (const char* path);
 
 /* internal structures */
@@ -713,7 +717,7 @@ zbx_uint64_t HFS_get_count_float_le (const char* hfs_base_dir, zbx_uint64_t item
 }
 
 
-zbx_uint64_t HFS_get_sum_sec_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int from)
+zbx_uint64_t HFS_get_sum_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
 {
     void functor (void* db, void* state)
     {
@@ -723,12 +727,16 @@ zbx_uint64_t HFS_get_sum_sec_u64 (const char* hfs_base_dir, zbx_uint64_t itemid,
 
     zbx_uint64_t sum = 0;
 
-    foldl_time (hfs_base_dir, itemid, from, &sum, functor);
+    if (seconds)
+	foldl_time (hfs_base_dir, itemid, period, &sum, functor);
+    else
+	foldl_count (hfs_base_dir, itemid, period, &sum, functor);
+
     return sum;
 }
 
 
-double HFS_get_sum_sec_float (const char* hfs_base_dir, zbx_uint64_t itemid, int from)
+double HFS_get_sum_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
 {
     void functor (void* db, void* state)
     {
@@ -738,36 +746,203 @@ double HFS_get_sum_sec_float (const char* hfs_base_dir, zbx_uint64_t itemid, int
 
     double sum = 0;
 
-    foldl_time (hfs_base_dir, itemid, from, &sum, functor);
+    if (seconds)
+	foldl_time (hfs_base_dir, itemid, period, &sum, functor);
+    else
+	foldl_count (hfs_base_dir, itemid, period, &sum, functor);
+
     return sum;
 }
 
 
-zbx_uint64_t HFS_get_sum_vals_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int count)
+double HFS_get_avg_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
+{
+    typedef struct {
+	zbx_uint64_t count, sum;
+    } state_t;
+
+    void functor (void* db, void* state)
+    {
+	if (is_valid_val (db)) {
+	    ((state_t*)state)->count++;
+	    ((state_t*)state)->sum += (*(zbx_uint64_t*)db);
+	}
+    }
+
+    state_t state;
+    state.sum = state.count = 0;
+
+    if (seconds)
+	foldl_time (hfs_base_dir, itemid, period, &state, functor);
+    else
+	foldl_count (hfs_base_dir, itemid, period, &state, functor);
+
+    return (double)state.sum / (double)state.count;
+}
+
+
+double HFS_get_avg_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
+{
+    typedef struct {
+	zbx_uint64_t count;
+	double sum;
+    } state_t;
+
+    void functor (void* db, void* state)
+    {
+	if (is_valid_val (db)) {
+	    ((state_t*)state)->count++;
+	    ((state_t*)state)->sum += (*(double*)db);
+	}
+    }
+
+    state_t state;
+    state.sum = state.count = 0;
+
+    if (seconds)
+	foldl_time (hfs_base_dir, itemid, period, &state, functor);
+    else
+	foldl_count (hfs_base_dir, itemid, period, &state, functor);
+
+    return (double)state.sum / (double)state.count;
+}
+
+
+zbx_uint64_t HFS_get_min_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
 {
     void functor (void* db, void* state)
     {
 	if (is_valid_val (db))
-	    *(zbx_uint64_t*)state += *(zbx_uint64_t*)db;
+	    if (*(zbx_uint64_t*)state > *(zbx_uint64_t*)db)
+		*(zbx_uint64_t*)state = *(zbx_uint64_t*)db;
     }
 
-    zbx_uint64_t sum = 0;
+    zbx_uint64_t min = ULLONG_MAX;
 
-    foldl_count (hfs_base_dir, itemid, count, &sum, functor);
-    return sum;
+    if (seconds)
+	foldl_time (hfs_base_dir, itemid, period, &min, functor);
+    else
+	foldl_count (hfs_base_dir, itemid, period, &min, functor);
+
+    return min;
 }
 
 
-double HFS_get_sum_vals_float (const char* hfs_base_dir, zbx_uint64_t itemid, int count)
+double HFS_get_min_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
 {
     void functor (void* db, void* state)
     {
 	if (is_valid_val (db))
-	    *(double*)state += *(double*)db;
+	    if (*(double*)state > *(double*)db)
+		*(double*)state = *(double*)db;
     }
 
-    double sum = 0;
+    double min = 1e300;
 
-    foldl_count (hfs_base_dir, itemid, count, &sum, functor);
-    return sum;
+    if (seconds)
+	foldl_time (hfs_base_dir, itemid, period, &min, functor);
+    else
+	foldl_count (hfs_base_dir, itemid, period, &min, functor);
+
+    return min;
 }
+
+
+zbx_uint64_t HFS_get_max_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
+{
+    void functor (void* db, void* state)
+    {
+	if (is_valid_val (db))
+	    if (*(zbx_uint64_t*)state < *(zbx_uint64_t*)db)
+		*(zbx_uint64_t*)state = *(zbx_uint64_t*)db;
+    }
+
+    zbx_uint64_t max = 0;
+
+    if (seconds)
+	foldl_time (hfs_base_dir, itemid, period, &max, functor);
+    else
+	foldl_count (hfs_base_dir, itemid, period, &max, functor);
+
+    return max;
+}
+
+
+double HFS_get_max_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
+{
+    void functor (void* db, void* state)
+    {
+	if (is_valid_val (db))
+	    if (*(double*)state < *(double*)db)
+		*(double*)state = *(double*)db;
+    }
+
+    double max = 0;
+
+    if (seconds)
+	foldl_time (hfs_base_dir, itemid, period, &max, functor);
+    else
+	foldl_count (hfs_base_dir, itemid, period, &max, functor);
+
+    return max;
+}
+
+
+zbx_uint64_t HFS_get_delta_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
+{
+    typedef struct {
+	zbx_uint64_t min, max;
+    } state_t;
+
+    void functor (void* db, void* state)
+    {
+	if (is_valid_val (db)) {
+	    if (((state_t*)state)->min > *(zbx_uint64_t*)db)
+		((state_t*)state)->min = *(zbx_uint64_t*)db;
+	    if (((state_t*)state)->max < *(zbx_uint64_t*)db)
+		((state_t*)state)->max = *(zbx_uint64_t*)db;
+	}
+    }
+
+    state_t state;
+    state.min = ULLONG_MAX;
+    state.max = 0;
+
+    if (seconds)
+	foldl_time (hfs_base_dir, itemid, period, &state, functor);
+    else
+	foldl_count (hfs_base_dir, itemid, period, &state, functor);
+
+    return state.max - state.min;
+}
+
+
+double HFS_get_delta_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
+{
+    typedef struct {
+	double min, max;
+    } state_t;
+
+    void functor (void* db, void* state)
+    {
+	if (is_valid_val (db)) {
+	    if (((state_t*)state)->min > *(double*)db)
+		((state_t*)state)->min = *(double*)db;
+	    if (((state_t*)state)->max < *(double*)db)
+		((state_t*)state)->max = *(double*)db;
+	}
+    }
+
+    state_t state;
+    state.min = 1e300;
+    state.max = 0;
+
+    if (seconds)
+	foldl_time (hfs_base_dir, itemid, period, &state, functor);
+    else
+	foldl_count (hfs_base_dir, itemid, period, &state, functor);
+
+    return state.max - state.min;
+}
+
+

@@ -40,9 +40,19 @@ zbx_uint64_t	HFS_get_count_float_lt (const char* hfs_base_dir, zbx_uint64_t item
 zbx_uint64_t	HFS_get_count_float_ge (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
 zbx_uint64_t	HFS_get_count_float_le (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
 
-zbx_uint64_t	HFS_get_sum_sec_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int from);
-double		HFS_get_sum_sec_float (const char* hfs_base_dir, zbx_uint64_t itemid, int from);
-zbx_uint64_t	HFS_get_sum_vals_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int count);
-double		HFS_get_sum_vals_float (const char* hfs_base_dir, zbx_uint64_t itemid, int count);
+zbx_uint64_t	HFS_get_sum_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
+double		HFS_get_sum_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
+
+double		HFS_get_avg_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
+double		HFS_get_avg_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
+
+zbx_uint64_t	HFS_get_min_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
+double		HFS_get_min_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
+
+zbx_uint64_t	HFS_get_max_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
+double		HFS_get_max_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
+
+zbx_uint64_t	HFS_get_delta_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
+double		HFS_get_delta_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
 
 #endif

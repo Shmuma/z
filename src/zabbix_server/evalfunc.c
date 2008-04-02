@@ -448,9 +448,9 @@ static int evaluate_SUM(char *value, DB_ITEM *item, int parameter, int flag)
 	{
 		if (CONFIG_HFS_PATH) {
 			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_sum_sec_u64 (CONFIG_HFS_PATH, item->itemid, now-parameter+1));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_sum_u64 (CONFIG_HFS_PATH, item->itemid, now-parameter+1, 1));
 			else
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_sum_sec_float (CONFIG_HFS_PATH, item->itemid, now-parameter+1));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_sum_float (CONFIG_HFS_PATH, item->itemid, now-parameter+1, 1));
 		}
 		else {
 			result = DBselect("select sum(value) from %s where clock>%d and itemid=" ZBX_FS_UI64,
@@ -474,9 +474,9 @@ static int evaluate_SUM(char *value, DB_ITEM *item, int parameter, int flag)
 	{
 		if (CONFIG_HFS_PATH) {
 			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_sum_vals_u64 (CONFIG_HFS_PATH, item->itemid, parameter));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_sum_u64 (CONFIG_HFS_PATH, item->itemid, parameter, 0));
 			else
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_sum_vals_float (CONFIG_HFS_PATH, item->itemid, parameter));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_sum_float (CONFIG_HFS_PATH, item->itemid, parameter, 0));
 		}
 		else {
 			zbx_snprintf(sql,sizeof(sql),"select value from %s where itemid=" ZBX_FS_UI64 " order by clock desc",
@@ -568,44 +568,60 @@ static int evaluate_AVG(char *value,DB_ITEM	*item,int parameter,int flag)
 
 	if(flag == ZBX_FLAG_SEC)
 	{
-		result = DBselect("select avg(value) from %s where clock>%d and itemid=" ZBX_FS_UI64,
-			table,
-			now-parameter,
-			item->itemid);
-
-		row = DBfetch(result);
-
-		if(!row || DBis_null(row[0])==SUCCEED)
-		{
-			zabbix_log(LOG_LEVEL_DEBUG, "Result for AVG is empty" );
-			res = FAIL;
+		if (CONFIG_HFS_PATH) {
+			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_avg_u64 (CONFIG_HFS_PATH, item->itemid, now-parameter+1, 1));
+			else
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_avg_float (CONFIG_HFS_PATH, item->itemid, now-parameter+1, 1));
 		}
-		else
-		{
-			strcpy(value,row[0]);
-			del_zeroes(value);
+		else {
+			result = DBselect("select avg(value) from %s where clock>%d and itemid=" ZBX_FS_UI64,
+				table,
+				now-parameter,
+				item->itemid);
+
+			row = DBfetch(result);
+
+			if(!row || DBis_null(row[0])==SUCCEED)
+			{
+				zabbix_log(LOG_LEVEL_DEBUG, "Result for AVG is empty" );
+				res = FAIL;
+			}
+			else
+			{
+				strcpy(value,row[0]);
+				del_zeroes(value);
+			}
 		}
 	}
 	else if(flag == ZBX_FLAG_VALUES)
 	{
-		zbx_snprintf(sql,sizeof(sql),"select value from %s where itemid=" ZBX_FS_UI64 " order by clock desc",
-			table,
-			item->itemid);
-		result = DBselectN(sql, parameter);
-		rows=0;
-		while((row=DBfetch(result)))
-		{
-			sum+=atof(row[0]);
-			rows++;
+		if (CONFIG_HFS_PATH) {
+			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_avg_u64 (CONFIG_HFS_PATH, item->itemid, parameter, 0));
+			else
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_avg_float (CONFIG_HFS_PATH, item->itemid, parameter, 0));
 		}
-		if(rows == 0)
-		{
-			zabbix_log(LOG_LEVEL_DEBUG, "Result for AVG is empty" );
-			res = FAIL;
-		}
-		else
-		{
-			zbx_snprintf(value,MAX_STRING_LEN, ZBX_FS_DBL, sum/(double)rows);
+		else {
+			zbx_snprintf(sql,sizeof(sql),"select value from %s where itemid=" ZBX_FS_UI64 " order by clock desc",
+				table,
+				item->itemid);
+			result = DBselectN(sql, parameter);
+			rows=0;
+			while((row=DBfetch(result)))
+			{
+				sum+=atof(row[0]);
+				rows++;
+			}
+			if(rows == 0)
+			{
+				zabbix_log(LOG_LEVEL_DEBUG, "Result for AVG is empty" );
+				res = FAIL;
+			}
+			else
+			{
+				zbx_snprintf(value,MAX_STRING_LEN, ZBX_FS_DBL, sum/(double)rows);
+			}
 		}
 	}
 	else
@@ -672,62 +688,78 @@ static int evaluate_MIN(char *value,DB_ITEM	*item,int parameter, int flag)
 
 	if(flag == ZBX_FLAG_SEC)
 	{
-		result = DBselect("select min(value) from %s where clock>%d and itemid=" ZBX_FS_UI64,
-			table,
-			now-parameter,
-			item->itemid);
-		row = DBfetch(result);
-		if(!row || DBis_null(row[0])==SUCCEED)
-		{
-			zabbix_log(LOG_LEVEL_DEBUG, "Result for MIN is empty" );
-			res = FAIL;
+		if (CONFIG_HFS_PATH) {
+			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_min_u64 (CONFIG_HFS_PATH, item->itemid, now-parameter+1, 1));
+			else
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_min_float (CONFIG_HFS_PATH, item->itemid, now-parameter+1, 1));
 		}
-		else
-		{
-			strcpy(value,row[0]);
-			del_zeroes(value);
+		else {
+			result = DBselect("select min(value) from %s where clock>%d and itemid=" ZBX_FS_UI64,
+				table,
+				now-parameter,
+				item->itemid);
+			row = DBfetch(result);
+			if(!row || DBis_null(row[0])==SUCCEED)
+			{
+				zabbix_log(LOG_LEVEL_DEBUG, "Result for MIN is empty" );
+				res = FAIL;
+			}
+			else
+			{
+				strcpy(value,row[0]);
+				del_zeroes(value);
+			}
 		}
 	}
 	else if(flag == ZBX_FLAG_VALUES)
 	{
-		zbx_snprintf(sql,sizeof(sql),"select value from %s where itemid=" ZBX_FS_UI64 " order by clock desc",
-			table,
-			item->itemid);
-		result = DBselectN(sql,parameter);
+		if (CONFIG_HFS_PATH) {
+			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_min_u64 (CONFIG_HFS_PATH, item->itemid, parameter, 0));
+			else
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_min_float (CONFIG_HFS_PATH, item->itemid, parameter, 0));
+		}
+		else {
+			zbx_snprintf(sql,sizeof(sql),"select value from %s where itemid=" ZBX_FS_UI64 " order by clock desc",
+				table,
+				item->itemid);
+			result = DBselectN(sql,parameter);
 
-		rows=0;
-		while((row=DBfetch(result)))
-		{
-			if(item->value_type == ITEM_VALUE_TYPE_UINT64)
+			rows=0;
+			while((row=DBfetch(result)))
 			{
-				ZBX_STR2UINT64(l,row[0]);
+				if(item->value_type == ITEM_VALUE_TYPE_UINT64)
+				{
+					ZBX_STR2UINT64(l,row[0]);
 
-				if(rows==0)		min_uint64 = l;
-				else if(l<min_uint64)	min_uint64 = l;
+					if(rows==0)		min_uint64 = l;
+					else if(l<min_uint64)	min_uint64 = l;
+				}
+				else
+				{
+					f=atof(row[0]);
+					if(rows==0)	min = f;
+					else if(f<min)	min = f;
+				}
+				rows++;
+			}
+
+			if(rows==0)
+			{
+				zabbix_log(LOG_LEVEL_DEBUG, "Result for MIN is empty" );
+				res = FAIL;
 			}
 			else
 			{
-				f=atof(row[0]);
-				if(rows==0)	min = f;
-				else if(f<min)	min = f;
-			}
-			rows++;
-		}
-
-		if(rows==0)
-		{
-			zabbix_log(LOG_LEVEL_DEBUG, "Result for MIN is empty" );
-			res = FAIL;
-		}
-		else
-		{
-			if(item->value_type == ITEM_VALUE_TYPE_UINT64)
-			{
-				zbx_snprintf(value,MAX_STRING_LEN,ZBX_FS_UI64, min_uint64);
-			}
-			else
-			{
-				zbx_snprintf(value,MAX_STRING_LEN, ZBX_FS_DBL, min);
+				if(item->value_type == ITEM_VALUE_TYPE_UINT64)
+				{
+					zbx_snprintf(value,MAX_STRING_LEN,ZBX_FS_UI64, min_uint64);
+				}
+				else
+				{
+					zbx_snprintf(value,MAX_STRING_LEN, ZBX_FS_DBL, min);
+				}
 			}
 		}
 	}
@@ -795,62 +827,78 @@ static int evaluate_MAX(char *value,DB_ITEM *item,int parameter,int flag)
 
 	if(flag == ZBX_FLAG_SEC)
 	{
-		result = DBselect("select max(value) from %s where clock>%d and itemid=" ZBX_FS_UI64,
-			table,
-			now-parameter,
-			item->itemid);
-
-		row = DBfetch(result);
-
-		if(!row || DBis_null(row[0])==SUCCEED)
-		{
-			zabbix_log(LOG_LEVEL_DEBUG, "Result for MAX is empty" );
-			res = FAIL;
+		if (CONFIG_HFS_PATH) {
+			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_max_u64 (CONFIG_HFS_PATH, item->itemid, now-parameter+1, 1));
+			else
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_max_float (CONFIG_HFS_PATH, item->itemid, now-parameter+1, 1));
 		}
-		else
-		{
-			strcpy(value,row[0]);
-			del_zeroes(value);
+		else {
+			result = DBselect("select max(value) from %s where clock>%d and itemid=" ZBX_FS_UI64,
+				table,
+				now-parameter,
+				item->itemid);
+
+			row = DBfetch(result);
+
+			if(!row || DBis_null(row[0])==SUCCEED)
+			{
+				zabbix_log(LOG_LEVEL_DEBUG, "Result for MAX is empty" );
+				res = FAIL;
+			}
+			else
+			{
+				strcpy(value,row[0]);
+				del_zeroes(value);
+			}
 		}
 	}
 	else if(flag == ZBX_FLAG_VALUES)
 	{
-		zbx_snprintf(sql,sizeof(sql),"select value from %s where itemid=" ZBX_FS_UI64 " order by clock desc",
-			table,
-			item->itemid);
-		result = DBselectN(sql,parameter);
-		rows=0;
-		while((row=DBfetch(result)))
-		{
-			if(item->value_type == ITEM_VALUE_TYPE_UINT64)
+		if (CONFIG_HFS_PATH) {
+			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_max_u64 (CONFIG_HFS_PATH, item->itemid, parameter, 0));
+			else
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_max_float (CONFIG_HFS_PATH, item->itemid, parameter, 0));
+		}
+		else {
+			zbx_snprintf(sql,sizeof(sql),"select value from %s where itemid=" ZBX_FS_UI64 " order by clock desc",
+				table,
+				item->itemid);
+			result = DBselectN(sql,parameter);
+			rows=0;
+			while((row=DBfetch(result)))
 			{
-				ZBX_STR2UINT64(l,row[0]);
+				if(item->value_type == ITEM_VALUE_TYPE_UINT64)
+				{
+					ZBX_STR2UINT64(l,row[0]);
 
-				if(rows==0)		max_uint64 = l;
-				else if(l>max_uint64)	max_uint64 = l;
+					if(rows==0)		max_uint64 = l;
+					else if(l>max_uint64)	max_uint64 = l;
+				}
+				else
+				{
+					f=atof(row[0]);
+					if(rows==0)	max=f;
+					else if(f>max)	max=f;
+				}
+				rows++;
+			}
+			if(rows == 0)
+			{
+				zabbix_log(LOG_LEVEL_DEBUG, "Result for MAX is empty" );
+				res = FAIL;
 			}
 			else
 			{
-				f=atof(row[0]);
-				if(rows==0)	max=f;
-				else if(f>max)	max=f;
-			}
-			rows++;
-		}
-		if(rows == 0)
-		{
-			zabbix_log(LOG_LEVEL_DEBUG, "Result for MAX is empty" );
-			res = FAIL;
-		}
-		else
-		{
-			if(item->value_type == ITEM_VALUE_TYPE_UINT64)
-			{
-				zbx_snprintf(value,MAX_STRING_LEN,ZBX_FS_UI64, max_uint64);
-			}
-			else
-			{
-				zbx_snprintf(value,MAX_STRING_LEN, ZBX_FS_DBL, max);
+				if(item->value_type == ITEM_VALUE_TYPE_UINT64)
+				{
+					zbx_snprintf(value,MAX_STRING_LEN,ZBX_FS_UI64, max_uint64);
+				}
+				else
+				{
+					zbx_snprintf(value,MAX_STRING_LEN, ZBX_FS_DBL, max);
+				}
 			}
 		}
 	}
@@ -920,77 +968,93 @@ static int evaluate_DELTA(char *value,DB_ITEM *item,int parameter, int flag)
 
 	if(flag == ZBX_FLAG_SEC)
 	{
-		result = DBselect("select max(value)-min(value) from %s where clock>%d and itemid=" ZBX_FS_UI64,
-			table,
-			now-parameter,
-			item->itemid);
-
-		row = DBfetch(result);
-		if(!row || DBis_null(row[0])==SUCCEED)
-		{
-			zabbix_log(LOG_LEVEL_DEBUG, "Result for DELTA is empty" );
-			res = FAIL;
+		if (CONFIG_HFS_PATH) {
+			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_delta_u64 (CONFIG_HFS_PATH, item->itemid, now-parameter+1, 1));
+			else
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_delta_float (CONFIG_HFS_PATH, item->itemid, now-parameter+1, 1));
 		}
-		else
-		{
-			strcpy(value,row[0]);
-			del_zeroes(value);
+		else {
+			result = DBselect("select max(value)-min(value) from %s where clock>%d and itemid=" ZBX_FS_UI64,
+				table,
+				now-parameter,
+				item->itemid);
+
+			row = DBfetch(result);
+			if(!row || DBis_null(row[0])==SUCCEED)
+			{
+				zabbix_log(LOG_LEVEL_DEBUG, "Result for DELTA is empty" );
+				res = FAIL;
+			}
+			else
+			{
+				strcpy(value,row[0]);
+				del_zeroes(value);
+			}
 		}
 	}
 	else if(flag == ZBX_FLAG_VALUES)
 	{
-		zbx_snprintf(sql,sizeof(sql),"select value from %s where itemid=" ZBX_FS_UI64 " order by clock desc",
-			table,
-			item->itemid);
-		result = DBselectN(sql,parameter);
-		rows=0;
-		while((row=DBfetch(result)))
-		{
-			if(item->value_type == ITEM_VALUE_TYPE_UINT64)
+		if (CONFIG_HFS_PATH) {
+			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_delta_u64 (CONFIG_HFS_PATH, item->itemid, parameter, 0));
+			else
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_delta_float (CONFIG_HFS_PATH, item->itemid, parameter, 0));
+		}
+		else {
+			zbx_snprintf(sql,sizeof(sql),"select value from %s where itemid=" ZBX_FS_UI64 " order by clock desc",
+				table,
+				item->itemid);
+			result = DBselectN(sql,parameter);
+			rows=0;
+			while((row=DBfetch(result)))
 			{
-				ZBX_STR2UINT64(l,row[0]);
+				if(item->value_type == ITEM_VALUE_TYPE_UINT64)
+				{
+					ZBX_STR2UINT64(l,row[0]);
 
-				if(rows==0)
-				{
-					max_uint64 = l;
-					min_uint64 = l;
+					if(rows==0)
+					{
+						max_uint64 = l;
+						min_uint64 = l;
+					}
+					else
+					{
+						if(l>max_uint64)	max_uint64 = l;
+						if(l<min_uint64)	min_uint64 = l;
+					}
 				}
 				else
 				{
-					if(l>max_uint64)	max_uint64 = l;
-					if(l<min_uint64)	min_uint64 = l;
+					f=atof(row[0]);
+					if(rows==0)
+					{
+						min=f;
+						max=f;
+					}
+					else
+					{
+						if(f>max)	max=f;
+						if(f<min)	min=f;
+					}
 				}
+				rows++;
+			}
+			if(rows==0)
+			{
+				zabbix_log(LOG_LEVEL_DEBUG, "Result for DELTA is empty" );
+				res = FAIL;
 			}
 			else
 			{
-				f=atof(row[0]);
-				if(rows==0)
+				if(item->value_type == ITEM_VALUE_TYPE_UINT64)
 				{
-					min=f;
-					max=f;
+					zbx_snprintf(value,MAX_STRING_LEN,ZBX_FS_UI64, max_uint64-min_uint64);
 				}
 				else
 				{
-					if(f>max)	max=f;
-					if(f<min)	min=f;
+					zbx_snprintf(value,MAX_STRING_LEN, ZBX_FS_DBL, max-min);
 				}
-			}
-			rows++;
-		}
-		if(rows==0)
-		{
-			zabbix_log(LOG_LEVEL_DEBUG, "Result for DELTA is empty" );
-			res = FAIL;
-		}
-		else
-		{
-			if(item->value_type == ITEM_VALUE_TYPE_UINT64)
-			{
-				zbx_snprintf(value,MAX_STRING_LEN,ZBX_FS_UI64, max_uint64-min_uint64);
-			}
-			else
-			{
-				zbx_snprintf(value,MAX_STRING_LEN, ZBX_FS_DBL, max-min);
 			}
 		}
 	}
