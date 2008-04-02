@@ -22,22 +22,25 @@
 #include "common.h"
 
 
-void HFSadd_history (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, double value, int clock);
-void HFSadd_history_uint (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, int clock);
-zbx_uint64_t HFS_get_count (const char* hfs_base_dir, zbx_uint64_t itemid, int from);
-zbx_uint64_t HFS_get_count_u64_eq (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
-zbx_uint64_t HFS_get_count_u64_ne (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
-zbx_uint64_t HFS_get_count_u64_gt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
-zbx_uint64_t HFS_get_count_u64_lt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
-zbx_uint64_t HFS_get_count_u64_ge (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
-zbx_uint64_t HFS_get_count_u64_le (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
+void		HFSadd_history (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, double value, int clock);
+void		HFSadd_history_uint (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, int clock);
 
-zbx_uint64_t HFS_get_count_float_eq (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
-zbx_uint64_t HFS_get_count_float_ne (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
-zbx_uint64_t HFS_get_count_float_gt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
-zbx_uint64_t HFS_get_count_float_lt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
-zbx_uint64_t HFS_get_count_float_ge (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
-zbx_uint64_t HFS_get_count_float_le (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
+zbx_uint64_t	HFS_get_count (const char* hfs_base_dir, zbx_uint64_t itemid, int from);
+zbx_uint64_t	HFS_get_count_u64_eq (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
+zbx_uint64_t	HFS_get_count_u64_ne (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
+zbx_uint64_t	HFS_get_count_u64_gt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
+zbx_uint64_t	HFS_get_count_u64_lt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
+zbx_uint64_t	HFS_get_count_u64_ge (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
+zbx_uint64_t	HFS_get_count_u64_le (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
 
+zbx_uint64_t	HFS_get_count_float_eq (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
+zbx_uint64_t	HFS_get_count_float_ne (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
+zbx_uint64_t	HFS_get_count_float_gt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
+zbx_uint64_t	HFS_get_count_float_lt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
+zbx_uint64_t	HFS_get_count_float_ge (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
+zbx_uint64_t	HFS_get_count_float_le (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
+
+zbx_uint64_t	HFS_get_sum_sec_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int from);
+double		HFS_get_sum_sec_float (const char* hfs_base_dir, zbx_uint64_t itemid, int from);
 
 #endif

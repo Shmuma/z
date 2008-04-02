@@ -539,3 +539,15 @@ zbx_uint64_t HFS_get_count_float_le (const char* hfs_base_dir, zbx_uint64_t item
 
     return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
 }
+
+
+zbx_uint64_t HFS_get_sum_sec_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int from)
+{
+    return 0;
+}
+
+
+double HFS_get_sum_sec_float (const char* hfs_base_dir, zbx_uint64_t itemid, int from)
+{
+    return 0;
+}
