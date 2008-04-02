@@ -37,6 +37,7 @@ typedef struct hfs_meta {
 } hfs_meta_t;
 
 typedef int (*pred_fn_t) (void*, void*);
+typedef void (*fold_fn_t) (void* db_val, void* state);
 
 
 static hfs_meta_t* read_meta (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock);
@@ -45,7 +46,11 @@ static char* get_name (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clo
 static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len);
 static off_t find_meta_ofs (int time, hfs_meta_t* meta);
 static int get_next_data_ts (int ts);
+static int get_prev_data_ts (int ts);
 static zbx_uint64_t get_count_generic (const char* hfs_base_dir, zbx_uint64_t itemid, int from, void* val, pred_fn_t pred);
+static void foldl_time (const char* hfs_base_dir, zbx_uint64_t itemid, int ts, void* init_res, fold_fn_t fn);
+static void foldl_count (const char* hfs_base_dir, zbx_uint64_t itemid, int count, void* init_res, fold_fn_t fn);
+static int is_valid_val (void* val);
 
 
 /*
@@ -231,23 +236,20 @@ static int make_directories (const char* path)
 
 
 /*
-  Routine calculates amount of items stored since timestamp
+  Performs folding of values of historical data into some state. We filter values according to time.
 */
-static zbx_uint64_t get_count_generic (const char* hfs_base_dir, zbx_uint64_t itemid, int from, void* val, pred_fn_t predicate)
+static void foldl_time (const char* hfs_base_dir, zbx_uint64_t itemid, int ts, void* init_res, fold_fn_t fn)
 {
-    int p_a, p_b;
-    char *p_meta, *p_data;
+    char *p_data;
     hfs_meta_t* meta;
     off_t ofs;
     int fd;
-    zbx_uint64_t value, res = 0, inv = 0;
+    zbx_uint64_t value;
 
-    zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_count_generic (%s, %llu, %u)", hfs_base_dir, itemid, from);
+    zabbix_log(LOG_LEVEL_DEBUG, "HFS_foldl_time (%s, %llu, %u)", hfs_base_dir, itemid, ts);
 
     while (1) {
-	p_meta = get_name (hfs_base_dir, itemid, from, 1);
-
-	meta = read_meta (hfs_base_dir, itemid, from);
+	meta = read_meta (hfs_base_dir, itemid, ts);
 	
 	if (!meta)
 	    break;
@@ -257,47 +259,71 @@ static zbx_uint64_t get_count_generic (const char* hfs_base_dir, zbx_uint64_t it
 	    break;
 	}
 
-	ofs = find_meta_ofs (from, meta);
+	ofs = find_meta_ofs (ts, meta);
 
-	zabbix_log(LOG_LEVEL_DEBUG, "Offset for TS %u is %u (%x) (%u)", from, ofs, ofs, time(NULL)-from);
+	zabbix_log(LOG_LEVEL_DEBUG, "Offset for TS %u is %u (%x) (%u)", ts, ofs, ofs, time(NULL)-ts);
 
 	/* open data file and count amount of valid items */
-	p_data = get_name (hfs_base_dir, itemid, from, 0);
+	p_data = get_name (hfs_base_dir, itemid, ts, 0);
 	fd = open (p_data, O_RDONLY);
 	
 	if (fd >= 0) {
 	    lseek (fd, ofs, SEEK_SET);
-	    while (read (fd, &value, sizeof (value)) > 0) {
-		if (predicate (&value, val))
-		    res++;
-		else
-		    inv++;
-	    }
+	    while (read (fd, &value, sizeof (value)) > 0)
+		fn (&value, init_res);
 	    close (fd);
 	}
 
 	free_meta (meta);
-	free (p_meta);
 	free (p_data);
 
-	from = get_next_data_ts (from);
+	ts = get_next_data_ts (ts);
     }
-
-    zabbix_log(LOG_LEVEL_DEBUG, "get_count_generic (%s, %llu) = %llu (rejected %llu)", hfs_base_dir, itemid, res, inv);
-
-    return res;
 }
 
 
-static int simple_predicate (void* a, void* b)
+/*
+  Performs folding of values of historical data into some state. We filter values according to count of values.
+*/
+static void foldl_count (const char* hfs_base_dir, zbx_uint64_t itemid, int count, void* init_res, fold_fn_t fn)
 {
-    return *(zbx_uint64_t*)a != (zbx_uint64_t)0xffffffffffffffffLLU;
+    char *p_data;
+    int fd, ts = time (NULL)-1;
+    zbx_uint64_t value;
+    off_t ofs;
+
+    zabbix_log(LOG_LEVEL_DEBUG, "HFS_foldl_count (%s, %llu, %u)", hfs_base_dir, itemid, count);
+
+    while (count > 0) {
+	p_data = get_name (hfs_base_dir, itemid, ts, 0);
+	fd = open (p_data, O_RDONLY);
+	
+	if (fd < 0)
+	    return;
+
+	ofs = lseek (fd, 0, SEEK_END);
+
+	while (ofs && count > 0) {
+	    ofs = lseek (fd, ofs - sizeof (double), SEEK_SET);
+	    read (fd, &value, sizeof (value));
+	    if (is_valid_val (&value)) {
+		fn (&value, init_res);
+		count--;
+	    }
+	}
+
+	close (fd);
+	free (p_data);
+
+	ts = get_prev_data_ts (ts);
+    }
 }
 
 
-zbx_uint64_t HFS_get_count (const char* hfs_base_dir, zbx_uint64_t itemid, int from)
+
+static int is_valid_val (void* val)
 {
-    return get_count_generic (hfs_base_dir, itemid, from, NULL, &simple_predicate);
+    return *(zbx_uint64_t*)val != (zbx_uint64_t)0xffffffffffffffffLLU;
 }
 
 
@@ -405,149 +431,343 @@ static off_t find_meta_ofs (int time, hfs_meta_t* meta)
 
 static int get_next_data_ts (int ts)
 {
-    return (ts / 1000000+1) * 1000000;
+    return (ts / 1000000 + 1) * 1000000;
+}
+
+
+static int get_prev_data_ts (int ts)
+{
+    return (ts / 1000000 - 1) * 1000000;
+}
+
+
+zbx_uint64_t HFS_get_count (const char* hfs_base_dir, zbx_uint64_t itemid, int from)
+{
+    void functor (void* db, void* state)
+    {
+	if (is_valid_val (db))
+	    (*(zbx_uint64_t*)state)++;
+    }
+
+    zbx_uint64_t val = 0;
+    foldl_time (hfs_base_dir, itemid, from, &val, functor);
+    return val;
 }
 
 
 zbx_uint64_t HFS_get_count_u64_eq (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
 {
-    int predicate (void* a, void* b)
+    typedef struct {
+	zbx_uint64_t val, count;
+    } state_t;
+
+    void functor (void* db, void* state)
     {
-	return simple_predicate (a, b) && (*(zbx_uint64_t*)a == *(zbx_uint64_t*)b);
+	if (is_valid_val (db) && *(zbx_uint64_t*)db == ((state_t*)state)->val)
+	    ((state_t*)state)->count++;
     }
 
-    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+    state_t state;
+    state.val = value;
+    state.count = 0;
+
+    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    return state.count;
 }
 
 
 zbx_uint64_t HFS_get_count_u64_ne (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
 {
-    int predicate (void* a, void* b)
+    typedef struct {
+	zbx_uint64_t val, count;
+    } state_t;
+
+    void functor (void* db, void* state)
     {
-	return simple_predicate (a, b) && (*(zbx_uint64_t*)a != *(zbx_uint64_t*)b);
+	if (is_valid_val (db) && *(zbx_uint64_t*)db != ((state_t*)state)->val)
+	    ((state_t*)state)->count++;
     }
 
-    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+    state_t state;
+    state.val = value;
+    state.count = 0;
+
+    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    return state.count;
 }
 
 
 zbx_uint64_t HFS_get_count_u64_gt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
 {
-    int predicate (void* a, void* b)
+    typedef struct {
+	zbx_uint64_t val, count;
+    } state_t;
+
+    void functor (void* db, void* state)
     {
-	return simple_predicate (a, b) && (*(zbx_uint64_t*)a > *(zbx_uint64_t*)b);
+	if (is_valid_val (db) && *(zbx_uint64_t*)db > ((state_t*)state)->val)
+	    ((state_t*)state)->count++;
     }
 
-    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+    state_t state;
+    state.val = value;
+    state.count = 0;
+
+    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    return state.count;
 }
 
 
 zbx_uint64_t HFS_get_count_u64_lt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
 {
-    int predicate (void* a, void* b)
+    typedef struct {
+	zbx_uint64_t val, count;
+    } state_t;
+
+    void functor (void* db, void* state)
     {
-	return simple_predicate (a, b) && (*(zbx_uint64_t*)a < *(zbx_uint64_t*)b);
+	if (is_valid_val (db) && *(zbx_uint64_t*)db < ((state_t*)state)->val)
+	    ((state_t*)state)->count++;
     }
 
-    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+    state_t state;
+    state.val = value;
+    state.count = 0;
+
+    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    return state.count;
 }
 
 
 zbx_uint64_t HFS_get_count_u64_ge (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
 {
-    int predicate (void* a, void* b)
+    typedef struct {
+	zbx_uint64_t val, count;
+    } state_t;
+
+    void functor (void* db, void* state)
     {
-	return simple_predicate (a, b) && (*(zbx_uint64_t*)a >= *(zbx_uint64_t*)b);
+	if (is_valid_val (db) && *(zbx_uint64_t*)db >= ((state_t*)state)->val)
+	    ((state_t*)state)->count++;
     }
 
-    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+    state_t state;
+    state.val = value;
+    state.count = 0;
+
+    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    return state.count;
 }
 
 
 zbx_uint64_t HFS_get_count_u64_le (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
 {
-    int predicate (void* a, void* b)
+    typedef struct {
+	zbx_uint64_t val, count;
+    } state_t;
+
+    void functor (void* db, void* state)
     {
-	return simple_predicate (a, b) && (*(zbx_uint64_t*)a <= *(zbx_uint64_t*)b);
+	if (is_valid_val (db) && *(zbx_uint64_t*)db <= ((state_t*)state)->val)
+	    ((state_t*)state)->count++;
     }
 
-    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+    state_t state;
+    state.val = value;
+    state.count = 0;
+
+    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    return state.count;
 }
 
 
 zbx_uint64_t HFS_get_count_float_eq (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value)
 {
-    int predicate (void* a, void* b)
+    typedef struct {
+	double val;
+	zbx_uint64_t count;
+    } state_t;
+
+    void functor (void* db, void* state)
     {
-	return simple_predicate (a, b) && (*(double*)a+0.00001 > *(double*)b) && (*(double*)a-0.00001 < *(double*)b);
+	if (is_valid_val (db) && *(double*)db+0.00001 > ((state_t*)state)->val && *(double*)db-0.00001 < ((state_t*)state)->val)
+	    ((state_t*)state)->count++;
     }
 
-    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+    state_t state;
+    state.val = value;
+    state.count = 0;
+
+    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    return state.count;
 }
 
 
 zbx_uint64_t HFS_get_count_float_ne (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value)
 {
-    int predicate (void* a, void* b)
+    typedef struct {
+	double val;
+	zbx_uint64_t count;
+    } state_t;
+
+    void functor (void* db, void* state)
     {
-	return simple_predicate (a, b) && ((*(double*)a+0.00001 < *(double*)b) || (*(double*)a-0.00001 > *(double*)b));
+	if (is_valid_val (db) && (*(double*)db+0.00001 < ((state_t*)state)->val || *(double*)db-0.00001 > ((state_t*)state)->val))
+	    ((state_t*)state)->count++;
     }
 
-    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+    state_t state;
+    state.val = value;
+    state.count = 0;
+
+    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    return state.count;
 }
 
 
 zbx_uint64_t HFS_get_count_float_gt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value)
 {
-    int predicate (void* a, void* b)
+    typedef struct {
+	double val;
+	zbx_uint64_t count;
+    } state_t;
+
+    void functor (void* db, void* state)
     {
-	return simple_predicate (a, b) && (*(double*)a > *(double*)b);
+	if (is_valid_val (db) && *(double*)db > ((state_t*)state)->val)
+	    ((state_t*)state)->count++;
     }
 
-    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+    state_t state;
+    state.val = value;
+    state.count = 0;
+
+    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    return state.count;
 }
 
 
 zbx_uint64_t HFS_get_count_float_lt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value)
 {
-    int predicate (void* a, void* b)
+    typedef struct {
+	double val;
+	zbx_uint64_t count;
+    } state_t;
+
+    void functor (void* db, void* state)
     {
-	return simple_predicate (a, b) && (*(double*)a < *(double*)b);
+	if (is_valid_val (db) && *(double*)db < ((state_t*)state)->val)
+	    ((state_t*)state)->count++;
     }
 
-    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+    state_t state;
+    state.val = value;
+    state.count = 0;
+
+    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    return state.count;
 }
 
 
 zbx_uint64_t HFS_get_count_float_ge (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value)
 {
-    int predicate (void* a, void* b)
+    typedef struct {
+	double val;
+	zbx_uint64_t count;
+    } state_t;
+
+    void functor (void* db, void* state)
     {
-	return simple_predicate (a, b) && (*(double*)a >= *(double*)b);
+	if (is_valid_val (db) && *(double*)db >= ((state_t*)state)->val)
+	    ((state_t*)state)->count++;
     }
 
-    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+    state_t state;
+    state.val = value;
+    state.count = 0;
+
+    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    return state.count;
 }
 
 
 zbx_uint64_t HFS_get_count_float_le (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value)
 {
-    int predicate (void* a, void* b)
+    typedef struct {
+	double val;
+	zbx_uint64_t count;
+    } state_t;
+
+    void functor (void* db, void* state)
     {
-	return simple_predicate (a, b) && (*(double*)a <= *(double*)b);
+	if (is_valid_val (db) && *(double*)db <= ((state_t*)state)->val)
+	    ((state_t*)state)->count++;
     }
 
-    return get_count_generic (hfs_base_dir, itemid, from, &value, &predicate);
+    state_t state;
+    state.val = value;
+    state.count = 0;
+
+    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    return state.count;
 }
 
 
 zbx_uint64_t HFS_get_sum_sec_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int from)
 {
-    return 0;
+    void functor (void* db, void* state)
+    {
+	if (is_valid_val (db))
+	    *(zbx_uint64_t*)state += *(zbx_uint64_t*)db;
+    }
+
+    zbx_uint64_t sum = 0;
+
+    foldl_time (hfs_base_dir, itemid, from, &sum, functor);
+    return sum;
 }
 
 
 double HFS_get_sum_sec_float (const char* hfs_base_dir, zbx_uint64_t itemid, int from)
 {
-    return 0;
+    void functor (void* db, void* state)
+    {
+	if (is_valid_val (db))
+	    *(double*)state += *(double*)db;
+    }
+
+    double sum = 0;
+
+    foldl_time (hfs_base_dir, itemid, from, &sum, functor);
+    return sum;
+}
+
+
+zbx_uint64_t HFS_get_sum_vals_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int count)
+{
+    void functor (void* db, void* state)
+    {
+	if (is_valid_val (db))
+	    *(zbx_uint64_t*)state += *(zbx_uint64_t*)db;
+    }
+
+    zbx_uint64_t sum = 0;
+
+    foldl_count (hfs_base_dir, itemid, count, &sum, functor);
+    return sum;
+}
+
+
+double HFS_get_sum_vals_float (const char* hfs_base_dir, zbx_uint64_t itemid, int count)
+{
+    void functor (void* db, void* state)
+    {
+	if (is_valid_val (db))
+	    *(double*)state += *(double*)db;
+    }
+
+    double sum = 0;
+
+    foldl_count (hfs_base_dir, itemid, count, &sum, functor);
+    return sum;
 }

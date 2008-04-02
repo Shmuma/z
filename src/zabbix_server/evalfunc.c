@@ -472,33 +472,41 @@ static int evaluate_SUM(char *value, DB_ITEM *item, int parameter, int flag)
 	}
 	else if(flag == ZBX_FLAG_VALUES)
 	{
-		zbx_snprintf(sql,sizeof(sql),"select value from %s where itemid=" ZBX_FS_UI64 " order by clock desc",
-			table,
-			item->itemid);
-		result = DBselectN(sql, parameter);
-		if(item->value_type == ITEM_VALUE_TYPE_UINT64)
-		{
-			while((row=DBfetch(result)))
-			{
-				ZBX_STR2UINT64(value_uint64,row[0]);
-				sum_uint64+=value_uint64;
-				rows++;
-			}
-			if(rows>0)	zbx_snprintf(value,MAX_STRING_LEN,ZBX_FS_UI64, sum_uint64);
+		if (CONFIG_HFS_PATH) {
+			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_sum_vals_u64 (CONFIG_HFS_PATH, item->itemid, parameter));
+			else
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_sum_vals_float (CONFIG_HFS_PATH, item->itemid, parameter));
 		}
-		else
-		{
-			while((row=DBfetch(result)))
+		else {
+			zbx_snprintf(sql,sizeof(sql),"select value from %s where itemid=" ZBX_FS_UI64 " order by clock desc",
+				table,
+				item->itemid);
+			result = DBselectN(sql, parameter);
+			if(item->value_type == ITEM_VALUE_TYPE_UINT64)
 			{
-				sum+=atof(row[0]);
-				rows++;
+				while((row=DBfetch(result)))
+				{
+					ZBX_STR2UINT64(value_uint64,row[0]);
+					sum_uint64+=value_uint64;
+					rows++;
+				}
+				if(rows>0)	zbx_snprintf(value,MAX_STRING_LEN,ZBX_FS_UI64, sum_uint64);
 			}
-			if(rows>0)	zbx_snprintf(value,MAX_STRING_LEN, ZBX_FS_DBL, sum);
-		}
-		if(0 == rows)
-		{
-			zabbix_log(LOG_LEVEL_DEBUG, "Result for SUM is empty" );
-			res = FAIL;
+			else
+			{
+				while((row=DBfetch(result)))
+				{
+					sum+=atof(row[0]);
+					rows++;
+				}
+				if(rows>0)	zbx_snprintf(value,MAX_STRING_LEN, ZBX_FS_DBL, sum);
+			}
+			if(0 == rows)
+			{
+				zabbix_log(LOG_LEVEL_DEBUG, "Result for SUM is empty" );
+				res = FAIL;
+			}
 		}
 	}
 	else

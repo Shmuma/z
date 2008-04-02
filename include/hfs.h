@@ -42,5 +42,7 @@ zbx_uint64_t	HFS_get_count_float_le (const char* hfs_base_dir, zbx_uint64_t item
 
 zbx_uint64_t	HFS_get_sum_sec_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int from);
 double		HFS_get_sum_sec_float (const char* hfs_base_dir, zbx_uint64_t itemid, int from);
+zbx_uint64_t	HFS_get_sum_vals_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int count);
+double		HFS_get_sum_vals_float (const char* hfs_base_dir, zbx_uint64_t itemid, int count);
 
 #endif
