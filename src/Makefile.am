@@ -20,5 +20,6 @@ endif
 
 SUBDIRS = \
 	libs \
+	php5-zabbix \
 	$(AGENT_SUBDIRS) \
 	$(SERVER_SUBDIRS)
