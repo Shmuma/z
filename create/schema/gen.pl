@@ -201,7 +201,7 @@ sub newstate
                             print "create or replace trigger zabbix.trau_${table_name} after update on zabbix.${table_name} for each row\n".
                                 "begin\nReplicate2MySQL.RunSQL\n(\n";
                             print "'update ${table_name} set '\n";
-                            print "${tr_upd}' where ${tr_pk_field}=||:old.${tr_pk_field}\n";
+                            print "${tr_upd}' where ${tr_pk_field}='||:old.${tr_pk_field}\n";
                             print ");\nend;\n/\n";
 
                             # delete trigger
