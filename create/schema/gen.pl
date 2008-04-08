@@ -137,6 +137,34 @@ $copy_asis = ":new.field||''";
 );
 
 
+$oracle_copy{"before"} = "
+create or replace and compile java source named system.\"TReplicate2MySQL\" as
+import java.io.*;
+import java.sql.*;
+import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
+
+public class TReplicate2MySQL
+{
+ public static void RunSQL
+ (
+   String csqlCmd
+ ) throws java.sql.SQLException
+ {
+   MysqlDataSource dsrTgt;
+   dsrTgt = new MysqlDataSource();
+   dsrTgt.setURL(\"jdbc:mysql://monitor-eto.yandex.net/zabbix?user=ztop&password=oracle\");
+   Connection ssnTgt = dsrTgt.getConnection();
+   PreparedStatement qryInsertHost = ssnTgt.prepareStatement
+   (
+     csqlCmd
+   );
+   qryInsertHost.execute();
+   ssnTgt.close();
+ }
+}
+/
+";
+
 %postgresql=("t_bigint"	=>	"bigint",
 	"database"	=>	"postgresql",
 	"before"	=>	"",
@@ -200,14 +228,14 @@ sub newstate
                             # update trigger
                             print "create or replace trigger zabbix.trau_${table_name} after update on zabbix.${table_name} for each row\n".
                                 "begin\nReplicate2MySQL.RunSQL\n(\n";
-                            print "'update ${table_name} set '\n";
+                            print "'update zabbix.${table_name} set '\n";
                             print "${tr_upd}' where ${tr_pk_field}='||:old.${tr_pk_field}\n";
                             print ");\nend;\n/\n";
 
                             # delete trigger
                             print "create or replace trigger zabbix.trad_${table_name} after delete on zabbix.${table_name} for each row\n".
                                 "begin\nReplicate2MySQL.RunSQL\n(\n".
-                                "'delete from hosts '\n||' where ${tr_pk_field}='||:old.${tr_pk_field}\n);\nend;\n/\n";
+                                "'delete from zabbix.${table_name} '\n||' where ${tr_pk_field}='||:old.${tr_pk_field}\n);\nend;\n/\n";
                         }
 
                         if($output{"type"} ne "triggers" && $new eq "field") { print ",\n" }
