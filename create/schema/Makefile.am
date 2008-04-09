@@ -6,5 +6,6 @@ dist-hook:
 	$(srcdir)/gen.pl postgresql > $(distdir)/postgresql.sql
 	$(srcdir)/gen.pl sqlite > $(distdir)/sqlite.sql
 	$(srcdir)/gen.pl oracle > $(distdir)/oracle.sql
+	$(srcdir)/gen.pl oracle_copy > $(distdir)/oracle_copy.sql
 	$(srcdir)/gen.pl c > $(top_distdir)/include/dbsync.h
 
