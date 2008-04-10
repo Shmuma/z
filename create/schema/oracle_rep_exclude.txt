@@ -10,3 +10,4 @@ history_str
 history_log
 history_text
 trends
+sessions
