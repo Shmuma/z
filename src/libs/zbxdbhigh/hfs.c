@@ -26,10 +26,18 @@
 
 static int make_directories (const char* path);
 
+
+typedef enum {
+    IT_UINT64 = 0,
+    IT_DOUBLE,
+} item_type_t;
+
+
 /* internal structures */
 typedef struct hfs_meta_item {
     time_t start, end;
     int delay;
+    item_type_t type;
     off_t ofs;
 } hfs_meta_item_t;
 
@@ -37,21 +45,20 @@ typedef struct hfs_meta_item {
 typedef struct hfs_meta {
     int blocks;
     int last_delay;
+    item_type_t last_type;
     hfs_meta_item_t* meta;
 } hfs_meta_t;
 
-typedef int (*pred_fn_t) (void*, void*);
 typedef void (*fold_fn_t) (void* db_val, void* state);
 
 
 static hfs_meta_t* read_meta (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock);
 static void free_meta (hfs_meta_t* meta);
 static char* get_name (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock, int meta);
-static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len);
+static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len, item_type_t type);
 static off_t find_meta_ofs (int time, hfs_meta_t* meta);
 static int get_next_data_ts (int ts);
 static int get_prev_data_ts (int ts);
-static zbx_uint64_t get_count_generic (const char* hfs_base_dir, zbx_uint64_t itemid, int from, void* val, pred_fn_t pred);
 static void foldl_time (const char* hfs_base_dir, zbx_uint64_t itemid, int ts, void* init_res, fold_fn_t fn);
 static void foldl_count (const char* hfs_base_dir, zbx_uint64_t itemid, int count, void* init_res, fold_fn_t fn);
 static int is_valid_val (void* val);
@@ -63,11 +70,11 @@ static int is_valid_val (void* val);
 void HFSadd_history (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, double value, int clock)
 {
     zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_history()");
-    store_value (hfs_base_dir, itemid, clock, delay, &value, sizeof (double));
+    store_value (hfs_base_dir, itemid, clock, delay, &value, sizeof (double), IT_DOUBLE);
 }
 
 
-static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len)
+static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len, item_type_t type)
 {
     char *p_meta, *p_data;
     hfs_meta_item_t item, *ip;
@@ -88,7 +95,7 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
     zabbix_log(LOG_LEVEL_DEBUG, "HFS: meta read: delays: %d %d, blocks %d", meta->last_delay, delay, meta->blocks);
 
     /* should we start a new block? */
-    if (meta->last_delay != delay) {
+    if (meta->last_delay != delay || type != meta->last_type) {
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: appending new block for item %llu", itemid);
 	item.start = item.end = clock;
 
@@ -106,17 +113,20 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
 	fd = open (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
 	meta->blocks++;
 	meta->last_delay = delay;
+        meta->last_type = type;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: blocks <- %u", meta->blocks);
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: delay <- %u", meta->last_delay);
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS: type <- %u", meta->last_type);
 
 	write (fd, &meta->blocks, sizeof (meta->blocks));
 	write (fd, &meta->last_delay, sizeof (meta->last_delay));
+	write (fd, &meta->last_type, sizeof (meta->last_type));
 	lseek (fd, sizeof (hfs_meta_item_t)*(meta->blocks-1), SEEK_CUR);
 	write (fd, &item, sizeof (item));
 	close (fd);
 
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS: block metadata updated %d, %d: %u, %u, %d, %llu", meta->blocks, meta->last_delay,
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS: block metadata updated %d, %d, %d: %u, %u, %d, %llu", meta->blocks, meta->last_delay, meta->last_type,
 		   item.start, item.end, item.delay, item.ofs);
 
 	/* append data */
@@ -160,7 +170,7 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
 
 	fd = open (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
 
-	lseek (fd, sizeof (meta->blocks) * 2 + sizeof (hfs_meta_item_t) * (meta->blocks-1), SEEK_SET);
+	lseek (fd, sizeof (meta->blocks) * 3 + sizeof (hfs_meta_item_t) * (meta->blocks-1), SEEK_SET);
 	write (fd, ip, sizeof (hfs_meta_item_t));
 	close (fd);
     }
@@ -180,7 +190,7 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
 void HFSadd_history_uint (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, int clock)
 {
     zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_history()");
-    store_value (hfs_base_dir, itemid, clock, delay, &value, sizeof (zbx_uint64_t));
+    store_value (hfs_base_dir, itemid, clock, delay, &value, sizeof (zbx_uint64_t), IT_UINT64);
 }
 
 
@@ -354,6 +364,7 @@ static hfs_meta_t* read_meta (const char* hfs_base_dir, zbx_uint64_t itemid, tim
 	zabbix_log(LOG_LEVEL_DEBUG, "file open failed: %s", path);
 	res->blocks = 0;
 	res->last_delay = 0;
+        res->last_type = IT_DOUBLE;
 	res->meta = NULL;
 	free (path);
 	return res;
@@ -363,6 +374,7 @@ static hfs_meta_t* read_meta (const char* hfs_base_dir, zbx_uint64_t itemid, tim
 
     fread (&res->blocks, sizeof (res->blocks), 1, f);
     fread (&res->last_delay, sizeof (res->last_delay), 1, f);
+    fread (&res->last_type, sizeof (res->last_type), 1, f);
 
     res->meta = (hfs_meta_item_t*)malloc (sizeof (hfs_meta_item_t)*res->blocks);
 
