@@ -21,9 +21,15 @@
 
 #include "common.h"
 
+#define alloc_item_values 1000
+typedef struct hfs_item_value {
+    time_t		ts;
+    zbx_uint64_t	value;
+} hfs_item_value_t;
 
 void		HFSadd_history (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, double value, int clock);
 void		HFSadd_history_uint (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, int clock);
+size_t		HFSread_item (const char* hfs_base_dir, zbx_uint64_t itemid, time_t ts, time_t to_ts, hfs_item_value_t **result);
 
 zbx_uint64_t	HFS_get_count (const char* hfs_base_dir, zbx_uint64_t itemid, int from);
 zbx_uint64_t	HFS_get_count_u64_eq (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
