@@ -170,6 +170,8 @@ as
   procedure RunSQL(csqlCmd in varchar2) as language java name 'TReplicate2MySQL.RunSQL(java.lang.String)';
 end;
 /
+grant execute on replicate2mysql to zabbix;
+/
 ";
 
 %postgresql=("t_bigint"	=>	"bigint",
