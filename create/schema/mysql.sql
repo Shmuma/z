@@ -514,6 +514,7 @@ CREATE TABLE items (
 	valuemapid		bigint unsigned		DEFAULT '0'	NOT NULL,
 	delay_flex		varchar(255)		DEFAULT ''	NOT NULL,
 	params		text		DEFAULT ''	NOT NULL,
+	siteid		bigint unsigned		DEFAULT '0'	NOT NULL,
 	PRIMARY KEY (itemid)
 ) type=InnoDB;
 CREATE UNIQUE INDEX items_1 on items (hostid,key_);

@@ -514,6 +514,7 @@ CREATE TABLE items (
 	valuemapid		number(20)		DEFAULT '0'	NOT NULL,
 	delay_flex		varchar2(255)		DEFAULT ''	,
 	params		varchar2(2048)		DEFAULT ''	,
+	siteid		number(20)		DEFAULT '0'	NOT NULL,
 	PRIMARY KEY (itemid)
 );
 CREATE UNIQUE INDEX items_1 on items (hostid,key_);
