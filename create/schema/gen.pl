@@ -231,7 +231,7 @@ sub newstate
                                 "begin\nReplicate2MySQL.RunSQL\n(\n";
                             print "'insert into ${table_name} (".(join ",", @tr_fields).") values ('\n";
                             print "${tr_ins}\n";
-                            print "||')'\n);\nend;\n/\n";
+                            print "||')'\n);\nend;\n/\nshow errors\n";
 
                             # update trigger
                             print "create or replace trigger zabbix.trau_${table_name} after update on zabbix.${table_name} for each row\n".
@@ -248,7 +248,7 @@ sub newstate
                                 }
                                 $op = "|| ' and ";
                             }
-                            print ");\nend;\n/\n";
+                            print ");\nend;\n/\nshow errors\n";
 
                             # delete trigger
                             print "create or replace trigger zabbix.trad_${table_name} after delete on zabbix.${table_name} for each row\n".
@@ -265,7 +265,7 @@ sub newstate
                                 }
                                 $op = "|| ' and ";
                             }
-                            print "\n);\nend;\n/\n";
+                            print "\n);\nend;\n/\nshow errors\n";
                         }
 
                         if($output{"type"} ne "triggers" && $new eq "field") { print ",\n" }
