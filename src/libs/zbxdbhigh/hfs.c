@@ -98,6 +98,7 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
     if (meta->last_delay != delay || type != meta->last_type) {
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: appending new block for item %llu", itemid);
 	item.start = item.end = clock;
+        item.type = type;
 
 	/* analyze current value */
 	item.delay = delay;
