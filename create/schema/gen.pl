@@ -112,8 +112,8 @@ static	ZBX_TABLE	tables[]={
 	"t_item_param"	=>	"varchar2(2048)"
 );
 
-$copy_conv = "Nvl(To_Char(:new.field),'null')||";
-$copy_asis = ":new.field||''";
+$copy_conv = "Nvl(To_Char(:new.field),'null')";
+$copy_asis = ":new.field||''''";
 
 %oracle_copy=(
 	"t_bigint"	=>	"copy_conv",
@@ -138,6 +138,8 @@ $copy_asis = ":new.field||''";
 
 
 $oracle_copy{"before"} = "
+set define off
+
 create or replace and compile java source named system.\"TReplicate2MySQL\" as
 import java.io.*;
 import java.sql.*;
@@ -162,6 +164,13 @@ public class TReplicate2MySQL
    ssnTgt.close();
  }
 }
+/
+create or replace package system.Replicate2MySQL
+as
+  procedure RunSQL(csqlCmd in varchar2) as language java name 'TReplicate2MySQL.RunSQL(java.lang.String)';
+end;
+/
+grant execute on replicate2mysql to zabbix;
 /
 ";
 
@@ -216,38 +225,49 @@ sub newstate
 			if($output{"type"} eq "sql" && $new eq "index") { print $pkey; }
 			if($output{"type"} eq "sql" && $new eq "table") { print $pkey; }
 			if($output{"type"} eq "code" && $new eq "table") { print ",\n\t\t{0}\n\t\t}\n\t},\n"; }
-			if($output{"type"} eq "triggers" && $new eq "table" && !defined ($oracle_exc{$table_name}))
+
+			if($output{"type"} eq "triggers" && $new ne "field" && !defined ($oracle_exc{$table_name}))
                         {
                             # insert trigger
                             print "create or replace trigger zabbix.trai_${table_name} after insert on zabbix.${table_name} for each row\n".
                                 "begin\nReplicate2MySQL.RunSQL\n(\n";
                             print "'insert into ${table_name} (".(join ",", @tr_fields).") values ('\n";
                             print "${tr_ins}\n";
-                            print "')'\n);\nend;\n/\n";
+                            print "||')'\n);\nend;\n/\nshow errors\n";
 
                             # update trigger
                             print "create or replace trigger zabbix.trau_${table_name} after update on zabbix.${table_name} for each row\n".
                                 "begin\nReplicate2MySQL.RunSQL\n(\n";
                             print "'update zabbix.${table_name} set '\n";
                             print "${tr_upd}";
-                            $op = " || 'where";
+                            $op = " || ' where ";
                             foreach $k (split (/,\s*/, $tr_pk_field)) {
-                                print "$op ${k}='||:old.${k} ";
-                                $op = "|| 'and";
+                                if ($fields_kind eq "copy_conv") {
+                                    print "$op ${k}='||:old.${k} ";
+                                }
+                                else {
+                                    print "$op ${k}='''||:old.${k}||'''' ";
+                                }
+                                $op = "|| ' and ";
                             }
-                            print ");\nend;\n/\n";
+                            print ");\nend;\n/\nshow errors\n";
 
                             # delete trigger
                             print "create or replace trigger zabbix.trad_${table_name} after delete on zabbix.${table_name} for each row\n".
                                 "begin\nReplicate2MySQL.RunSQL\n(\n".
                                 "'delete from zabbix.${table_name} '\n";
 
-                            $op = " || 'where";
+                            $op = " || ' where ";
                             foreach $k (split (/,\s*/, $tr_pk_field)) {
-                                print "$op ${k}='||:old.${k} ";
-                                $op = "|| 'and";
+                                if ($fields_kind eq "copy_conv") {
+                                    print "$op ${k}='||:old.${k} ";
+                                }
+                                else {
+                                    print "$op ${k}='''||:old.${k}||'''' ";
+                                }
+                                $op = "|| ' and ";
                             }
-                            print "\n);\nend;\n/\n";
+                            print "\n);\nend;\n/\nshow errors\n";
                         }
 
                         if($output{"type"} ne "triggers" && $new eq "field") { print ",\n" }
@@ -287,6 +307,7 @@ sub process_table
                 $tr_upd = $tr_ins = "";
                 $tr_pk_field = $pkey;
                 @tr_fields = ();
+                %fields_kind = ();
             }
         }
 	else
@@ -330,16 +351,17 @@ sub process_field
                 $out = $output{$type_short};
                 $out = $out eq "copy_conv" ? $copy_conv : $copy_asis;
                 $out =~ s/field/$name/g;
-                $tr_ins .= "','\n" if $tr_ins;
-                $tr_upd .= "','\n" if $tr_upd;
+                $tr_ins .= "||','\n" if $tr_ins;
+                $tr_upd .= "||','\n" if $tr_upd;
                 if ($output{$type_short} eq "copy_conv") {
                     $tr_ins .= "||$out";
                     $tr_upd .= "||' $name='||$out";
                 }
                 else {
-                    $tr_ins .= "||''''||$out||";
+                    $tr_ins .= "||''''||$out";
                     $tr_upd .= "||' $name='''||$out";
                 }
+                $fields_kind{$name} = $output{$type_short};
             }
         }
 	else
@@ -384,7 +406,7 @@ sub process_index
 
 sub usage
 {
-	printf "Usage: $0 [c|mysql|oracle|php|postgresql|sqlite]\n";
+	printf "Usage: $0 [c|mysql|oracle|oracle_copy|php|postgresql|sqlite]\n";
 	printf "The script generates ZABBIX SQL schemas and C/PHP code for different database engines.\n";
 	exit;
 }
