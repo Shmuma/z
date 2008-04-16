@@ -26,13 +26,6 @@
 
 static int make_directories (const char* path);
 
-
-typedef enum {
-    IT_UINT64 = 0,
-    IT_DOUBLE,
-} item_type_t;
-
-
 /* internal structures */
 typedef struct hfs_meta_item {
     time_t start, end;
@@ -958,46 +951,54 @@ double HFS_get_delta_float (const char* hfs_base_dir, zbx_uint64_t itemid, int p
     return state.max - state.min;
 }
 
-size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t itemid, time_t ts, time_t to_ts, hfs_item_value_t **result)
+size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t itemid, time_t from_ts, time_t to_ts, hfs_item_value_t **result)
 {
-	char *p_data;
 	zbx_uint64_t value;
 	hfs_meta_item_t *ip;
 	hfs_meta_t *meta;
 	off_t ofs;
+	time_t ts = from_ts;
 	size_t items = 0, result_size = 0;
+	char *p_data = NULL;
 	int fd, finish_loop = 0, block = -1;
 
 	while (!finish_loop) {
 		if ((meta = read_meta (hfs_base_dir, itemid, ts)) == NULL)
 			break;
 
-		if (!meta->blocks) {
+		while (!meta->blocks) {
+			if (ts >= to_ts) {
+				finish_loop = 1;
+				goto nextloop;
+			}
+
 			free_meta (meta);
-			break;
+			ts = get_next_data_ts (ts);
+
+			if ((meta = read_meta (hfs_base_dir, itemid, ts)) == NULL)
+				goto nextloop;
 		}
 
 		if (block == -1) {
 			int i = 0;
 			for (; i < meta->blocks; i++) {
 				ip = meta->meta + i;
-
-				if (ip->start < ts) {
+				if (ip->start <= ts || from_ts <= ip->start) {
 					block = i;
 					break;
 				}
 			}
-			if (block == -1) 
+			if (block == -1)
 				goto nextloop;
 		}
-		else
+		else {
 			ip = meta->meta;
+		}
 
 		if ((p_data = get_name (hfs_base_dir, itemid, ts, 0)) == NULL) {
 			zabbix_log(LOG_LEVEL_ERR, "unable to get file name");
 			goto nextloop;
 		}
-
 		if ((fd = open (p_data, O_RDONLY)) == -1) {
 			zabbix_log(LOG_LEVEL_ERR, "%s: file open failed: %s", p_data, strerror(errno));
 			goto nextloop;
@@ -1022,6 +1023,7 @@ size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t itemid, time_t ts, t
 				*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * result_size));
 			}
 			(*result)[items].ts    = ts;
+			(*result)[items].type  = ip->type;
 			(*result)[items].value = value;
 	    		items++;
 			ts += ip->delay;
@@ -1037,9 +1039,11 @@ size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t itemid, time_t ts, t
 			}
     		}
 		block = 0;
-
-nextloop:	if (p_data)
+nextloop:
+		if (p_data) {
 			free (p_data);
+			p_data = NULL;
+		}
 		free_meta (meta);
 		ts = get_next_data_ts (ts);
 	}

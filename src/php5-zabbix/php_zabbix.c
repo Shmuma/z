@@ -1,17 +1,14 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 
-#include "php_config.h"
-#include "php.h"
-#include "php_ini.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "php_zabbix.h"
-
 #include "hfs.h"
 
-char *progname = "test";
-char title_message[] = "Title";
-char usage_message[] = "Usage";
-char *help_message[] = { "Help", 0 };
+ZEND_DECLARE_MODULE_GLOBALS(zabbix)
 
 static zend_function_entry php_zabbix_functions[] = {
 	PHP_FE(zabbix_hfs_read, NULL)
@@ -19,25 +16,46 @@ static zend_function_entry php_zabbix_functions[] = {
 };
 
 zend_module_entry zabbix_module_entry = {
+#if ZEND_MODULE_API_NO >= 20010901
 	STANDARD_MODULE_HEADER,
+#endif
 	"zabbix", 
  	php_zabbix_functions, 
-	NULL, 
-	NULL, 
-	NULL,
-	NULL, 
-	PHP_MINFO(zabbix), 
-	NO_VERSION_YET,
+	PHP_MINIT(zabbix),
+	PHP_MSHUTDOWN(zabbix),
 	NULL,
 	NULL,
-	NULL,
-	NULL,
-	STANDARD_MODULE_PROPERTIES_EX
+	PHP_MINFO(zabbix),
+	"0.1.0",
+	STANDARD_MODULE_PROPERTIES
 };
 
-//#ifdef COMPILE_DL_zabbix
+#ifdef COMPILE_DL_ZABBIX
 ZEND_GET_MODULE(zabbix)
-//#endif
+#endif
+
+
+PHP_INI_BEGIN()
+STD_PHP_INI_ENTRY("zabbix.hfs_base_dir", "/tmp/hfs", PHP_INI_ALL, OnUpdateString,
+                  hfs_base_dir, zend_zabbix_globals, zabbix_globals)
+PHP_INI_END()
+
+char *progname = "test";
+char title_message[] = "Title";
+char usage_message[] = "Usage";
+char *help_message[] = { "Help", 0 };
+
+PHP_MINIT_FUNCTION(zabbix)
+{
+	REGISTER_INI_ENTRIES();
+	return SUCCESS;
+}
+
+PHP_MSHUTDOWN_FUNCTION(zabbix)
+{
+	UNREGISTER_INI_ENTRIES();
+	return SUCCESS;
+}
 
 PHP_MINFO_FUNCTION(zabbix)
 {
@@ -56,25 +74,23 @@ PHP_FUNCTION(zabbix_hfs_read)
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lll", &itemid, &from_time_sec, &to_time_sec) == FAILURE)
 		RETURN_FALSE;
-/*
-	if (from_time_sec <= 0) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "From_time has to be greater than 0");
-		RETURN_FALSE;
-	}
 
-	if (to_time_sec <= 0) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "To_time has to be greater than 0");
-		RETURN_FALSE;
-	}
-*/
 	array_init(return_value);
 
-	n = HFSread_item("/tmp/hfs", itemid, from_time_sec, to_time_sec, &res);
-//	php_error_docref(NULL TSRMLS_CC, E_WARNING, "n=%d", n);
+	n = HFSread_item(ZABBIX_GLOBAL(hfs_base_dir), itemid, from_time_sec, to_time_sec, &res);
 
-	for (i = 0; i < n; i++)
-		add_assoc_long (return_value, res[i].ts, res[i].value);
+	for (i = 0; i < n; i++) {
+		char *key = NULL;
+		asprintf(&key, "%d", res[i].ts);
 
-	if (res)
-		free(res);
+		if (res[i].type == IT_UINT64) {
+			add_assoc_long   (return_value, key, res[i].value);
+		}
+		else if (res[i].type == IT_DOUBLE) {
+			add_assoc_double (return_value, key, res[i].value);
+		}
+
+		free(key);
+	}
+	if (res) free(res);
 }

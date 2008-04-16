@@ -21,9 +21,15 @@
 
 #include "common.h"
 
+typedef enum {
+    IT_UINT64 = 0,
+    IT_DOUBLE,
+} item_type_t;
+
 #define alloc_item_values 1000
 typedef struct hfs_item_value {
     time_t		ts;
+    item_type_t		type;
     zbx_uint64_t	value;
 } hfs_item_value_t;
 
