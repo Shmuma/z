@@ -1,5 +1,9 @@
 #!/bin/sh
 #
+# chkconfig: - 55 45
+# description: zabbix_agentd
+# probe: false
+#
 # zabbix_agentd_ctl 
 #
 # control script to stop/start/restart zabbix_agentd
