@@ -16,9 +16,14 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 **/
+
+#include <sys/param.h> // for MAX/MIN
 #include "common.h"
 #include "log.h"
 #include "hfs.h"
+
+#define _ISOC99_SOURCE 1
+#include <math.h>
 
 # ifndef ULLONG_MAX
 #  define ULLONG_MAX    18446744073709551615ULL
@@ -922,7 +927,6 @@ zbx_uint64_t HFS_get_delta_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, i
     return state.max - state.min;
 }
 
-
 double HFS_get_delta_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
 {
     typedef struct {
@@ -951,18 +955,31 @@ double HFS_get_delta_float (const char* hfs_base_dir, zbx_uint64_t itemid, int p
     return state.max - state.min;
 }
 
-size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t itemid, time_t from_ts, time_t to_ts, hfs_item_value_t **result)
+
+
+size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t x, zbx_uint64_t itemid, time_t from_ts, time_t to_ts, hfs_item_value_t **result)
 {
 	zbx_uint64_t value;
-	hfs_meta_item_t *ip;
-	hfs_meta_t *meta;
-	off_t ofs;
-	time_t ts = from_ts;
+	time_t p, ts = from_ts;
 	size_t items = 0, result_size = 0;
-	char *p_data = NULL;
-	int fd, finish_loop = 0, block = -1;
+	int z, finish_loop = 0, block = -1;
+	item_value_u max, min, val;
+
+	p = (to_ts - from_ts);
+	z = (p - (from_ts % p));
+	x = (x - 1);
+
+	max.d = 0.0;
+	min.d = 0.0;
 
 	while (!finish_loop) {
+		double group = -1;
+		int fd;
+		char *p_data = NULL;
+		hfs_meta_item_t *ip;
+		hfs_meta_t *meta;
+		off_t ofs;
+
 		if ((meta = read_meta (hfs_base_dir, itemid, ts)) == NULL)
 			break;
 
@@ -1015,6 +1032,9 @@ size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t itemid, time_t from_
 		}	
 
 	        while (read (fd, &value, sizeof (value)) > 0) {
+			double cur_group;
+
+
 			if (!is_valid_val(&value))
 				continue;
 
@@ -1022,11 +1042,40 @@ size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t itemid, time_t from_
 				result_size += alloc_item_values;
 				*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * result_size));
 			}
-			(*result)[items].ts    = ts;
-			(*result)[items].type  = ip->type;
-			(*result)[items].value = value;
-	    		items++;
+
+			cur_group = round(((x * ((ts + z) % p)) / p));
+			if (group == -1)
+				group = cur_group;
+
+			if (group != cur_group) {
+				(*result)[items].type  = ip->type;
+				(*result)[items].group = (long) group;
+				(*result)[items].clock = (ts - ip->delay);
+				(*result)[items].max = max;
+				(*result)[items].min = min;
+
+				if (ip->type == IT_DOUBLE)
+					(*result)[items].avg.d = ((max.d + min.d) / 2);
+				else
+					(*result)[items].avg.l = ((max.l + min.l) / 2);
+
+				group = cur_group;
+				max.d = 0.0;
+				min.d = 0.0;
+
+				items++;
+			}
 			ts += ip->delay;
+			val.l = value;
+
+			if (ip->type == IT_DOUBLE) {
+				max.d = ((max.d > val.d) ? max.d : val.d);
+				min.d = ((max.d < val.d) ? max.d : val.d);
+			}
+			else {
+				max.l = ((max.l > val.l) ? max.l : val.l);
+				min.l = ((max.l < val.l) ? max.l : val.l);
+			}
 
 			if (ts >= to_ts) {
 				finish_loop = 1;

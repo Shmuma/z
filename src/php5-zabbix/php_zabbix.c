@@ -64,33 +64,60 @@ PHP_MINFO_FUNCTION(zabbix)
 	php_info_print_table_end();
 }
 
-/* {{{ proto array zabbix_hfs_read(int itemid, int from_time, int to_time) */
+/* {{{ add_next_index_object
+ */
+static inline int add_next_index_object(zval *arg, zval *tmp TSRMLS_DC)
+{
+	HashTable *symtable;
+
+	if (Z_TYPE_P(arg) == IS_OBJECT) {
+		symtable = Z_OBJPROP_P(arg);
+	} else {
+		symtable = Z_ARRVAL_P(arg);
+	}
+
+	return zend_hash_next_index_insert(symtable, (void *) &tmp, sizeof(zval *), NULL); 
+}
+/* }}} */
+
+/* {{{ proto array zabbix_hfs_read(int itemid int sizex, int from_time, int to_time) */
 PHP_FUNCTION(zabbix_hfs_read)
 {
-	size_t n;
+	size_t n = 0;
+	zval *z_obj;
 	hfs_item_value_t *res = NULL;
-	int i, itemid = 0;
+	int i, sizex, itemid = 0;
 	time_t from_time_sec = 0, to_time_sec = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lll", &itemid, &from_time_sec, &to_time_sec) == FAILURE)
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "llll", &sizex, &itemid, &from_time_sec, &to_time_sec) == FAILURE)
 		RETURN_FALSE;
 
-	array_init(return_value);
+        if (array_init(return_value) == FAILURE)
+		RETURN_FALSE;
 
-	n = HFSread_item(ZABBIX_GLOBAL(hfs_base_dir), itemid, from_time_sec, to_time_sec, &res);
+	n = HFSread_item(ZABBIX_GLOBAL(hfs_base_dir), sizex, itemid, from_time_sec, to_time_sec, &res);
 
 	for (i = 0; i < n; i++) {
-		char *key = NULL;
-		asprintf(&key, "%d", res[i].ts);
+		MAKE_STD_ZVAL(z_obj);
+		object_init(z_obj);
 
-		if (res[i].type == IT_UINT64) {
-			add_assoc_long   (return_value, key, res[i].value);
+		add_property_long (z_obj, "itemid",	itemid);
+		add_property_long (z_obj, "count",	1);
+		add_property_long (z_obj, "clock",	res[i].clock);
+		add_property_long (z_obj, "i",		res[i].group);
+
+		if (res[i].type == IT_DOUBLE) {
+			add_property_double (z_obj, "avg", res[i].avg.d);
+			add_property_double (z_obj, "max", res[i].max.d);
+			add_property_double (z_obj, "min", res[i].min.d);
 		}
-		else if (res[i].type == IT_DOUBLE) {
-			add_assoc_double (return_value, key, res[i].value);
+		else {
+			add_property_long   (z_obj, "avg", res[i].avg.l);
+			add_property_long   (z_obj, "max", res[i].max.l);
+			add_property_long   (z_obj, "min", res[i].min.l);
 		}
 
-		free(key);
+		add_next_index_object(return_value, z_obj TSRMLS_CC);
 	}
 	if (res) free(res);
 }

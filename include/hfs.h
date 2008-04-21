@@ -26,16 +26,24 @@ typedef enum {
     IT_DOUBLE,
 } item_type_t;
 
+typedef union {
+	zbx_uint64_t	l;
+	double		d;
+} item_value_u;
+
 #define alloc_item_values 1000
 typedef struct hfs_item_value {
-    time_t		ts;
-    item_type_t		type;
-    zbx_uint64_t	value;
+	item_type_t	type;
+        time_t		clock;
+	long		group;
+        item_value_u 	max;
+        item_value_u	min;
+	item_value_u	avg;
 } hfs_item_value_t;
 
 void		HFSadd_history (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, double value, int clock);
 void		HFSadd_history_uint (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, int clock);
-size_t		HFSread_item (const char* hfs_base_dir, zbx_uint64_t itemid, time_t ts, time_t to_ts, hfs_item_value_t **result);
+size_t		HFSread_item (const char* hfs_base_dir, zbx_uint64_t x, zbx_uint64_t itemid, time_t ts, time_t to_ts, hfs_item_value_t **result);
 
 zbx_uint64_t	HFS_get_count (const char* hfs_base_dir, zbx_uint64_t itemid, int from);
 zbx_uint64_t	HFS_get_count_u64_eq (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
