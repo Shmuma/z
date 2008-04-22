@@ -16,9 +16,9 @@ RETVAL=0
 prog="zabbix_server"
 
 # Some functions to make the below more readable
-BASEDIR=/usr/sbin/
+BASEDIR=/usr/sbin
 ZABBIX_SERVER=$BASEDIR/zabbix_server
-PID_FILE=/var/run/zabbix/zabbix_agent.pid
+PID_FILE=/var/run/zabbix/zabbix_server.pid
 
 runlevel=$(set -- $(runlevel); eval "echo \$$#" )
 
@@ -36,11 +36,7 @@ start()
 stop()
 {
 	echo -n $"Stopping $prog: "
-	if [ -n "`pidfileofproc $ZABBIX_SERVER`" ] ; then
-	    killproc $ZABBIX_SERVER
-	else
-	    failure $"Stopping $prog"
-	fi
+	killproc -p $PID_FILE $ZABBIX_SERVER
 	RETVAL=$?
 	# if we are in halt or reboot runlevel kill all running sessions
 	# so the TCP connections are closed cleanly
@@ -63,7 +59,7 @@ case "$1" in
 		start
 		;;
 	status)
-		status $ZABBIX_SERVER
+		status $ZABBIX_SERVER $PID_FILE
 		RETVAL=$?
 		;;
 	*)

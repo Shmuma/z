@@ -34,6 +34,9 @@ exit 1
 
 make
 
+%post
+ln -s %_libdir/libsqlora8/include/libsqlora8-config.h %_includedir/libsqlora8-config.h
+
 %install
 %makeinstall pkgconfigdir=%buildroot/%_libdir/pkgconfig/
 
