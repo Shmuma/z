@@ -13,12 +13,21 @@ Summary: A network monitor.
 
 %define zabbix_bindir 	        %{_sbindir}
 %define zabbix_confdir 		%{_sysconfdir}/%{realname}
-%define zabbix_run 		%{_localstatedir}/run/zabbix/
-%define zabbix_log 		%{_localstatedir}/log/zabbix/
-%define zabbix_spool 		%{_localstatedir}/spool/zabbix/
+%define zabbix_run 		%{_localstatedir}/run/zabbix
+%define zabbix_log 		%{_localstatedir}/log/zabbix
+%define zabbix_spool 		%{_localstatedir}/spool/zabbix
+%define zabbix_www		/var/www/html/zabbix
 
 %description
 zabbix is a network monitor.
+
+%package -n zabbix-phpfrontend
+Summary: Zabbix web frontend (php).
+Group: System Environment/Daemons
+Requires: php
+
+%description -n zabbix-phpfrontend
+A php frontent to zabbix.
 
 %prep
 %setup -q -n %{realname}-%{version}_yandex
@@ -71,12 +80,16 @@ rm -fr %buildroot
 # create directory structure
 install -d %{buildroot}%{zabbix_confdir}
 install -d %{buildroot}%{_sysconfdir}/init.d
+install -d %{buildroot}%{zabbix_www}
 
 # copy conf files
 install -m 755 misc/conf/zabbix_server.conf %{buildroot}%{zabbix_confdir}
 
 # redhat install scripts
 install -m 755 misc/init.d/redhat/zabbix_server %{buildroot}%{_sysconfdir}/init.d/
+
+# frontend
+cp -r frontends/php/* %{buildroot}%{zabbix_www}/
 
 %files
 %defattr(-,root,root)
@@ -85,6 +98,10 @@ install -m 755 misc/init.d/redhat/zabbix_server %{buildroot}%{_sysconfdir}/init.
 %attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_server.conf
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_server
 %config(noreplace) %{_sysconfdir}/init.d/zabbix_server
+
+%files -n zabbix-phpfrontend
+%defattr(0644,root,root,0755)
+%{zabbix_www}
 
 %changelog
 * Fri Jan 29 2005 Dirk Datzert <dirk@datzert.de>
