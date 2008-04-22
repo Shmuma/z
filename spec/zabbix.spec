@@ -1,16 +1,18 @@
-Name: zabbix
-Version: 1.4.4_yandex
-Release: 1
+%define realname	zabbix
+
+Name: zabbix-mysql
+Version: 1.4.4
+Release: yandex_1
 Group: System Environment/Daemons
 License: GPL
-Source: %{name}-%{version}.tar.gz
+Source: %{realname}-%{version}_yandex.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
 BuildPrereq: mysql, mysql-devel, net-snmp-devel, setproctitle-devel, iksemel-devel
 Requires: mysql, net-snmp, setproctitle, iksemel
 Summary: A network monitor.
 
 %define zabbix_bindir 	        %{_sbindir}
-%define zabbix_confdir 		%{_sysconfdir}/%{name}
+%define zabbix_confdir 		%{_sysconfdir}/%{realname}
 %define zabbix_run 		%{_localstatedir}/run/zabbix/
 %define zabbix_log 		%{_localstatedir}/log/zabbix/
 %define zabbix_spool 		%{_localstatedir}/spool/zabbix/
@@ -18,27 +20,33 @@ Summary: A network monitor.
 %description
 zabbix is a network monitor.
 
-%package agent
+%package -n zabbix-agent
 Summary: Zabbix agent
 Group: System Environment/Daemons
 
-%description agent
+%description -n zabbix-agent
 the zabbix network monitor agent.
 
 %prep
-%setup -q
+%setup -q -n %{realname}-%{version}_yandex
 
 %build
 %configure --enable-server --enable-agent --with-mysql --with-jabber --with-net-snmp
 make
 
 # adjust in several files /home/zabbix
+HOSTNAME=$(hostname -f)
+
 for zabbixfile in misc/conf/* misc/init.d/redhat/{zabbix_agentd,zabbix_server}; do
     sed -i -e "s#BASEDIR=.*#BASEDIR=%{zabbix_bindir}#g" \
         -e "s#PidFile=/var/tmp#PidFile=%{zabbix_run}#g" \
         -e "s#LogFile=/tmp#LogFile=%{zabbix_log}#g" \
+        -e "s#ActiveChecksBufFile=/var/tmp/#ActiveChecksBufFile=%{zabbix_spool}#g" \
+        -e "s#AlertScriptsPath=/home/zabbix/#AlertScriptsPath=%{zabbix_confdir}#g" \
+        -e "s#Hostname=.*#Hostname=$HOSTNAME#g" \
         -e "s#/home/zabbix/lock#%{_localstatedir}/lock#g" $zabbixfile
 done
+
 
 %pre
 if [ -z "`grep zabbix etc/group`" ]; then
@@ -48,7 +56,7 @@ if [ -z "`grep zabbix etc/passwd`" ]; then
     usr/sbin/useradd -g zabbix zabbix >/dev/null 2>&1
 fi
 
-%pre agent
+%pre -n zabbix-agent
 if [ -z "`grep zabbix etc/group`" ]; then
     usr/sbin/groupadd zabbix >/dev/null 2>&1
 fi
@@ -61,7 +69,7 @@ fi
 [ -d %zabbix_run ] || ( mkdir %zabbix_run && chown zabbix:zabbix %zabbix_run )
 [ -d %zabbix_log ] || ( mkdir %zabbix_log && chown zabbix:zabbix %zabbix_log )
 
-%post agent
+%post -n zabbix-agent
 /sbin/chkconfig --add zabbix_agentd
 [ -d %zabbix_run ] || ( mkdir %zabbix_run && chown zabbix:zabbix %zabbix_run )
 [ -d %zabbix_log ] || ( mkdir %zabbix_log && chown zabbix:zabbix %zabbix_log )
@@ -86,7 +94,7 @@ then
   /sbin/chkconfig --del zabbix_server
 fi
 
-%preun agent
+%preun -n zabbix-agent
 if [ "$1" = 0 ]
 then
   /sbin/service zabbix_agentd stop >/dev/null 2>&1 || :
@@ -120,7 +128,7 @@ install -m 755 misc/init.d/redhat/zabbix_server %{buildroot}%{_sysconfdir}/init.
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_server
 %config(noreplace) %{_sysconfdir}/init.d/zabbix_server
 
-%files agent 
+%files -n zabbix-agent
 %defattr(-,root,root)
 %dir %attr(0755,root,root) %{zabbix_confdir}
 %attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_agent.conf
