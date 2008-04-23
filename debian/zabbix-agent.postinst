@@ -18,21 +18,13 @@ if [ "$1" = "configure" ]; then
         zabbix_server="localhost"
     fi
 
-    sed "s/^[# ]*Server=.*/Server=$zabbix_server/g" < $CONFFILE1 > $CONFFILE_DEST1.new 
-    ucf --debconf-ok $CONFFILE_DEST1.new $CONFFILE_DEST1
-    rm -f $CONFFILE_DEST1.new
-
-    sed "s/^[# ]*Server=.*/Server=$zabbix_server/g" < $CONFFILE2 > $CONFFILE_DEST2.new 
-    ucf --debconf-ok $CONFFILE_DEST2.new $CONFFILE_DEST2
-    rm -f $CONFFILE_DEST2.new
-
     zabbix_hostname=$(hostname -f)
 
-    sed "s/^[# ]*Hostname=.*/Hostname=$zabbix_hostname/g" < $CONFFILE1 > $CONFFILE_DEST1.new 
+    sed "s/^[# ]*Server=.*/Server=$zabbix_server/g; s/^[# ]*Hostname=.*/Hostname=$zabbix_hostname/g" < $CONFFILE1 > $CONFFILE_DEST1.new 
     ucf --debconf-ok $CONFFILE_DEST1.new $CONFFILE_DEST1
     rm -f $CONFFILE_DEST1.new
 
-    sed "s/^[# ]*Hostname=.*/Hostname=$zabbix_hostname/g" < $CONFFILE2 > $CONFFILE_DEST2.new 
+    sed "s/^[# ]*Server=.*/Server=$zabbix_server/g; s/^[# ]*Hostname=.*/Hostname=$zabbix_hostname/g" < $CONFFILE2 > $CONFFILE_DEST2.new 
     ucf --debconf-ok $CONFFILE_DEST2.new $CONFFILE_DEST2
     rm -f $CONFFILE_DEST2.new
     
