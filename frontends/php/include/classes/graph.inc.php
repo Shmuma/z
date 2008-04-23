@@ -958,7 +958,7 @@
 
 		function selectData()
 		{
-			global $DB_TYPE;
+			global $DB_TYPE, $HISTORY_STORAGE;
 
 			$this->data = array();
 

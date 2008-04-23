@@ -8,4 +8,3 @@ libzbxdbhigh_a_SOURCES = \
 	hfs.c
 
 libzbxdbhigh_a_CFLAGS = -I@top_srcdir@/src/zabbix_server/
-libzbxdbhigh_a_LIBS = -lm

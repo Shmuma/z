@@ -17,13 +17,9 @@
 ** Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 **/
 
-#include <sys/param.h> // for MAX/MIN
 #include "common.h"
 #include "log.h"
 #include "hfs.h"
-
-#define _ISOC99_SOURCE 1
-#include <math.h>
 
 # ifndef ULLONG_MAX
 #  define ULLONG_MAX    18446744073709551615ULL
@@ -959,11 +955,11 @@ double HFS_get_delta_float (const char* hfs_base_dir, zbx_uint64_t itemid, int p
 
 size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t x, zbx_uint64_t itemid, time_t from_ts, time_t to_ts, hfs_item_value_t **result)
 {
-	zbx_uint64_t value;
+	item_value_u max, min, val;
 	time_t p, ts = from_ts;
 	size_t items = 0, result_size = 0;
 	int z, finish_loop = 0, block = -1;
-	item_value_u max, min, val;
+	long group;
 
 	p = (to_ts - from_ts);
 	z = (p - (from_ts % p));
@@ -973,7 +969,6 @@ size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t x, zbx_uint64_t item
 	min.d = 0.0;
 
 	while (!finish_loop) {
-		double group = -1;
 		int fd;
 		char *p_data = NULL;
 		hfs_meta_item_t *ip;
@@ -1007,6 +1002,8 @@ size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t x, zbx_uint64_t item
 			}
 			if (block == -1)
 				goto nextloop;
+
+			group = (long) (((x * ((ts + z) % p)) / p));
 		}
 		else {
 			ip = meta->meta;
@@ -1029,13 +1026,12 @@ size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t x, zbx_uint64_t item
 		if (lseek (fd, ofs, SEEK_SET) == -1) {
 			zabbix_log(LOG_LEVEL_ERR, "%s: unable to change file offset: %s", p_data, strerror(errno));
 			goto nextloop;
-		}	
+		}
 
-	        while (read (fd, &value, sizeof (value)) > 0) {
-			double cur_group;
+	        while (read (fd, &val.l, sizeof (val.l)) > 0) {
+			long cur_group;
 
-
-			if (!is_valid_val(&value))
+			if (!is_valid_val(&val.l))
 				continue;
 
 			if (result_size <= items) {
@@ -1043,13 +1039,11 @@ size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t x, zbx_uint64_t item
 				*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * result_size));
 			}
 
-			cur_group = round(((x * ((ts + z) % p)) / p));
-			if (group == -1)
-				group = cur_group;
+			cur_group = (long) (((x * ((ts + z) % p)) / p));
 
 			if (group != cur_group) {
 				(*result)[items].type  = ip->type;
-				(*result)[items].group = (long) group;
+				(*result)[items].group = group;
 				(*result)[items].clock = (ts - ip->delay);
 				(*result)[items].max = max;
 				(*result)[items].min = min;
@@ -1066,7 +1060,6 @@ size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t x, zbx_uint64_t item
 				items++;
 			}
 			ts += ip->delay;
-			val.l = value;
 
 			if (ip->type == IT_DOUBLE) {
 				max.d = ((max.d > val.d) ? max.d : val.d);
