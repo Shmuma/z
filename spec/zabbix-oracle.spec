@@ -1,37 +1,39 @@
 %define realname	zabbix
 
-Name: zabbix-mysql
+Name: zabbix-oracle
 Version: 1.4.4
 Release: yandex_1
 Group: System Environment/Daemons
 License: GPL
 Source: %{realname}-%{version}_yandex.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
-BuildPrereq: mysql, mysql-devel, net-snmp-devel, setproctitle-devel, iksemel-devel
-Requires: mysql, net-snmp, setproctitle, iksemel
+BuildPrereq: libsqlora8-devel, net-snmp-devel, setproctitle-devel, iksemel-devel
+Requires: libsqlora8, net-snmp, setproctitle, iksemel
 Summary: A network monitor.
 
 %define zabbix_bindir 	        %{_sbindir}
 %define zabbix_confdir 		%{_sysconfdir}/%{realname}
-%define zabbix_run 		%{_localstatedir}/run/zabbix/
-%define zabbix_log 		%{_localstatedir}/log/zabbix/
-%define zabbix_spool 		%{_localstatedir}/spool/zabbix/
+%define zabbix_run 		%{_localstatedir}/run/zabbix
+%define zabbix_log 		%{_localstatedir}/log/zabbix
+%define zabbix_spool 		%{_localstatedir}/spool/zabbix
+%define zabbix_www		/var/www/html/zabbix
 
 %description
 zabbix is a network monitor.
 
-%package -n zabbix-agent
-Summary: Zabbix agent
+%package -n zabbix-phpfrontend
+Summary: Zabbix web frontend (php).
 Group: System Environment/Daemons
+Requires: php
 
-%description -n zabbix-agent
-the zabbix network monitor agent.
+%description -n zabbix-phpfrontend
+A php frontent to zabbix.
 
 %prep
 %setup -q -n %{realname}-%{version}_yandex
 
 %build
-%configure --enable-server --enable-agent --with-mysql --with-jabber --with-net-snmp
+%configure --enable-server --with-oracle --with-jabber --with-net-snmp
 make
 
 # adjust in several files /home/zabbix
@@ -56,50 +58,16 @@ if [ -z "`grep zabbix etc/passwd`" ]; then
     /usr/sbin/useradd -g zabbix zabbix >/dev/null 2>&1
 fi
 
-%pre -n zabbix-agent
-if [ -z "`grep zabbix etc/group`" ]; then
-    /usr/sbin/groupadd zabbix >/dev/null 2>&1
-fi
-if [ -z "`grep zabbix etc/passwd`" ]; then
-    /usr/sbin/useradd -g zabbix zabbix >/dev/null 2>&1
-fi
-
 %post
 /sbin/chkconfig --add zabbix_server
 [ -d %zabbix_run ] || ( mkdir %zabbix_run && chown zabbix:zabbix %zabbix_run )
 [ -d %zabbix_log ] || ( mkdir %zabbix_log && chown zabbix:zabbix %zabbix_log )
-
-%post -n zabbix-agent
-/sbin/chkconfig --add zabbix_agentd
-[ -d %zabbix_run ] || ( mkdir %zabbix_run && chown zabbix:zabbix %zabbix_run )
-[ -d %zabbix_log ] || ( mkdir %zabbix_log && chown zabbix:zabbix %zabbix_log )
-[ -d %zabbix_spool ] || ( mkdir %zabbix_spool && chown zabbix:zabbix %zabbix_spool )
-
-if [ -z "`grep zabbix_agent etc/services`" ]; then
-  cat >>etc/services <<EOF
-zabbix_agent	10050/tcp
-EOF
-fi
-
-if [ -z "`grep zabbix_trap etc/services`" ]; then
-  cat >>etc/services <<EOF
-zabbix_trap	10051/tcp
-EOF
-fi
 
 %preun
 if [ "$1" = 0 ]
 then
   /sbin/service zabbix_server stop >/dev/null 2>&1 || :
   /sbin/chkconfig --del zabbix_server
-fi
-
-%preun -n zabbix-agent
-if [ "$1" = 0 ]
-then
-  /sbin/service zabbix_agentd stop >/dev/null 2>&1 || :
-  /sbin/chkconfig --del zabbix_agentd
-  [ -d %zabbix_spool ] && rm -rf %zabbix_spool
 fi
 
 %clean
@@ -112,13 +80,16 @@ rm -fr %buildroot
 # create directory structure
 install -d %{buildroot}%{zabbix_confdir}
 install -d %{buildroot}%{_sysconfdir}/init.d
+install -d %{buildroot}%{zabbix_www}
 
 # copy conf files
-install -m 755 misc/conf/zabbix_*.conf %{buildroot}%{zabbix_confdir}
+install -m 755 misc/conf/zabbix_server.conf %{buildroot}%{zabbix_confdir}
 
 # redhat install scripts
-install -m 755 misc/init.d/redhat/zabbix_agentd %{buildroot}%{_sysconfdir}/init.d/
 install -m 755 misc/init.d/redhat/zabbix_server %{buildroot}%{_sysconfdir}/init.d/
+
+# frontend
+cp -r frontends/php/* %{buildroot}%{zabbix_www}/
 
 %files
 %defattr(-,root,root)
@@ -128,17 +99,9 @@ install -m 755 misc/init.d/redhat/zabbix_server %{buildroot}%{_sysconfdir}/init.
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_server
 %config(noreplace) %{_sysconfdir}/init.d/zabbix_server
 
-%files -n zabbix-agent
-%defattr(-,root,root)
-%dir %attr(0755,root,root) %{zabbix_confdir}
-%attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_agent.conf
-%attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_agentd.conf
-%attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_trapper.conf
-%config(noreplace) %{_sysconfdir}/init.d/zabbix_agentd
-%attr(0755,root,root) %{zabbix_bindir}/zabbix_agent
-%attr(0755,root,root) %{zabbix_bindir}/zabbix_agentd
-%attr(0755,root,root) %{zabbix_bindir}/zabbix_sender
-%attr(0755,root,root) %{zabbix_bindir}/zabbix_get
+%files -n zabbix-phpfrontend
+%defattr(0644,root,root,0755)
+%{zabbix_www}
 
 %changelog
 * Fri Jan 29 2005 Dirk Datzert <dirk@datzert.de>
