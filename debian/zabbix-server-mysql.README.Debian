@@ -1,0 +1,15 @@
+zabbix-sever for Debian
+-----------------------
+
+ In order to use zabbix-server you have to configure the connection to
+ the MySQL server modifying /etc/zabbix/zabbix_server.conf to fit your
+ setup.
+
+ Debian zabbix-server-mysql package uses dbconfig-common to setup the
+ database, but the system administrator can choose to skip the 
+ auto-configuration and proceed manually. 
+
+ The SQL scripts for the schema and the base data are stored in
+ /usr/share/zabbix-server/.
+
+ -- Fabio Tranchitella <kobold@debian.org> Tue, 10 May 2006 14:16:00 +0200

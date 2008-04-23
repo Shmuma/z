@@ -1,0 +1,44 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          zabbix-agent
+# Required-Start:    $local_fs $network 
+# Required-Stop:     $local_fs
+# Default-Start:     S
+# Default-Stop:      0 6
+# Short-Description: Start zabbix-agent daemon
+### END INIT INFO
+DAEMON=/usr/sbin/zabbix_agentd
+NAME=zabbix_agentd
+DESC="Zabbix agent"
+PID=/var/run/zabbix-agent/$NAME.pid
+
+test -f $DAEMON || exit 0
+
+set -e
+
+export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
+
+case "$1" in
+  start)
+   	rm -f $PID
+	echo "Starting $DESC: $NAME" >&2
+	start-stop-daemon --oknodo --start --pidfile $PID \
+	 --exec $DAEMON >/dev/null 2>&1
+	;;
+  stop)
+	echo "Stopping $DESC: $NAME"
+	start-stop-daemon --oknodo --stop --exec $DAEMON 
+	;;
+  restart|force-reload)
+	$0 stop
+	sleep 5
+	$0 start
+	;;
+  *)
+	N=/etc/init.d/$NAME
+	echo "Usage: $N {start|stop|restart|force-reload}" >&2
+	exit 1
+	;;
+esac
+
+exit 0
