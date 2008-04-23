@@ -1,0 +1,25 @@
+zabbix for Debian
+==================
+
+Zabbix Manual
+--------------
+
+ The Zabbix Manual provides all necessary information to successfully install,
+ configure, and run Zabbix. The Manual is available online in HTML format and
+ can be found here:
+
+ http://www.zabbix.com/manual/v1.1/
+
+
+Zabbix Database
+----------------
+
+ The debian Packages use dbconfig-common in order to setup the Database. If
+ you have chosen to not setup your Database using dbconfig-common, the Package
+ ships all needed SQL Files in /usr/share/zabbix-server/.
+
+ SQL Files for upgrades from previous versions can be found in: 
+
+   /usr/share/dbconfig-common/data/zabbix-server-mysql/upgrade/mysql/<version> 
+ 
+ -- Michael Ablassmeier <abi@debian.org>

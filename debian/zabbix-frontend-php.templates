@@ -1,0 +1,15 @@
+Template: zabbix-frontend-php/reconfigure-webserver
+Type: multiselect
+_Choices: apache, apache-ssl, apache-perl, apache2
+Default: apache, apache-ssl, apache-perl, apache2
+_Description: Webserver Reconfiguration:
+ Zabbix supports any web server that php4 does, but this automatic
+ configuration process only supports Apache. Please select which 
+ apache version you want to configure the Zabbix frontend for.
+
+Template: zabbix-frontend-php/restart-webserver
+Type: boolean
+Default: true
+_Description: Would you like to restart your webserver(s) now?
+ Remember that in order to apply the changes your webserver(s) has/have to
+ be restarted. 

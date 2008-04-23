@@ -1,0 +1,121 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: zabbix\n"
+"Report-Msgid-Bugs-To: kobold-zabbix@debian.org\n"
+"POT-Creation-Date: 2007-09-06 00:21+0200\n"
+"PO-Revision-Date: 2006-11-14 08:33+0100\n"
+"Last-Translator: Yves Rütschlé <l10n@rutschle.net>\n"
+"Language-Team: French <debian-l10n-french@lists.debian.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: string
+#. Description
+#: ../zabbix-agent.templates:1001
+msgid "Zabbix server host address:"
+msgstr "Adresse du serveur Zabbix :"
+
+#. Type: string
+#. Description
+#: ../zabbix-agent.templates:1001
+msgid ""
+"Please enter the host name or the address of the Zabbix server you  want to "
+"connect to."
+msgstr ""
+"Veuillez entrer le nom ou l'adresse du serveur Zabbix que vous désirez "
+"utiliser."
+
+#. Type: multiselect
+#. Choices
+#: ../zabbix-frontend-php.templates:1001
+msgid "apache, apache-ssl, apache-perl, apache2"
+msgstr "apache, apache-ssl, apache-perl, apache2"
+
+#. Type: multiselect
+#. Description
+#: ../zabbix-frontend-php.templates:1002
+msgid "Webserver Reconfiguration:"
+msgstr "Serveur(s) web à reconfigurer :"
+
+#. Type: multiselect
+#. Description
+#: ../zabbix-frontend-php.templates:1002
+msgid ""
+"Zabbix supports any web server that php4 does, but this automatic "
+"configuration process only supports Apache. Please select which  apache "
+"version you want to configure the Zabbix frontend for."
+msgstr ""
+"Zabbix gère les mêmes serveurs Web que php4, mais ce processus de "
+"configuration automatique ne fonctionne qu'avec Apache. Veuillez "
+"sélectionner la version d'Apache pour laquelle vous désirez configurer le "
+"frontal de Zabbix."
+
+#. Type: boolean
+#. Description
+#: ../zabbix-frontend-php.templates:2001
+msgid "Would you like to restart your webserver(s) now?"
+msgstr "Faut-il redémarrer le(s) serveur(s) web ?"
+
+#. Type: boolean
+#. Description
+#: ../zabbix-frontend-php.templates:2001
+msgid ""
+"Remember that in order to apply the changes your webserver(s) has/have to be "
+"restarted."
+msgstr ""
+"Les changements ne seront pris en compte qu'après le redémarrage des "
+"serveurs."
+
+#~ msgid "Type of Database Server:"
+#~ msgstr "Type du serveur de base de données :"
+
+#~ msgid "Please choose which database you want to use to store Zabbix data."
+#~ msgstr ""
+#~ "Veuillez choisir la base de données que vous désirez utiliser pour "
+#~ "stocker les données de Zabbix."
+
+#~ msgid "Database Server Host Address:"
+#~ msgstr "Adresse du serveur de bases de données :"
+
+#~ msgid ""
+#~ "Please enter the host name or the address of the database server you want "
+#~ "to connect to."
+#~ msgstr ""
+#~ "Veuillez entrer le nom ou l'adresse du serveur de base de données que "
+#~ "vous désirez utiliser."
+
+#~ msgid "Database name:"
+#~ msgstr "Nom de la base de données :"
+
+#~ msgid "This is the database where your zabbix-server stores all data."
+#~ msgstr ""
+#~ "Veuillez entrer le nom de la base de données où votre serveur Zabbix "
+#~ "stocke ses données."
+
+#~ msgid "Database username:"
+#~ msgstr "Nom de l'utilisateur de la base de données :"
+
+#~ msgid "This is the username used for accessing the zabbix-server database."
+#~ msgstr ""
+#~ "Veuillez entrer le nom d'utilisateur pour accéder à la base de données de "
+#~ "Zabbix."
+
+#~ msgid "Database password:"
+#~ msgstr "Mot de passe :"
+
+#~ msgid "Please specify what password the previously entered database uses."
+#~ msgstr ""
+#~ "Veuillez entrer le mot de passe de l'utilisateur qui accédera à la base "
+#~ "de données."
+
+#~ msgid "What is your Zabbix server host address?"
+#~ msgstr " "
+
+#~ msgid "If your password is empty, type \"none\"."
+#~ msgstr "Si le mot de passe est vide, entrez « none »."
