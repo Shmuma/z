@@ -40,6 +40,7 @@ typedef struct hfs_meta {
     int blocks;
     int last_delay;
     item_type_t last_type;
+    off_t last_ofs;
     hfs_meta_item_t* meta;
 } hfs_meta_t;
 
@@ -74,7 +75,7 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
     hfs_meta_item_t item, *ip;
     hfs_meta_t* meta;
     int fd;
-    int i, j, r;
+    int i, j, r, extra;
     unsigned char v = 0xff;
     off_t size, ofs;
 
@@ -86,20 +87,20 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
     meta = read_meta (hfs_base_dir, itemid, clock);
 
     make_directories (p_meta);
-    zabbix_log(LOG_LEVEL_DEBUG, "HFS: meta read: delays: %d %d, blocks %d", meta->last_delay, delay, meta->blocks);
+    zabbix_log(LOG_LEVEL_DEBUG, "HFS: meta read: delays: %d %d, blocks %d, ofs %u", meta->last_delay, delay, meta->blocks, meta->last_ofs);
 
     /* should we start a new block? */
     if (meta->last_delay != delay || type != meta->last_type) {
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: appending new block for item %llu", itemid);
 	item.start = item.end = clock;
-        item.type = type;
+	item.type = type;
 
 	/* analyze current value */
 	item.delay = delay;
 	if (meta->blocks) {
 	    ip = meta->meta + (meta->blocks-1);
 	    zabbix_log(LOG_LEVEL_DEBUG, "HFS: there is another block on way: %u, %u, %d, %llu", ip->start, ip->end, ip->delay, ip->ofs);
-	    item.ofs = ip->ofs + (1 + (ip->end - ip->start) / ip->delay) * len;
+	    item.ofs = meta->last_ofs + len;
 	}
 	else
 	    item.ofs = 0;
@@ -108,15 +109,21 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
 	fd = open (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
 	meta->blocks++;
 	meta->last_delay = delay;
-        meta->last_type = type;
+	meta->last_type = type;
+
+	/* when new data file is created, last_ofs is zero */
+	if (meta->last_ofs)
+	    meta->last_ofs += len;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: blocks <- %u", meta->blocks);
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: delay <- %u", meta->last_delay);
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: type <- %u", meta->last_type);
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS: last_ofs <- %u", meta->last_ofs);
 
 	write (fd, &meta->blocks, sizeof (meta->blocks));
 	write (fd, &meta->last_delay, sizeof (meta->last_delay));
 	write (fd, &meta->last_type, sizeof (meta->last_type));
+	write (fd, &meta->last_ofs, sizeof (meta->last_type));
 	lseek (fd, sizeof (hfs_meta_item_t)*(meta->blocks-1), SEEK_CUR);
 	write (fd, &item, sizeof (item));
 	close (fd);
@@ -131,7 +138,7 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
 	close (fd);
     }
     else {
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS: extending existing block for item %llu", itemid);
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS: extending existing block for item %llu, last ofs %u", itemid, meta->last_ofs);
 
 	/* check for gaps in block */
 	ip = meta->meta + (meta->blocks-1);
@@ -143,31 +150,40 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
 	/* fill missing values with FFs */
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: check for gaps. Now %d, last %d, delay %d, delta %d", clock, ip->end, delay, clock - ip->end);
 
-	if (clock - ip->end >= delay*2) {
-	    ofs = lseek (fd, ip->ofs + ((ip->end - ip->start + 2*ip->delay)/ip->delay)*len, SEEK_SET);
-	    zabbix_log(LOG_LEVEL_DEBUG, "HFS: there are gaps of size %d items (%d bytes per item)", (clock - ip->end - delay) / delay, len);
-	    zabbix_log(LOG_LEVEL_DEBUG, "HFS gaps: cur %u, size %u", ofs, size);
+	meta->last_ofs += len;
+	lseek (fd, meta->last_ofs, SEEK_SET);
 
-	    for (i = 0; i < (clock - ip->end - ip->delay) / delay; i++)
-		for (j = 0; j < len; j++)
-		    write (fd, &v, sizeof (v));
+	extra = (clock - ip->end) / delay;
+
+	/* if value appeared before it's time */
+	if (extra >= 1) {
+	    if (extra > 1) {
+		extra--;
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS: there are gaps of size %d items", extra);
+
+		for (i = 0; i < extra; i++)
+		    for (j = 0; j < len; j++)
+			write (fd, &v, sizeof (v));
+		meta->last_ofs += extra * len;
+	    }
+
+	    write (fd, value, len);
+	    close (fd);
+
+	    /* update meta */
+	    ip->end = clock;
+
+	    fd = open (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+
+	    lseek (fd, sizeof (meta->blocks) * 3, SEEK_SET);
+	    write (fd, &meta->last_ofs, sizeof (meta->last_ofs));
+
+	    lseek (fd, sizeof (hfs_meta_item_t) * (meta->blocks-1), SEEK_CUR);
+	    write (fd, ip, sizeof (hfs_meta_item_t));
+	    close (fd);
 	}
-	else {
-	    ofs = lseek (fd, ip->ofs + ((clock - ip->start + ip->delay)/ip->delay)*len, SEEK_SET);
-	    zabbix_log(LOG_LEVEL_DEBUG, "HFS: cur %u, size %u", ofs, size);
-	}
-
-	write (fd, value, len);
-	close (fd);
-
-	/* update meta */
-	ip->end = clock;
-
-	fd = open (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
-
-	lseek (fd, sizeof (meta->blocks) * 3 + sizeof (hfs_meta_item_t) * (meta->blocks-1), SEEK_SET);
-	write (fd, ip, sizeof (hfs_meta_item_t));
-	close (fd);
+	else
+	    zabbix_log(LOG_LEVEL_DEBUG, "HFS: value appeared earlier than expected. Now %d, but next must be at %d", clock, ip->end + delay);
     }
 
     free_meta (meta);
@@ -359,7 +375,8 @@ static hfs_meta_t* read_meta (const char* hfs_base_dir, zbx_uint64_t itemid, tim
 	zabbix_log(LOG_LEVEL_DEBUG, "file open failed: %s", path);
 	res->blocks = 0;
 	res->last_delay = 0;
-        res->last_type = IT_DOUBLE;
+	res->last_type = IT_DOUBLE;
+	res->last_ofs = 0;
 	res->meta = NULL;
 	free (path);
 	return res;
@@ -370,6 +387,7 @@ static hfs_meta_t* read_meta (const char* hfs_base_dir, zbx_uint64_t itemid, tim
     fread (&res->blocks, sizeof (res->blocks), 1, f);
     fread (&res->last_delay, sizeof (res->last_delay), 1, f);
     fread (&res->last_type, sizeof (res->last_type), 1, f);
+    fread (&res->last_ofs, sizeof (res->last_ofs), 1, f);
 
     res->meta = (hfs_meta_item_t*)malloc (sizeof (hfs_meta_item_t)*res->blocks);
 
@@ -1028,7 +1046,7 @@ size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t x, zbx_uint64_t item
 			goto nextloop;
 		}
 
-	        while (read (fd, &val.l, sizeof (val.l)) > 0) {
+		while (read (fd, &val.l, sizeof (val.l)) > 0) {
 			long cur_group;
 
 			if (!is_valid_val(&val.l))
