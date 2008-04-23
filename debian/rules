@@ -148,6 +148,7 @@ install-agent-stamp: build-agent
 	$(INSTALL_DIR) $(TMP_CLIENT)/usr/sbin
 	$(INSTALL_DIR) $(TMP_CLIENT)/etc/zabbix/
 	$(INSTALL_DIR) $(TMP_CLIENT)/etc/logrotate.d/
+	$(INSTALL_DIR) $(TMP_CLIENT)/var/spool/zabbix/
 	$(INSTALL_DIR) $(TMP_CLIENT)/usr/share/zabbix-agent/
 	$(INSTALL_DIR) $(TMP_CLIENT)/DEBIAN
 	$(INSTALL_PROGRAM) src/zabbix_agent/zabbix_agentd  $(TMP_CLIENT)/usr/sbin
