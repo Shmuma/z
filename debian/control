@@ -1,7 +1,7 @@
 Source: zabbix
 Section: net
 Priority: optional
-Maintainer: Max Lapan <max.lapan@gmail.com>
+Maintainer: Max Lapan <lapan@yandex-team.ru>
 Build-Depends: debhelper (>= 4), libsnmp9-dev | libsnmp5-dev | libsnmp-dev, dpatch, automake1.9, po-debconf, libldap2-dev, libcurl4-gnutls-dev | libcurl3-dev
 Standards-Version: 3.7.3
  
