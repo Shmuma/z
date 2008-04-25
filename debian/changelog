@@ -6,7 +6,7 @@ zabbix (1:1.4.4-yandex1) unstable; urgency=high
   [ Max Lapan ]
   * Agent buffers on disk
 
- -- Max Lapan <max.lapan@gmail.com>  Wed, 23 Apr 2008 13:08:29 +0400
+ -- Max Lapan <lapan@yandex-team.ru>  Wed, 23 Apr 2008 13:08:29 +0400
 
 zabbix (1:1.4.4-5) UNRELEASED; urgency=low
 
