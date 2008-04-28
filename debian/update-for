@@ -1,0 +1,17 @@
+#!/bin/sh
+
+case ${1:incorrect} in
+    sarge|etch|lenny)
+        ;;
+    *)
+        echo "You must specify valid distro as first argument (sarge, etch or lenny)"
+        exit 1
+esac
+
+DIR=$(dirname $0)
+[ -L $DIR/control ] && rm $DIR/control && ln -s control.$1 $DIR/control
+
+VER=$(cat $DIR/control | grep -e '^Version:' | head -n 1 | cut -d ' ' -f 2)
+
+[ a$VER = a ] && ( echo Not found version tag in control file. Failed.; exit 1 )
+cat $DIR/changelog | sed "1s/(.*)/(1:$VER)/" > $DIR/changelog.new && mv $DIR/changelog.new $DIR/changelog
