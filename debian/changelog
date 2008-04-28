@@ -1,4 +1,4 @@
-zabbix (1:1.4.4-yandex1) unstable; urgency=high
+zabbix (1:1.4.4-yandex-lenny1) unstable; urgency=high
 
   [ Michael Ablassmeier ]
   * Fixed remote DoS (CVE-2008-1353) Closes: #471678
