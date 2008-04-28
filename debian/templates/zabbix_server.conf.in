@@ -49,6 +49,9 @@
 
 #ListenIP=127.0.0.1
 
+# PollerIP parameter specify which address poller's requests to agents will be bind to.
+#PollerIP=
+
 # How often ZABBIX will perform housekeeping procedure
 # (in hours)
 # Default value is 1 hour
@@ -77,11 +80,11 @@ DebugLevel=3
 
 # Specifies how long we wait for agent response (in sec)
 # Must be between 1 and 30 
-Timeout=5
+Timeout=30
 
 # Specifies how many seconds trapper may spend processing new data
 # Must be between 1 and 30 
-#TrapperTimeout=5
+TrapperTimeout=30
 
 # After how many seconds of unreachability treat a host as unavailable
 #UnreachablePeriod=45
@@ -113,6 +116,12 @@ AlertScriptsPath=/etc/zabbix/alert.d/
 
 # Frequency of ICMP pings (item keys 'icmpping' and 'icmppingsec'). Defauls is 60 seconds.
 #PingerFrequency=60
+
+# Server site name. If specified, this server will process only items
+# related to this site. Under items I mean: pinger, poller, triggers
+# and events.  If not specified, filters are off and server handles
+# all there object regardless their site binding.
+ServerSite=Default
 
 # Database host name
 # Default is localhost

@@ -7,7 +7,7 @@ Group: System Environment/Daemons
 License: GPL
 Source: %{realname}-%{version}_yandex.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
-BuildPrereq: mysql, mysql-devel, net-snmp-devel, setproctitle-devel, iksemel-devel
+BuildPrereq: mysql, mysql-devel, net-snmp-devel, setproctitle-devel, iksemel-devel, pkgconfig
 Requires: mysql, net-snmp, setproctitle, iksemel
 Summary: A network monitor.
 

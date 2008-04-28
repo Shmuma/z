@@ -7,7 +7,7 @@ Group: System Environment/Daemons
 License: GPL
 Source: %{realname}-%{version}_yandex.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
-BuildPrereq: libsqlora8-devel, net-snmp-devel, setproctitle-devel, iksemel-devel
+BuildPrereq: libsqlora8-devel, net-snmp-devel, setproctitle-devel, iksemel-devel, pkgconfig
 Requires: libsqlora8, net-snmp, setproctitle, iksemel
 Summary: A network monitor.
 

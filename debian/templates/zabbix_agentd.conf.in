@@ -31,7 +31,7 @@ Hostname=@hostname@
 # Default value is 5
 # This parameter must be between 1 and 16
 
-StartAgents=5
+StartAgents=10
 
 # How often refresh list of active checks. 2 minutes by default.
 
@@ -70,11 +70,11 @@ LogFileSize=10
 # Spend no more than Timeout seconds on processing
 # Must be between 1 and 30
 
-Timeout=10
+Timeout=30
 
 # Size of buffer for active checks stored on disk in megabytes.
 # If it set to zero (default) active buffering disabled.
-ActiveChecksBufSize=10
+ActiveChecksBufSize=0
 ActiveChecksBufFile=/var/spool/zabbix/active_buf.dat
 
 ####### USER-DEFINED MONITORED PARAMETERS #######
