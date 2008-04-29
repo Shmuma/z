@@ -75,7 +75,7 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
     hfs_meta_item_t item, *ip;
     hfs_meta_t* meta;
     int fd;
-    int i, j, r, extra;
+    int i, j, r, extra, eextra;
     unsigned char v = 0xff;
     off_t size, ofs;
 
@@ -157,6 +157,17 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
 
 	/* if value appeared before it's time */
 	if (extra >= 1) {
+            /* check for time-based items count differs from offset-based */
+            eextra = (ip->end - ip->start) / delay - (meta->last_ofs - ip->ofs) / len;
+
+            if (eextra > 0) {
+                zabbix_log(LOG_LEVEL_CRIT, "HFS: there is disagree of time-based items count with offset based. Perform alignment. Count=%d", eextra);
+		for (i = 0; i < eextra; i++)
+		    for (j = 0; j < len; j++)
+			write (fd, &v, sizeof (v));
+                meta->last_ofs += eextra * len;
+            }
+
 	    if (extra > 1) {
 		extra--;
 		zabbix_log(LOG_LEVEL_DEBUG, "HFS: there are gaps of size %d items", extra);
@@ -165,7 +176,7 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
 		    for (j = 0; j < len; j++)
 			write (fd, &v, sizeof (v));
 		meta->last_ofs += extra * len;
-	    }
+	    }            
 
 	    write (fd, value, len);
 	    close (fd);
@@ -1093,10 +1104,10 @@ size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t x, zbx_uint64_t item
 
 		while (read (fd, &val.l, sizeof (val.l)) > 0) {
 			long cur_group;
-
+#ifndef DEBUG_legion
 			if (!is_valid_val(&val.l))
 				continue;
-
+#endif
 			if (result_size <= items) {
 				result_size += alloc_item_values;
 				*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * result_size));
