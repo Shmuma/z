@@ -5,7 +5,7 @@ Version: 1.4.4
 Release: yandex_1
 Group: System Environment/Daemons
 License: GPL
-Source: %{realname}-%{version}_yandex.tar.gz
+Source: %{realname}-%{version}_yandex1.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
 BuildPrereq: libsqlora8-devel, net-snmp-devel, setproctitle-devel, iksemel-devel, pkgconfig
 Requires: libsqlora8, net-snmp, setproctitle, iksemel
@@ -30,7 +30,7 @@ Requires: php
 A php frontent to zabbix.
 
 %prep
-%setup -q -n %{realname}-%{version}_yandex
+%setup -q -n %{realname}-%{version}_yandex1
 
 %build
 %configure --enable-server --with-oracle --with-jabber --with-net-snmp
@@ -43,8 +43,8 @@ for zabbixfile in misc/conf/* misc/init.d/redhat/{zabbix_agentd,zabbix_server}; 
     sed -i -e "s#BASEDIR=.*#BASEDIR=%{zabbix_bindir}#g" \
         -e "s#PidFile=/var/tmp#PidFile=%{zabbix_run}#g" \
         -e "s#LogFile=/tmp#LogFile=%{zabbix_log}#g" \
-        -e "s#ActiveChecksBufFile=/var/tmp/#ActiveChecksBufFile=%{zabbix_spool}#g" \
-        -e "s#AlertScriptsPath=/home/zabbix/#AlertScriptsPath=%{zabbix_confdir}#g" \
+        -e "s#ActiveChecksBufFile=/var/tmp#ActiveChecksBufFile=%{zabbix_spool}#g" \
+        -e "s#AlertScriptsPath=/home/zabbix#AlertScriptsPath=%{zabbix_confdir}#g" \
         -e "s#Hostname=.*#Hostname=$HOSTNAME#g" \
         -e "s#/home/zabbix/lock#%{_localstatedir}/lock#g" $zabbixfile
 done
