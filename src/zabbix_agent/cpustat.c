@@ -258,9 +258,13 @@ static int	get_cpustat(
 		int cpuid,
 		int *now,
 		zbx_uint64_t *cpu_user,
-		zbx_uint64_t *cpu_system,
 		zbx_uint64_t *cpu_nice,
-		zbx_uint64_t *cpu_idle
+		zbx_uint64_t *cpu_system,
+		zbx_uint64_t *cpu_idle,
+		zbx_uint64_t *cpu_iowait,
+		zbx_uint64_t *cpu_irq,
+		zbx_uint64_t *cpu_softirq,
+		zbx_uint64_t *cpu_steal
 
 	)
 {
@@ -291,7 +295,7 @@ static int	get_cpustat(
 		return 1;
 	}
 
-	*cpu_user = *cpu_nice = *cpu_system = *cpu_idle = -1;
+	*cpu_user = *cpu_nice = *cpu_system = *cpu_idle = *cpu_iowait = *cpu_irq = *cpu_softirq = *cpu_steal = 0;
 
 	zbx_snprintf(cpu_name, sizeof(cpu_name), "cpu%c ", cpuid > 0 ? '0' + (cpuid - 1) : ' ');
 
@@ -299,7 +303,8 @@ static int	get_cpustat(
 	{
 		if(strstr(line, cpu_name) == NULL) continue;
 
-		sscanf(line, "%*s " ZBX_FS_UI64 " " ZBX_FS_UI64 " " ZBX_FS_UI64 " " ZBX_FS_UI64, cpu_user, cpu_nice, cpu_system, cpu_idle);
+		sscanf(line, "%*s " ZBX_FS_UI64 " " ZBX_FS_UI64 " " ZBX_FS_UI64 " " ZBX_FS_UI64 " " ZBX_FS_UI64 " " ZBX_FS_UI64 " " ZBX_FS_UI64 " " ZBX_FS_UI64,
+		    cpu_user, cpu_nice, cpu_system, cpu_idle, cpu_iowait, cpu_irq, cpu_softirq, cpu_steal);
 		break;
 	}
 	zbx_fclose(file);
@@ -345,9 +350,13 @@ static void	apply_cpustat(
 	int cpuid,
 	int now, 
 	zbx_uint64_t cpu_user, 
-	zbx_uint64_t cpu_system,
 	zbx_uint64_t cpu_nice,
-	zbx_uint64_t cpu_idle
+	zbx_uint64_t cpu_system,
+	zbx_uint64_t cpu_idle,
+	zbx_uint64_t cpu_iowait,
+	zbx_uint64_t cpu_irq,
+	zbx_uint64_t cpu_softirq,
+	zbx_uint64_t cpu_steal
 	)
 {
 	register int	i	= 0;
@@ -358,22 +367,38 @@ static void	apply_cpustat(
 		time15	= 0;
 
 	zbx_uint64_t
-		idle	= 0,
-		idle1	= 0,
-		idle5	= 0,
-		idle15	= 0,
 		user	= 0,
 		user1	= 0,
 		user5	= 0,
 		user15	= 0,
-		system	= 0,
-		system1	= 0,
-		system5	= 0,
-		system15= 0,
 		nice	= 0,
 		nice1	= 0,
 		nice5	= 0,
 		nice15	= 0,
+		system	= 0,
+		system1	= 0,
+		system5	= 0,
+		system15= 0,
+		idle	= 0,
+		idle1	= 0,
+		idle5	= 0,
+		idle15	= 0,
+		iowait	= 0,
+		iowait1	= 0,
+		iowait5	= 0,
+		iowait15= 0,
+		irq	= 0,
+		irq1	= 0,
+		irq5	= 0,
+		irq15	= 0,
+		softirq		= 0,
+		softirq1	= 0,
+		softirq5	= 0,
+		softirq15	= 0,
+		steal	= 0,
+		steal1	= 0,
+		steal5	= 0,
+		steal15	= 0,
 		all	= 0,
 		all1	= 0,
 		all5	= 0,
@@ -390,11 +415,15 @@ static void	apply_cpustat(
 			curr_cpu->clock[i]	= now;
 
 			user	= curr_cpu->h_user[i]	= cpu_user;
-			system	= curr_cpu->h_system[i]	= cpu_system;
 			nice	= curr_cpu->h_nice[i]	= cpu_nice;
+			system	= curr_cpu->h_system[i]	= cpu_system;
 			idle	= curr_cpu->h_idle[i]	= cpu_idle;
+			iowait	= curr_cpu->h_iowait[i]	= cpu_iowait;
+			irq	= curr_cpu->h_irq[i]	= cpu_irq;
+			softirq	= curr_cpu->h_softirq[i]= cpu_softirq;
+			steal	= curr_cpu->h_steal[i]	= cpu_steal;
 
-			all	= cpu_idle + cpu_user + cpu_nice + cpu_system;
+			all	= cpu_user + cpu_nice + cpu_system + cpu_idle + cpu_iowait + cpu_irq + cpu_softirq + cpu_steal;
 			break;
 		}
 	}
@@ -407,22 +436,30 @@ static void	apply_cpustat(
 
 		if(curr_cpu->clock[i] == now)
 		{
-			idle	= curr_cpu->h_idle[i];
 			user	= curr_cpu->h_user[i];
 			nice	= curr_cpu->h_nice[i];
 			system	= curr_cpu->h_system[i];
-			all	= idle + user + nice + system;
+			idle	= curr_cpu->h_idle[i];
+			iowait	= curr_cpu->h_iowait[i];
+			irq	= curr_cpu->h_irq[i];
+			softirq	= curr_cpu->h_softirq[i];
+			steal	= curr_cpu->h_steal[i];
+			all	= user + nice + system +  idle + iowait + irq + softirq + steal;
 		}
 
 #define SAVE_CPU_CLOCK_FOR(t)										\
 		if((curr_cpu->clock[i] >= (now - (t * 60))) && (time ## t > curr_cpu->clock[i]))	\
 		{											\
 			time ## t	= curr_cpu->clock[i];						\
-			idle ## t	= curr_cpu->h_idle[i];						\
 			user ## t	= curr_cpu->h_user[i];						\
 			nice ## t	= curr_cpu->h_nice[i];						\
 			system ## t	= curr_cpu->h_system[i];					\
-			all ## t	= idle ## t + user ## t + nice ## t + system ## t;		\
+			idle ## t	= curr_cpu->h_idle[i];						\
+			iowait ## t	= curr_cpu->h_iowait[i];					\
+			irq ## t	= curr_cpu->h_irq[i];						\
+			softirq ## t	= curr_cpu->h_softirq[i];					\
+			steal ## t	= curr_cpu->h_steal[i];						\
+			all ## t	= user ## t + nice ## t + system ## t + idle ## t + iowait ## t + irq ## t + softirq ## t + steal ##t;	\
 		}
 
 		SAVE_CPU_CLOCK_FOR(1);
@@ -441,10 +478,6 @@ static void	apply_cpustat(
 		curr_cpu->type ## time = 0.;						\
 	}
 
-	CALC_CPU_LOAD(idle, 1);
-	CALC_CPU_LOAD(idle, 5);
-	CALC_CPU_LOAD(idle, 15);
-
 	CALC_CPU_LOAD(user, 1);
 	CALC_CPU_LOAD(user, 5);
 	CALC_CPU_LOAD(user, 15);
@@ -456,6 +489,26 @@ static void	apply_cpustat(
 	CALC_CPU_LOAD(system, 1);
 	CALC_CPU_LOAD(system, 5);
 	CALC_CPU_LOAD(system, 15);
+
+	CALC_CPU_LOAD(idle, 1);
+	CALC_CPU_LOAD(idle, 5);
+	CALC_CPU_LOAD(idle, 15);
+
+	CALC_CPU_LOAD(iowait, 1);
+	CALC_CPU_LOAD(iowait, 5);
+	CALC_CPU_LOAD(iowait, 15);
+
+	CALC_CPU_LOAD(irq, 1);
+	CALC_CPU_LOAD(irq, 5);
+	CALC_CPU_LOAD(irq, 15);
+
+	CALC_CPU_LOAD(softirq, 1);
+	CALC_CPU_LOAD(softirq, 5);
+	CALC_CPU_LOAD(softirq, 15);
+
+	CALC_CPU_LOAD(irq, 1);
+	CALC_CPU_LOAD(irq, 5);
+	CALC_CPU_LOAD(irq, 15);
 }
 
 #endif /* not _WINDOWS */
@@ -575,14 +628,14 @@ void	collect_cpustat(ZBX_CPUS_STAT_DATA *pcpus)
 	register int i = 0;
 	int	now = 0;
 
-	zbx_uint64_t cpu_user, cpu_nice, cpu_system, cpu_idle;
+	zbx_uint64_t cpu_user, cpu_nice, cpu_system, cpu_idle, cpu_iowait, cpu_irq, cpu_softirq, cpu_steal;
 
 	for ( i = 0; i <= pcpus->count; i++ )
 	{
-		if(0 != get_cpustat(i, &now, &cpu_user, &cpu_system, &cpu_nice, &cpu_idle))
+		if(0 != get_cpustat(i, &now, &cpu_user, &cpu_nice, &cpu_system, &cpu_idle, &cpu_iowait, &cpu_irq, &cpu_softirq, &cpu_steal))
 			continue;
 
-		apply_cpustat(pcpus, i, now, cpu_user, cpu_system, cpu_nice, cpu_idle);
+		apply_cpustat(pcpus, i, now, cpu_user, cpu_nice, cpu_system, cpu_idle, cpu_iowait, cpu_irq, cpu_softirq, cpu_steal);
 	}
 
 #endif /* _WINDOWS */
