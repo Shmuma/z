@@ -477,7 +477,7 @@
 					"delay"			=> array('template' => 1),
 					"history"		=> array('template' => 1 , 'httptest' => 1),
 					"status"		=> array('template' => 1 , 'httptest' => 1),
-					"type"			=> array(),
+					"type"			=> array('template' => 1),
 					"snmp_community"	=> array(),
 					"snmp_oid"		=> array(),
 					"value_type"		=> array(),

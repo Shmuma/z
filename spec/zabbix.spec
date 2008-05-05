@@ -5,7 +5,7 @@ Version: 1.4.4
 Release: yandex_1
 Group: System Environment/Daemons
 License: GPL
-Source: %{realname}-%{version}_yandex.tar.gz
+Source: %{realname}-%{version}_yandex1.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
 BuildPrereq: mysql, mysql-devel, net-snmp-devel, setproctitle-devel, iksemel-devel, pkgconfig
 Requires: mysql, net-snmp, setproctitle, iksemel
@@ -13,9 +13,9 @@ Summary: A network monitor.
 
 %define zabbix_bindir 	        %{_sbindir}
 %define zabbix_confdir 		%{_sysconfdir}/%{realname}
-%define zabbix_run 		%{_localstatedir}/run/zabbix/
-%define zabbix_log 		%{_localstatedir}/log/zabbix/
-%define zabbix_spool 		%{_localstatedir}/spool/zabbix/
+%define zabbix_run 		%{_localstatedir}/run/zabbix
+%define zabbix_log 		%{_localstatedir}/log/zabbix
+%define zabbix_spool 		%{_localstatedir}/spool/zabbix
 
 %description
 zabbix is a network monitor.
@@ -28,22 +28,19 @@ Group: System Environment/Daemons
 the zabbix network monitor agent.
 
 %prep
-%setup -q -n %{realname}-%{version}_yandex
+%setup -q -n %{realname}-%{version}_yandex1
 
 %build
 %configure --enable-server --enable-agent --with-mysql --with-jabber --with-net-snmp
 make
 
 # adjust in several files /home/zabbix
-HOSTNAME=$(hostname -f)
-
 for zabbixfile in misc/conf/* misc/init.d/redhat/{zabbix_agentd,zabbix_server}; do
     sed -i -e "s#BASEDIR=.*#BASEDIR=%{zabbix_bindir}#g" \
         -e "s#PidFile=/var/tmp#PidFile=%{zabbix_run}#g" \
         -e "s#LogFile=/tmp#LogFile=%{zabbix_log}#g" \
-        -e "s#ActiveChecksBufFile=/var/tmp/#ActiveChecksBufFile=%{zabbix_spool}#g" \
-        -e "s#AlertScriptsPath=/home/zabbix/#AlertScriptsPath=%{zabbix_confdir}#g" \
-        -e "s#Hostname=.*#Hostname=$HOSTNAME#g" \
+        -e "s#ActiveChecksBufFile=/var/tmp#ActiveChecksBufFile=%{zabbix_spool}#g" \
+        -e "s#AlertScriptsPath=/home/zabbix#AlertScriptsPath=%{zabbix_confdir}#g" \
         -e "s#/home/zabbix/lock#%{_localstatedir}/lock#g" $zabbixfile
 done
 
@@ -86,6 +83,14 @@ if [ -z "`grep zabbix_trap etc/services`" ]; then
 zabbix_trap	10051/tcp
 EOF
 fi
+
+# replace Hostname of config file with fqdn
+HOSTNAME=$(hostname -f)
+
+for zabbixfile in %{zabbix_confdir}/zabbix_agentd.conf; do
+    sed -i -e "s#Hostname=.*#Hostname=$HOSTNAME#g" $zabbixfile
+done
+
 
 %preun
 if [ "$1" = 0 ]

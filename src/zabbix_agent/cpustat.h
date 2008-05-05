@@ -69,23 +69,39 @@
 		/* private */
 		int	clock[MAX_CPU_HISTORY];
 		zbx_uint64_t	h_user[MAX_CPU_HISTORY];
-		zbx_uint64_t	h_system[MAX_CPU_HISTORY];
 		zbx_uint64_t	h_nice[MAX_CPU_HISTORY];
+		zbx_uint64_t	h_system[MAX_CPU_HISTORY];
 		zbx_uint64_t	h_idle[MAX_CPU_HISTORY];
+		zbx_uint64_t	h_iowait[MAX_CPU_HISTORY];
+		zbx_uint64_t	h_irq[MAX_CPU_HISTORY];
+		zbx_uint64_t	h_softirq[MAX_CPU_HISTORY];
+		zbx_uint64_t	h_steal[MAX_CPU_HISTORY];
 
 		/* public */
-		double	idle1;
-		double	idle5;
-		double	idle15;
 		double	user1;
 		double	user5;
 		double	user15;
-		double	system1;
-		double	system5;
-		double	system15;
 		double	nice1;
 		double	nice5;
 		double	nice15;
+		double	system1;
+		double	system5;
+		double	system15;
+		double	idle1;
+		double	idle5;
+		double	idle15;
+		double	iowait1;
+		double	iowait5;
+		double	iowait15;
+		double	irq1;
+		double	irq5;
+		double	irq15;
+		double	softirq1;
+		double	softirq5;
+		double	softirq15;
+		double	steal1;
+		double	steal5;
+		double	steal15;
 
 	} ZBX_SINGLE_CPU_STAT_DATA;
 
