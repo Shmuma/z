@@ -451,7 +451,7 @@ static off_t find_meta_ofs (int time, hfs_meta_t* meta)
     int f = 0;
 
     for (i = 0; i < meta->blocks; i++) {
-	zabbix_log(LOG_LEVEL_CRIT, "check block %d[%d,%d], ts %d, ofs %u", i, meta->meta[i].start, meta->meta[i].end, time, meta->meta[i].ofs);
+	zabbix_log(LOG_LEVEL_DEBUG, "check block %d[%d,%d], ts %d, ofs %u", i, meta->meta[i].start, meta->meta[i].end, time, meta->meta[i].ofs);
 
 	if (!f) {
 	    f = (meta->meta[i].end > time);
@@ -980,122 +980,133 @@ double HFS_get_delta_float (const char* hfs_base_dir, zbx_uint64_t itemid, int p
     return state.max - state.min;
 }
 
+static int
+HFS_find_meta(const char *hfs_base_dir, zbx_uint64_t itemid, time_t from_ts, hfs_meta_t **res) {
+	int i, block = 0;
+	time_t ts = from_ts;
+	hfs_meta_t *meta = NULL;
+	hfs_meta_item_t *ip = NULL;
 
+#ifdef DEBUG_legion
+	fprintf(stderr, "It HFS_find_meta(hfs_base_dir=%s, itemid=%lld, from=%d, res)\n", hfs_base_dir, itemid, from_ts);
+	fflush(stderr);
+#endif
+	(*res) = NULL;
 
-size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t x, zbx_uint64_t itemid, time_t from_ts, time_t to_ts, hfs_item_value_t **result)
+	while (ts > 0) {
+		char *path = get_name (hfs_base_dir, itemid, ts, 1);
+		i = access(path, R_OK);
+		free(path);
+
+		if (i == -1)
+			break;
+
+		if ((meta = read_meta(hfs_base_dir, itemid, ts)) == NULL)
+			return -1; // Somethig real bad happend :(
+
+		if (meta->blocks > 0)
+			break;
+
+		free_meta(meta);
+		ts = get_next_data_ts(ts);
+	}
+
+	if ((meta == NULL) || (meta->blocks == 0)) {
+		free_meta(meta);
+		return -1;
+	}
+
+	(*res) = meta;
+	if (from_ts < ts)
+		return block;
+
+	for (i = 0; i < meta->blocks; i++) {
+		ip = meta->meta + i;
+
+		if (ip->start <= ts && ip->end >= ts)
+			return i;
+	}
+
+	/* Interesting situation:
+	   Meta file was found, from_ts not in past, but timestamp not found in blocks
+	*/
+	free_meta(meta);
+	(*res) = NULL;
+	return -1;
+}
+
+size_t
+HFSread_item (const char *hfs_base_dir, size_t sizex, zbx_uint64_t itemid, time_t graph_from_ts, time_t graph_to_ts, time_t from_ts, time_t to_ts, hfs_item_value_t **result)
 {
 	item_value_u max, min, val;
-	time_t p, ts = from_ts;
+	time_t ts = from_ts;
 	size_t items = 0, result_size = 0;
-	int z, finish_loop = 0, block = -1;
-	long group;
+	int z, p, x, finish_loop = 0, block;
+	long cur_group, group = -1;
 
-	p = (to_ts - from_ts);
-	z = (p - (from_ts % p));
-	x = (x - 1);
+	p = (graph_to_ts - graph_from_ts);
+	z = (p - graph_from_ts % p);
+	x = (sizex - 1);
 
 	max.d = 0.0;
 	min.d = 0.0;
 
 #ifdef DEBUG_legion
-	printf("In HFSread_item(hfs_base_dir=%s, sizex=%lld, itemid=%lld, from=%d, to=%d)\n", hfs_base_dir, x, itemid, from_ts, to_ts);
+	fprintf(stderr, "In HFSread_item(hfs_base_dir=%s, sizex=%d, itemid=%lld, from=%d, to=%d)\n", hfs_base_dir, x, itemid, from_ts, to_ts);
+	fprintf(stderr, "Magic variables: p=%d z=%d x=%d\n", p, z, x);
 #endif
 	while (!finish_loop) {
 		int fd;
 		char *p_data = NULL;
-		hfs_meta_item_t *ip;
 		hfs_meta_t *meta;
+		hfs_meta_item_t *ip;
 		off_t ofs;
-
-		if ((meta = read_meta (hfs_base_dir, itemid, ts)) == NULL) {
 #ifdef DEBUG_legion
-			printf("\tread_meta() == NULL\n");
+		fprintf(stderr, "HFSread_item in main loop\n");
+		fflush(stderr);
 #endif
+
+		if ((block = HFS_find_meta(hfs_base_dir, itemid, ts, &meta)) == -1)
 			break;
-		}
-#ifdef DEBUG_legion
-		printf("meta {\n\t"
-			"blocks=%d;\n\t"
-			"last_delay=%d\n\t"
-			"last_type=%d\n\t"
-			"last_ofs=%d\n};\n",
-			meta->blocks,
-			meta->last_delay,
-			meta->last_type,
-			meta->last_ofs
-		);
-#endif
-		while (!meta->blocks) {
-			if (ts >= to_ts) {
-#ifdef DEBUG_legion
-				printf("!meta->block && ts >= to_ts (%d >= %d)\n", ts, to_ts);
-#endif
-				finish_loop = 1;
-				goto nextloop;
-			}
 
-			free_meta (meta);
-			ts = get_next_data_ts (ts);
+		ip = meta->meta + block;
 
-			if ((meta = read_meta (hfs_base_dir, itemid, ts)) == NULL) {
-#ifdef DEBUG_legion
-				printf("!meta->block && read_meta() == NULL\n");
-#endif
-				goto nextloop;
-			}
-		}
+		if (group == -1)
+			group = (long) (x * ((ts + z) % p) / p);
 
-		if (block == -1) {
-			int i = 0;
-			for (; i < meta->blocks; i++) {
-				ip = meta->meta + i;
-				if (ip->start <= ts || from_ts <= ip->start) {
 #ifdef DEBUG_legion
-					printf("start from block[%d]\n", i);
-#endif
-					block = i;
-					break;
-				}
-			}
-			if (block == -1)
-				goto nextloop;
-
-			group = (long) ((x * ((ts + z) % p)) / p);
-		}
-		else {
-			ip = meta->meta;
-		}
-#ifdef DEBUG_legion
-		printf("hfs_meta_item meta->meta[%d] {\n\t"
-			"start=%d\n\t"
-			"end=%d\n\t"
-			"delay=%d\n\t"
-			"type=%d\n\t"
-			"ofs=%d\n\t"
+		fprintf(stderr, "hfs_meta_item meta->meta[%d] {\n"
+			"\tstart=%d\n"
+			"\tend=%d\n"
+			"\tdelay=%d\n"
+			"\ttype=%d\n"
+			"\tofs=%d\n"
 			"};\n",
 			block,
 			ip->start, ip->end, ip->delay, ip->type, ip->ofs);
+		fflush(stderr);
 #endif
+
 		if ((p_data = get_name (hfs_base_dir, itemid, ts, 0)) == NULL) {
 			zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get file name");
 			goto nextloop;
 		}
 #ifdef DEBUG_legion
-		printf("data file = [%s]\n", p_data);
+		fprintf(stderr, "data file = [%s]\n", p_data);
+		fflush(stderr);
 #endif
 		if ((fd = open (p_data, O_RDONLY)) == -1) {
 			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
 			goto nextloop;
 		}
-#ifdef DEBUG_legion
-		printf("run find_meta_ofs (%d, meta)\n", ts);
-#endif
+
 		if ((ofs = find_meta_ofs (ts, meta)) == -1) {
 			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to get offset in file", p_data);
 			goto nextloop;
 		}
 #ifdef DEBUG_legion
-		printf("meta file offset = [%d]\n", ofs);
+		fprintf(stderr, "run find_meta_ofs (%d, meta) = %d\n", ts, ofs);
+		fflush(stderr);
 #endif
 		if (lseek (fd, ofs, SEEK_SET) == -1) {
 			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to change file offset: %s", p_data, strerror(errno));
@@ -1103,17 +1114,17 @@ size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t x, zbx_uint64_t item
 		}
 
 		while (read (fd, &val.l, sizeof (val.l)) > 0) {
-			long cur_group;
-#ifndef DEBUG_legion
+			ts += ip->delay;
+
 			if (!is_valid_val(&val.l))
 				continue;
-#endif
+
 			if (result_size <= items) {
 				result_size += alloc_item_values;
 				*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * result_size));
 			}
 
-			cur_group = (long) ((x * ((ts + z) % p)) / p);
+			cur_group = (long) (x * ((ts + z) % p) / p);
 
 			if (group != cur_group) {
 				(*result)[items].type  = ip->type;
@@ -1130,30 +1141,22 @@ size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t x, zbx_uint64_t item
 				group = cur_group;
 				max.d = 0.0;
 				min.d = 0.0;
-
 				items++;
 			}
 
 			if (ip->type == IT_DOUBLE) {
-#ifdef DEBUG_legion
-				printf("value=%f %d\n", val.d, ts);
-#endif
 				max.d = ((max.d > val.d) ? max.d : val.d);
 				min.d = ((max.d < val.d) ? max.d : val.d);
 			}
 			else {
-#ifdef DEBUG_legion
-				printf("value=%d %d\n", val.l, ts);
-#endif
 				max.l = ((max.l > val.l) ? max.l : val.l);
 				min.l = ((max.l < val.l) ? max.l : val.l);
 			}
 
-			ts += ip->delay;
-
 			if (ts >= to_ts) {
 #ifdef DEBUG_legion
-				printf("ts >= to_ts (%d >= %d)\n", ts, to_ts);
+				fprintf(stderr, "ts >= to_ts (%d >= %d)\n", ts, to_ts);
+				fflush(stderr);
 #endif
 				finish_loop = 1;
 				break;
@@ -1161,27 +1164,21 @@ size_t HFSread_item (const char *hfs_base_dir, zbx_uint64_t x, zbx_uint64_t item
 
 			if (ts >= ip->end) {
 				block++;
+
+				if (block >= meta->blocks)
+					/* We have read all blocks and we need another meta. */
+					break;
+
 				ip = meta->meta + block;
 #ifdef DEBUG_legion
-				printf("read next block %d\n", block);
-				printf("hfs_meta_item meta->meta[%d] {\n\t"
-					"start=%d\n\t"
-					"end=%d\n\t"
-					"delay=%d\n\t"
-					"type=%d\n\t"
-					"ofs=%d\n\t"
-					"};\n",
-					block,
-					ip->start, ip->end, ip->delay, ip->type, ip->ofs);
+				fprintf(stderr, "read next block %d\n", block);
+				fflush(stderr);
 #endif
 			}
     		}
-		block = 0;
 nextloop:
-		if (p_data) {
+		if (p_data)
 			free (p_data);
-			p_data = NULL;
-		}
 		free_meta (meta);
 		ts = get_next_data_ts (ts);
 	}
@@ -1189,7 +1186,8 @@ nextloop:
 	if (result_size > items)
 		*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * items));
 #ifdef DEBUG_legion
-	printf("Out HFSread_item()\n");
+	fprintf(stderr, "Out HFSread_item()\n");
+	fflush(stderr);
 #endif
 	return items;
 }

@@ -1053,7 +1053,10 @@
 					}
 				}
 				elseif ($HISTORY_STORAGE == "HFS") {
-					$arr = zabbix_hfs_read($this->sizeX, $this->items[$i]['itemid'], $from_time, $to_time);
+					$arr = zabbix_hfs_read($this->sizeX, $this->items[$i]['itemid'],
+								$this->from_time, $this->to_time,
+								$from_time, $to_time);
+
 					foreach($arr as $obj)
 					{
 						$idx=$obj->i;

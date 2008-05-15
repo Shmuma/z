@@ -43,7 +43,7 @@ typedef struct hfs_item_value {
 
 void		HFSadd_history (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, double value, int clock);
 void		HFSadd_history_uint (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, int clock);
-size_t		HFSread_item (const char* hfs_base_dir, zbx_uint64_t x, zbx_uint64_t itemid, time_t ts, time_t to_ts, hfs_item_value_t **result);
+size_t		HFSread_item (const char* hfs_base_dir, size_t x, zbx_uint64_t itemid, time_t graph_from, time_t graph_to, time_t from, time_t to, hfs_item_value_t **result);
 
 zbx_uint64_t	HFS_get_count (const char* hfs_base_dir, zbx_uint64_t itemid, int from);
 zbx_uint64_t	HFS_get_count_u64_eq (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);

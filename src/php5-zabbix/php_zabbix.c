@@ -12,6 +12,7 @@ ZEND_DECLARE_MODULE_GLOBALS(zabbix)
 
 static zend_function_entry php_zabbix_functions[] = {
 	PHP_FE(zabbix_hfs_read, NULL)
+//	PHP_FE(zabbix_hfs_last, NULL)
 	{NULL, NULL, NULL}
 };
 
@@ -80,22 +81,23 @@ static inline int add_next_index_object(zval *arg, zval *tmp TSRMLS_DC)
 }
 /* }}} */
 
-/* {{{ proto array zabbix_hfs_read(int itemid int sizex, int from_time, int to_time) */
+/* {{{ proto array zabbix_hfs_read(int itemid, int sizex, int graph_from_time, int graph_to_time, int from_time, int to_time) */
 PHP_FUNCTION(zabbix_hfs_read)
 {
 	size_t n = 0;
 	zval *z_obj;
 	hfs_item_value_t *res = NULL;
 	int i, sizex, itemid = 0;
-	time_t from_time_sec = 0, to_time_sec = 0;
+	time_t graph_from = 0, graph_to = 0;
+	time_t from = 0, to = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "llll", &sizex, &itemid, &from_time_sec, &to_time_sec) == FAILURE)
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "llllll", &sizex, &itemid, &graph_from, &graph_to, &from, &to) == FAILURE)
 		RETURN_FALSE;
 
         if (array_init(return_value) == FAILURE)
 		RETURN_FALSE;
 
-	n = HFSread_item(ZABBIX_GLOBAL(hfs_base_dir), sizex, itemid, from_time_sec, to_time_sec, &res);
+	n = HFSread_item(ZABBIX_GLOBAL(hfs_base_dir), sizex, itemid, graph_from, graph_to, from, to, &res);
 
 	for (i = 0; i < n; i++) {
 		MAKE_STD_ZVAL(z_obj);
@@ -121,3 +123,17 @@ PHP_FUNCTION(zabbix_hfs_read)
 	}
 	if (res) free(res);
 }
+/* }}} */
+
+/* {{{ proto array zabbix_hfs_last(int itemid, int count) */
+/*
+PHP_FUNCTION(zabbix_hfs_last)
+{
+	int count, itemid;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ll", &itemid, &count) == FAILURE)
+		RETURN_FALSE;
+
+//	foldl_count (hfs_base_dir, itemid, period, &sum, functor);
+}*/
+/* }}} */
