@@ -21,6 +21,10 @@
 #include "cfg.h"
 #include "log.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
 
 char	*CONFIG_FILE			= NULL;
 int	CONFIG_ZABBIX_FORKS		= 5;
@@ -30,6 +34,42 @@ char	*CONFIG_LOG_FILE		= NULL;
 int	CONFIG_LOG_FILE_SIZE		= 1;
 char	CONFIG_ALLOW_ROOT		= 0;
 int	CONFIG_TIMEOUT			= AGENT_TIMEOUT;
+
+static int
+parse_cfg_object(const char *cfg_file,struct cfg_line *cfg)
+{
+	DIR *dir;
+	struct stat sb;
+	struct dirent *d;
+	int result = SUCCEED;
+
+	if (stat(cfg_file, &sb) == -1) {
+		zbx_error("%s: %s\n", cfg_file, strerror(errno));
+		return FAIL;
+	}
+
+	if (!S_ISDIR(sb.st_mode))
+		return parse_cfg_file(cfg_file, cfg);
+
+	if ((dir = opendir(cfg_file)) == NULL) {
+		zbx_error("%s: %s\n", cfg_file, strerror(errno));
+		return FAIL;
+	}
+
+	while((d = readdir(dir)) != NULL) {
+		if (d->d_type == DT_REG && parse_cfg_file(d->d_name, cfg) == FAIL) {
+			result = FAIL;
+			break;
+		}
+	}
+
+	if (closedir(dir) == -1) {
+		zbx_error("%s: %s\n", cfg_file, strerror(errno));
+		return FAIL;
+	}
+
+	return result;
+}
 
 /******************************************************************************
  *                                                                            *
@@ -117,7 +157,7 @@ int	parse_cfg_file(const char *cfg_file,struct cfg_line *cfg)
 
 				if(strcmp(parameter, "Include") == 0)
 				{
-					parse_cfg_file(value, cfg);
+					parse_cfg_object(value, cfg);
 				}
 
 				for(i = 0; value[i] != '\0'; i++)
