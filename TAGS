@@ -1,0 +1,5434 @@
+
+src/libs/zbxsms/sms.c,165
+static int write_gsm(39,1018
+int read_gsm(70,1622
+} zbx_sms_scenario;174,3754
+int	send_sms(176,3775
+#define	ZBX_AT_ESC	178,3863
+#define ZBX_AT_CTRL_Z	179,3889
+
+src/libs/zbxcommon/gnuregex.c,6744
+#undef DEBUG23,917
+#define _GNU_SOURCE42,1370
+#undef NULL58,1720
+#		define bcmp(67,1966
+#		define bcopy(70,2040
+#		define bzero(73,2111
+#define Sword 84,2358
+#define CHAR_SET_SIZE 94,2513
+static char re_syntax_table[re_syntax_table96,2540
+init_syntax_once 99,2597
+#define SYNTAX(125,3022
+#define isascii(136,3253
+#define ISBLANK(140,3297
+#define ISBLANK(142,3351
+#define ISGRAPH(145,3420
+#define ISGRAPH(147,3474
+#define ISPRINT(150,3546
+#define ISDIGIT(151,3594
+#define ISALNUM(152,3642
+#define ISALPHA(153,3690
+#define ISCNTRL(154,3738
+#define ISLOWER(155,3786
+#define ISPUNCT(156,3834
+#define ISSPACE(157,3882
+#define ISUPPER(158,3930
+#define ISXDIGIT(159,3978
+#define NULL 162,4042
+#undef SIGN_EXTEND_CHAR169,4307
+#define SIGN_EXTEND_CHAR(171,4344
+#define SIGN_EXTEND_CHAR(174,4452
+	#define REGEX_ALLOCATE 189,5080
+	#define REGEX_REALLOCATE(190,5111
+			#define alloca 199,5345
+			#define alloca 203,5442
+	#define REGEX_ALLOCATE 209,5600
+	#define REGEX_REALLOCATE(212,5680
+#define FIRST_STRING_P(223,6032
+#define TALLOC(227,6187
+#define RETALLOC(228,6242
+#define REGEX_TALLOC(229,6321
+#define BYTEWIDTH 231,6391
+#define STREQ(233,6428
+#define MAX(236,6488
+#define MIN(239,6549
+typedef char boolean;243,6620
+#define false 246,6650
+#define true 247,6666
+  no_op 260,7155
+  exactn 263,7240
+  anychar,266,7308
+  charset,274,7716
+  charset_not,278,7842
+  start_memory,287,8308
+  stop_memory,296,8817
+  duplicate,300,8955
+  begline,303,9018
+  endline,306,9073
+  begbuf,310,9207
+  endbuf,313,9272
+  jump,316,9355
+  jump_past_alt,319,9424
+  on_failure_jump,323,9548
+  on_failure_keep_string_jump,327,9696
+  pop_failure_jump,331,9842
+  maybe_pop_jump,340,10331
+  dummy_failure_jump,347,10690
+  push_dummy_failure,351,10800
+  succeed_n,355,10968
+  jump_n,359,11110
+  set_number_at,364,11286
+  wordchar,366,11304
+  notwordchar,367,11363
+  wordbeg,369,11435
+  wordend,370,11484
+  wordbound,372,11528
+  notwordbound	373,11580
+  ,before_dot,376,11652
+  at_dot,377,11700
+  after_dot,378,11739
+  syntaxspec,382,11916
+  notsyntaxspec385,11997
+} re_opcode_t;387,12032
+#define STORE_NUMBER(393,12170
+#define STORE_NUMBER_AND_INCR(403,12493
+#define EXTRACT_NUMBER(412,12750
+extract_number 420,12965
+#undef EXTRACT_NUMBER430,13189
+#define EXTRACT_NUMBER(431,13211
+#define EXTRACT_NUMBER_AND_INCR(439,13432
+extract_number_and_incr 447,13621
+#undef EXTRACT_NUMBER_AND_INCR456,13803
+#define EXTRACT_NUMBER_AND_INCR(457,13834
+static int debug 477,14495
+#define DEBUG_STATEMENT(479,14518
+#define DEBUG_PRINT1(480,14547
+#define DEBUG_PRINT2(481,14593
+#define DEBUG_PRINT3(482,14649
+#define DEBUG_PRINT4(483,14713
+#define DEBUG_PRINT_COMPILED_PATTERN(484,14785
+#define DEBUG_PRINT_DOUBLE_STRING(486,14888
+print_fastmap 495,15086
+print_partial_compiled_pattern 527,15726
+print_compiled_pattern 735,20043
+print_double_string 762,20856
+#undef assert790,21454
+#define assert(791,21468
+#define DEBUG_STATEMENT(793,21487
+#define DEBUG_PRINT1(794,21514
+#define DEBUG_PRINT2(795,21538
+#define DEBUG_PRINT3(796,21567
+#define DEBUG_PRINT4(797,21600
+#define DEBUG_PRINT_COMPILED_PATTERN(798,21637
+#define DEBUG_PRINT_DOUBLE_STRING(799,21683
+reg_syntax_t re_syntax_options 806,21973
+re_set_syntax 817,22338
+static const char *re_error_msg[re_error_msg829,22622
+#define PATFETCH(861,24020
+#define PATFETCH_RAW(869,24271
+#define PATUNFETCH 875,24450
+#define TRANSLATE(882,24754
+#define INIT_BUF_SIZE 888,24959
+#define GET_BUFFER_SPACE(891,25053
+#define BUF_PUSH(896,25263
+#define BUF_PUSH_2(904,25476
+#define BUF_PUSH_3(913,25705
+#define STORE_JUMP(924,26068
+#define STORE_JUMP2(928,26185
+#define INSERT_JUMP(932,26347
+#define INSERT_JUMP2(936,26504
+#define MAX_BUF_SIZE 943,26795
+#define EXTEND_BUFFER(950,27102
+#define MAX_REGNUM 979,28322
+typedef unsigned regnum_t;983,28440
+typedef int pattern_offset_t;990,28656
+} compile_stack_elt_t;999,28870
+} compile_stack_type;1007,29016
+#define INIT_COMPILE_STACK_SIZE 1010,29040
+#define COMPILE_STACK_EMPTY 1012,29076
+#define COMPILE_STACK_FULL 1013,29132
+#define COMPILE_STACK_TOP 1016,29240
+#define SET_LIST_BIT(1020,29357
+#define GET_UNSIGNED_NUMBER(1026,29580
+#define CHAR_CLASS_MAX_LENGTH 1042,30002
+#define IS_CHAR_CLASS(1044,30061
+regex_compile 1071,31190
+store_op1 2072,66900
+store_op2 2085,67133
+insert_op1 2100,67472
+insert_op2 2119,67840
+at_begline_loc_p 2140,68344
+at_endline_loc_p 2159,68922
+group_in_compile_stack 2181,69539
+compile_range 2209,70362
+#define INIT_FAILURE_ALLOC 2262,72170
+int re_max_failures 2269,72449
+typedef const unsigned char *fail_stack_elt_t;fail_stack_elt_t2271,72478
+} fail_stack_type;2278,72644
+#define FAIL_STACK_EMPTY(2280,72664
+#define FAIL_STACK_PTR_EMPTY(2281,72719
+#define FAIL_STACK_FULL(2282,72779
+#define FAIL_STACK_TOP(2283,72848
+#define INIT_FAIL_STACK(2288,72987
+#define DOUBLE_FAIL_STACK(2308,73605
+#define PUSH_PATTERN_OP(2326,74216
+#define PUSH_FAILURE_ITEM(2336,74628
+#define POP_FAILURE_ITEM(2340,74801
+#define DEBUG_PUSH 2344,74952
+#define DEBUG_POP(2345,74989
+#define DEBUG_PUSH(2347,75059
+#define DEBUG_POP(2348,75084
+#define PUSH_FAILURE_POINT(2361,75423
+#define NUM_REG_ITEMS 2437,78782
+#define NUM_NONREG_ITEMS 2441,78871
+#define NUM_NONREG_ITEMS 2443,78938
+#define MAX_FAILURE_ITEMS 2447,79026
+#define NUM_FAILURE_ITEMS	2450,79146
+#define REMAINING_AVAIL_SLOTS 2455,79349
+#define POP_FAILURE_POINT(2470,79923
+re_compile_fastmap 2541,82823
+re_set_registers 2826,90642
+re_search 2853,91268
+re_search_2 2886,92394
+#define MATCH_NULL_UNSET_VALUE 3026,96698
+} register_info_type;3032,96884
+#define REG_MATCH_NULL_STRING_P(3034,96907
+#define IS_ACTIVE(3035,96974
+#define MATCHED_SOMETHING(3036,97017
+#define EVER_MATCHED_SOMETHING(3037,97076
+#define SET_REGS_MATCHED(3043,97332
+#define POINTER_TO_OFFSET(3059,97829
+#define REG_UNSET_VALUE 3063,98007
+#define REG_UNSET(3064,98045
+#define MATCHING_IN_FIRST_STRING 3069,98158
+#define PREFETCH(3073,98312
+#define AT_STRINGS_BEG(3087,98772
+#define AT_STRINGS_END(3088,98845
+#define WORDCHAR_P(3095,99151
+#define AT_WORD_BOUNDARY(3102,99398
+#define FREE_VAR(3109,99582
+#define FREE_VARIABLES(3110,99636
+#define FREE_VARIABLES(3125,100147
+#define NO_HIGHEST_ACTIVE_REG 3136,100696
+#define NO_LOWEST_ACTIVE_REG 3137,100743
+re_match 3145,100953
+re_match_2 3170,101795
+group_match_null_string_p 4366,145774
+alt_match_null_string_p 4475,149546
+common_op_match_null_string_p 4512,150402
+bcmp_translate 4600,152338
+re_compile_pattern 4626,153027
+static struct re_pattern_buffer re_comp_buf;4656,153933
+re_comp 4659,153986
+re_exec 4697,154880
+regcomp 4745,156484
+regexec 4820,158883
+regerror 4885,160715
+regfree 4928,161704
+
+src/libs/zbxcommon/str.c,1049
+static void app_title(35,1760
+void version(50,2663
+void usage(68,3717
+void help(86,4828
+int	find_char(114,6322
+void __zbx_zbx_error(138,7534
+int __zbx_zbx_snprintf(179,9239
+int zbx_vsnprintf(215,10868
+void __zbx_zbx_snprintf_alloc(249,12683
+char *string_replace(string_replace275,13148
+void del_zeroes(335,15469
+void	delete_reol(375,16908
+void	zbx_rtrim(402,18306
+void	zbx_ltrim(431,19816
+void	compress_signs(466,21303
+void	rtrim_spaces(566,23979
+void	ltrim_spaces(596,25329
+void	lrtrim_spaces(633,26776
+int	zbx_get_field(655,28047
+size_t zbx_strlcpy(712,30396
+size_t zbx_strlcat(754,32156
+char* zbx_dvsprintf(794,33672
+char* __zbx_zbx_dsprintf(836,35152
+char* zbx_strdcat(864,36467
+char* __zbx_zbx_strdcatf(907,38029
+int	num_param(943,39581
+int	get_param(1023,41966
+char	zbx_num2hex(1132,44591
+u_char	zbx_hex2num(1157,46057
+void	zbx_binary2hex(1184,47670
+int	zbx_hex2binary(1227,49455
+void	zbx_pg_escape_bytea(1270,51600
+int	zbx_pg_unescape_bytea(1352,54118
+char	*zbx_get_next_field(zbx_get_next_field1406,56138
+
+src/libs/zbxcommon/regexp.c,143
+static	char	*zbx_regexp(zbx_regexp26,846
+char	*zbx_regexp_match(zbx_regexp_match52,1288
+char	*zbx_iregexp_match(zbx_iregexp_match57,1438
+
+src/libs/zbxcommon/comms.c,485
+char*	comms_create_request(37,1856
+#define ADD_XML_DATA(47,2045
+int	comms_parse_response(96,3141
+int	comms_parse_multi_response 163,5150
+void    *zbx_malloc2(zbx_malloc2247,7166
+static char*	comms_get_xml_b64_value 281,7945
+char*	comms_start_multi_request 293,8234
+char*	comms_append_multi_request 300,8440
+char*	comms_finish_multi_request 307,8672
+void    *zbx_realloc(zbx_realloc329,10058
+zbx_uint64_t	zbx_htole_uint64(369,11892
+zbx_uint64_t	zbx_letoh_uint64(406,13743
+
+src/libs/zbxcommon/misc.c,479
+char* get_programm_name(38,1996
+int get_nodeid_by_id(64,3385
+double	zbx_time(86,4762
+double zbx_current_time 123,6152
+void	__zbx_zbx_setproctitle(141,7273
+int	calculate_item_nextcheck(175,8919
+int	expand_ipv6(253,11610
+int	ip_in_list_ipv6(344,14235
+int	ip_in_list(448,16953
+int	int_in_list(544,19481
+int	check_time_period(618,21602
+int	cmp_double(680,23811
+int	is_double_prefix(705,25184
+int	is_double(774,27205
+int	is_uint(834,29083
+int	uint64_in_list(878,30776
+
+src/libs/zbxcommon/zbxgetopt.c,577
+#undef GETOPT_COMPAT31,1174
+#undef BAD_OPTION49,1902
+char *zbx_optarg zbx_optarg57,2176
+int zbx_optind 72,2751
+static char *nextchar;nextchar81,3062
+int zbx_opterr 86,3176
+#define BAD_OPTION 92,3367
+int zbx_optopt 93,3391
+  REQUIRE_ORDER,126,4867
+  REQUIRE_ORDER, PERMUTE,126,4867
+  REQUIRE_ORDER, PERMUTE, RETURN_IN_ORDER126,4867
+} ordering;127,4909
+static int first_nonopt;135,5163
+static int last_nonopt;136,5188
+static void exchange 158,6084
+static int zbx_getopt_internal 237,9563
+int zbx_getopt(591,20788
+int zbx_getopt_long(599,21034
+main 612,21383
+
+src/libs/zbxcommon/alias.c,157
+static ALIAS *aliasList=aliasList26,834
+int	add_alias_from_config(33,964
+int	add_alias(49,1181
+void	alias_list_free(99,2198
+void	alias_expand(119,2457
+
+src/libs/zbxcommon/xml.c,25
+int xml_get_data(24,831
+
+src/libs/zbxsys/mutexs.c,534
+		union semun26,839
+#		undef HAVE_SEMUN34,1089
+#		define HAVE_SEMUN 35,1109
+	static int	ZBX_SEM_LIST_ID 42,1195
+int zbx_mutex_create_ext(66,2716
+#define ZBX_MAX_ATTEMPTS 80,3129
+int zbx_mutex_lock(194,6745
+int zbx_mutex_unlock(239,8511
+int zbx_mutex_destroy(284,10256
+#define SYSVSEM_SEM	345,12800
+#define SYSVSEM_USAGE	346,12822
+#define SYSVSEM_SETVAL	347,12846
+int php_sem_get(349,12872
+static int php_sysvsem_semop(458,15808
+int php_sem_acquire(487,16507
+int php_sem_release(492,16591
+int php_sem_remove(497,16675
+
+src/libs/zbxsys/symbols.c,74
+static FARPROC GetProcAddressAndLog(31,1108
+void import_symbols(42,1345
+
+src/libs/zbxsys/threads.c,133
+int	zbx_fork(42,2121
+ZBX_THREAD_HANDLE zbx_thread_start(68,3560
+int zbx_thread_wait(122,5706
+long int zbx_get_thread_id(161,6551
+
+src/libs/zbxjabber/jabber.c,768
+zbx_io_close 29,868
+static int	zbx_j_sock 38,982
+zbx_io_connect 41,1022
+zbx_io_send 100,2870
+zbx_io_recv 111,3084
+ikstransport zbx_iks_transport 138,3788
+#define JABBER_DISCONNECTED	147,3912
+#define JABBER_ERROR	148,3942
+#define JABBER_CONNECTING	150,3967
+#define JABBER_CONNECTED	151,3995
+#define JABBER_AUTHORIZED	152,4022
+#define JABBER_WORKING	153,4050
+#define JABBER_READY	154,4076
+typedef struct jabber_session 156,4102
+} jabber_session_t, *jabber_session_p;jabber_session_p165,4271
+static jabber_session_p jsess 167,4311
+static int on_result 169,4350
+static int disconnect_jabber(191,5716
+static int on_stream 219,6169
+static int on_error 287,8274
+static void on_log 296,8464
+static int connect_jabber(318,9970
+int	send_jabber(427,13687
+
+src/libs/zbxsysinfo/freebsd/proc.c,147
+#define DO_SUM 24,850
+#define DO_MAX 25,867
+#define DO_MIN 26,884
+#define DO_AVG 27,901
+int     PROC_MEMORY(29,927
+int	    PROC_NUM(285,7562
+
+src/libs/zbxsysinfo/freebsd/memory.c,371
+static int	VM_MEMORY_CACHED(24,800
+static int	VM_MEMORY_BUFFERS(72,2053
+static int	VM_MEMORY_SHARED(99,2571
+static int	VM_MEMORY_TOTAL(138,3339
+static int	VM_MEMORY_FREE(209,4747
+static int      VM_MEMORY_PFREE(318,7268
+int     VM_MEMORY_SIZE(353,8098
+#define MEM_FNCLIST 355,8197
+	MEM_FNCLIST fl[fl362,8289
+        char    mode[mode372,8518
+	int i;373,8556
+
+src/libs/zbxsysinfo/freebsd/freebsd.c,59
+ZBX_METRIC	parameters_specific[parameters_specific23,799
+
+src/libs/zbxsysinfo/freebsd/kernel.c,84
+int	KERNEL_MAXFILES(24,800
+int	KERNEL_MAXPROC(51,1283
+int     OLD_KERNEL(80,1790
+
+src/libs/zbxsysinfo/freebsd/swap.c,460
+void get_swapinfo(38,1015
+static int	SYSTEM_SWAP_FREE(101,2186
+static int	SYSTEM_SWAP_TOTAL(174,3573
+static int	SYSTEM_SWAP_PFREE(247,4948
+static int	SYSTEM_SWAP_PUSED(282,5865
+int	SYSTEM_SWAP_SIZE(317,6788
+#define SWP_FNCLIST 320,6886
+	SWP_FNCLIST fl[fl327,6978
+	char swapdev[swapdev336,7143
+	char mode[mode337,7174
+	int i;338,7202
+int     OLD_SWAP(387,8071
+int	get_swap_io(423,8861
+int	SYSTEM_SWAP_IN(464,9793
+int	SYSTEM_SWAP_OUT(512,10889
+
+src/libs/zbxsysinfo/freebsd/sensors.c,58
+static int	get_sensor(26,818
+int     OLD_SENSOR(79,1793
+
+src/libs/zbxsysinfo/freebsd/cpu.c,425
+int	SYSTEM_CPU_NUM(25,819
+int	SYSTEM_CPU_UTIL(51,1293
+static int getloadavg_kmem(157,4167
+int	SYSTEM_CPU_LOAD1(189,4634
+int	SYSTEM_CPU_LOAD5(276,6121
+int	SYSTEM_CPU_LOAD15(363,7608
+int	SYSTEM_CPU_LOAD(450,9099
+#define CPU_FNCLIST 453,9196
+	CPU_FNCLIST fl[fl460,9288
+	char cpuname[cpuname468,9421
+	char mode[mode469,9452
+	int i;470,9480
+int     SYSTEM_CPU_SWITCHES(515,10338
+int     SYSTEM_CPU_INTR(524,10527
+
+src/libs/zbxsysinfo/freebsd/inodes.c,390
+static int	get_fs_inodes_stat(26,818
+static int	VFS_FS_INODE_USED(47,1187
+static int	VFS_FS_INODE_FREE(70,1738
+static int	VFS_FS_INODE_TOTAL(93,2289
+static int	VFS_FS_INODE_PFREE(118,2862
+static int	VFS_FS_INODE_PUSED(142,3467
+int	VFS_FS_INODE(166,4069
+#define FS_FNCLIST 169,4163
+	FS_FNCLIST fl[fl176,4252
+	char fsname[fsname186,4455
+	char mode[mode187,4485
+	int i;188,4513
+
+src/libs/zbxsysinfo/freebsd/uptime.c,26
+int	SYSTEM_UPTIME(24,800
+
+src/libs/zbxsysinfo/freebsd/diskspace.c,351
+int	get_fs_size_stat(24,800
+static int	VFS_FS_USED(61,1810
+static int	VFS_FS_FREE(84,2412
+static int	VFS_FS_TOTAL(107,3014
+static int	VFS_FS_PFREE(133,3638
+static int	VFS_FS_PUSED(157,4302
+int	VFS_FS_SIZE(181,4963
+#define FS_FNCLIST 184,5056
+	FS_FNCLIST fl[fl191,5145
+	char fsname[fsname201,5318
+	char mode[mode202,5348
+	int i;203,5376
+
+src/libs/zbxsysinfo/freebsd/diskio.c,225
+int	VFS_DEV_WRITE(24,800
+int	VFS_DEV_READ(100,2641
+static int	DISK_IO(176,4481
+static int	DISK_RIO(185,4685
+static int	DISK_WIO(194,4890
+static int	DISK_RBLK(203,5095
+static int	DISK_WBLK(212,5301
+int	OLD_IO(221,5507
+
+src/libs/zbxsysinfo/freebsd/net.c,181
+static int get_ifmib_general(32,964
+int	NET_IF_IN(75,1869
+int	NET_IF_OUT(127,3105
+int	NET_IF_TOTAL(175,4220
+int     NET_TCP_LISTEN(223,5433
+int     NET_IF_COLLISIONS(232,5617
+
+src/libs/zbxsysinfo/simple/ntp.c,857
+#define NTP_SCALE 26,851
+#define NTP_PACKET_MIN 28,914
+#define NTP_PACKET_MAX 29,982
+#define NTP_DISP_FIELD 30,1057
+#define NTP_REFERENCE 31,1129
+#define NTP_ORIGINATE 32,1204
+#define NTP_RECEIVE 33,1279
+#define NTP_TRANSMIT 34,1352
+#define NTP_LI_FUDGE 36,1427
+#define NTP_VERSION 37,1493
+#define NTP_VERSION_MAX 38,1558
+#define NTP_STRATUM 39,1629
+#define NTP_STRATUM_MAX 40,1706
+#define NTP_POLLING 41,1777
+#define NTP_PRECISION 42,1853
+#define NTP_ACTIVE 44,1932
+#define NTP_PASSIVE 45,2006
+#define NTP_CLIENT 46,2082
+#define NTP_SERVER 47,2146
+#define NTP_BROADCAST 48,2211
+#define NTP_INSANITY 50,2278
+#define RESET_MIN 51,2355
+#define ABSCISSA 52,2430
+typedef struct ntp_data_s 54,2509
+} ntp_data;71,2754
+static void make_packet 73,2767
+static void pack_ntp 87,3129
+static void unpack_ntp 127,4171
+int	check_ntp(178,5919
+
+src/libs/zbxsysinfo/simple/simple.c,181
+ZBX_METRIC	parameters_simple[parameters_simple31,918
+static int    check_ldap(41,1227
+static int	check_ssh(106,2522
+int	CHECK_SERVICE_PERF(152,3546
+int	CHECK_SERVICE(280,6063
+
+src/libs/zbxsysinfo/common/system.c,122
+int	SYSTEM_LOCALTIME(25,820
+int     SYSTEM_UNUM(36,1032
+int     SYSTEM_UNAME(52,1396
+int     SYSTEM_HOSTNAME(169,4098
+
+src/libs/zbxsysinfo/common/common.c,415
+#	define VFS_TEST_FILE 32,935
+#	define VFS_TEST_REGEXP 33,972
+#	define VFS_TEST_FILE 35,1010
+#	define VFS_TEST_REGEXP 36,1056
+ZBX_METRIC	parameters_common[parameters_common43,1408
+static int	ONLY_ACTIVE(77,2912
+int	getPROC(86,3157
+static int	AGENT_PING(130,3841
+static int	AGENT_VERSION(140,4052
+int	EXECUTE_STR(154,4315
+int	EXECUTE_INT(315,7829
+int	RUN_COMMAND(334,8256
+#define MAX_FLAG_LEN 336,8348
+
+src/libs/zbxsysinfo/common/http.c,157
+#define	ZABBIX_MAX_WEBPAGE_SIZE	29,872
+static int	get_http_page(31,917
+int	WEB_PAGE_GET(68,1714
+int	WEB_PAGE_PERF(119,2640
+int	WEB_PAGE_REGEXP(174,3682
+
+src/libs/zbxsysinfo/common/file.c,270
+int	VFS_FILE_SIZE(27,836
+int	VFS_FILE_TIME(54,1386
+int	VFS_FILE_EXISTS(106,2424
+int	VFS_FILE_REGEXP(141,3119
+int	VFS_FILE_REGMATCH(212,4167
+int	VFS_FILE_MD5SUM(280,5165
+static u_long crctab[crctab349,6566
+int	VFS_FILE_CKSUM(413,10144
+#define	COMPUTE(446,10819
+
+src/libs/zbxsysinfo/common/file.h,29
+#define MAX_FILE_LEN 24,825
+
+src/libs/zbxsysinfo/common/net.c,173
+int	tcp_expect(33,905
+int	TCP_LISTEN(85,1834
+int	CHECK_PORT(135,2778
+int	CHECK_DNS(185,3569
+#	define PACKETSZ 191,3728
+#	define C_IN 195,3793
+#	define T_SOA	199,3855
+
+src/libs/zbxsysinfo/linux/proc.c,147
+#define DO_SUM 24,850
+#define DO_MAX 25,867
+#define DO_MIN 26,884
+#define DO_AVG 27,901
+int     PROC_MEMORY(29,927
+int	    PROC_NUM(324,5943
+
+src/libs/zbxsysinfo/linux/linux.c,59
+ZBX_METRIC	parameters_specific[parameters_specific23,799
+
+src/libs/zbxsysinfo/linux/memory.c,417
+static int	VM_MEMORY_CACHED(24,800
+static int	VM_MEMORY_BUFFERS(62,1579
+static int	VM_MEMORY_SHARED(85,2028
+static int	VM_MEMORY_TOTAL(108,2476
+static int	VM_MEMORY_FREE(131,2920
+static int      VM_MEMORY_PFREE(154,3362
+static int      VM_MEMORY_AVAILABLE(189,4192
+int     VM_MEMORY_SIZE(221,4997
+#define MEM_FNCLIST 223,5096
+	MEM_FNCLIST fl[fl230,5188
+        char    mode[mode241,5449
+	int i;242,5487
+
+src/libs/zbxsysinfo/linux/kernel.c,84
+int	KERNEL_MAXFILES(24,800
+int	KERNEL_MAXPROC(53,1312
+int     OLD_KERNEL(81,1812
+
+src/libs/zbxsysinfo/linux/boottime.c,57
+static int getPROC2(24,800
+int	SYSTEM_BOOTTIME(86,1839
+
+src/libs/zbxsysinfo/linux/swap.c,661
+static int	SYSTEM_SWAP_FREE(26,818
+static int	SYSTEM_SWAP_TOTAL(49,1262
+static int	SYSTEM_SWAP_PFREE(72,1709
+static int	SYSTEM_SWAP_PUSED(107,2626
+int	SYSTEM_SWAP_SIZE(142,3549
+#define SWP_FNCLIST 145,3647
+	SWP_FNCLIST fl[fl152,3739
+	char swapdev[swapdev161,3904
+	char mode[mode162,3935
+	int i;163,3963
+int     OLD_SWAP(212,4832
+struct swap_stat_s 247,5604
+#	define INFO_FILE_NAME	257,5773
+#	define PARSE(258,5816
+#	define INFO_FILE_NAME	268,6168
+#	define PARSE(269,6210
+static int get_swap_dev_stat(289,6858
+static int	get_swap_pages(325,7424
+static int 	get_swap_stat(367,8078
+int	SYSTEM_SWAP_IN(415,8954
+int	SYSTEM_SWAP_OUT(482,10143
+
+src/libs/zbxsysinfo/linux/sensors.c,58
+static int	get_sensor(26,818
+int     OLD_SENSOR(83,1849
+
+src/libs/zbxsysinfo/linux/cpu.c,386
+int	SYSTEM_CPU_NUM(25,819
+int	SYSTEM_CPU_UTIL(67,1706
+int	SYSTEM_CPU_LOAD1(201,6030
+int	SYSTEM_CPU_LOAD5(220,6329
+int	SYSTEM_CPU_LOAD15(239,6628
+int	SYSTEM_CPU_LOAD(258,6927
+#define CPU_FNCLIST 261,7024
+	CPU_FNCLIST fl[fl268,7116
+	char cpuname[cpuname276,7249
+	char mode[mode277,7280
+	int i;278,7308
+int     SYSTEM_CPU_SWITCHES(323,8164
+int     SYSTEM_CPU_INTR(332,8353
+
+src/libs/zbxsysinfo/linux/inodes.c,391
+static int	get_fs_inodes_stat(26,818
+static int	VFS_FS_INODE_USED(61,1506
+static int	VFS_FS_INODE_FREE(84,2063
+static int	VFS_FS_INODE_TOTAL(107,2620
+static int	VFS_FS_INODE_PFREE(132,3199
+static int	VFS_FS_INODE_PUSED(156,3832
+int	VFS_FS_INODE(180,4462
+#define FS_FNCLIST 183,4556
+	FS_FNCLIST fl[fl190,4645
+	char fsname[fsname200,4848
+	char mode[mode201,4878
+	int i;202,4906
+
+src/libs/zbxsysinfo/linux/uptime.c,26
+int	SYSTEM_UPTIME(24,800
+
+src/libs/zbxsysinfo/linux/diskspace.c,351
+int	get_fs_size_stat(24,800
+static int	VFS_FS_USED(61,1864
+static int	VFS_FS_FREE(84,2465
+static int	VFS_FS_TOTAL(107,3066
+static int	VFS_FS_PFREE(133,3689
+static int	VFS_FS_PUSED(157,4374
+int	VFS_FS_SIZE(181,5056
+#define FS_FNCLIST 184,5149
+	FS_FNCLIST fl[fl191,5238
+	char fsname[fsname201,5411
+	char mode[mode202,5441
+	int i;203,5469
+
+src/libs/zbxsysinfo/linux/diskio.c,400
+struct disk_stat_s 25,830
+#	define INFO_FILE_NAME	33,959
+#	define PARSE(34,1002
+#	define INFO_FILE_NAME	44,1354
+#	define PARSE(45,1396
+static int get_disk_stat(65,2044
+int	VFS_DEV_WRITE(99,2582
+int	VFS_DEV_READ(154,3658
+static int	DISK_IO(209,4733
+static int	DISK_RIO(218,4937
+static int	DISK_WIO(227,5142
+static int	DISK_RBLK(236,5347
+static int	DISK_WBLK(245,5553
+int	OLD_IO(254,5759
+
+src/libs/zbxsysinfo/linux/net.c,203
+struct net_stat_s 23,799
+static int get_net_stat(35,1018
+int	NET_IF_IN(98,2513
+int	NET_IF_OUT(161,3743
+int	NET_IF_TOTAL(224,4974
+int     NET_TCP_LISTEN(287,6254
+int     NET_IF_COLLISIONS(296,6438
+
+src/libs/zbxsysinfo/sysinfo.c,727
+ZBX_METRIC *commands=commands40,1164
+void	add_metric(42,1192
+void	add_user_parameter(78,1846
+void	init_metrics(137,3274
+void	free_metrics(166,3846
+void    escape_string(183,4086
+int 	copy_result(213,4522
+void	free_result(236,4857
+void	init_result(245,5038
+int parse_command(258,5266
+void	test_parameter(303,6045
+void	test_parameters(336,6608
+int	replace_param(373,7289
+int	process(430,8342
+#define COLUMN_2_X 537,10377
+int	set_result_type(563,10845
+static zbx_uint64_t* get_result_ui64_value(610,11691
+static double* get_result_dbl_value(644,12284
+static char** get_result_str_value(678,12858
+static char** get_result_text_value(716,13676
+void	*get_result_value_by_type(get_result_value_by_type768,15986
+
+src/libs/zbxsysinfo/hpux/proc.c,147
+#define DO_SUM 24,850
+#define DO_MAX 25,867
+#define DO_MIN 26,884
+#define DO_AVG 27,901
+int     PROC_MEMORY(29,927
+int	    PROC_NUM(286,7251
+
+src/libs/zbxsysinfo/hpux/memory.c,330
+static int	VM_MEMORY_CACHED(24,800
+static int	VM_MEMORY_BUFFERS(71,2050
+static int	VM_MEMORY_SHARED(102,2618
+static int	VM_MEMORY_TOTAL(145,3423
+static int	VM_MEMORY_FREE(234,5043
+int     VM_MEMORY_SIZE(359,7751
+#define MEM_FNCLIST 361,7850
+	MEM_FNCLIST fl[fl368,7942
+        char    mode[mode377,8135
+	int i;378,8173
+
+src/libs/zbxsysinfo/hpux/hpux.c,59
+ZBX_METRIC	parameters_specific[parameters_specific23,799
+
+src/libs/zbxsysinfo/hpux/kernel.c,84
+int	KERNEL_MAXFILES(24,800
+int	KERNEL_MAXPROC(51,1283
+int     OLD_KERNEL(80,1790
+
+src/libs/zbxsysinfo/hpux/swap.c,431
+void get_swapinfo(30,895
+static int	SYSTEM_SWAP_FREE(93,2066
+static int	SYSTEM_SWAP_TOTAL(138,2859
+static int	SYSTEM_SWAP_PFREE(183,3658
+static int	SYSTEM_SWAP_PUSED(218,4575
+int	SYSTEM_SWAP_SIZE(253,5498
+#define SWP_FNCLIST 256,5596
+	SWP_FNCLIST fl[fl263,5688
+	char swapdev[swapdev272,5853
+	char mode[mode273,5884
+	int i;274,5912
+int     OLD_SWAP(323,6782
+int	SYSTEM_SWAP_IN(358,7554
+int	SYSTEM_SWAP_OUT(364,7750
+
+src/libs/zbxsysinfo/hpux/sensors.c,58
+static int	get_sensor(26,818
+int     OLD_SENSOR(79,1794
+
+src/libs/zbxsysinfo/hpux/cpu.c,386
+int	SYSTEM_CPU_NUM(25,819
+int	SYSTEM_CPU_UTIL(78,1806
+int	SYSTEM_CPU_LOAD1(183,4640
+int	SYSTEM_CPU_LOAD5(199,4970
+int	SYSTEM_CPU_LOAD15(215,5301
+int	SYSTEM_CPU_LOAD(231,5635
+#define CPU_FNCLIST 234,5732
+	CPU_FNCLIST fl[fl241,5824
+	char cpuname[cpuname249,5957
+	char mode[mode250,5988
+	int i;251,6016
+int     SYSTEM_CPU_SWITCHES(296,6874
+int     SYSTEM_CPU_INTR(305,7063
+
+src/libs/zbxsysinfo/hpux/inodes.c,391
+static int	get_fs_inodes_stat(26,818
+static int	VFS_FS_INODE_USED(61,1458
+static int	VFS_FS_INODE_FREE(84,2009
+static int	VFS_FS_INODE_TOTAL(107,2560
+static int	VFS_FS_INODE_PFREE(132,3133
+static int	VFS_FS_INODE_PUSED(156,3738
+int	VFS_FS_INODE(180,4340
+#define FS_FNCLIST 183,4434
+	FS_FNCLIST fl[fl190,4523
+	char fsname[fsname200,4726
+	char mode[mode201,4756
+	int i;202,4784
+
+src/libs/zbxsysinfo/hpux/uptime.c,26
+int	SYSTEM_UPTIME(24,800
+
+src/libs/zbxsysinfo/hpux/diskspace.c,351
+int	get_fs_size_stat(24,800
+static int	VFS_FS_USED(61,1810
+static int	VFS_FS_FREE(84,2412
+static int	VFS_FS_TOTAL(107,3014
+static int	VFS_FS_PFREE(133,3638
+static int	VFS_FS_PUSED(157,4302
+int	VFS_FS_SIZE(181,4963
+#define FS_FNCLIST 184,5056
+	FS_FNCLIST fl[fl191,5145
+	char fsname[fsname201,5318
+	char mode[mode202,5348
+	int i;203,5376
+
+src/libs/zbxsysinfo/hpux/diskio.c,225
+int	VFS_DEV_WRITE(24,800
+int	VFS_DEV_READ(100,2641
+static int	DISK_IO(176,4481
+static int	DISK_RIO(185,4685
+static int	DISK_WIO(194,4890
+static int	DISK_RBLK(203,5095
+static int	DISK_WBLK(212,5301
+int	OLD_IO(221,5507
+
+src/libs/zbxsysinfo/hpux/net.c,138
+int	NET_IF_IN(24,800
+int	NET_IF_OUT(34,976
+int	NET_IF_TOTAL(44,1153
+int     NET_TCP_LISTEN(54,1332
+int     NET_IF_COLLISIONS(63,1516
+
+src/libs/zbxsysinfo/win32/proc.c,266
+#define MAX_PROCESSES 26,872
+#define MAX_MODULES 27,907
+static int GetProcessUsername(29,942
+int     PROC_MEMORY(72,1759
+int	    PROC_NUM(81,2041
+static double ConvertProcessTime(172,3736
+static double GetProcessAttribute(185,3973
+int	    PROC_INFO(312,8202
+
+src/libs/zbxsysinfo/win32/memory.c,31
+int     VM_MEMORY_SIZE(26,822
+
+src/libs/zbxsysinfo/win32/kernel.c,83
+int	KERNEL_MAXFILES(24,800
+int	KERNEL_MAXPROC(33,999
+int     OLD_KERNEL(42,1197
+
+src/libs/zbxsysinfo/win32/win32.c,59
+ZBX_METRIC	parameters_specific[parameters_specific25,821
+
+src/libs/zbxsysinfo/win32/swap.c,115
+int	SYSTEM_SWAP_SIZE(28,840
+int     OLD_SWAP(105,2268
+int	SYSTEM_SWAP_IN(114,2457
+int	SYSTEM_SWAP_OUT(123,2654
+
+src/libs/zbxsysinfo/win32/sensors.c,27
+int     OLD_SENSOR(27,819
+
+src/libs/zbxsysinfo/win32/services.c,26
+int	SERVICE_STATE(24,800
+
+src/libs/zbxsysinfo/win32/cpu.c,183
+int	SYSTEM_CPU_NUM(25,819
+int     OLD_CPU(63,1518
+int	SYSTEM_CPU_UTIL(70,1664
+int	SYSTEM_CPU_LOAD(163,3335
+int     SYSTEM_CPU_SWITCHES(227,4424
+int     SYSTEM_CPU_INTR(237,4636
+
+src/libs/zbxsysinfo/win32/inodes.c,25
+int	VFS_FS_INODE(25,801
+
+src/libs/zbxsysinfo/win32/uptime.c,26
+int	SYSTEM_UPTIME(25,821
+
+src/libs/zbxsysinfo/win32/diskspace.c,24
+int	VFS_FS_SIZE(25,801
+
+src/libs/zbxsysinfo/win32/diskio.c,217
+int	VFS_DEV_WRITE(25,801
+int	VFS_DEV_READ(34,996
+static int	DISK_IO(43,1189
+static int	DISK_RIO(52,1379
+static int	DISK_WIO(61,1571
+static int	DISK_RBLK(70,1763
+static int	DISK_WBLK(79,1957
+int	OLD_IO(88,2151
+
+src/libs/zbxsysinfo/win32/pdhmon.c,55
+int	USER_PERFCOUNTER(29,859
+int	PERF_MONITOR(54,1381
+
+src/libs/zbxsysinfo/win32/net.c,138
+int	NET_IF_IN(25,801
+int	NET_IF_OUT(34,994
+int	NET_IF_TOTAL(43,1183
+int     NET_TCP_LISTEN(52,1376
+int     NET_IF_COLLISIONS(61,1577
+
+src/libs/zbxsysinfo/openbsd/proc.c,147
+#define DO_SUM 24,850
+#define DO_MAX 25,867
+#define DO_MIN 26,884
+#define DO_AVG 27,901
+int     PROC_MEMORY(29,927
+int	    PROC_NUM(205,3899
+
+src/libs/zbxsysinfo/openbsd/memory.c,230
+static int	VM_MEMORY_TOTAL(24,800
+static int	VM_MEMORY_FREE(47,1258
+int     VM_MEMORY_SIZE(70,1706
+#define MEM_FNCLIST 72,1805
+	MEM_FNCLIST fl[fl79,1897
+        char    mode[mode85,1992
+	int 	ret 86,2030
+	int 	i;87,2060
+
+src/libs/zbxsysinfo/openbsd/kernel.c,84
+int	KERNEL_MAXFILES(24,800
+int	KERNEL_MAXPROC(47,1197
+int     OLD_KERNEL(71,1617
+
+src/libs/zbxsysinfo/openbsd/openbsd.c,59
+ZBX_METRIC	parameters_specific[parameters_specific23,799
+
+src/libs/zbxsysinfo/openbsd/swap.c,462
+static int get_swap_size(27,819
+static int	SYSTEM_SWAP_FREE(60,1567
+static int	SYSTEM_SWAP_TOTAL(78,1901
+static int	SYSTEM_SWAP_PFREE(96,2236
+static int	SYSTEM_SWAP_PUSED(131,3153
+int	SYSTEM_SWAP_SIZE(166,4076
+#define SWP_FNCLIST 169,4174
+	SWP_FNCLIST fl[fl176,4266
+	char swapdev[swapdev185,4431
+	char mode[mode186,4462
+	int i;187,4490
+int     OLD_SWAP(236,5360
+int	get_swap_io(271,6132
+int	SYSTEM_SWAP_IN(311,6854
+int	SYSTEM_SWAP_OUT(368,7950
+
+src/libs/zbxsysinfo/openbsd/sensors.c,58
+static int	get_sensor(26,818
+int     OLD_SENSOR(79,1793
+
+src/libs/zbxsysinfo/openbsd/cpu.c,790
+int	SYSTEM_CPU_NUM(24,800
+static int get_cpu_data(29,924
+#define CPU_I 58,1567
+#define CPU_U 59,1583
+#define CPU_N 60,1599
+#define CPU_S 61,1615
+#define CPU_T 62,1631
+int	SYSTEM_CPU_UTIL(64,1648
+#define CPU_PARAMLIST 66,1744
+	CPU_PARAMLIST pl[pl73,1833
+    unsigned long long cpu_val[cpu_val83,1973
+    unsigned long long interval_size;84,2008
+    char cpuname[cpuname86,2047
+    char mode[mode87,2081
+    int i;89,2113
+    int ret 91,2125
+int	SYSTEM_CPU_LOAD1(157,3336
+int	SYSTEM_CPU_LOAD5(175,3638
+int	SYSTEM_CPU_LOAD15(193,3940
+int	SYSTEM_CPU_LOAD(211,4243
+#define CPU_FNCLIST 214,4340
+	CPU_FNCLIST fl[fl221,4432
+	char cpuname[cpuname229,4565
+	char mode[mode230,4596
+	int i;231,4624
+int     SYSTEM_CPU_SWITCHES(276,5482
+int     SYSTEM_CPU_INTR(285,5671
+
+src/libs/zbxsysinfo/openbsd/inodes.c,390
+static int	get_fs_inodes_stat(26,818
+static int	VFS_FS_INODE_USED(47,1187
+static int	VFS_FS_INODE_FREE(70,1738
+static int	VFS_FS_INODE_TOTAL(93,2289
+static int	VFS_FS_INODE_PFREE(118,2862
+static int	VFS_FS_INODE_PUSED(142,3467
+int	VFS_FS_INODE(166,4069
+#define FS_FNCLIST 169,4163
+	FS_FNCLIST fl[fl176,4252
+	char fsname[fsname186,4455
+	char mode[mode187,4485
+	int i;188,4513
+
+src/libs/zbxsysinfo/openbsd/OpenBSD3.7.c,1394
+typedef struct busy_data69,1765
+} BUSY_DATA;73,1840
+typedef struct read_ios_data75,1854
+} READ_IOS_DATA;79,1928
+typedef struct write_ios_data81,1946
+} WRITE_IOS_DATA;85,2022
+typedef struct rblocks_data87,2041
+} RBLOCKS_DATA;91,2114
+typedef struct wblocks_data93,2131
+} WBLOCKS_DATA;97,2207
+typedef struct disk_data99,2224
+ } DISK_DATA;108,2405
+typedef struct rbytes_data110,2420
+} RBYTES_DATA;114,2490
+typedef struct obytes_data116,2506
+} OBYTES_DATA;120,2576
+typedef struct rpackets_data122,2592
+} RPACKETS_DATA;126,2666
+typedef struct opackets_data128,2684
+} OPACKETS_DATA;132,2758
+typedef struct network_data134,2776
+} NETWORK_DATA;142,2925
+static NETWORK_DATA *interfaces;interfaces144,2942
+static DISK_DATA *disks;disks145,2975
+static DISK_DATA *get_disk_data_record(get_disk_data_record158,3181
+static NETWORK_DATA *get_net_data_record(get_net_data_record194,3704
+static int PROCCNT(230,4256
+static int DISKBUSY(477,9992
+static int TCP_LISTEN(1087,24357
+static int count_active_sockets(1150,26356
+static void count_active_sockets_on_port(1212,28434
+static int TCP_SOCKETS(1279,30949
+static int TCP_SOCKETS_IN(1286,31135
+static int TCP_SOCKETS_OUT(1297,31423
+static int     PROCCOUNT(1573,36541
+static int PROCRUNNING(1603,37306
+static int CSWITCHES(1642,38335
+static int INTERRUPTS(1664,38717
+ZBX_METRIC agent_commands[agent_commands1748,40460
+
+src/libs/zbxsysinfo/openbsd/uptime.c,26
+int	SYSTEM_UPTIME(24,800
+
+src/libs/zbxsysinfo/openbsd/diskspace.c,351
+int	get_fs_size_stat(24,800
+static int	VFS_FS_USED(61,1810
+static int	VFS_FS_FREE(84,2412
+static int	VFS_FS_TOTAL(107,3014
+static int	VFS_FS_PFREE(133,3638
+static int	VFS_FS_PUSED(157,4302
+int	VFS_FS_SIZE(181,4963
+#define FS_FNCLIST 184,5056
+	FS_FNCLIST fl[fl191,5145
+	char fsname[fsname201,5318
+	char mode[mode202,5348
+	int i;203,5376
+
+src/libs/zbxsysinfo/openbsd/diskio.c,665
+static int	VFS_DEV_READ_BYTES(68,1573
+static int	VFS_DEV_READ_OPERATIONS(97,2188
+static int	VFS_DEV_WRITE_BYTES(126,2807
+static int	VFS_DEV_WRITE_OPERATIONS(155,3423
+int	VFS_DEV_WRITE(184,4043
+#define DEV_FNCLIST 187,4138
+	DEV_FNCLIST fl[fl194,4230
+	char devname[devname201,4347
+	char mode[mode202,4378
+	int i;203,4406
+int	VFS_DEV_READ(241,5096
+#define DEV_FNCLIST 244,5190
+	DEV_FNCLIST fl[fl251,5282
+	char devname[devname258,5397
+	char mode[mode259,5428
+	int i;260,5456
+static int	DISK_IO(298,6146
+static int	DISK_RIO(307,6350
+static int	DISK_WIO(316,6555
+static int	DISK_RBLK(325,6760
+static int	DISK_WBLK(334,6966
+int	OLD_IO(343,7172
+
+src/libs/zbxsysinfo/openbsd/net.c,1147
+static struct nlist kernel_symbols[kernel_symbols24,800
+#define IFNET_ID 31,929
+static int get_ifdata(33,949
+static int      NET_IF_IN_BYTES(87,1995
+static int      NET_IF_IN_PACKETS(118,2539
+static int      NET_IF_IN_ERRORS(149,3087
+int	NET_IF_IN(180,3633
+#define NET_FNCLIST 182,3723
+        NET_FNCLIST fl[fl189,3829
+        char if_name[if_name197,4050
+        char mode[mode198,4088
+        int i;199,4123
+static int      NET_IF_OUT_BYTES(236,4944
+static int      NET_IF_OUT_PACKETS(267,5489
+static int      NET_IF_OUT_ERRORS(298,6038
+int	NET_IF_OUT(329,6585
+#define NET_FNCLIST 331,6676
+        NET_FNCLIST fl[fl338,6782
+        char if_name[if_name346,7006
+        char mode[mode347,7044
+        int i;348,7079
+static int      NET_IF_TOTAL_BYTES(385,7900
+static int      NET_IF_TOTAL_PACKETS(416,8465
+static int      NET_IF_TOTAL_ERRORS(447,9036
+int	NET_IF_TOTAL(478,9604
+#define NET_FNCLIST 480,9697
+        NET_FNCLIST fl[fl487,9803
+        char if_name[if_name495,10033
+        char mode[mode496,10071
+        int i;497,10106
+int     NET_TCP_LISTEN(534,10927
+int     NET_IF_COLLISIONS(543,11111
+
+src/libs/zbxsysinfo/aix/proc.c,148
+#define DO_SUM 24,850
+#define DO_MAX 25,867
+#define DO_MIN 26,884
+#define DO_AVG 27,901
+int     PROC_MEMORY(41,1138
+int	    PROC_NUM(280,6008
+
+src/libs/zbxsysinfo/aix/memory.c,330
+static int	VM_MEMORY_CACHED(24,800
+static int	VM_MEMORY_BUFFERS(70,2058
+static int	VM_MEMORY_SHARED(101,2626
+static int	VM_MEMORY_TOTAL(144,3431
+static int	VM_MEMORY_FREE(233,5051
+int     VM_MEMORY_SIZE(358,7759
+#define MEM_FNCLIST 360,7858
+	MEM_FNCLIST fl[fl367,7950
+        char    mode[mode376,8143
+	int i;377,8181
+
+src/libs/zbxsysinfo/aix/kernel.c,84
+int	KERNEL_MAXFILES(24,800
+int	KERNEL_MAXPROC(51,1283
+int     OLD_KERNEL(80,1790
+
+src/libs/zbxsysinfo/aix/swap.c,431
+void get_swapinfo(30,895
+static int	SYSTEM_SWAP_FREE(93,2066
+static int	SYSTEM_SWAP_TOTAL(138,2859
+static int	SYSTEM_SWAP_PFREE(183,3658
+static int	SYSTEM_SWAP_PUSED(218,4575
+int	SYSTEM_SWAP_SIZE(253,5498
+#define SWP_FNCLIST 256,5596
+	SWP_FNCLIST fl[fl263,5688
+	char swapdev[swapdev272,5853
+	char mode[mode273,5884
+	int i;274,5912
+int     OLD_SWAP(323,6782
+int	SYSTEM_SWAP_IN(358,7554
+int	SYSTEM_SWAP_OUT(364,7750
+
+src/libs/zbxsysinfo/aix/sensors.c,58
+static int	get_sensor(26,818
+int     OLD_SENSOR(79,1795
+
+src/libs/zbxsysinfo/aix/aix.c,59
+ZBX_METRIC	parameters_specific[parameters_specific23,799
+
+src/libs/zbxsysinfo/aix/cpu.c,423
+int	SYSTEM_CPU_NUM(25,819
+int	SYSTEM_CPU_UTIL(30,943
+static int getloadavg_kmem(136,3817
+int	SYSTEM_CPU_LOAD1(168,4284
+int	SYSTEM_CPU_LOAD5(255,5771
+int	SYSTEM_CPU_LOAD15(342,7258
+int	SYSTEM_CPU_LOAD(429,8749
+#define CPU_FNCLIST 432,8846
+	CPU_FNCLIST fl[fl439,8938
+	char cpuname[cpuname447,9071
+	char mode[mode448,9102
+	int i;449,9130
+int     SYSTEM_CPU_SWITCHES(494,9988
+int     SYSTEM_CPU_INTR(503,10177
+
+src/libs/zbxsysinfo/aix/inodes.c,391
+static int	get_fs_inodes_stat(26,818
+static int	VFS_FS_INODE_USED(61,1458
+static int	VFS_FS_INODE_FREE(84,2009
+static int	VFS_FS_INODE_TOTAL(107,2560
+static int	VFS_FS_INODE_PFREE(132,3133
+static int	VFS_FS_INODE_PUSED(156,3738
+int	VFS_FS_INODE(180,4340
+#define FS_FNCLIST 183,4434
+	FS_FNCLIST fl[fl190,4523
+	char fsname[fsname200,4726
+	char mode[mode201,4756
+	int i;202,4784
+
+src/libs/zbxsysinfo/aix/uptime.c,26
+int	SYSTEM_UPTIME(24,800
+
+src/libs/zbxsysinfo/aix/diskspace.c,351
+int	get_fs_size_stat(24,800
+static int	VFS_FS_USED(61,1810
+static int	VFS_FS_FREE(84,2412
+static int	VFS_FS_TOTAL(107,3014
+static int	VFS_FS_PFREE(133,3638
+static int	VFS_FS_PUSED(157,4302
+int	VFS_FS_SIZE(181,4963
+#define FS_FNCLIST 184,5056
+	FS_FNCLIST fl[fl191,5145
+	char fsname[fsname201,5318
+	char mode[mode202,5348
+	int i;203,5376
+
+src/libs/zbxsysinfo/aix/AIX_new.c,778
+#define KMEM 10,173
+int kmem;11,198
+#define X_AVENRUN 14,280
+#define X_SYSINFO 15,306
+#define X_VMKER 16,332
+#define X_V 17,358
+static struct nlist nlst[nlst20,386
+static unsigned long avenrun_offset;30,601
+static unsigned long sysinfo_offset;31,638
+static unsigned long vmker_offset;32,675
+static unsigned long proc_offset;33,710
+static unsigned long v_offset;34,744
+struct proc *p_proc;p_proc36,776
+struct procentry64 *p_info;p_info37,842
+struct var v_info;39,871
+int nprocs;40,929
+int ncpus;41,998
+int ptsize;42,1057
+void init(45,1128
+long get_num_procs(83,1824
+long get_running_procs(100,2074
+double get_loadavg(129,2533
+u_longlong_t get_disk_io(154,2993
+u_longlong_t get_disk_stat(181,3437
+int getkval(213,3897
+unsigned int get_uptime(239,4283
+
+src/libs/zbxsysinfo/aix/diskio.c,225
+int	VFS_DEV_WRITE(24,800
+int	VFS_DEV_READ(100,2641
+static int	DISK_IO(176,4481
+static int	DISK_RIO(185,4685
+static int	DISK_WIO(194,4890
+static int	DISK_RBLK(203,5095
+static int	DISK_WBLK(212,5301
+int	OLD_IO(221,5507
+
+src/libs/zbxsysinfo/aix/net.c,138
+int	NET_IF_IN(24,800
+int	NET_IF_OUT(34,976
+int	NET_IF_TOTAL(44,1153
+int     NET_TCP_LISTEN(54,1332
+int     NET_IF_COLLISIONS(63,1516
+
+src/libs/zbxsysinfo/osf/proc.c,147
+#define DO_SUM 24,850
+#define DO_MAX 25,867
+#define DO_MIN 26,884
+#define DO_AVG 27,901
+int     PROC_MEMORY(29,927
+int	    PROC_NUM(203,4169
+
+src/libs/zbxsysinfo/osf/memory.c,210
+static int	VM_MEMORY_TOTAL(24,800
+static int	VM_MEMORY_FREE(33,1189
+int     VM_MEMORY_SIZE(79,2274
+#define MEM_FNCLIST 81,2373
+	MEM_FNCLIST fl[fl88,2465
+        char    mode[mode94,2560
+	int i;95,2598
+
+src/libs/zbxsysinfo/osf/kernel.c,84
+int	KERNEL_MAXFILES(24,800
+int	KERNEL_MAXPROC(51,1283
+int     OLD_KERNEL(80,1790
+
+src/libs/zbxsysinfo/osf/swap.c,431
+void get_swapinfo(30,895
+static int	SYSTEM_SWAP_FREE(93,2066
+static int	SYSTEM_SWAP_TOTAL(138,2859
+static int	SYSTEM_SWAP_PFREE(183,3658
+static int	SYSTEM_SWAP_PUSED(218,4575
+int	SYSTEM_SWAP_SIZE(253,5498
+#define SWP_FNCLIST 256,5596
+	SWP_FNCLIST fl[fl263,5688
+	char swapdev[swapdev272,5853
+	char mode[mode273,5884
+	int i;274,5912
+int     OLD_SWAP(323,6787
+int	SYSTEM_SWAP_IN(358,7559
+int	SYSTEM_SWAP_OUT(364,7755
+
+src/libs/zbxsysinfo/osf/sensors.c,58
+static int	get_sensor(26,818
+int     OLD_SENSOR(79,1794
+
+src/libs/zbxsysinfo/osf/cpu.c,686
+int	SYSTEM_CPU_NUM(24,800
+static int	SYSTEM_CPU_IDLE1(29,924
+static int	SYSTEM_CPU_SYS1(34,1129
+static int	SYSTEM_CPU_NICE1(39,1335
+static int	SYSTEM_CPU_USER1(44,1542
+int	SYSTEM_CPU_UTIL(49,1749
+#define CPU_FNCLIST 52,1846
+	CPU_FNCLIST fl[fl60,1951
+	char cpuname[cpuname69,2151
+	char type[type70,2182
+	char mode[mode71,2210
+	int i;72,2238
+int	SYSTEM_CPU_LOAD1(131,3367
+int	SYSTEM_CPU_LOAD5(136,3568
+int	SYSTEM_CPU_LOAD15(141,3771
+int	SYSTEM_CPU_LOAD(146,3975
+#define CPU_FNCLIST 149,4072
+	CPU_FNCLIST fl[fl156,4164
+	char cpuname[cpuname164,4297
+	char mode[mode165,4328
+	int i;166,4356
+int     SYSTEM_CPU_SWITCHES(211,5213
+int     SYSTEM_CPU_INTR(220,5402
+
+src/libs/zbxsysinfo/osf/inodes.c,391
+static int	get_fs_inodes_stat(26,818
+static int	VFS_FS_INODE_USED(61,1458
+static int	VFS_FS_INODE_FREE(84,2009
+static int	VFS_FS_INODE_TOTAL(107,2560
+static int	VFS_FS_INODE_PFREE(132,3133
+static int	VFS_FS_INODE_PUSED(156,3738
+int	VFS_FS_INODE(180,4340
+#define FS_FNCLIST 183,4434
+	FS_FNCLIST fl[fl190,4523
+	char fsname[fsname200,4726
+	char mode[mode201,4756
+	int i;202,4784
+
+src/libs/zbxsysinfo/osf/uptime.c,26
+int	SYSTEM_UPTIME(24,800
+
+src/libs/zbxsysinfo/osf/diskspace.c,351
+int	get_fs_size_stat(24,800
+static int	VFS_FS_USED(61,1810
+static int	VFS_FS_FREE(84,2412
+static int	VFS_FS_TOTAL(107,3014
+static int	VFS_FS_PFREE(133,3638
+static int	VFS_FS_PUSED(157,4302
+int	VFS_FS_SIZE(181,4963
+#define FS_FNCLIST 184,5056
+	FS_FNCLIST fl[fl191,5145
+	char fsname[fsname201,5318
+	char mode[mode202,5348
+	int i;203,5376
+
+src/libs/zbxsysinfo/osf/osf.c,59
+ZBX_METRIC	parameters_specific[parameters_specific23,799
+
+src/libs/zbxsysinfo/osf/diskio.c,225
+int	VFS_DEV_WRITE(24,800
+int	VFS_DEV_READ(100,2641
+static int	DISK_IO(176,4481
+static int	DISK_RIO(185,4685
+static int	DISK_WIO(194,4890
+static int	DISK_RBLK(203,5095
+static int	DISK_WBLK(212,5301
+int	OLD_IO(221,5507
+
+src/libs/zbxsysinfo/osf/net.c,138
+int	NET_IF_IN(24,800
+int	NET_IF_OUT(34,976
+int	NET_IF_TOTAL(44,1153
+int     NET_TCP_LISTEN(54,1332
+int     NET_IF_COLLISIONS(63,1516
+
+src/libs/zbxsysinfo/unknown/proc.c,147
+#define DO_SUM 24,850
+#define DO_MAX 25,867
+#define DO_MIN 26,884
+#define DO_AVG 27,901
+int     PROC_MEMORY(29,927
+int	    PROC_NUM(286,7495
+
+src/libs/zbxsysinfo/unknown/unknown.c,59
+ZBX_METRIC	parameters_specific[parameters_specific23,799
+
+src/libs/zbxsysinfo/unknown/memory.c,330
+static int	VM_MEMORY_CACHED(24,800
+static int	VM_MEMORY_BUFFERS(70,2050
+static int	VM_MEMORY_SHARED(101,2618
+static int	VM_MEMORY_TOTAL(144,3423
+static int	VM_MEMORY_FREE(233,5043
+int     VM_MEMORY_SIZE(358,7751
+#define MEM_FNCLIST 360,7850
+	MEM_FNCLIST fl[fl367,7942
+        char    mode[mode376,8135
+	int i;377,8173
+
+src/libs/zbxsysinfo/unknown/kernel.c,84
+int	KERNEL_MAXFILES(24,800
+int	KERNEL_MAXPROC(51,1283
+int     OLD_KERNEL(80,1790
+
+src/libs/zbxsysinfo/unknown/swap.c,431
+void get_swapinfo(30,895
+static int	SYSTEM_SWAP_FREE(93,2066
+static int	SYSTEM_SWAP_TOTAL(138,2859
+static int	SYSTEM_SWAP_PFREE(183,3658
+static int	SYSTEM_SWAP_PUSED(218,4575
+int	SYSTEM_SWAP_SIZE(253,5498
+#define SWP_FNCLIST 256,5596
+	SWP_FNCLIST fl[fl263,5688
+	char swapdev[swapdev272,5853
+	char mode[mode273,5884
+	int i;274,5912
+int     OLD_SWAP(323,6781
+int	SYSTEM_SWAP_IN(358,7553
+int	SYSTEM_SWAP_OUT(364,7749
+
+src/libs/zbxsysinfo/unknown/sensors.c,58
+static int	get_sensor(26,818
+int     OLD_SENSOR(79,1795
+
+src/libs/zbxsysinfo/unknown/cpu.c,423
+int	SYSTEM_CPU_NUM(25,819
+int	SYSTEM_CPU_UTIL(30,943
+static int getloadavg_kmem(136,3816
+int	SYSTEM_CPU_LOAD1(168,4283
+int	SYSTEM_CPU_LOAD5(255,5770
+int	SYSTEM_CPU_LOAD15(342,7257
+int	SYSTEM_CPU_LOAD(429,8748
+#define CPU_FNCLIST 432,8845
+	CPU_FNCLIST fl[fl439,8937
+	char cpuname[cpuname447,9070
+	char mode[mode448,9101
+	int i;449,9129
+int     SYSTEM_CPU_SWITCHES(494,9987
+int     SYSTEM_CPU_INTR(503,10176
+
+src/libs/zbxsysinfo/unknown/inodes.c,391
+static int	get_fs_inodes_stat(26,818
+static int	VFS_FS_INODE_USED(61,1458
+static int	VFS_FS_INODE_FREE(84,2009
+static int	VFS_FS_INODE_TOTAL(107,2560
+static int	VFS_FS_INODE_PFREE(132,3133
+static int	VFS_FS_INODE_PUSED(156,3738
+int	VFS_FS_INODE(180,4340
+#define FS_FNCLIST 183,4434
+	FS_FNCLIST fl[fl190,4523
+	char fsname[fsname200,4726
+	char mode[mode201,4756
+	int i;202,4784
+
+src/libs/zbxsysinfo/unknown/uptime.c,26
+int	SYSTEM_UPTIME(24,800
+
+src/libs/zbxsysinfo/unknown/diskspace.c,351
+int	get_fs_size_stat(24,800
+static int	VFS_FS_USED(61,1810
+static int	VFS_FS_FREE(84,2412
+static int	VFS_FS_TOTAL(107,3014
+static int	VFS_FS_PFREE(133,3638
+static int	VFS_FS_PUSED(157,4302
+int	VFS_FS_SIZE(181,4963
+#define FS_FNCLIST 184,5056
+	FS_FNCLIST fl[fl191,5145
+	char fsname[fsname201,5318
+	char mode[mode202,5348
+	int i;203,5376
+
+src/libs/zbxsysinfo/unknown/diskio.c,225
+int	VFS_DEV_WRITE(24,800
+int	VFS_DEV_READ(100,2641
+static int	DISK_IO(176,4481
+static int	DISK_RIO(185,4685
+static int	DISK_WIO(194,4890
+static int	DISK_RBLK(203,5095
+static int	DISK_WBLK(212,5301
+int	OLD_IO(221,5507
+
+src/libs/zbxsysinfo/unknown/net.c,136
+int	NET_IF_IN(24,800
+int	NET_IF_OUT(34,976
+int	NET_IF_OUT(44,1153
+int     NET_TCP_LISTEN(54,1330
+int     NET_IF_COLLISIONS(63,1514
+
+src/libs/zbxsysinfo/netbsd/proc.c,147
+#define DO_SUM 24,850
+#define DO_MAX 25,867
+#define DO_MIN 26,884
+#define DO_AVG 27,901
+int     PROC_MEMORY(29,927
+int	    PROC_NUM(286,7495
+
+src/libs/zbxsysinfo/netbsd/memory.c,330
+static int	VM_MEMORY_CACHED(24,800
+static int	VM_MEMORY_BUFFERS(70,2051
+static int	VM_MEMORY_SHARED(101,2619
+static int	VM_MEMORY_TOTAL(144,3424
+static int	VM_MEMORY_FREE(233,5044
+int     VM_MEMORY_SIZE(358,7752
+#define MEM_FNCLIST 360,7851
+	MEM_FNCLIST fl[fl367,7943
+        char    mode[mode376,8136
+	int i;377,8174
+
+src/libs/zbxsysinfo/netbsd/netbsd.c,59
+ZBX_METRIC	parameters_specific[parameters_specific23,799
+
+src/libs/zbxsysinfo/netbsd/kernel.c,84
+int	KERNEL_MAXFILES(24,800
+int	KERNEL_MAXPROC(51,1283
+int     OLD_KERNEL(80,1790
+
+src/libs/zbxsysinfo/netbsd/swap.c,431
+void get_swapinfo(30,895
+static int	SYSTEM_SWAP_FREE(93,2066
+static int	SYSTEM_SWAP_TOTAL(138,2859
+static int	SYSTEM_SWAP_PFREE(183,3658
+static int	SYSTEM_SWAP_PUSED(218,4575
+int	SYSTEM_SWAP_SIZE(253,5498
+#define SWP_FNCLIST 256,5596
+	SWP_FNCLIST fl[fl263,5688
+	char swapdev[swapdev272,5853
+	char mode[mode273,5884
+	int i;274,5912
+int     OLD_SWAP(323,6782
+int	SYSTEM_SWAP_IN(358,7554
+int	SYSTEM_SWAP_OUT(364,7750
+
+src/libs/zbxsysinfo/netbsd/sensors.c,58
+static int	get_sensor(26,818
+int     OLD_SENSOR(79,1794
+
+src/libs/zbxsysinfo/netbsd/cpu.c,423
+int	SYSTEM_CPU_NUM(25,819
+int	SYSTEM_CPU_UTIL(30,943
+static int getloadavg_kmem(137,3818
+int	SYSTEM_CPU_LOAD1(169,4285
+int	SYSTEM_CPU_LOAD5(256,5772
+int	SYSTEM_CPU_LOAD15(343,7259
+int	SYSTEM_CPU_LOAD(430,8750
+#define CPU_FNCLIST 433,8847
+	CPU_FNCLIST fl[fl440,8939
+	char cpuname[cpuname448,9072
+	char mode[mode449,9103
+	int i;450,9131
+int     SYSTEM_CPU_SWITCHES(495,9989
+int     SYSTEM_CPU_INTR(504,10178
+
+src/libs/zbxsysinfo/netbsd/inodes.c,390
+static int	get_fs_inodes_stat(26,818
+static int	VFS_FS_INODE_USED(47,1187
+static int	VFS_FS_INODE_FREE(70,1738
+static int	VFS_FS_INODE_TOTAL(93,2289
+static int	VFS_FS_INODE_PFREE(118,2862
+static int	VFS_FS_INODE_PUSED(142,3467
+int	VFS_FS_INODE(166,4069
+#define FS_FNCLIST 169,4163
+	FS_FNCLIST fl[fl176,4252
+	char fsname[fsname186,4455
+	char mode[mode187,4485
+	int i;188,4513
+
+src/libs/zbxsysinfo/netbsd/uptime.c,26
+int	SYSTEM_UPTIME(24,800
+
+src/libs/zbxsysinfo/netbsd/diskspace.c,351
+int	get_fs_size_stat(24,800
+static int	VFS_FS_USED(61,1810
+static int	VFS_FS_FREE(84,2412
+static int	VFS_FS_TOTAL(107,3014
+static int	VFS_FS_PFREE(133,3638
+static int	VFS_FS_PUSED(157,4302
+int	VFS_FS_SIZE(181,4963
+#define FS_FNCLIST 184,5056
+	FS_FNCLIST fl[fl191,5145
+	char fsname[fsname201,5318
+	char mode[mode202,5348
+	int i;203,5376
+
+src/libs/zbxsysinfo/netbsd/diskio.c,225
+int	VFS_DEV_WRITE(24,800
+int	VFS_DEV_READ(100,2641
+static int	DISK_IO(176,4481
+static int	DISK_RIO(185,4685
+static int	DISK_WIO(194,4890
+static int	DISK_RBLK(203,5095
+static int	DISK_WBLK(212,5301
+int	OLD_IO(221,5507
+
+src/libs/zbxsysinfo/netbsd/net.c,138
+int	NET_IF_IN(24,800
+int	NET_IF_OUT(34,976
+int	NET_IF_TOTAL(44,1153
+int     NET_TCP_LISTEN(54,1332
+int     NET_IF_COLLISIONS(63,1516
+
+src/libs/zbxsysinfo/osx/proc.c,147
+#define DO_SUM 24,850
+#define DO_MAX 25,867
+#define DO_MIN 26,884
+#define DO_AVG 27,901
+int     PROC_MEMORY(29,927
+int	    PROC_NUM(286,7494
+
+src/libs/zbxsysinfo/osx/memory.c,330
+static int	VM_MEMORY_CACHED(24,800
+static int	VM_MEMORY_BUFFERS(71,2051
+static int	VM_MEMORY_SHARED(102,2619
+static int	VM_MEMORY_TOTAL(145,3424
+static int	VM_MEMORY_FREE(234,5044
+int     VM_MEMORY_SIZE(359,7752
+#define MEM_FNCLIST 361,7851
+	MEM_FNCLIST fl[fl368,7943
+        char    mode[mode377,8136
+	int i;378,8174
+
+src/libs/zbxsysinfo/osx/osx.c,59
+ZBX_METRIC	parameters_specific[parameters_specific23,799
+
+src/libs/zbxsysinfo/osx/kernel.c,84
+int	KERNEL_MAXFILES(24,800
+int	KERNEL_MAXPROC(51,1283
+int     OLD_KERNEL(80,1790
+
+src/libs/zbxsysinfo/osx/swap.c,431
+void get_swapinfo(30,895
+static int	SYSTEM_SWAP_FREE(93,2066
+static int	SYSTEM_SWAP_TOTAL(138,2859
+static int	SYSTEM_SWAP_PFREE(183,3658
+static int	SYSTEM_SWAP_PUSED(218,4575
+int	SYSTEM_SWAP_SIZE(253,5498
+#define SWP_FNCLIST 256,5596
+	SWP_FNCLIST fl[fl263,5688
+	char swapdev[swapdev272,5865
+	char mode[mode273,5896
+	int i;274,5924
+int     OLD_SWAP(323,6794
+int	SYSTEM_SWAP_IN(358,7566
+int	SYSTEM_SWAP_OUT(364,7762
+
+src/libs/zbxsysinfo/osx/sensors.c,58
+static int	get_sensor(26,818
+int     OLD_SENSOR(79,1794
+
+src/libs/zbxsysinfo/osx/cpu.c,423
+int	SYSTEM_CPU_NUM(25,819
+int	SYSTEM_CPU_UTIL(30,943
+static int getloadavg_kmem(136,3816
+int	SYSTEM_CPU_LOAD1(168,4283
+int	SYSTEM_CPU_LOAD5(255,5770
+int	SYSTEM_CPU_LOAD15(342,7257
+int	SYSTEM_CPU_LOAD(429,8748
+#define CPU_FNCLIST 432,8845
+	CPU_FNCLIST fl[fl439,8937
+	char cpuname[cpuname447,9070
+	char mode[mode448,9101
+	int i;449,9129
+int     SYSTEM_CPU_SWITCHES(494,9987
+int     SYSTEM_CPU_INTR(503,10176
+
+src/libs/zbxsysinfo/osx/inodes.c,391
+static int	get_fs_inodes_stat(26,818
+static int	VFS_FS_INODE_USED(61,1458
+static int	VFS_FS_INODE_FREE(84,2009
+static int	VFS_FS_INODE_TOTAL(107,2560
+static int	VFS_FS_INODE_PFREE(132,3133
+static int	VFS_FS_INODE_PUSED(156,3738
+int	VFS_FS_INODE(180,4340
+#define FS_FNCLIST 183,4434
+	FS_FNCLIST fl[fl190,4523
+	char fsname[fsname200,4726
+	char mode[mode201,4756
+	int i;202,4784
+
+src/libs/zbxsysinfo/osx/uptime.c,26
+int	SYSTEM_UPTIME(24,800
+
+src/libs/zbxsysinfo/osx/diskspace.c,351
+int	get_fs_size_stat(24,800
+static int	VFS_FS_USED(61,1810
+static int	VFS_FS_FREE(84,2412
+static int	VFS_FS_TOTAL(107,3014
+static int	VFS_FS_PFREE(133,3638
+static int	VFS_FS_PUSED(157,4302
+int	VFS_FS_SIZE(181,4963
+#define FS_FNCLIST 184,5056
+	FS_FNCLIST fl[fl191,5145
+	char fsname[fsname201,5318
+	char mode[mode202,5348
+	int i;203,5376
+
+src/libs/zbxsysinfo/osx/diskio.c,225
+int	VFS_DEV_WRITE(24,800
+int	VFS_DEV_READ(100,2641
+static int	DISK_IO(176,4481
+static int	DISK_RIO(185,4685
+static int	DISK_WIO(194,4890
+static int	DISK_RBLK(203,5095
+static int	DISK_WBLK(212,5301
+int	OLD_IO(221,5507
+
+src/libs/zbxsysinfo/osx/net.c,138
+int	NET_IF_IN(24,800
+int	NET_IF_OUT(34,976
+int	NET_IF_TOTAL(44,1153
+int     NET_TCP_LISTEN(54,1332
+int     NET_IF_COLLISIONS(63,1516
+
+src/libs/zbxsysinfo/solaris/proc.c,139
+#define DO_SUM 24,850
+#define DO_MAX 25,867
+#define DO_MIN 26,884
+#define DO_AVG 27,901
+int	PROC_MEMORY(29,919
+int	PROC_NUM(247,5719
+
+src/libs/zbxsysinfo/solaris/SunOS5.9.c,53
+ZBX_METRIC agent_commands[agent_commands1656,33420
+
+src/libs/zbxsysinfo/solaris/memory.c,211
+int     VM_MEMORY_SIZE(27,1004
+#define MEM_FNCLIST 29,1103
+	MEM_FNCLIST fl[fl36,1195
+        char    mode[mode42,1290
+	int i;43,1328
+static int	VM_MEMORY_TOTAL(76,1887
+static int	VM_MEMORY_FREE(86,2168
+
+src/libs/zbxsysinfo/solaris/kernel.c,84
+int	KERNEL_MAXPROC(25,801
+int	KERNEL_MAXFILES(58,1406
+int     OLD_KERNEL(67,1580
+
+src/libs/zbxsysinfo/solaris/swap.c,555
+void get_swapinfo(27,819
+int	SYSTEM_SWAP_FREE(88,1976
+int	SYSTEM_SWAP_TOTAL(102,2251
+static int	SYSTEM_SWAP_PFREE(116,2529
+static int	SYSTEM_SWAP_PUSED(151,3446
+int	SYSTEM_SWAP_SIZE(186,4369
+#define SWP_FNCLIST 189,4467
+	SWP_FNCLIST fl[fl196,4559
+	char swapdev[swapdev205,4736
+	char mode[mode206,4767
+	int i;207,4795
+int     OLD_SWAP(256,5665
+#define	DO_SWP_IN	291,6437
+#define DO_PG_IN	292,6457
+#define	DO_SWP_OUT	293,6476
+#define DO_PG_OUT	294,6497
+int	get_swap_io(296,6518
+int	SYSTEM_SWAP_IN(350,7622
+int	SYSTEM_SWAP_OUT(412,8797
+
+src/libs/zbxsysinfo/solaris/sensors.c,58
+static int	get_sensor(26,818
+int     OLD_SENSOR(79,1794
+
+src/libs/zbxsysinfo/solaris/cpu.c,529
+int	SYSTEM_CPU_NUM(24,800
+static int get_cpu_data(66,1687
+#define CPU_I 137,3104
+#define CPU_U 138,3120
+#define CPU_K 139,3136
+#define CPU_W 140,3152
+int	SYSTEM_CPU_UTIL(142,3169
+static int	SYSTEM_CPU_LOAD1(223,4793
+static int	SYSTEM_CPU_LOAD5(242,5099
+static int	SYSTEM_CPU_LOAD15(261,5413
+int	SYSTEM_CPU_LOAD(280,5720
+#define CPU_FNCLIST 283,5817
+	CPU_FNCLIST fl[fl290,5909
+	char cpuname[cpuname298,6042
+	char mode[mode299,6073
+	int i;300,6101
+int	SYSTEM_CPU_SWITCHES(345,6959
+int	SYSTEM_CPU_INTR(387,7738
+
+src/libs/zbxsysinfo/solaris/inodes.c,390
+static int	get_fs_inodes_stat(26,818
+static int	VFS_FS_INODE_USED(47,1192
+static int	VFS_FS_INODE_FREE(70,1743
+static int	VFS_FS_INODE_TOTAL(93,2294
+static int	VFS_FS_INODE_PFREE(118,2867
+static int	VFS_FS_INODE_PUSED(142,3472
+int	VFS_FS_INODE(166,4074
+#define FS_FNCLIST 169,4168
+	FS_FNCLIST fl[fl176,4257
+	char fsname[fsname186,4460
+	char mode[mode187,4490
+	int i;188,4518
+
+src/libs/zbxsysinfo/solaris/uptime.c,26
+int	SYSTEM_UPTIME(24,800
+
+src/libs/zbxsysinfo/solaris/solaris.c,59
+ZBX_METRIC	parameters_specific[parameters_specific23,799
+
+src/libs/zbxsysinfo/solaris/diskspace.c,315
+int	get_fs_size_stat(24,800
+int	VFS_FS_USED(45,1350
+int	VFS_FS_FREE(68,1938
+int	VFS_FS_TOTAL(91,2526
+int	VFS_FS_PFREE(117,3136
+int	VFS_FS_PUSED(141,3786
+int	VFS_FS_SIZE(165,4433
+#define FS_FNCLIST 168,4526
+	FS_FNCLIST fl[fl175,4615
+	char fsname[fsname185,4788
+	char mode[mode186,4818
+	int i;187,4846
+
+src/libs/zbxsysinfo/solaris/diskio.c,1119
+typedef struct busy_data29,826
+} BUSY_DATA;33,889
+typedef struct svc_time_data35,903
+} SVC_TIME_DATA;40,985
+typedef struct read_ios_data42,1003
+} READ_IOS_DATA;46,1068
+typedef struct write_ios_data48,1086
+} WRITE_IOS_DATA;52,1153
+typedef struct rblocks_data54,1172
+} RBLOCKS_DATA;58,1242
+typedef struct wblocks_data60,1259
+} WBLOCKS_DATA;64,1332
+typedef struct disk_data66,1349
+} DISK_DATA;76,1566
+static DISK_DATA *get_disk_data_record(get_disk_data_record83,1612
+static int get_disk_kstat_record(122,2219
+int	DISKSVC(161,2962
+int	DISKBUSY(201,3763
+static int get_kstat_io(233,4444
+static int	VFS_DEV_READ_BYTES(261,4907
+static int	VFS_DEV_READ_OPERATIONS(277,5232
+static int	VFS_DEV_WRITE_BYTES(293,5564
+static int	VFS_DEV_WRITE_OPERATIONS(309,5901
+int	VFS_DEV_WRITE(325,6239
+#define DEV_FNCLIST 328,6334
+	DEV_FNCLIST fl[fl335,6426
+	char devname[devname342,6545
+	char mode[mode343,6576
+	int i;344,6604
+int	VFS_DEV_READ(381,7280
+#define DEV_FNCLIST 384,7374
+	DEV_FNCLIST fl[fl391,7466
+	char devname[devname398,7581
+	char mode[mode399,7612
+	int i;400,7640
+int	OLD_IO(435,8315
+
+src/libs/zbxsysinfo/solaris/net.c,942
+static int get_kstat_named_field(24,850
+static int	NET_IF_IN_BYTES(54,1439
+static int	NET_IF_IN_PACKETS(86,2137
+static int	NET_IF_IN_ERRORS(118,2843
+static int	NET_IF_OUT_BYTES(144,3389
+static int	NET_IF_OUT_PACKETS(176,4088
+static int	NET_IF_OUT_ERRORS(208,4793
+static int	NET_IF_TOTAL_BYTES(234,5341
+static int	NET_IF_TOTAL_PACKETS(269,6262
+static int	NET_IF_TOTAL_ERRORS(304,7194
+int	NET_IF_COLLISIONS(332,7865
+int	NET_TCP_LISTEN(360,8428
+int	NET_IF_IN(375,8807
+#define NET_FNCLIST 378,8898
+	NET_FNCLIST fl[fl385,8990
+	char if_name[if_name393,9131
+	char mode[mode394,9162
+	int i;395,9190
+int	NET_IF_OUT(431,9868
+#define NET_FNCLIST 434,9960
+	NET_FNCLIST fl[fl441,10052
+	char if_name[if_name449,10196
+	char mode[mode450,10227
+	int i;451,10255
+int	NET_IF_TOTAL(487,10930
+#define NET_FNCLIST 490,11024
+	NET_FNCLIST fl[fl497,11116
+	char if_name[if_name505,11266
+	char mode[mode506,11297
+	int i;507,11325
+
+src/libs/zbxconf/cfg.c,348
+char	*CONFIG_FILE	CONFIG_FILE25,813
+int	CONFIG_ZABBIX_FORKS	26,841
+char	*CONFIG_LOG_FILE	CONFIG_LOG_FILE29,873
+int	CONFIG_LOG_FILE_SIZE	30,904
+char	CONFIG_ALLOW_ROOT	31,935
+int	CONFIG_TIMEOUT	32,964
+int	parse_cfg_file(52,2444
+#define ZBX_MAX_INCLUDE_LEVEL 58,2546
+#define ZBX_CFG_LTRIM_CHARS 60,2580
+#define ZBX_CFG_RTRIM_CHARS 61,2614
+
+src/libs/zbxcrypto/base64.c,245
+#define MAX_B64_SIZE 23,798
+static char base64_set 25,828
+static int is_base64 45,1360
+static char char_base64_encode(73,1863
+static unsigned char char_base64_decode(91,2242
+void str_base64_encode(129,2941
+void str_base64_decode(207,4439
+
+src/libs/zbxcrypto/md5.c,1868
+#undef BYTE_ORDER	58,2290
+#  define BYTE_ORDER 60,2388
+#  define BYTE_ORDER 62,2445
+#define T_MASK 65,2476
+#define T1 66,2508
+#define T2 67,2558
+#define T3 68,2608
+#define T4 69,2633
+#define T5 70,2683
+#define T6 71,2733
+#define T7 72,2758
+#define T8 73,2808
+#define T9 74,2858
+#define T10 75,2883
+#define T11 76,2934
+#define T12 77,2985
+#define T13 78,3036
+#define T14 79,3062
+#define T15 80,3113
+#define T16 81,3164
+#define T17 82,3190
+#define T18 83,3241
+#define T19 84,3292
+#define T20 85,3318
+#define T21 86,3369
+#define T22 87,3420
+#define T23 88,3446
+#define T24 89,3497
+#define T25 90,3548
+#define T26 91,3574
+#define T27 92,3625
+#define T28 93,3676
+#define T29 94,3702
+#define T30 95,3753
+#define T31 96,3804
+#define T32 97,3830
+#define T33 98,3881
+#define T34 99,3932
+#define T35 100,3983
+#define T36 101,4009
+#define T37 102,4060
+#define T38 103,4111
+#define T39 104,4137
+#define T40 105,4188
+#define T41 106,4239
+#define T42 107,4265
+#define T43 108,4316
+#define T44 109,4367
+#define T45 110,4393
+#define T46 111,4444
+#define T47 112,4495
+#define T48 113,4521
+#define T49 114,4572
+#define T50 115,4623
+#define T51 116,4649
+#define T52 117,4700
+#define T53 118,4751
+#define T54 119,4777
+#define T55 120,4828
+#define T56 121,4879
+#define T57 122,4930
+#define T58 123,4956
+#define T59 124,5007
+#define T60 125,5058
+#define T61 126,5084
+#define T62 127,5135
+#define T63 128,5186
+#define T64 129,5212
+md5_process(133,5277
+#    define xbuf 190,6631
+#define ROTATE_LEFT(198,6802
+#define F(203,6986
+#define SET(204,7034
+#undef SET224,7716
+#define G(229,7853
+#define SET(230,7901
+#undef SET250,8584
+#define H(255,8721
+#define SET(256,8758
+#undef SET276,9441
+#define I(281,9578
+#define SET(282,9618
+#undef SET302,10301
+md5_init(314,10576
+md5_append(324,10824
+md5_finish(362,11671
+
+src/libs/zbxnix/pid.c,112
+static FILE	*fpid fpid28,855
+static int	fdpid 29,881
+int	create_pid_file(31,905
+void	drop_pid_file(97,2715
+
+src/libs/zbxnix/daemon.c,252
+char	*APP_PID_FILE	APP_PID_FILE28,870
+static int	parent 30,898
+#define uninit(32,922
+void	child_signal_handler(34,975
+static void	parent_signal_handler(57,1491
+int	daemon_start(88,2925
+void	daemon_stop(193,4933
+void	init_main_process(198,4992
+
+src/libs/zbxdb/db.c,788
+	int		sqlite_transaction_started 28,868
+	sqlite3		*conn conn29,906
+	PHP_MUTEX	sqlite_access;30,930
+	MYSQL	*conn conn34,982
+	PGconn	*conn conn38,1034
+	int     ZBX_PG_BYTEAOID 39,1056
+	sqlo_db_handle_t oracle;43,1113
+void	zbx_db_close(46,1147
+int	zbx_db_connect(72,1543
+int __zbx_zbx_db_execute(208,4635
+#	define zbx_db_select(221,4823
+#	define zbx_db_select 223,4920
+static DB_RESULT __zbx_zbx_db_select(225,4993
+void	zbx_db_begin(253,6385
+void zbx_db_commit(292,8036
+void zbx_db_rollback(334,9641
+int zbx_db_vexecute(365,10136
+int	zbx_db_is_null(488,12816
+void	PG_DBfree_result(501,13064
+void	SQ_DBfree_result(519,13387
+DB_ROW	zbx_db_fetch(532,13542
+DB_RESULT zbx_db_vselect(621,15209
+zbx_uint64_t	zbx_db_insert_id(751,18217
+DB_RESULT zbx_db_select_n(812,19563
+
+src/libs/zbxdbhigh/db.c,1867
+void	DBclose(41,1081
+void    DBconnect(51,1192
+int	DBping(93,2891
+void DBbegin(118,4301
+void DBcommit(138,5543
+void DBrollback(158,6787
+int __zbx_DBexecute(167,6933
+int	DBis_null(190,7318
+DB_ROW	DBfetch(195,7381
+DB_RESULT __zbx_DBselect(205,7545
+DB_RESULT DBselectN(231,8082
+zbx_uint64_t	DBinsert_id(239,8241
+int     DBget_function_result(247,8410
+void	get_latest_event_status(297,10342
+int	latest_service_alarm(382,12520
+int	DBadd_service_alarm(424,13357
+static int	trigger_dependent_rec(460,15135
+static int	trigger_dependent(519,17468
+int	DBupdate_trigger_value(535,17814
+void update_triggers_status_to_unknown(661,22151
+void  DBdelete_service(694,23247
+void  DBdelete_services_by_triggerid(703,23509
+void  DBdelete_trigger(726,24086
+void  DBdelete_triggers_by_itemid(746,24789
+void DBdelete_trends_by_itemid(772,25417
+void DBdelete_history_by_itemid(778,25544
+void DBdelete_sysmaps_links_by_shostid(786,25748
+void DBdelete_sysmaps_hosts_by_hostid(792,25931
+void DBupdate_triggers_status_after_restart(815,26490
+void DBupdate_host_availability(871,28219
+int	DBupdate_item_status_to_notsupported(961,30504
+int	DBadd_trend(989,31065
+int	DBadd_history(1043,32279
+int	DBadd_history_uint(1063,32756
+int	DBadd_history_str(1083,33269
+int	DBadd_history_text(1104,33796
+int	DBadd_history_log(1221,36612
+int	DBget_items_count(1245,37268
+int	DBget_triggers_count(1273,37761
+int	DBget_items_unsupported_count(1300,38216
+int	DBget_history_str_count(1327,38728
+int	DBget_history_count(1354,39192
+int	DBget_trends_count(1381,39644
+int	DBget_queue_count(1408,40093
+int	DBadd_alert(1450,41308
+void	DBvacuum(1498,42608
+void    DBescape_string(1525,43325
+#	define ZBX_DB_ESC_CH	1529,43493
+#	define ZBX_DB_ESC_CH	1531,43549
+char*	DBdyn_escape_string(1554,43938
+void	DBget_item_from_db(1583,44409
+zbx_uint64_t DBget_maxid(1740,47767
+
+src/libs/zbxdbhigh/host.c,2997
+#define ZBX_MAX_APPLICATIONS 27,831
+#define ZBX_MAX_DEPENDENCES	28,863
+#define	DBadd_application(31,897
+#define DBupdate_application(32,1000
+static int	DBget_applications_by_itemid(51,2495
+static int	DBget_same_applications_for_host(97,4493
+static int	DBinsert_dependency(147,6521
+static int	DBdelete_dependencies_by_triggerid(176,8169
+static void	DBclear_parents_from_trigger(221,10217
+static int	DBget_service_status(268,12091
+void	DBupdate_services_rec(333,14533
+static void DBupdate_services_status_all(403,17031
+void	DBupdate_services(464,19434
+static int	DBdelete_service(516,21237
+static int	DBdelete_services_by_triggerid(544,22839
+static int	DBdelete_sysmaps_element(586,24533
+static int	DBdelete_sysmaps_elements_with_triggerid(614,26044
+static int	DBdelete_trigger(657,27839
+static int	DBdelete_triggers_by_itemid(741,31290
+static int	DBdelete_trends_by_itemid(786,33134
+static int	DBdelete_history_by_itemid(821,34924
+} ZBX_GRAPH_ITEMS;874,37209
+#define zbx_free_gitems(887,38110
+static void	__zbx_free_gitems(889,38170
+static int	DBcmp_graphitems(916,39412
+static ZBX_GRAPH_ITEMS* DBget_same_graphitems_for_host(955,41349
+static int	DBadd_item_to_graph(1033,44586
+static int	DBdelete_graph(1091,46564
+static int	DBupdate_graph(1150,48875
+static int	DBupdate_graph_with_items(1211,51105
+static int	DBadd_graph(1386,56150
+static int	DBadd_graph_with_items(1453,58338
+static int	DBdelete_item(1580,62116
+static int	DBdelete_application(1647,64772
+static void	DBdelete_template_graphs(1739,68329
+static void	DBdelete_template_triggers(1816,71123
+static void	DBdelete_template_items(1897,73982
+static void	DBdelete_template_applications(1975,76575
+static int	DBdb_save_application(2055,79387
+static int	DBcopy_template_applications(2198,84083
+static int	DBupdate_item(2287,88439
+static int	DBadd_item(2548,97531
+static int	DBcopy_template_items(2785,104851
+static int	DBreset_items_nextcheck(2889,108747
+static int	DBreplace_template_dependences(2932,110661
+static int	DBadd_event(2985,112755
+static char*	DBimplode_exp 3050,115301
+static int	DBget_trigger_dependences_by_triggerid(3216,120168
+static char* DBexplode_exp 3261,122137
+		EXP_NONE,3264,122207
+		EXP_FUNCTIONID3265,122219
+	} expression_parsing_states;3266,122236
+static int	DBupdate_trigger(3366,125568
+static int	DBcmp_triggers(3535,130994
+static int	DBcopy_trigger_to_host(3617,133969
+static int	DBupdate_template_dependences_for_host(3836,140936
+static int	DBcopy_template_triggers(3911,143904
+static int	DBcopy_graph_to_host(3982,146588
+static int	DBcopy_template_graphs(4168,152823
+static int	DBdelete_sysmaps_elements_with_hostid(4233,155150
+/* public */ void	DBdelete_template_elements(4276,157015
+/* public */ int	DBcopy_template_elements(4306,158836
+/* public */ int	DBsync_host_with_template(4338,160604
+/* public */ int	DBsync_host_with_templates(4363,162062
+/* public */ void	DBunlink_template(4409,163960
+/* public */ int	DBdelete_host(4436,165464
+
+src/libs/zbxlog/log.c,524
+static	char log_filename[log_filename27,838
+static	int log_type 29,881
+static	int log_level 30,923
+	LOG_LEVEL_WARNING;34,990
+static ZBX_MUTEX log_file_access;37,1030
+static HANDLE system_log_handle 45,1133
+void redirect_std(51,1237
+int zabbix_open_log(85,1962
+void zabbix_close_log(159,3363
+void zabbix_set_log_level(187,3768
+void __zbx_zabbix_log(192,3830
+#define ZBX_MESSAGE_BUF_SIZE	371,7139
+char *strerror_from_system(strerror_from_system373,7174
+char *strerror_from_module(strerror_from_module406,7822
+
+src/libs/zbxplugin/zbxplugin.c,72
+ZBX_PLUGIN_LIST	*PluginsList PluginsList24,802
+int add_plugin(27,841
+
+src/libs/zbxwin32/service.c,601
+#define uninit(32,987
+static	SERVICE_STATUS		serviceStatus;38,1047
+static	SERVICE_STATUS_HANDLE	serviceHandle;39,1085
+int application_status 41,1130
+static void	parent_signal_handler(43,1172
+static VOID WINAPI ServiceCtrlHandler(60,1419
+static VOID WINAPI ServiceEntry(101,2438
+void service_start(129,3246
+int ZabbixCreateService(162,3944
+#define MAX_CMD_LEN 164,3982
+int ZabbixRemoveService(238,5452
+int ZabbixStartService(286,6355
+int ZabbixStopService(330,7208
+static int ZabbixInstallEventSource(373,8113
+static int ZabbixRemoveEventSource(409,9005
+void	init_main_process(426,9444
+
+src/libs/zbxwin32/perfmon.c,97
+PERFCOUNTER *PerfCounterList PerfCounterList25,817
+char *GetCounterName(GetCounterName31,904
+
+src/libs/zbxcomms/comms.c,1742
+		typedef int ssize_t;26,891
+		typedef long ssize_t;28,921
+#	define ZBX_TCP_WRITE(31,972
+#	define ZBX_TCP_READ(32,1040
+#	define ZBX_TCP_ERROR	34,1108
+#	define ZBX_SOCK_ERROR	35,1144
+#	define zbx_sock_close(37,1184
+#	define zbx_sock_last_error(38,1255
+#	define ZBX_SOCK_ERR_TIMEDOUT	40,1305
+#	define ZBX_TCP_WRITE(42,1355
+#	define ZBX_TCP_READ(43,1421
+#	define ZBX_TCP_ERROR	45,1486
+#	define ZBX_SOCK_ERROR	46,1512
+#	define	zbx_sock_close(48,1540
+#	define  zbx_sock_last_error(49,1605
+#	define ZBX_SOCK_ERR_TIMEDOUT	51,1644
+#define ZBX_TCP_MAX_STRERROR	70,2906
+int	zbx_tcp_error(72,2940
+static char zbx_tcp_strerror_message[zbx_tcp_strerror_message82,3089
+char*	zbx_tcp_strerror(84,3150
+#	define zbx_set_tcp_strerror(91,3337
+#	define zbx_set_tcp_strerror 93,3448
+static void __zbx_zbx_set_tcp_strerror(95,3535
+void	zbx_gethost_by_ip(124,4991
+void	zbx_gethost_by_ip(146,5414
+struct hostent	*zbx_gethost(zbx_gethost185,7006
+#define ZBX_TCP_START(224,8665
+/* static (winXX threads require OFF) */ int	tcp_started 226,8751
+static int	zbx_tcp_start(228,8817
+#	define ZBX_TCP_START(255,9605
+static void	zbx_tcp_clean(273,10857
+void	zbx_tcp_init(295,12152
+int	zbx_tcp_connect(318,13543
+int	zbx_tcp_connect(391,15738
+#define ZBX_TCP_HEADER_DATA	466,18831
+#define ZBX_TCP_HEADER_VERSION	467,18867
+#define ZBX_TCP_HEADER	468,18903
+#define ZBX_TCP_HEADER_LEN	469,18971
+int	zbx_tcp_send_ext(471,19002
+void	zbx_tcp_close(528,21242
+int zbx_tcp_listen(558,22720
+int zbx_tcp_listen(631,25221
+int	zbx_tcp_accept(704,28168
+int	zbx_tcp_accept(763,29950
+void	zbx_tcp_unaccept(801,31712
+void	zbx_tcp_free(829,33138
+int	zbx_tcp_recv_ext(850,34480
+#define ZBX_BUF_LEN	852,34552
+int	zbx_tcp_check_security(980,38433
+
+src/libs/zbxemail/email.c,24
+int	send_email(47,1127
+
+src/zabbix_server/evalfunc.c,609
+static int evaluate_LOGSOURCE(45,2236
+static int evaluate_LOGSEVERITY(105,4319
+static int evaluate_COUNT(157,6328
+static int evaluate_SUM(351,13150
+static int evaluate_AVG(459,16333
+static int evaluate_MIN(558,19230
+static int evaluate_MAX(681,22547
+static int evaluate_DELTA(806,25973
+static int evaluate_NODATA(946,29614
+int evaluate_function(989,31622
+static void	add_value_suffix_uptime(1399,41237
+static void	add_value_suffix_s(1461,43447
+static void	add_value_suffix_normal(1542,46295
+int	add_value_suffix(1626,49062
+int	replace_value_by_map(1721,51903
+int evaluate_function2(1776,54263
+
+src/zabbix_server/housekeeper/housekeeper.c,296
+static int housekeeping_process_log(43,2135
+static int housekeeping_sessions(100,3570
+static int housekeeping_alerts(116,3892
+static int housekeeping_events(150,4559
+static int delete_history(211,6666
+static int housekeeping_history_and_trends(268,8916
+int main_housekeeper_loop(299,10031
+
+src/zabbix_server/housekeeper/housekeeper.h,36
+#define ZABBIX_HOUSEKEEPER_H21,786
+
+src/zabbix_server/timer/timer.h,30
+#define ZABBIX_TIMER_H21,780
+
+src/zabbix_server/timer/timer.c,30
+void main_timer_loop(46,2111
+
+src/zabbix_server/utils/nodechange.h,35
+#define ZABBIX_NODECHANGE_H21,785
+
+src/zabbix_server/utils/nodechange.c,174
+static int convert_trigger_expression(46,2230
+	enum	state_t 50,2379
+	enum	state_t {NORMAL,NORMAL50,2379
+	enum	state_t {NORMAL, ID}ID50,2379
+int change_nodeid(110,4386
+
+src/zabbix_server/evalfunc.h,176
+#define ZABBIX_EVALFUNC_H22,784
+#define	EVALUATE_FUNCTION_NORMAL	27,848
+#define	EVALUATE_FUNCTION_SUFFIX	28,883
+#define ZBX_FLAG_SEC	30,919
+#define ZBX_FLAG_VALUES	31,944
+
+src/zabbix_server/operations.c,587
+static	void	send_to_user_medias(61,2480
+void	op_notify_user(121,5023
+static void run_remote_command(174,7313
+#define CMD_ALIAS 237,9812
+#define CMD_REM_COMMAND 238,9832
+static int get_next_command(240,9859
+void	op_run_commands(323,12538
+static zbx_uint64_t	select_dhostid_by_dserviceid(380,14895
+static zbx_uint64_t	select_discovered_host(418,16658
+static zbx_uint64_t	add_discovered_host(456,18409
+void	op_host_add(530,21091
+void	op_host_del(566,22715
+void	op_group_add(606,24412
+void	op_group_del(666,26873
+void	op_template_add(711,28835
+void	op_template_del(777,31376
+
+src/zabbix_server/expression.c,1452
+double	str2double(51,2180
+void	delete_spaces(87,3748
+int	evaluate_simple(121,5325
+int	evaluate(492,13341
+static char**	extract_numbers(600,16123
+static void	zbx_free_numbers(659,17113
+static void	expand_trigger_description_constants(690,18616
+#define MVAR_DATE	752,20863
+#define MVAR_EVENT_ID	753,20892
+#define MVAR_HOST_NAME	754,20929
+#define MVAR_IPADDRESS	755,20967
+#define MVAR_TIME	756,21006
+#define MVAR_ITEM_LASTVALUE	757,21035
+#define MVAR_ITEM_NAME	758,21083
+#define MVAR_TRIGGER_COMMENT	759,21122
+#define MVAR_TRIGGER_ID	760,21172
+#define MVAR_TRIGGER_KEY	761,21213
+#define MVAR_TRIGGER_NAME	762,21255
+#define MVAR_TRIGGER_SEVERITY	763,21299
+#define MVAR_TRIGGER_STATUS	764,21351
+#define MVAR_TRIGGER_STATUS_OLD	765,21399
+#define MVAR_TRIGGER_VALUE	766,21443
+#define MVAR_TRIGGER_URL	767,21489
+#define MVAR_PROFILE_DEVICETYPE	768,21531
+#define MVAR_PROFILE_NAME	769,21587
+#define MVAR_PROFILE_OS	770,21631
+#define MVAR_PROFILE_SERIALNO	771,21672
+#define MVAR_PROFILE_TAG	772,21724
+#define MVAR_PROFILE_MACADDRESS	773,21766
+#define MVAR_PROFILE_HARDWARE	774,21822
+#define MVAR_PROFILE_SOFTWARE	775,21874
+#define MVAR_PROFILE_CONTACT	776,21926
+#define MVAR_PROFILE_LOCATION	777,21976
+#define MVAR_PROFILE_NOTES	778,22028
+#define STR_UNKNOWN_VARIABLE	780,22075
+void	substitute_simple_macros(782,22118
+void	substitute_macros(1401,43466
+int	substitute_functions(1520,47295
+int	evaluate_expression(1594,49916
+
+src/zabbix_server/pinger/pinger.c,184
+int pinger_num;31,915
+static int is_ip(49,2214
+static int process_value(103,4082
+static int create_host_file(174,6553
+static int do_ping(271,9814
+void main_pinger_loop(377,12780
+
+src/zabbix_server/pinger/pinger.h,31
+#define ZABBIX_PINGER_H21,781
+
+src/zabbix_server/alerter/alerter.c,60
+int execute_action(53,2367
+int main_alerter_loop(176,6873
+
+src/zabbix_server/alerter/alerter.h,32
+#define ZABBIX_ALERTER_H21,782
+
+src/zabbix_server/events.c,106
+static void	add_trigger_info(65,2398
+static void	free_trigger_info(128,5121
+int	process_event(149,6441
+
+src/zabbix_server/functions.h,65
+#define ZABBIX_FUNCTIONS_H21,784
+#define ZBX_COND_SITE 30,1006
+
+src/zabbix_server/expression.h,215
+#define ZABBIX_EXPRESSION_H22,786
+#define MACRO_TYPE_TRIGGER_DESCRIPTION	33,1125
+#define MACRO_TYPE_MESSAGE_SUBJECT	34,1166
+#define MACRO_TYPE_MESSAGE_BODY	35,1203
+#define MACRO_TYPE_TRIGGER_EXPRESSION	36,1238
+
+src/zabbix_server/server.c,3826
+#define       LISTENQ 50,1377
+char *progname progname56,1450
+char title_message[title_message57,1473
+char usage_message[usage_message58,1522
+char *help_message[help_message61,1606
+char *help_message[help_message70,1905
+static struct zbx_option longopts[longopts84,2290
+static char	shortopts[shortopts106,2612
+pid_t	*threads=threads115,2740
+int	CONFIG_ALERTER_FORKS	117,2762
+int	CONFIG_DISCOVERER_FORKS	118,2793
+int	CONFIG_HOUSEKEEPER_FORKS	119,2827
+int	CONFIG_NODEWATCHER_FORKS	120,2861
+int	CONFIG_PINGER_FORKS	121,2895
+int	CONFIG_POLLER_FORKS	122,2925
+int	CONFIG_HTTPPOLLER_FORKS	123,2955
+int	CONFIG_TIMER_FORKS	124,2989
+int	CONFIG_TRAPPERD_FORKS	125,3018
+int	CONFIG_UNREACHABLE_POLLER_FORKS	126,3050
+char	*CONFIG_SERVER_MODE	CONFIG_SERVER_MODE128,3092
+int	CONFIG_LISTEN_PORT	130,3127
+char	*CONFIG_LISTEN_IP	CONFIG_LISTEN_IP131,3160
+char	*CONFIG_POLLER_IP CONFIG_POLLER_IP132,3192
+int	CONFIG_TRAPPER_TIMEOUT	133,3237
+int	CONFIG_HOUSEKEEPING_FREQUENCY	136,3320
+int	CONFIG_SENDER_FREQUENCY	137,3359
+int	CONFIG_PINGER_FREQUENCY	138,3394
+int	CONFIG_DISABLE_HOUSEKEEPING	140,3465
+int	CONFIG_UNREACHABLE_PERIOD	141,3502
+int	CONFIG_UNREACHABLE_DELAY	142,3538
+int	CONFIG_UNAVAILABLE_DELAY	143,3573
+int	CONFIG_LOG_LEVEL	144,3608
+char	*CONFIG_ALERT_SCRIPTS_PATH	CONFIG_ALERT_SCRIPTS_PATH145,3651
+char	*CONFIG_EXTERNALSCRIPTS	CONFIG_EXTERNALSCRIPTS146,3691
+char	*CONFIG_FPING_LOCATION	CONFIG_FPING_LOCATION147,3729
+char	*CONFIG_DBHOST	CONFIG_DBHOST148,3766
+char	*CONFIG_DBNAME	CONFIG_DBNAME149,3796
+char	*CONFIG_DBUSER	CONFIG_DBUSER150,3826
+char	*CONFIG_DBPASSWORD	CONFIG_DBPASSWORD151,3856
+char	*CONFIG_DBSOCKET	CONFIG_DBSOCKET152,3889
+int	CONFIG_DBPORT	153,3920
+int	CONFIG_ENABLE_REMOTE_COMMANDS	154,3945
+int	CONFIG_NODEID	156,3985
+int	CONFIG_MASTER_NODEID	157,4010
+int	CONFIG_NODE_NOEVENTS	158,4041
+int	CONFIG_NODE_NOHISTORY	159,4072
+char	*CONFIG_SERVER_SITE	CONFIG_SERVER_SITE161,4105
+char	*CONFIG_MASTER_IP	CONFIG_MASTER_IP163,4140
+int	CONFIG_MASTER_PORT	164,4172
+int	CONFIG_ENABLE_LOG	167,4276
+int	CONFIG_REFRESH_UNSUPPORTED	170,4329
+int     CONFIG_SERVER_STARTUP_TIME 173,4399
+void	init_config(190,5646
+void test_params(287,10288
+#define ZBX_PARAM 290,10310
+ZBX_PARAM expressions[expressions301,10458
+	int result;314,10728
+	int i;315,10741
+	char *exp=exp317,10750
+	char str[str318,10767
+		exp=326,10966
+		str[str328,11044
+		result 334,11207
+void test_expressions(352,11702
+#define ZBX_EXP 355,11729
+ZBX_EXP expressions[expressions363,11825
+	int result;381,12102
+	int i;382,12115
+	char *exp=exp384,12124
+	char error[error385,12141
+		exp=391,12253
+void test_compress_signs(410,12745
+#define ZBX_SIGN 413,12775
+ZBX_SIGN expressions[expressions420,12868
+	int i;442,13244
+	char *exp=exp444,13253
+		exp=450,13354
+void test_db_connection(465,13671
+void test_variable_argument_list(488,14061
+void test_zbx_gethost(506,14547
+void test_templates(517,14725
+void test_zbx_tcp_connect(659,17486
+#define ZBX_TEST_TCP_CONNECT 661,17520
+ZBX_TEST_TCP_CONNECT expressions[expressions668,17670
+	int		i;681,17930
+	zbx_sock_t	s;682,17939
+	char		host[host683,17954
+	char		ip_list[ip_list684,17983
+void test_ip_in_list(718,18733
+#define ZBX_TEST_IP 720,18758
+ZBX_TEST_IP expressions[expressions728,18854
+	int	i;747,19727
+	int	result;748,19735
+	char    list[list749,19748
+		result 756,19897
+void test_binary2hex(772,20269
+#define ZBX_TEST_HEX 774,20294
+ZBX_TEST_HEX expressions[expressions781,20380
+	int	len,790,20659
+	int	len, ilen;790,20659
+	int	i;791,20675
+	char	*buffer buffer792,20683
+	len 796,20767
+	buffer 797,20780
+		ilen 800,20863
+void test_zbx_get_next_field(829,21573
+void test_regexp(852,22361
+void test(866,22533
+int main(919,24541
+int MAIN_ZABBIX_ENTRY(994,25863
+void	zbx_on_exit(1225,33919
+
+src/zabbix_server/nodewatcher/nodesender.c,281
+#define	ZBX_NODE_MASTER	31,915
+#define	ZBX_NODE_SLAVE	32,941
+static int send_config_data(50,2249
+static int get_slave_node(262,8558
+int get_master_node(309,10300
+static int send_to_master_and_slave(346,11918
+static int process_node(438,14827
+void main_nodesender(475,16427
+
+src/zabbix_server/nodewatcher/history.h,44
+#define ZABBIX_NODEWATCHER_HISTORY_H21,794
+
+src/zabbix_server/nodewatcher/history.c,252
+static int process_node_history_log(47,2198
+static int process_node_history_str(158,5993
+static int process_node_history_uint(237,8724
+static int process_node_history(325,11616
+static void process_node(414,14524
+void main_historysender(441,16103
+
+src/zabbix_server/nodewatcher/nodecomms.h,34
+#define ZABBIX_NODECOMMS_H21,784
+
+src/zabbix_server/nodewatcher/events.c,128
+#define	ZBX_NODE_MASTER	31,915
+#define	ZBX_NODE_SLAVE	32,941
+static int process_node(50,2249
+void main_eventsender(134,5120
+
+src/zabbix_server/nodewatcher/nodesender.h,35
+#define ZABBIX_NODESENDER_H21,785
+
+src/zabbix_server/nodewatcher/nodewatcher.c,154
+static int calculate_checksums(49,2240
+static int update_checksums(199,7254
+static int compare_checksums(227,8864
+int main_nodewatcher_loop(311,12713
+
+src/zabbix_server/nodewatcher/nodecomms.c,26
+int send_to_node(46,2172
+
+src/zabbix_server/nodewatcher/events.h,43
+#define ZABBIX_NODEWATCHER_EVENTS_H21,793
+
+src/zabbix_server/nodewatcher/nodewatcher.h,36
+#define ZABBIX_NODEWATCHER_H21,786
+
+src/zabbix_server/actions.h,32
+#define ZABBIX_ACTIONS_H22,783
+
+src/zabbix_server/operations.h,35
+#define ZABBIX_OPERATIONS_H22,786
+
+src/zabbix_server/trapper/nodesync.h,33
+#define ZABBIX_NODESYNC_H22,784
+
+src/zabbix_server/trapper/nodehistory.c,62
+static int	process_record(62,2419
+int	node_history(164,5994
+
+src/zabbix_server/trapper/nodeevents.h,35
+#define ZABBIX_NODEEVENTS_H22,786
+
+src/zabbix_server/trapper/active.c,40
+int	send_list_of_active_checks(63,2495
+
+src/zabbix_server/trapper/trapper.c,104
+static int	process_trap(40,1071
+void	process_trapper_child(207,5167
+void	child_trapper_main(233,5673
+
+src/zabbix_server/trapper/nodeevents.c,61
+static int	process_record(64,2443
+int	node_events(114,4502
+
+src/zabbix_server/trapper/active.h,39
+#define ZABBIX_TRAPPER_ACTIVE_H22,790
+
+src/zabbix_server/trapper/nodesync.c,59
+static int	process_record(63,2437
+int	node_sync(272,9431
+
+src/zabbix_server/trapper/nodehistory.h,36
+#define ZABBIX_NODEHISTORY_H22,787
+
+src/zabbix_server/trapper/trapper.h,32
+#define ZABBIX_TRAPPER_H21,782
+
+src/zabbix_server/httppoller/httppoller.h,35
+#define ZABBIX_HTTPPOLLER_H21,785
+
+src/zabbix_server/httppoller/httpmacro.c,37
+void http_substitute_macros(45,2089
+
+src/zabbix_server/httppoller/httppoller.c,100
+int	httppoller_num;35,985
+static int get_minnextcheck(52,2207
+void main_httppoller_loop(103,4081
+
+src/zabbix_server/httppoller/httpmacro.h,34
+#define ZABBIX_HTTPMACRO_H21,784
+
+src/zabbix_server/httppoller/httptest.c,300
+static S_ZBX_HTTPPAGE	page;34,957
+static int process_value(54,2427
+static size_t WRITEFUNCTION2(98,3394
+static size_t HEADERFUNCTION2(115,3768
+static void	process_test_data(125,3993
+static void	process_step_data(175,5236
+static void	process_httptest(245,7880
+void process_httptests(509,16696
+
+src/zabbix_server/httppoller/httptest.h,131
+#define ZABBIX_HTTPTEST_H21,783
+#define S_ZBX_HTTPPAGE	23,810
+#define S_ZBX_HTTPSTAT	31,923
+#	define process_httptests(44,1166
+
+src/zabbix_server/watchdog/watchdog.h,33
+#define ZABBIX_WATCHDOG_H21,783
+
+src/zabbix_server/watchdog/watchdog.c,300
+#define ZBX_RECIPIENT 33,940
+#define	ZBX_MAX_RECIPIENTS	41,1048
+ZBX_RECIPIENT	recipients[recipients43,1079
+static	int num 45,1126
+static	int lastsent 46,1146
+static void send_alerts(63,2373
+static void init_config(95,3830
+static void ping_database(147,6515
+void main_watchdog_loop(178,8107
+
+src/zabbix_server/events.h,31
+#define ZABBIX_EVENTS_H22,782
+
+src/zabbix_server/zlog.c,34
+void __zbx_zabbix_syslog(52,2203
+
+src/zabbix_server/functions.c,262
+void	update_functions(50,2156
+void	update_triggers(127,5144
+void	calc_timestamp(177,6719
+int	process_data(272,9589
+static int	add_history(433,14188
+static void	update_item(578,19319
+void	process_new_value(784,27267
+const char* getSiteCondition 836,28503
+
+src/zabbix_server/poller/checks_internal.c,32
+int	get_value_internal(40,2168
+
+src/zabbix_server/poller/checks_agent.c,29
+int	get_value_agent(44,2424
+
+src/zabbix_server/poller/checks_agent.h,37
+#define ZABBIX_CHECKS_AGENT_H21,787
+
+src/zabbix_server/poller/checks_aggregate.c,105
+static	int	evaluate_one(23,808
+static int	evaluate_aggregate(85,1785
+int	get_value_aggregate(236,7204
+
+src/zabbix_server/poller/checks_internal.h,40
+#define ZABBIX_CHECKS_INTERNAL_H21,789
+
+src/zabbix_server/poller/checks_snmp.h,36
+#define ZABBIX_CHECKS_SNMP_H21,786
+
+src/zabbix_server/poller/poller.c,240
+AGENT_RESULT    result;37,1059
+int	poller_type;39,1084
+int	poller_num;40,1101
+int	get_value(42,1118
+static int get_minnextcheck(104,2530
+static void update_key_status(182,5230
+int get_values(247,7628
+void main_poller_loop(520,16143
+
+src/zabbix_server/poller/checks_simple.c,29
+int	get_value_simple(22,785
+
+src/zabbix_server/poller/poller.h,31
+#define ZABBIX_POLLER_H21,781
+
+src/zabbix_server/poller/checks_simple.h,38
+#define ZABBIX_CHECKS_SIMPLE_H21,788
+
+src/zabbix_server/poller/checks_external.h,40
+#define ZABBIX_CHECKS_EXTERNAL_H21,789
+
+src/zabbix_server/poller/checks_snmp.c,113
+int	get_value_snmp(24,901
+	#define NEW_APPROACH27,959
+#define ASN_FLOAT 304,9072
+#define ASN_DOUBLE 305,9122
+
+src/zabbix_server/poller/checks_aggregate.h,41
+#define ZABBIX_CHECKS_AGGREGATE_H21,790
+
+src/zabbix_server/poller/checks_external.c,36
+int     get_value_external(40,2170
+
+src/zabbix_server/discoverer/discoverer.c,440
+int	discoverer_num;35,1024
+static void add_host_event(52,2246
+static void add_service_event(107,4243
+static void update_dservice(148,5971
+static void update_dhost(182,7643
+static void register_service(210,9132
+static void register_host(298,12449
+static void update_service(364,14955
+static int discover_service(455,17849
+static void process_check(638,22174
+static void process_rule(707,24382
+void main_discoverer_loop(862,28327
+
+src/zabbix_server/discoverer/discoverer.h,35
+#define ZABBIX_DISCOVERER_H21,785
+
+src/zabbix_server/actions.c,156
+static int	check_action_condition(69,2546
+static int	check_action_conditions(556,17162
+void	execute_operations(669,20563
+void	process_actions(747,23451
+
+src/alphacode/poller/poller.c,197
+#define NUM	29,929
+#define ZBXPOOL 31,946
+ZBXPOOL	pool[pool41,1111
+int	s;43,1131
+struct pollfd poll_cli[poll_cli45,1139
+void	init_pool(47,1169
+void	wait_connect(57,1246
+int	main(156,3291
+
+src/alphacode/poller/snmp.c,638
+MYSQL	mysql;23,545
+#define CONFIG_DBHOST 25,559
+#define CONFIG_DBNAME 26,584
+#define CONFIG_DBUSER 27,613
+#define CONFIG_DBPASSWORD 28,642
+struct host 33,707
+} hosts[hosts36,758
+struct oid 44,873
+} oids[oids49,968
+char	*DBget_field(DBget_field54,1049
+int	DBnum_rows(68,1378
+MYSQL_RES *DBselect(DBselect94,1795
+void load_oids(112,2222
+void initialize 183,3411
+int print_result 209,3854
+struct session 256,5062
+} sessions[sessions259,5192
+int active_hosts;261,5237
+int asynch_response(266,5324
+void asynchronous(314,6526
+void	DBclose(388,8248
+void    DBconnect(393,8294
+int	DBexecute(412,8719
+int main 435,9232
+
+src/alphacode/poller/poller_epoll.c,169
+#define NUM	29,930
+int	s;31,948
+int 	epfd;33,956
+struct epoll_event ev;34,967
+struct epoll_event *events;events35,991
+void	wait_connect(37,1021
+int	main(69,1538
+
+src/alphacode/poller/snmp_orig.c,322
+struct host 20,475
+} hosts[hosts23,534
+struct oid 70,1886
+} oids[oids74,1957
+void initialize 136,3546
+int print_result 156,3892
+void synchronous 203,5154
+struct session 239,6091
+} sessions[sessions242,6223
+int active_hosts;244,6268
+int asynch_response(249,6355
+void asynchronous(280,7174
+int main 342,8772
+
+src/zabbix_sender/zabbix_sender.c,824
+char *progname progname28,876
+char title_message[title_message30,900
+char usage_message[usage_message32,939
+char *help_message[help_message35,1034
+char *help_message[help_message57,2078
+static struct zbx_option longopts[longopts84,3049
+static char     shortopts[shortopts101,3441
+static int	CONFIG_LOG_LEVEL 105,3527
+static char*	INPUT_FILE 107,3574
+static char*	ZABBIX_SERVER 109,3607
+unsigned short	ZABBIX_SERVER_PORT 110,3642
+static char*	ZABBIX_HOSTNAME 111,3681
+static char*	ZABBIX_KEY 112,3718
+static char*	ZABBIX_KEY_VALUE 113,3750
+static void    send_signal_handler(117,3813
+typedef struct zbx_active_metric_type134,4184
+} ZBX_THREAD_SENDVAL_ARGS;141,4308
+static ZBX_THREAD_ENTRY(143,4336
+static void    init_config(210,5833
+static zbx_task_t parse_commandline(259,7148
+int main(311,8220
+
+src/zabbix_get/zabbix_get.c,368
+char *progname progname28,876
+char title_message[title_message29,899
+char usage_message[usage_message30,968
+char *help_message[help_message33,1065
+char *help_message[help_message45,1570
+struct zbx_option longopts[longopts61,2154
+static char     shortopts[shortopts73,2336
+void    signal_handler(95,3639
+static int	get_value(131,5488
+int main(178,7260
+
+src/zabbix_agent/interfaces.c,232
+void	collect_stats_interfaces(24,803
+INTERFACE interfaces[interfaces74,1670
+void	init_stats_interfaces(104,2200
+void	report_stats_interfaces(148,2977
+void	add_values_interfaces(280,5959
+void	collect_stats_interfaces(331,7016
+
+src/zabbix_agent/zbxconf.c,666
+	static char	DEFAULT_PID_FILE[DEFAULT_PID_FILE41,1144
+char	*CONFIG_HOSTS_ALLOWED	CONFIG_HOSTS_ALLOWED44,1231
+char	*CONFIG_HOSTNAME	CONFIG_HOSTNAME45,1267
+int	CONFIG_DISABLE_ACTIVE	48,1300
+int	CONFIG_ENABLE_REMOTE_COMMANDS	49,1332
+int	CONFIG_LISTEN_PORT	50,1371
+int	CONFIG_SERVER_PORT	51,1403
+int	CONFIG_REFRESH_ACTIVE_CHECKS	52,1435
+char	*CONFIG_LISTEN_IP	CONFIG_LISTEN_IP53,1475
+int	CONFIG_LOG_LEVEL	54,1507
+char	CONFIG_LOG_UNRES_SYMB	55,1554
+int	CONFIG_ACTIVE_BUF_SIZE_MB	56,1587
+char	*CONFIG_ACTIVE_BUF_FILE	CONFIG_ACTIVE_BUF_FILE57,1622
+void    load_config(60,1662
+static int     add_parameter(128,3701
+void    load_user_parameters(143,3917
+
+src/zabbix_agent/activebuf.c,877
+static const unsigned int buffer_signature 30,934
+static const unsigned int entry_size_estimation 33,1050
+#define FLUSH_EVERY_ITEMS 36,1216
+static int flush_counter;37,1245
+} buffer_check_entry_t;51,1582
+} buffer_state_t;63,1801
+buffer_state_t buffer 67,1822
+void init_active_buffer 80,2066
+void free_active_buffer 125,3445
+static void flush_buffer 141,3724
+void update_active_buffer 167,4740
+static int read_initial_buffer 182,5026
+static int create_initial_buffer 260,7629
+static int apply_new_entries 270,7822
+static void deactivate_buffer 351,10553
+static void free_entries 359,10642
+void store_in_active_buffer 377,10927
+int  active_buffer_is_empty 449,13059
+active_buffer_item_t* take_active_buffer_item 455,13142
+void free_active_buffer_item 521,15067
+active_buffer_checks_t* get_buffer_checks_list 536,15316
+void free_buffer_checks_list 582,16449
+
+src/zabbix_agent/listener.c,64
+static void	process_listener(36,1064
+ZBX_THREAD_ENTRY(71,1731
+
+src/zabbix_agent/zabbix_agent.c,448
+char *progname progname31,942
+char title_message[title_message32,965
+char usage_message[usage_message33,1004
+char *help_message[help_message35,1088
+char *help_message[help_message45,1385
+struct zbx_option longopts[longopts56,1714
+void	child_signal_handler(66,1878
+	static char	DEFAULT_CONFIG_FILE[DEFAULT_CONFIG_FILE80,2087
+	static char	DEFAULT_CONFIG_FILE[DEFAULT_CONFIG_FILE82,2174
+void    init_config(85,2267
+int	main(99,2574
+
+src/zabbix_agent/cpustat.c,277
+static int	zbx_get_cpu_num(43,1999
+int	init_cpu_collector(125,4800
+void	close_cpu_collector(224,8538
+static int	get_cpustat(257,9029
+static void	apply_cpustat(348,11218
+#define SAVE_CPU_CLOCK_FOR(450,13242
+#define CALC_CPU_LOAD(470,13983
+void	collect_cpustat(516,14968
+
+src/zabbix_agent/diskdevices.h,227
+#define ZABBIX_DISKDEVICES_H21,786
+#define	MAX_DISKDEVICES	24,817
+typedef struct c_single_diskdevice_data26,844
+} ZBX_SINGLE_DISKDEVICE_DATA;36,1056
+typedef struct c_diskdevices_data38,1087
+} ZBX_DISKDEVICES_DATA;41,1176
+
+src/zabbix_agent/active.c,525
+static ZBX_ACTIVE_METRIC *active_metrics active_metrics38,1110
+static void	init_active_metrics(40,1160
+static void	disable_all_metrics(56,1456
+static void	free_active_metrics(75,1777
+static int	get_min_nextcheck(99,2217
+static void	add_check(121,2598
+static int	parse_list_of_checks(181,5265
+static int	get_active_checks(255,7618
+static int	send_value(320,10407
+static int	send_history_values(393,13049
+static int	process_active_checks(450,14376
+static void	refresh_metrics(678,19878
+ZBX_THREAD_ENTRY(686,20145
+
+src/zabbix_agent/listener.h,33
+#define ZABBIX_LISTENER_H21,783
+
+src/zabbix_agent/logfiles.c,27
+int   process_log(46,2499
+
+src/zabbix_agent/stats.h,100
+#define ZABBIX_STATS_H21,780
+typedef struct s_collector_data36,1101
+} ZBX_COLLECTOR_DATA;42,1256
+
+src/zabbix_agent/eventlog.c,258
+#define MAX_INSERT_STRS 27,842
+#define MAX_MSG_LENGTH 28,869
+#define EVENTLOG_REG_PATH 30,898
+static int    zbx_open_eventlog(33,1026
+static long	zbx_close_eventlog(81,2190
+static long    zbx_get_eventlog_message(89,2370
+int process_eventlog(247,7125
+
+src/zabbix_agent/active.h,220
+#define ZABBIX_ACTIVE_H21,781
+#define MAX_LINES_PER_SECOND	29,901
+typedef struct zbx_active_metric_type31,934
+} ZBX_ACTIVE_METRIC;39,1079
+typedef struct active_ckeck_args41,1101
+} ZBX_THREAD_ACTIVECHK_ARGS;45,1172
+
+src/zabbix_agent/diskdevices.c,271
+void	collect_stats_diskdevices(24,804
+DISKDEVICE diskdevices[diskdevices81,1803
+int	get_device_name(83,1845
+void	init_stats_diskdevices(116,2675
+void	report_stats_diskdevices(229,4682
+void	add_values_diskdevices(426,10056
+void	collect_stats_diskdevices(453,10756
+
+src/zabbix_agent/stats.c,212
+ZBX_COLLECTOR_DATA *collector collector40,1077
+#define ZBX_GET_SHM_KEY(42,1116
+void	init_collector_data(69,2899
+#define ZBX_MAX_ATTEMPTS 79,3099
+void	free_collector_data(143,5461
+ZBX_THREAD_ENTRY(191,7127
+
+src/zabbix_agent/zabbix_agentd.c,619
+char *progname progname47,1219
+	static char	DEFAULT_CONFIG_FILE[DEFAULT_CONFIG_FILE51,1294
+	static char	DEFAULT_CONFIG_FILE[DEFAULT_CONFIG_FILE53,1382
+char title_message[title_message58,1501
+char usage_message[usage_message75,1820
+char *help_message[help_message88,2015
+static struct zbx_option longopts[longopts122,2830
+static char	shortopts[shortopts145,3169
+static char	*TEST_METRIC TEST_METRIC156,3300
+static ZBX_THREAD_HANDLE	*threads threads158,3334
+static zbx_task_t parse_commandline(160,3377
+int MAIN_ZABBIX_ENTRY(220,4424
+void	zbx_on_exit(294,6081
+int	main(338,6711
+int main(399,7852
+
+src/zabbix_agent/interfaces.h,218
+#define ZABBIX_INTERFACES_H21,785
+#define	MAX_INTERFACE	24,815
+typedef struct s_single_interface_data26,843
+} ZBX_SINGLE_INTERFACE_DATA;32,965
+typedef struct s_interfaces_data34,995
+} ZBX_INTERFACES_DATA;37,1079
+
+src/zabbix_agent/perfstat.h,302
+#define ZABBIX_PERFSTAT_H21,783
+#	define PERF_COLLECTOR_STARTED(27,857
+#	define PDH_RAW_COUNTER	31,973
+#	define HCOUNTER	32,1004
+#	define HQUERY	33,1029
+struct zbx_perfs37,1076
+typedef struct zbx_perfs PERF_COUNTERS;50,1310
+typedef struct s_perfs_stat_data52,1351
+} ZBX_PERF_STAT_DATA;56,1440
+
+src/zabbix_agent/zbxconf.h,32
+#define ZABBIX_ZBXCONF_H21,782
+
+src/zabbix_agent/perfstat.c,278
+static PERF_COUNTERS *statPerfCounterList=statPerfCounterList32,917
+static int	add_perf_counter(51,2327
+int	add_perfs_from_config(147,5640
+void	perfs_list_free(201,7310
+int	init_perf_collector(241,9059
+void	close_perf_collector(305,11365
+void	collect_perfstat(329,11748
+
+src/zabbix_agent/logfiles.h,33
+#define ZABBIX_LOGFILES_H21,783
+
+src/zabbix_agent/zabbix_agent.h,33
+#define ZABBIX_MONAGENT_H21,783
+
+src/zabbix_agent/activebuf.h,99
+#define ZABBIX_ACTIVEBUF_H21,783
+} active_buffer_item_t;32,951
+} active_buffer_checks_t;49,1367
+
+src/zabbix_agent/eventlog.h,33
+#define ZABBIX_EVENTLOG_H21,783
+
+src/zabbix_agent/cpustat.h,545
+#define ZABBIX_CPUSTAT_H21,782
+	#define MAX_CPU	25,832
+	#define MAX_CPU_HISTORY 26,852
+	typedef struct s_single_cpu_stat_data28,906
+	} ZBX_SINGLE_CPU_STAT_DATA;40,1156
+	typedef struct s_cpus_stat_data42,1186
+	} ZBX_CPUS_STAT_DATA;58,1481
+#	define CPU_COLLECTOR_STARTED(60,1505
+	#define MAX_CPU	64,1619
+	#define MAX_CPU_HISTORY 65,1639
+	typedef struct s_single_cpu_stat_data67,1693
+	} ZBX_SINGLE_CPU_STAT_DATA;106,2538
+	typedef struct s_cpus_stat_data108,2568
+	} ZBX_CPUS_STAT_DATA;113,2661
+#	define CPU_COLLECTOR_STARTED(115,2685
+
+include/common.h,8725
+#define ZABBIX_COMMON_H21,781
+#	define SDI(30,886
+#	define SDI2(31,988
+#	define zbx_dbg_assert(32,1097
+#	define SDI(34,1144
+#	define SDI2(35,1176
+#	define zbx_dbg_assert(36,1211
+#	define REINIT_CHECK_MEMORY(42,1315
+#	define INIT_CHECK_MEMORY(45,1383
+#	define CHECK_MEMORY(50,1526
+#	define INIT_CHECK_MEMORY(79,2436
+#	define CHECK_MEMORY(80,2475
+#		define va_copy(85,2569
+#		define va_copy(87,2616
+#undef snprintf92,2734
+#define snprintf	94,2757
+#undef sprintf97,2849
+#define sprintf	99,2871
+#undef strncpy102,2962
+#define strncpy	104,2984
+#undef vsprintf107,3075
+#define vsprintf	109,3098
+#	define zbx_atoui64(113,3268
+#	define zbx_atoui64(115,3327
+#define zbx_atod(118,3387
+#define ON	120,3437
+#define OFF	121,3450
+#define	APPLICATION_NAME	123,3465
+#define	ZABBIX_REVDATE	124,3505
+#define	ZABBIX_VERSION	125,3548
+	struct option 133,3777
+#	define  getopt_long(139,3857
+#define ZBX_UNUSED(142,3989
+#define	SUCCEED	144,4025
+#define	FAIL	145,4044
+#define	NOTSUPPORTED	146,4063
+#define	NETWORK_ERROR	147,4089
+#define	TIMEOUT_ERROR	148,4116
+#define	AGENT_ERROR	149,4143
+	#define MAX_STRING_LEN	156,4213
+	#define MAX_STRING_LEN	158,4247
+#define MAX_BUF_LEN	160,4283
+#define ZBX_DM_DELIMITER	162,4310
+	ITEM_TYPE_ZABBIX 167,4375
+	ITEM_TYPE_SNMPv1,168,4398
+	ITEM_TYPE_TRAPPER,169,4417
+	ITEM_TYPE_SIMPLE,170,4437
+	ITEM_TYPE_SNMPv2c,171,4456
+	ITEM_TYPE_INTERNAL,172,4476
+	ITEM_TYPE_SNMPv3,173,4497
+	ITEM_TYPE_ZABBIX_ACTIVE,174,4516
+	ITEM_TYPE_AGGREGATE,175,4542
+	ITEM_TYPE_HTTPTEST,176,4564
+	ITEM_TYPE_EXTERNAL177,4585
+} zbx_item_type_t;178,4605
+	EVENT_SOURCE_TRIGGERS 183,4660
+	EVENT_SOURCE_DISCOVERY184,4688
+} zbx_event_source_t;185,4712
+	EVENT_OBJECT_TRIGGER 190,4770
+	EVENT_OBJECT_DHOST,191,4797
+	EVENT_OBJECT_DSERVICE192,4818
+} zbx_event_object_t;193,4841
+	DOBJECT_STATUS_UP	197,4879
+	DOBJECT_STATUS_DOWN198,4903
+} zbx_dstatus_t;199,4924
+	ITEM_VALUE_TYPE_FLOAT 204,4980
+	ITEM_VALUE_TYPE_STR,205,5008
+	ITEM_VALUE_TYPE_LOG,206,5030
+	ITEM_VALUE_TYPE_UINT64,207,5052
+	ITEM_VALUE_TYPE_TEXT208,5077
+} zbx_item_value_type_t;209,5099
+	HTTPTEST_STATE_IDLE 214,5163
+	HTTPTEST_STATE_BUSY215,5189
+} zbx_httptest_state_type_t;216,5210
+	SVC_SSH 221,5293
+	SVC_LDAP,222,5307
+	SVC_SMTP,223,5318
+	SVC_FTP,224,5329
+	SVC_HTTP,225,5339
+	SVC_POP,226,5350
+	SVC_NNTP,227,5360
+	SVC_IMAP,228,5371
+	SVC_TCP,229,5382
+	SVC_AGENT,230,5392
+	SVC_SNMPv1,231,5404
+	SVC_SNMPv2c232,5417
+} zbx_dservice_type_t;233,5430
+#define ITEM_SNMPV3_SECURITYLEVEL_NOAUTHNOPRIV	237,5489
+#define ITEM_SNMPV3_SECURITYLEVEL_AUTHNOPRIV	238,5538
+#define ITEM_SNMPV3_SECURITYLEVEL_AUTHPRIV	239,5585
+#define ITEM_MULTIPLIER_DO_NOT_USE	242,5659
+#define ITEM_MULTIPLIER_USE	243,5697
+#define ITEM_STORE_AS_IS	246,5753
+#define ITEM_STORE_SPEED_PER_SECOND	247,5781
+#define ITEM_STORE_SIMPLE_CHANGE	248,5819
+#define OPERATION_OBJECT_USER	251,5889
+#define OPERATION_OBJECT_GROUP	252,5921
+	ACTION_EVAL_TYPE_AND_OR	257,5992
+	ACTION_EVAL_TYPE_AND,258,6022
+	ACTION_EVAL_TYPE_OR259,6045
+}	zbx_action_eval_type_t;260,6066
+	CONDITION_TYPE_HOST_GROUP 265,6130
+	CONDITION_TYPE_HOST,266,6162
+	CONDITION_TYPE_TRIGGER,267,6184
+	CONDITION_TYPE_TRIGGER_NAME,268,6209
+	CONDITION_TYPE_TRIGGER_SEVERITY,269,6239
+	CONDITION_TYPE_TRIGGER_VALUE,270,6273
+	CONDITION_TYPE_TIME_PERIOD,271,6304
+	CONDITION_TYPE_DHOST_IP,272,6333
+	CONDITION_TYPE_DSERVICE_TYPE,273,6359
+	CONDITION_TYPE_DSERVICE_PORT,274,6390
+	CONDITION_TYPE_DSTATUS,275,6421
+	CONDITION_TYPE_DUPTIME,276,6446
+	CONDITION_TYPE_DVALUE277,6471
+} zbx_condition_type_t;278,6494
+	CONDITION_OPERATOR_EQUAL 283,6560
+	CONDITION_OPERATOR_NOT_EQUAL,284,6591
+	CONDITION_OPERATOR_LIKE,285,6622
+	CONDITION_OPERATOR_NOT_LIKE,286,6648
+	CONDITION_OPERATOR_IN,287,6678
+	CONDITION_OPERATOR_MORE_EQUAL,288,6702
+	CONDITION_OPERATOR_LESS_EQUAL,289,6734
+	CONDITION_OPERATOR_NOT_IN290,6766
+} zbx_condition_op_t;291,6793
+	SYSMAP_ELEMENT_TYPE_HOST 295,6831
+	SYSMAP_ELEMENT_TYPE_MAP,296,6862
+	SYSMAP_ELEMENT_TYPE_TRIGGER,297,6888
+	SYSMAP_ELEMENT_TYPE_HOST_GROUP298,6918
+} zbx_sysmap_element_types_t;299,6950
+#define SERVER_STATUS_KEY	302,7035
+#define SERVER_ICMPPING_KEY	304,7113
+#define SERVER_ICMPPINGSEC_KEY	306,7202
+#define SERVER_ZABBIXLOG_KEY	308,7299
+	ALERT_TYPE_EMAIL 313,7376
+	ALERT_TYPE_EXEC,314,7399
+	ALERT_TYPE_SMS,315,7417
+	ALERT_TYPE_JABBER316,7434
+} zbx_alert_type_t;317,7453
+	ALERT_STATUS_NOT_SENT 322,7510
+	ALERT_STATUS_SENT323,7538
+} zbx_alert_status_t;324,7557
+	ITEM_STATUS_ACTIVE 329,7615
+	ITEM_STATUS_DISABLED,330,7640
+	ITEM_STATUS_NOTSUPPORTED 332,7689
+	ITEM_STATUS_DELETED,333,7720
+	ITEM_STATUS_NOTAVAILABLE334,7742
+} zbx_item_status_t;335,7768
+#define HTTPTEST_STATUS_MONITORED	338,7816
+#define HTTPTEST_STATUS_NOT_MONITORED	339,7852
+#define DRULE_STATUS_MONITORED	342,7914
+#define DRULE_STATUS_NOT_MONITORED	343,7948
+#define HOST_STATUS_MONITORED	346,8006
+#define HOST_STATUS_NOT_MONITORED	347,8039
+#define HOST_STATUS_TEMPLATE	349,8113
+#define HOST_STATUS_DELETED	350,8144
+#define HOST_AVAILABLE_UNKNOWN	353,8199
+#define HOST_AVAILABLE_TRUE	354,8232
+#define HOST_AVAILABLE_FALSE	355,8262
+#define HOST_USE_HOSTNAME	358,8325
+#define HOST_USE_IP	359,8353
+#define TRIGGER_STATUS_ENABLED	369,8594
+#define TRIGGER_STATUS_DISABLED	370,8627
+#define TRIGGER_VALUE_FALSE	373,8683
+#define TRIGGER_VALUE_TRUE	374,8713
+#define TRIGGER_VALUE_UNKNOWN	375,8742
+#define TRIGGER_SEVERITY_NOT_CLASSIFIED	378,8798
+#define TRIGGER_SEVERITY_INFORMATION	379,8840
+#define TRIGGER_SEVERITY_WARNING	380,8879
+#define TRIGGER_SEVERITY_AVERAGE	381,8914
+#define TRIGGER_SEVERITY_HIGH	382,8949
+#define TRIGGER_SEVERITY_DISASTER	383,8982
+#define MEDIA_STATUS_ACTIVE	386,9040
+#define MEDIA_STATUS_DISABLED	387,9070
+#define ACTION_STATUS_ACTIVE	390,9125
+#define ACTION_STATUS_DISABLED	391,9156
+#define OPERATION_TYPE_MESSAGE	394,9212
+#define OPERATION_TYPE_COMMAND	395,9246
+#define OPERATION_TYPE_HOST_ADD	396,9280
+#define OPERATION_TYPE_HOST_REMOVE	397,9315
+#define OPERATION_TYPE_GROUP_ADD	398,9352
+#define OPERATION_TYPE_GROUP_REMOVE	399,9387
+#define OPERATION_TYPE_TEMPLATE_ADD	400,9425
+#define OPERATION_TYPE_TEMPLATE_REMOVE	401,9463
+#define SERVICE_ALGORITHM_NONE	404,9553
+#define SERVICE_ALGORITHM_MAX	405,9586
+#define SERVICE_ALGORITHM_MIN	406,9618
+#define	NODE_CKSUM_TYPE_OLD	409,9683
+#define	NODE_CKSUM_TYPE_NEW	410,9713
+#define	NODE_CONFIGLOG_OP_UPDATE	413,9783
+#define	NODE_CONFIGLOG_OP_ADD	414,9818
+#define	NODE_CONFIGLOG_OP_DELETE	415,9851
+#define	ZBX_TYPE_INT	417,9887
+#define	ZBX_TYPE_CHAR	418,9910
+#define	ZBX_TYPE_FLOAT	419,9934
+#define	ZBX_TYPE_BLOB	420,9959
+#define	ZBX_TYPE_TEXT	421,9983
+#define	ZBX_TYPE_UINT	422,10007
+#define	ZBX_TYPE_ID	423,10031
+#define	ZBX_TABLE_HISTORY	426,10092
+#define	ZBX_TABLE_HISTORY_UINT	427,10120
+#define	ZBX_TABLE_HISTORY_STR	428,10153
+#define	ZBX_TABLE_HISTORY_LOG	429,10185
+#define	ZBX_TABLE_HISTORY_TEXT	430,10217
+	ZBX_HTTPITEM_TYPE_RSPCODE 435,10288
+	ZBX_HTTPITEM_TYPE_TIME,436,10320
+	ZBX_HTTPITEM_TYPE_SPEED,437,10345
+	ZBX_HTTPITEM_TYPE_LASTSTEP438,10371
+} zbx_httpitem_type_t;439,10399
+#define	ZBX_SYNC	442,10435
+#define	ZBX_NODE_TYPE_REMOTE	445,10476
+#define	ZBX_NODE_TYPE_LOCAL	446,10507
+#define	POLLER_DELAY	448,10538
+#define	ZBX_POLLER_TYPE_NORMAL	450,10562
+#define	ZBX_POLLER_TYPE_UNREACHABLE	451,10596
+#define	POLLER_TIMEOUT	453,10635
+#define	AGENT_TIMEOUT	458,10824
+#define	SENDER_TIMEOUT	460,10849
+#define	TRAPPER_TIMEOUT	461,10875
+#define	SNMPTRAPPER_TIMEOUT	462,10902
+#	define MAX(465,10945
+#	define MIN(469,11014
+#define strscpy(473,11096
+#define strnscpy(474,11144
+#define	zbx_malloc(476,11189
+#define zbx_free(481,11381
+#define zbx_fclose(483,11443
+#define ZBX_COND_NODEID 485,11500
+#define LOCAL_NODE(486,11595
+#define ZBX_NODE(487,11670
+#define MIN_ZABBIX_PORT 490,11738
+#define MAX_ZABBIX_PORT 491,11768
+#define ZBX_MAX_B64_LEN 503,11987
+	ZBX_TASK_START 509,12073
+	ZBX_TASK_SHOW_HELP,510,12094
+	ZBX_TASK_SHOW_VERSION,511,12115
+	ZBX_TASK_PRINT_SUPPORTED,512,12139
+	ZBX_TASK_TEST_METRIC,513,12166
+	ZBX_TASK_SHOW_USAGE,514,12189
+	ZBX_TASK_INSTALL_SERVICE,515,12211
+	ZBX_TASK_UNINSTALL_SERVICE,516,12238
+	ZBX_TASK_START_SERVICE,517,12267
+	ZBX_TASK_STOP_SERVICE,518,12292
+	ZBX_TASK_CHANGE_NODEID519,12316
+} zbx_task_t;520,12340
+#	define zbx_setproctitle(550,13515
+#	define zbx_setproctitle 552,13618
+#define ZBX_JAN_1970_IN_SEC 556,13749
+#	define zbx_error(561,13908
+#	define zbx_error 563,13997
+#	define zbx_snprintf(568,14131
+#	define zbx_snprintf 570,14250
+#	define zbx_snprintf_alloc(577,14493
+#	define zbx_snprintf_alloc 580,14677
+#	define zbx_dsprintf(590,15076
+#	define zbx_dsprintf 592,15183
+#	define zbx_strdcatf(599,15386
+#	define zbx_strdcatf 601,15493
+
+include/sysinc.h,251
+#define ZABBIX_SYSINC_H21,781
+#	undef SEC_I_INCOMPLETE_CREDENTIALS129,2163
+#	undef SEC_E_INCOMPLETE_CREDENTIALS130,2200
+#	undef SEC_I_RENEGOTIATE131,2237
+#	define _STRUCTURED_PROC 189,3086
+#			define _GNU_SOURCE296,4569
+#	undef T_NULL 343,5194
+
+include/sms.h,28
+#define ZABBIX_SMS_H22,779
+
+include/snprintf.c,1204
+ void dummy_snprintf(84,3087
+#define LDOUBLE 88,3150
+#define LDOUBLE 90,3184
+#define LLONG 94,3237
+#define LLONG 96,3267
+#define SAFE_FREE(101,3375
+	#define VA_COPY(115,3635
+	#define VA_COPY(117,3690
+#define DP_S_DEFAULT 136,4367
+#define DP_S_FLAGS 137,4390
+#define DP_S_MIN 138,4413
+#define DP_S_DOT 139,4436
+#define DP_S_MAX 140,4459
+#define DP_S_MOD 141,4482
+#define DP_S_CONV 142,4505
+#define DP_S_DONE 143,4528
+#define DP_F_MINUS 146,4578
+#define DP_F_PLUS 147,4607
+#define DP_F_SPACE 148,4636
+#define DP_F_NUM 149,4665
+#define DP_F_ZERO 150,4694
+#define DP_F_UP 151,4723
+#define DP_F_UNSIGNED 152,4752
+#define DP_C_SHORT 155,4808
+#define DP_C_LONG 156,4831
+#define DP_C_LDOUBLE 157,4854
+#define DP_C_LLONG 158,4877
+#define char_to_int(160,4901
+#define MAX(162,4947
+static size_t dopr(165,4999
+static void fmtstr(426,10917
+static void fmtint(464,11768
+static LDOUBLE abs_val(548,13600
+static LDOUBLE POW10(558,13722
+static LLONG ROUND(570,13842
+static double my_modf(583,14095
+static void fmtfp 617,14573
+static void dopr_outch(769,18030
+ int vsnprintf 781,18374
+ int snprintf(797,18965
+ int vasprintf(809,19167
+ int asprintf(832,19510
+ int main 850,19765
+
+include/base64.h,31
+#define ZABBIX_BASE64_H21,781
+
+include/email.h,30
+#define ZABBIX_EMAIL_H22,781
+
+include/perfmon.h,321
+#define ZABBIX_PERFMON_H21,782
+#define PCI_SYSTEM	31,942
+#define PCI_PROCESSOR	32,967
+#define PCI_PROCESSOR_TIME	33,997
+#define PCI_PROCESSOR_QUEUE_LENGTH	34,1029
+#define PCI_SYSTEM_UP_TIME	35,1069
+#define MAX_PERFCOUNTER_NAME_LEN 41,1148
+struct perfcounter43,1229
+typedef struct perfcounter PERFCOUNTER;53,1508
+
+include/symbols.h,65
+#define ZABBIX_SYMBOLS_H21,782
+#	define import_symbols(34,1142
+
+include/cfg.h,261
+#define ZABBIX_CFG_H21,778
+#define	TYPE_INT	23,800
+#define	TYPE_STRING	24,819
+#define	PARM_OPT	26,842
+#define	PARM_MAND	27,861
+#define AF_STANDALONE 33,911
+#define AF_USE_EVENT_LOG 34,954
+#define AF_LOG_UNRESOLVED_SYMBOLS 35,997
+struct cfg_line44,1189
+
+include/sysinfo.h,1185
+#define ZABBIX_SYSINFO_H22,783
+typedef struct zbx_result_s 27,861
+} AGENT_RESULT;34,978
+#define AR_UINT64	37,1020
+#define AR_DOUBLE	38,1040
+#define AR_STRING	39,1060
+#define AR_MESSAGE	40,1080
+#define AR_TEXT	41,1101
+#define SET_DBL_RESULT(46,1141
+#define SET_UI64_RESULT(52,1245
+#define SET_STR_RESULT(58,1357
+#define SET_TEXT_RESULT(64,1461
+#define SET_MSG_RESULT(70,1565
+#define ISSET_UI64(78,1689
+#define ISSET_DBL(79,1739
+#define ISSET_STR(80,1788
+#define ISSET_TEXT(81,1837
+#define ISSET_MSG(82,1885
+#define UNSET_DBL_RESULT(86,1956
+#define UNSET_UI64_RESULT(92,2108
+#define UNSET_STR_RESULT(98,2269
+#define UNSET_TEXT_RESULT(106,2514
+#define UNSET_MSG_RESULT(114,2747
+#define UNSET_RESULT_EXCLUDING(122,2998
+#define GET_UI64_RESULT(135,3367
+#define GET_DBL_RESULT(136,3454
+#define GET_STR_RESULT(137,3534
+#define GET_TEXT_RESULT(138,3613
+#define GET_MSG_RESULT(139,3691
+	SYSINFO_RET_OK	148,3937
+	SYSINFO_RET_FAIL	149,3959
+	SYSINFO_RET_TIMEOUT	150,3982
+} ZBX_SYSINFO_RET;151,4007
+typedef struct zbx_metric_type153,4027
+} ZBX_METRIC;160,4151
+#define CF_USEUPARAM	163,4190
+#define PROCESS_TEST	167,4260
+#define PROCESS_USE_TEST_PARAM	168,4284
+
+include/db.h,3295
+#define ZABBIX_DB_H22,778
+	GRAPH_TYPE_NORMAL 42,1196
+	GRAPH_TYPE_STACKED 43,1220
+} zbx_graph_types;44,1244
+	SCREEN_RESOURCE_GRAPH 47,1279
+	SCREEN_RESOURCE_SIMPLE_GRAPH,48,1307
+	SCREEN_RESOURCE_MAP,49,1338
+	SCREEN_RESOURCE_PLAIN_TEXT,50,1360
+	SCREEN_RESOURCE_HOSTS_INFO,51,1389
+	SCREEN_RESOURCE_TRIGGERS_INFO,52,1418
+	SCREEN_RESOURCE_SERVER_INFO,53,1450
+	SCREEN_RESOURCE_CLOCK,54,1480
+	SCREEN_RESOURCE_SCREEN,55,1504
+	SCREEN_RESOURCE_TRIGGERS_OVERVIEW,56,1529
+	SCREEN_RESOURCE_DATA_OVERVIEW,57,1565
+	SCREEN_RESOURCE_URL,58,1597
+	SCREEN_RESOURCE_ACTIONS,59,1619
+	SCREEN_RESOURCE_EVENTS60,1645
+} zbx_screen_resources;61,1669
+	CALC_FNC_MIN 64,1709
+	CALC_FNC_AVG 65,1728
+	CALC_FNC_MAX 66,1747
+	CALC_FNC_ALL 67,1766
+} zbx_graph_item_calc_function;68,1784
+	GRAPH_ITEM_SIMPLE 71,1832
+	GRAPH_ITEM_AGGREGATED 72,1856
+} zbx_graph_item_type;73,1883
+#define	ZBX_DB_CONNECT_NORMAL	75,1907
+#define	ZBX_DB_CONNECT_EXIT	76,1939
+#define DB_FULL_DELETE	78,1970
+#define DB_PART_DELETE	79,1995
+#define DB_ACTION	81,2021
+#define DB_ALERT	82,2062
+#define DB_CONDITION	83,2101
+#define DB_DHOST	84,2148
+#define DB_DRULE	85,2187
+#define DB_DSERVICE	86,2226
+#define DB_DCHECK	87,2271
+#define DB_EVENT	88,2312
+#define DB_FUNCTION	89,2351
+#define DB_GRAPH	90,2396
+#define DB_GRAPH_ITEM	91,2435
+#define DB_HOST	92,2484
+#define DB_HOUSEKEEPER	93,2522
+#define DB_ITEM	94,2573
+#define DB_MEDIA	95,2611
+#define DB_MEDIATYPE	96,2650
+#define DB_OPERATION	97,2697
+#define DB_TRIGGER	98,2744
+#define DB_HTTPTEST	99,2787
+#define DB_HTTPSTEP	100,2832
+#define DB_HTTPSTEPITEM	101,2877
+#define DB_HTTPTESTITEM	102,2930
+#define	MAX_HOST_HOST_LEN	104,2984
+#define	MAX_ITEM_KEY_LEN	106,3014
+#define	MAX_ITEM_IP_LEN	107,3043
+#define	MAX_ITEM_SNMP_COMMUNITY_LEN	108,3071
+#define	MAX_ITEM_SNMP_OID_LEN	109,3110
+#define TRIGGER_DESCRIPTION_LEN	112,3175
+#define TRIGGER_DESCRIPTION_LEN_MAX	113,3212
+#define TRIGGER_EXPRESSION_LEN	114,3274
+#define TRIGGER_EXPRESSION_LEN_MAX	115,3310
+#define TRIGGER_URL_LEN	116,3370
+#define TRIGGER_URL_LEN_MAX	117,3400
+#define TRIGGER_COMMENTS_LEN	118,3447
+#define TRIGGER_COMMENTS_LEN_MAX	119,3482
+#define CONDITION_VALUE_LEN	121,3534
+#define CONDITION_VALUE_LEN_MAX	122,3567
+#define HOST_HOST_LEN	124,3623
+#define HOST_HOST_LEN_MAX	125,3650
+#define HOST_DNS_LEN	126,3693
+#define HOST_DNS_LEN_MAX	127,3719
+#define HOST_IP_LEN	128,3760
+#define HOST_IP_LEN_MAX	129,3785
+#define HOST_ERROR_LEN	130,3825
+#define HOST_ERROR_LEN_MAX	131,3854
+#define HOST_ERROR_LEN	132,3899
+#define HOST_ERROR_LEN_MAX	133,3928
+#define ITEM_KEY_LEN	135,3974
+#define ITEM_KEY_LEN_MAX	136,4001
+#define GRAPH_NAME_LEN	138,4043
+#define GRAPH_NAME_LEN_MAX	139,4072
+#define GRAPH_ITEM_COLOR_LEN	141,4118
+#define GRAPH_ITEM_COLOR_LEN_MAX	142,4151
+#define ACTION_SUBJECT_LEN	144,4208
+#define ACTION_SUBJECT_LEN_MAX	145,4240
+#define DSERVICE_VALUE_LEN	147,4294
+#define DSERVICE_VALUE_LEN_MAX	148,4326
+#define HTTPSTEP_STATUS_LEN	150,4380
+#define HTTPSTEP_STATUS_LEN_MAX	151,4413
+#define HTTPSTEP_REQUIRED_LEN	153,4469
+#define HTTPSTEP_REQUIRED_LEN_MAX	154,4504
+#define ZBX_SQL_ITEM_SELECT	156,4563
+#define ZBX_MAX_SQL_LEN	158,5069
+#	define DBexecute(471,10118
+#	define DBexecute 473,10207
+#	define DBselect(478,10340
+#	define DBselect 480,10427
+
+include/log.h,412
+#define ZABBIX_LOG_H21,778
+#define LOG_LEVEL_EMPTY	23,800
+#define LOG_LEVEL_CRIT	24,827
+#define LOG_LEVEL_ERR	25,853
+#define LOG_LEVEL_WARNING	26,878
+#define LOG_LEVEL_DEBUG	27,906
+#define LOG_LEVEL_INFORMATION	29,934
+#define LOG_TYPE_UNDEFINED	31,969
+#define LOG_TYPE_SYSLOG	32,998
+#define LOG_TYPE_FILE	33,1025
+#	define zabbix_log(41,1207
+#	define zabbix_log 43,1312
+#	define redirect_std(54,1645
+
+include/md5.h,206
+#  define md5_INCLUDED51,2053
+#define MD5_DIGEST_SIZE 63,2598
+typedef unsigned char md5_byte_t;65,2626
+typedef unsigned int md5_word_t;66,2677
+typedef struct md5_state_s 69,2774
+} md5_state_t;73,2961
+
+include/comms.h,570
+#define ZABBIX_COMMS_H21,780
+	ZBX_TCP_ERR_NETWORK 24,819
+	ZBX_TCP_ERR_TIMEOUT25,845
+} zbx_tcp_errors;26,866
+	typedef SOCKET ZBX_SOCKET;30,927
+	typedef int ZBX_SOCKET;32,993
+typedef struct sockaddr_in ZBX_SOCKADDR;36,1052
+	ZBX_BUF_TYPE_STAT 40,1109
+	ZBX_BUF_TYPE_DYN41,1133
+} zbx_buf_type_t;42,1151
+#define ZBX_STAT_BUF_LEN	44,1170
+typedef struct zbx_sock46,1201
+} zbx_sock_t;60,1497
+#define ZBX_TCP_NEW_PROTOCOL	74,1889
+#define zbx_tcp_send(76,1924
+#define zbx_tcp_send_raw(77,2001
+#define ZBX_TCP_READ_UNTIL_CLOSE 94,2390
+#define	zbx_tcp_recv(96,2429
+
+include/gnuregex.h,2286
+#define __REGEXP_LIBRARY_H__21,898
+typedef unsigned reg_syntax_t;43,1577
+#define RE_BACKSLASH_ESCAPE_IN_LISTS 47,1744
+#define RE_BK_PLUS_QM 52,1945
+#define RE_CHAR_CLASSES 58,2274
+#define RE_CONTEXT_INDEP_ANCHORS 72,3010
+#define RE_CONTEXT_INDEP_OPS 80,3437
+#define RE_CONTEXT_INVALID_OPS 84,3637
+#define RE_DOT_NEWLINE 88,3780
+#define RE_DOT_NOT_NULL 92,3916
+#define RE_HAT_LISTS_NOT_NEWLINE 96,4061
+#define RE_INTERVALS 101,4272
+#define RE_LIMITED_OPS 105,4421
+#define RE_NEWLINE_ALT 109,4563
+#define RE_NO_BK_BRACES 114,4753
+#define RE_NO_BK_PARENS 118,4944
+#define RE_NO_BK_REFS 122,5100
+#define RE_NO_BK_VBAR 126,5297
+#define RE_NO_EMPTY_RANGES 132,5591
+#define RE_UNMATCHED_RIGHT_PAREN_ORD 136,5747
+#define RE_SYNTAX_EMACS 148,6289
+#define RE_SYNTAX_AWK	150,6316
+#define RE_SYNTAX_POSIX_AWK 156,6547
+#define RE_SYNTAX_GREP	159,6644
+#define RE_SYNTAX_EGREP	164,6800
+#define RE_SYNTAX_POSIX_EGREP	170,7016
+#define RE_SYNTAX_ED 174,7161
+#define RE_SYNTAX_SED 176,7205
+#define _RE_SYNTAX_POSIX_COMMON	179,7323
+#define RE_SYNTAX_POSIX_BASIC	183,7466
+#define RE_SYNTAX_POSIX_MINIMAL_BASIC	189,7759
+#define RE_SYNTAX_POSIX_EXTENDED	192,7849
+#define RE_SYNTAX_POSIX_MINIMAL_EXTENDED	200,8211
+#undef RE_DUP_MAX211,8698
+# define RE_DUP_MAX 214,8742
+#define REG_EXTENDED 222,8980
+#define REG_ICASE 226,9104
+#define REG_NEWLINE 231,9289
+#define REG_NOSUB 235,9467
+#define REG_NOTBOL 245,9833
+#define REG_NOTEOL 248,9907
+  REG_NOERROR 255,10057
+  REG_NOMATCH,256,10092
+  REG_BADPAT,260,10239
+  REG_ECOLLATE,261,10278
+  REG_ECTYPE,262,10319
+  REG_EESCAPE,263,10371
+  REG_ESUBREG,264,10414
+  REG_EBRACK,265,10461
+  REG_EPAREN,266,10507
+  REG_EBRACE,267,10553
+  REG_BADBR,268,10589
+  REG_ERANGE,269,10636
+  REG_ESPACE,270,10677
+  REG_BADRPT,271,10718
+  REG_EEND,274,10810
+  REG_ESIZE,275,10845
+  REG_ERPAREN	276,10907
+} reg_errcode_t;277,10975
+struct re_pattern_buffer285,11311
+#define REGS_UNALLOCATED 327,12922
+#define REGS_REALLOCATE 328,12949
+#define REGS_FIXED 329,12975
+typedef struct re_pattern_buffer regex_t;353,13657
+#define RE_EXACTN_VALUE 358,13817
+typedef int regoff_t;361,13915
+struct re_registers366,14071
+#define RE_NREGS 378,14361
+} regmatch_t;389,14735
+#define _RE_ARGS(401,15082
+#define _RE_ARGS(405,15137
+
+include/threads.h,517
+#define ZABBIX_THREADS_H21,782
+	#define ZBX_THREAD_ERROR 27,852
+	#define ZBX_THREAD_HANDLE 29,883
+	#define ZBX_THREAD_ENTRY_POINTER(31,918
+	#define ZBX_THREAD_ENTRY(34,1016
+	#define zbx_tread_exit(37,1117
+	#define zbx_sleep(41,1224
+	#define zbx_thread_kill(43,1285
+	#define ZBX_THREAD_ERROR 49,1388
+	#define ZBX_THREAD_HANDLE 51,1420
+	#define ZBX_THREAD_ENTRY_POINTER(53,1454
+	#define ZBX_THREAD_ENTRY(56,1542
+	#define zbx_tread_exit(59,1634
+	#define zbx_sleep(63,1724
+	#define zbx_thread_kill(65,1762
+
+include/alias.h,124
+#define ZABBIX_ALIAS_H21,780
+#define MAX_ALIAS_NAME 23,804
+struct zbx_alias25,839
+typedef struct zbx_alias ALIAS;32,935
+
+include/mutexs.h,703
+#define ZABBIX_MUTEXS_H21,781
+#	define ZBX_MUTEX	25,829
+#	define ZBX_MUTEX_ERROR	26,856
+#	define ZBX_MUTEX_OK	27,886
+#	define ZBX_MUTEX_NAME	29,914
+#	define ZBX_MUTEX_LOG 31,946
+#	define ZBX_MUTEX	35,1016
+#	define ZBX_MUTEX_ERROR	37,1041
+#	define ZBX_MUTEX_OK	38,1072
+#	define ZBX_MUTEX_NAME	40,1101
+#	define ZBX_MUTEX_LOG	42,1131
+#	define ZBX_MUTEX_COUNT	43,1157
+#	define ZBX_MUTEX_MAX_TRIES	45,1186
+#define zbx_mutex_create(53,1293
+#define zbx_mutex_create_force(54,1369
+#define PHP_MUTEX_OK	64,1838
+#define PHP_MUTEX_ERROR	65,1861
+} PHP_MUTEX;70,1929
+#	define php_sem_get(81,2208
+#	define php_sem_acquire(82,2262
+#	define php_sem_release(83,2316
+#	define php_sem_remove(84,2370
+
+include/zbxsecurity.h,36
+#define ZABBIX_ZBXSECURITY_H21,786
+
+include/pid.h,28
+#define ZABBIX_PID_H21,778
+
+include/service.h,304
+#define ZABBIX_SERVICE_H21,782
+#define ZABBIX_SERVICE_NAME 31,962
+#define ZABBIX_EVENT_SOURCE 32,1009
+int application_status;45,1351
+#define ZBX_APP_STOPPED 47,1376
+#define ZBX_APP_RUNNED 48,1402
+#define ZBX_IS_RUNNING 51,1480
+#define ZBX_DO_EXIT(54,1595
+#define START_MAIN_ZABBIX_ENTRY(56,1655
+
+include/daemon.h,184
+#define ZABBIX_DAEMON_H22,782
+#define USE_PID_FILE 28,900
+#define	MAXFD	34,976
+#define ZBX_IS_RUNNING 44,1194
+#define ZBX_DO_EXIT(47,1307
+#define START_MAIN_ZABBIX_ENTRY(49,1330
+
+include/zbxgetopt.h,202
+#define ZBX_GETOPT_H 19,804
+struct zbx_option77,2911
+#define zbx_no_argument 89,3202
+#define zbx_required_argument 90,3236
+#define zbx_optional_argument 91,3270
+#define zbx_exact_argument 92,3304
+
+include/zbxplugin.h,303
+#define ZABBIX_ZBXPLUGIN_H21,784
+#	define __zabbix_api 25,829
+typedef HMODULE ZBX_MODULE;26,859
+#	define __zabbix_api30,914
+typedef void* ZBX_MODULE;31,936
+#define MAX_CMDNAME	35,986
+} ZBX_PLUGIN_ARGS;42,1263
+struct zbx_plugin_list44,1283
+typedef struct zbx_plugin_list ZBX_PLUGIN_LIST;55,1602
+
+include/zlog.h,91
+#define ZABBIX_ZLOG_H21,779
+#	define zabbix_syslog(28,878
+#	define zabbix_syslog 30,975
+
+include/zbxdb.h,755
+#define ZABBIX_ZBXDB_H22,781
+#define	ZBX_DB_OK	26,826
+#define	ZBX_DB_FAIL	27,848
+#define	ZBX_DB_DOWN	28,873
+#	define	DB_HANDLE	34,985
+#	define ZBX_SQL_MOD(55,1409
+#	define ZBX_SQL_MOD(57,1452
+	#define DB_ROW	64,1550
+	#define	DB_RESULT	65,1575
+	#define	DBfree_result	66,1612
+	typedef struct zbx_sq_db_result_s68,1653
+	} ZBX_SQ_DB_RESULT;76,1769
+	#define	DB_RESULT	85,1894
+	#define	DBfree_result	86,1925
+	#define DB_ROW	87,1966
+	#define DB_ROW	91,2024
+	#define	DB_RESULT	92,2049
+	#define	DBfree_result	93,2086
+	typedef struct zbx_pg_db_result_s95,2127
+	} ZBX_PG_DB_RESULT;102,2253
+	#define	DB_RESULT	110,2372
+	#define	DBfree_result	111,2410
+	#define DB_ROW	112,2444
+#	define zbx_db_execute(123,2713
+#	define zbx_db_execute 125,2812
+
+include/jabber.h,31
+#define ZABBIX_JABBER_H22,782
+
+include/zbxtypes.h,701
+#define ZABBIX_TYPES_H21,780
+#define	ZBX_FS_DBL	23,804
+#define	ZBX_FS_DBL_EXT(24,829
+#	define __UINT64_C(29,911
+#	define zbx_uint64_t 32,961
+#	define ZBX_FS_UI64 33,991
+#	define zbx_pid_t	35,1021
+#	define stat	37,1045
+#	define snprintf	38,1066
+#	define vsnprintf	39,1095
+#	define alloca	41,1126
+#	define uint32_t	44,1169
+#			define __UINT64_C(51,1278
+#			define __UINT64_C(53,1325
+#	define zbx_uint64_t 57,1379
+#		define ZBX_FS_UI64 59,1432
+#		define ZBX_OFFSET 60,1460
+#			define ZBX_FS_UI64 63,1558
+#			define ZBX_FS_UI64 65,1595
+#		define ZBX_OFFSET 67,1634
+#	define zbx_pid_t	70,1708
+#	define S_ISREG(75,1773
+#define ZBX_STR2UINT64(78,1829
+#define ZBX_CONST_STRING(80,1902
+
+build/win32/include/config.h,568
+#define ARCH 2,42
+#define HAVE_WINDOWS_H 5,125
+#define HAVE_WINSOCK2_H 8,211
+#define HAVE_WS2TCPIP_H11,298
+#define HAVE_CONIO_H 14,380
+#define HAVE_PROCESS_H 17,463
+#define HAVE_PDH_H 20,544
+#define HAVE_PDHMSG_H 23,624
+#define HAVE_PSAPI_H 26,706
+#define HAVE_SYS_TIMEB_H 29,791
+#define HAVE_WINLDAP_H 32,878
+#define HAVE_WINBER_H 35,962
+#define HAVE_STRING_H 38,1045
+#define HAVE_SYS_STAT_H 41,1130
+#define HAVE_MATH_H 44,1213
+#define HAVE_SYS_TYPES_H 47,1297
+#define HAVE_TIME_H 50,1381
+#define HAVE_ASSERT_H 53,1462
+#define HAVE_SIGNAL_H56,1545
+
+build/win32/project/resource.h,159
+#define _APS_NEXT_RESOURCE_VALUE 10,204
+#define _APS_NEXT_COMMAND_VALUE 11,248
+#define _APS_NEXT_CONTROL_VALUE 12,294
+#define _APS_NEXT_SYMED_VALUE 13,339
+
+src/libs/zbxsysinfo/specsysinfo.h,0
+
+src/libs/zbxsysinfo/common/system.h,0
+
+src/libs/zbxsysinfo/common/http.h,0
+
+src/libs/zbxsysinfo/common/common.h,0
+
+src/libs/zbxsysinfo/common/net.h,0
+
+src/libs/zbxsysinfo/simple/ntp.h,0
+
+src/libs/zbxsysinfo/simple/simple.h,0
+
+frontends/php/charts.php,112
+		define('ZBX_PAGE_NO_MENU'ZBX_PAGE_NO_MENU32,1007
+		define('ZBX_PAGE_DO_REFRESH'ZBX_PAGE_DO_REFRESH37,1169
+
+frontends/php/screens.php,112
+		define('ZBX_PAGE_NO_MENU'ZBX_PAGE_NO_MENU34,1055
+		define('ZBX_PAGE_DO_REFRESH'ZBX_PAGE_DO_REFRESH40,1206
+
+frontends/php/popup_gitem.php,162
+	define('ZBX_PAGE_NO_MENU'ZBX_PAGE_NO_MENU31,1024
+function add_var_to_opener_obj(68,2602
+function add_graph_item(78,2872
+function update_graph_item(102,3695
+
+frontends/php/include/screens.inc.php,703
+	function	screen_accessiable(25,853
+        function        add_screen(91,2948
+        function        update_screen(103,3292
+        function        delete_screen(109,3543
+        function add_screen_item(123,4116
+        function update_screen_item(140,4885
+        function delete_screen_item(147,5362
+	function	get_screen_by_screenid(153,5558
+	function	check_screen_recursion(165,5808
+	function get_slideshow(181,6256
+	function get_screen(222,7636
+	function	slideshow_accessiable(445,15202
+	function	get_slideshow_by_slideshowid(462,15718
+	function	validate_slide(467,15866
+	function	add_slideshow(476,16050
+	function	update_slideshow(507,16803
+	function	delete_slideshow(534,17516
+
+frontends/php/include/db.inc.php,679
+	function	DBconnect(24,855
+						function init_db_access(87,2630
+						function lock_db_access(102,2986
+						function unlock_db_access(115,3232
+						function free_db_access(126,3460
+	function	DBclose(166,4117
+	function	DBloadfile(201,4818
+	function	DBstart(231,5303
+	function	DBend(237,5423
+	function	&DBselect(DBselect267,5991
+	function	DBexecute(354,7811
+	function	DBfetch(401,8722
+	function	zbx_dbstr(452,9822
+	function	zbx_dbstr(456,9915
+	function	zbx_dbconcat(461,9984
+	function zbx_sql_mod(474,10184
+	function DBid2nodeid(486,10364
+	function id2nodeid(504,10690
+	function DBin_node(509,10776
+	function in_node(532,11338
+	function	get_dbid(557,11910
+
+frontends/php/include/profiles.inc.php,74
+	function	add_host_profile(24,791
+	function	delete_host_profile(47,1586
+
+frontends/php/include/httptest.inc.php,634
+	function	httptest_status2str(24,852
+	function	httptest_status2style(36,1112
+	function	db_save_step(48,1362
+	function	db_save_httptest(151,5150
+	function	add_httptest(318,10403
+	function	update_httptest(327,10686
+	function	delete_httpstep(336,10994
+	function	delete_httptest(348,11468
+	function	activate_httptest(366,12008
+	function	disable_httptest(371,12163
+	function	delete_history_by_httptestid(376,12319
+	function	get_httptest_by_httptestid(387,12727
+	function	&get_httpsteps_by_httptestid(get_httpsteps_by_httptestid392,12868
+	function	get_httpstep_by_httpstepid(397,13002
+	function	get_httpstep_by_no(402,13143
+
+frontends/php/include/page_header.php,232
+			define('ZBX_PAGE_NO_MENU'ZBX_PAGE_NO_MENU49,1371
+			define('ZBX_PAGE_NO_MENU'ZBX_PAGE_NO_MENU54,1550
+					define('ZBX_DISABLE_SUBNODES'ZBX_DISABLE_SUBNODES298,9029
+	define ('PAGE_HEADER_LOADED'PAGE_HEADER_LOADED369,10772
+
+frontends/php/include/import.inc.php,328
+	class CZabbixXMLImport24,852
+		function CZabbixXMLImport(26,879
+		function CharacterData(42,1388
+		function StartElement(47,1494
+		function EndElement(155,4088
+		function Parse(600,18248
+		function SetRules(646,19329
+	class CZabbixHostImport655,19497
+		function CZabbixHostImport(657,19525
+		function Parse(661,19567
+
+frontends/php/include/config.inc.php,2697
+function SDI(21,762
+function VDP(22,856
+function TODO(23,994
+	function zbx_err_handler(83,3076
+			define('ZBX_DISTRIBUTED'ZBX_DISTRIBUTED114,3873
+			define('ZBX_PAGE_NO_AUTHERIZATION'ZBX_PAGE_NO_AUTHERIZATION115,3910
+				define('ZBX_DISTRIBUTED'ZBX_DISTRIBUTED128,4279
+				define('ZBX_DISTRIBUTED'ZBX_DISTRIBUTED132,4334
+		define('ZBX_PAGE_NO_AUTHERIZATION'ZBX_PAGE_NO_AUTHERIZATION143,4518
+		define('ZBX_DISTRIBUTED'ZBX_DISTRIBUTED144,4563
+	function	init_nodes(176,5102
+			define('ZBX_DISABLE_SUBNODES'ZBX_DISABLE_SUBNODES249,7228
+	function	get_current_nodeid(252,7270
+	function	get_node_name_by_elid(269,7754
+	function	is_show_subnodes(284,8054
+	function	access_deny(298,8356
+	function zbx_stripslashes(308,8514
+	function get_request(319,8848
+	function info(327,8995
+	function error(337,9179
+	function clear_messages(347,9365
+	function &asort_by_key(asort_by_key354,9448
+	function fatal_error(365,9728
+	function str2mem(372,9876
+	function mem2str(390,10158
+	function getmicrotime(398,10392
+	function	convert_units(405,10583
+	function	calc_trigger_hash(575,13246
+	function	select_config(601,13945
+	function	show_messages(615,14193
+	function	show_message(727,16970
+	function	show_error_message(732,17037
+	function	parse_period(737,17111
+	function	find_period_start(761,17641
+	function	find_period_end(817,19069
+	function	validate_period(859,20110
+	function	validate_float(888,21045
+	function	validate_ticks(902,21291
+	function	get_event_by_eventid(969,22977
+	function	reset_items_nextcheck(983,23696
+	function	update_config(996,23992
+	function	&get_table_header(get_table_header1040,25064
+	function	show_table_header(1049,25313
+	function	show_history(1057,25453
+	function	get_status(1079,26037
+	function	get_resource_name(1193,30523
+	function	not_empty(1300,32475
+	function	empty2null(1305,32539
+	function	get_profile(1311,32611
+	function	update_profile(1343,33394
+		function DashedLine(1383,34534
+		function DashedLine(1395,34949
+	function DashedRectangle(1401,35065
+	function time_navigator(1410,35314
+	function	add_mapping_to_valuemap(1547,39566
+	function	add_valuemap(1565,40040
+	function	update_valuemap(1586,40501
+	function	delete_valuemap(1603,40881
+	function	replace_value_by_map(1610,41075
+	function natksort(1624,41413
+	function	set_image_header(1638,41626
+	function ImageOut(1650,42018
+	function	get_cookie(1673,42455
+	function	zbx_setcookie(1689,42736
+	function	zbx_unsetcookie(1705,43031
+	function	zbx_flush_post_cookies(1718,43242
+	function	zbx_set_post_cookie(1747,43855
+	function	inarr_isset(1754,44022
+	function	zbx_rksort(1781,44442
+	function	zbx_date2str(1801,44798
+	function	encode_log(1806,44908
+
+frontends/php/include/graphs.inc.php,1198
+	function	graph_item_type2str(32,1017
+	function	graph_item_drawtypes(53,1513
+        function	graph_item_drawtype2str(74,2007
+	function	graph_item_calc_fnc2str(100,2837
+	function 	get_graph_by_gitemid(115,3274
+	function 	&get_graphs_by_hostid(get_graphs_by_hostid123,3493
+	function	&get_realhosts_by_graphid(get_realhosts_by_graphid129,3702
+	function 	&get_hosts_by_graphid(get_hosts_by_graphid138,3930
+	function	&get_graphitems_by_graphid(get_graphitems_by_graphid144,4139
+	function	get_graphitem_by_gitemid(150,4324
+	function	get_graphitem_by_itemid(162,4577
+	function	get_graph_by_graphid(173,4788
+	function	&get_graphs_by_templateid(get_graphs_by_templateid186,5025
+	function	get_same_graphitems_for_host(203,5453
+	function	add_graph(240,6378
+	function	add_graph_with_items(264,7237
+	function	update_graph(355,9553
+	function	update_graph_with_items(385,10687
+	function	delete_graph(490,13571
+	function	cmp_graphitems(533,14734
+	function	add_item_to_graph(560,15462
+	function	delete_template_graphs(584,16290
+	function	copy_template_graphs(628,17316
+	function	copy_graph_to_host(662,18123
+	function	navigation_bar_calc(749,20576
+	function	navigation_bar(783,21736
+
+frontends/php/include/acknow.inc.php,206
+	function	get_last_event_by_triggerid(22,770
+	function 	&get_acknowledges_by_eventid(get_acknowledges_by_eventid31,1037
+	function	add_acknowledge_coment(36,1166
+	function	set_event_acnowledged(53,1618
+
+frontends/php/include/perm.inc.php,418
+	function	permission2str(24,807
+	function	check_authorisation(40,1197
+	function	perm_mode2comparator(119,3333
+	function	get_accessible_hosts_by_user(134,3732
+	function	get_accessible_groups_by_user(230,7118
+	function	get_accessible_nodes_by_user(312,9790
+	function	get_accessible_hosts_by_rights(425,13242
+	function	get_accessible_groups_by_rights(518,16080
+	function	get_accessible_nodes_by_rights(587,18162
+
+frontends/php/include/hosts.inc.php,2014
+	function	add_site(28,952
+	function	update_site(33,1031
+	function	delete_site(38,1131
+	function	db_save_site(64,1686
+	function	add_host_to_group(96,2554
+	function	delete_host_from_group(109,3012
+	function	db_save_group(130,3529
+	function	add_group_to_host(160,4292
+	function	update_host_groups_by_groupid(172,4535
+	function	update_host_groups(182,4750
+	function	add_host_group(192,4954
+	function	update_host_group(203,5152
+	function 	check_circle_host_link(228,5627
+	function	db_save_host(253,6224
+	function	add_host(335,8331
+	function	update_host(367,9003
+	function	unlink_template(408,9999
+	function	delete_template_elements(428,10613
+	function	copy_template_elements(448,11209
+	function	sync_host_with_templates(468,11785
+	function	delete_groups_by_hostid(474,11956
+	function	delete_host(504,12696
+	function	delete_host_group(551,14011
+	function	get_hostgroup_by_groupid(562,14281
+	function	get_site_by_siteid(574,14529
+	function	get_host_by_itemid(586,14759
+	function	get_host_by_hostid(599,15036
+	function	&get_hosts_by_templateid(get_hosts_by_templateid613,15326
+	function	update_host_status(620,15525
+	function	get_templates_by_hostid(649,16182
+	function get_correct_group_and_host(674,16783
+	function	validate_group_with_host(812,20767
+	function	validate_group(857,22136
+	function	db_save_application(884,22918
+	function	add_application(973,25459
+	function	update_application(988,25748
+	function	delete_application(1005,26140
+	function	get_application_by_applicationid(1042,27476
+	function	&get_applications_by_templateid(get_applications_by_templateid1056,27811
+	function	get_realhost_by_applicationid(1061,27958
+	function	get_host_by_applicationid(1070,28247
+	function	&get_items_by_applicationid(get_items_by_applicationid1083,28573
+	function	&get_applications_by_hostid(get_applications_by_hostid1088,28763
+	function        delete_template_applications(1107,29204
+	function	copy_template_applications(1161,30404
+	function	validate_templates(1199,31258
+
+frontends/php/include/copt.lib.php,325
+define("USE_VAR_MON"USE_VAR_MON90,1953
+define("USE_TIME_PROF"USE_TIME_PROF91,1978
+define("USE_MEM_PROF"USE_MEM_PROF92,2005
+define("USE_COUNTER_PROF"USE_COUNTER_PROF93,2031
+define("USE_MENU_PROF"USE_MENU_PROF94,2061
+define("USE_SQLREQUEST_PROF"USE_SQLREQUEST_PROF96,2120
+	class COpt{109,2450
+	class COpt316,8018
+
+frontends/php/include/users.inc.php,355
+	function	user_type2str(22,770
+	function	add_user(36,1122
+	function	update_user(90,2921
+	function	update_user_profile(136,4583
+	function	delete_user(152,5010
+	function	get_user_by_userid(178,5698
+	function	add_user_group(192,5972
+	function	update_user_group(225,7101
+	function	delete_user_group(260,8236
+	function	get_group_by_usrgrpid(274,8683
+
+frontends/php/include/locales.inc.php,34
+	function	process_locales(23,824
+
+frontends/php/include/export.inc.php,658
+	function zbx_xmlwriter_open_memory(101,2521
+	function zbx_xmlwriter_set_indent(106,2612
+	function zbx_xmlwriter_start_document(111,2682
+	function zbx_xmlwriter_start_element(117,2793
+	function zbx_xmlwriter_write_attribute(124,2972
+	function zbx_xmlwriter_end_element(130,3105
+	function zbx_xmlwriter_output_memory(137,3264
+	function zbx_xmlwriter_write_element(142,3402
+	class CZabbixXMLExport147,3563
+		function CZabbixXMLExport(149,3590
+		function export_item(151,3625
+		function export_trigger(193,5115
+		function export_graph_element(220,5962
+		function export_graph(248,6905
+		function export_host(281,8008
+		function Export(356,10621
+
+frontends/php/include/html.inc.php,444
+	function	bold(22,770
+	function	bfirst(34,985
+	function	nbsp(42,1172
+	function form_select(47,1239
+	function form_input(60,1495
+	function form_textarea(65,1627
+	function url1_param(70,1786
+	function	prepare_url(84,1967
+	function url_param(102,2261
+	function table_begin(136,2734
+	function table_header(142,2901
+	function table_row(153,3097
+	function table_end(178,3666
+	function table_td(184,3727
+	function table_nodata(189,3797
+
+frontends/php/include/images.inc.php,134
+	function	get_image_by_imageid(22,770
+	function	add_image(61,1603
+	function	update_image(138,3369
+	function	delete_image(216,5248
+
+frontends/php/include/maps.inc.php,1039
+	function	map_link_drawtypes(36,1120
+        function	map_link_drawtype2str(56,1602
+	function	sysmap_accessiable(81,2267
+	function	get_sysmap_by_sysmapid(137,4016
+	function	get_sysmaps_element_by_selementid(148,4253
+	function	delete_sysmap(166,4590
+	function	update_sysmap(182,5039
+	function	add_sysmap(191,5383
+	function	add_link(205,5800
+	function	update_link(223,6380
+	function	delete_link(234,6863
+	function	check_circle_elements_link(249,7190
+	function add_element_to_sysmap(268,7692
+	function	update_sysmap_element(293,8521
+	function	delete_sysmaps_element(316,9751
+	function	delete_sysmaps_elements_with_hostid(331,10439
+	function	delete_sysmaps_elements_with_sysmapid(341,10765
+	function	delete_sysmaps_elements_with_triggerid(357,11503
+	function	delete_sysmaps_elements_with_groupid(367,11841
+	function get_png_by_selementid(378,12177
+	function	get_info_by_selementid(404,12826
+	function get_action_map_by_sysmapid(568,18201
+	function	get_icon_center_by_selementid(625,19870
+	function	MyDrawLine(641,20189
+
+frontends/php/include/services.inc.php,1267
+	function	add_service(22,770
+	function	update_service(71,2499
+	function	add_host_to_services(109,4054
+	function	is_service_hardlinked(126,4687
+	function get_service_status(148,5077
+	function	delete_service(189,6500
+	function	clear_parents_from_trigger(217,7184
+	function	does_service_depend_on_the_service(243,7899
+	function	service_has_parent(270,8444
+	function	service_has_no_this_parent(280,8657
+	function	add_service_link(290,8914
+	function	update_service_link(312,9489
+	function remove_service_links(326,9923
+	function	get_last_service_value(335,10133
+	function	expand_periodical_service_times(359,10815
+	function	calculate_service_availability(400,11967
+	function	get_service_status_description(573,17557
+	function	get_num_of_service_childs(599,18091
+	function	get_service_by_serviceid(606,18303
+	function	get_services_links_by_linkid(617,18547
+	function algorithm2str(629,18808
+	function get_service_childs(646,19103
+	function createServiceTree(661,19534
+	function createShowServiceTree(692,20673
+	function del_empty_nodes(724,21680
+function update_services_rec(753,23185
+function update_services(806,25547
+function update_services_status_all(832,26225
+function latest_service_alarm(862,27506
+function add_service_alarm(891,28451
+
+frontends/php/include/nodes.inc.php,233
+	function	detect_node_type(23,807
+	function	node_type2str(35,1189
+	function	add_node(49,1491
+	function	update_node(104,2970
+	function	delete_node(119,3483
+	function	get_node_by_nodeid(144,4226
+	function	get_node_path(149,4344
+
+frontends/php/include/validate.inc.php,970
+	function unset_request(22,770
+	define('ZBX_VALID_OK'ZBX_VALID_OK27,854
+	define('ZBX_VALID_ERROR'ZBX_VALID_ERROR28,883
+	define('ZBX_VALID_WARNING'ZBX_VALID_WARNING29,914
+	function	is_int_range(31,948
+	function	is_hex_color(44,1247
+	function	BETWEEN(49,1328
+	function	GT(54,1433
+	function	IN(59,1508
+	function	HEX(65,1651
+	function	KEY_PARAM(69,1735
+	function	validate_ipv4(73,1836
+	function	validate_ipv6(79,2094
+	function	validate_ip(96,2884
+	function	validate_ip_range(130,3809
+	function	validate_port_list(187,5019
+	define("NOT_EMPTY"NOT_EMPTY201,5328
+	define("DB_ID"DB_ID202,5363
+	function	calc_exp2(206,5487
+	function	calc_exp(233,6251
+	function	unset_not_in_list(259,6983
+	function	unset_if_zero(270,7157
+	function	unset_action_vars(284,7468
+	function	unset_all(297,7730
+	function 	check_type(305,7840
+	function	check_trim(435,10461
+	function	check_field(450,10653
+	function	invalid_url(545,12778
+	function	check_fields(553,12946
+
+frontends/php/include/page_footer.php,94
+		define ('PAGE_HEADER_LOADED'PAGE_HEADER_LOADED30,917
+function zbxCallPostScripts(40,1080
+
+frontends/php/include/triggers.inc.php,2690
+	function INIT_TRIGGER_EXPRESSION_STRUCTURES(38,1099
+		define('TRIGGER_EXPRESSION_STRUCTURES_OK'TRIGGER_EXPRESSION_STRUCTURES_OK41,1210
+	function	get_severity_style(189,5757
+	function	get_severity_description(212,6384
+	function	get_trigger_value_style(236,7101
+	function	trigger_value2str(260,7575
+	function get_trigger_priority(285,8010
+	function        get_realhosts_by_triggerid(316,8679
+	function	get_trigger_by_triggerid(325,8934
+	function	&get_hosts_by_triggerid(get_hosts_by_triggerid338,9201
+	function	&get_functions_by_triggerid(get_functions_by_triggerid344,9412
+	function	&get_triggers_by_hostid(get_triggers_by_hostid361,9758
+	function	&get_triggers_by_templateid(get_triggers_by_templateid386,10448
+	function	&get_hosts_by_expression(get_hosts_by_expression403,10804
+	function zbx_unquote_param(447,12077
+	function zbx_get_params(480,12800
+	function	validate_expression(532,13777
+	function	add_trigger(675,18521
+	function	get_trigger_dependences_by_triggerid(752,20623
+	function	replace_template_dependences(768,21306
+	function	copy_trigger_to_host(785,22089
+	function	explode_exp 887,25528
+	function	implode_exp 961,27494
+	function	update_trigger_comments(1014,29445
+	function	update_trigger_status(1022,29642
+	function	extract_numbers(1047,30318
+	function	expand_trigger_description_constants(1070,30829
+	function	expand_trigger_description_by_data(1104,31579
+	function	expand_trigger_description_simple(1231,36041
+	function	expand_trigger_description(1244,36463
+	function	update_trigger_value_to_unknown_by_hostid(1252,36666
+	function add_event(1272,37588
+	function	add_trigger_dependency(1295,38482
+	function	delete_trigger(1313,39270
+	function	update_trigger(1382,41580
+	function	check_right_on_trigger_by_triggerid(1481,44388
+	function	check_right_on_trigger_by_expression(1490,44749
+	function	delete_dependencies_by_triggerid(1513,45722
+	function	insert_dependency(1532,46624
+	function	add_additional_dependencies(1546,47131
+	function	delete_function_by_triggerid(1564,47756
+	function	delete_events_by_triggerid(1569,47886
+	function	delete_triggers_by_itemid(1579,48453
+	function	delete_services_by_triggerid(1599,49273
+	function	cmp_triggers(1621,49742
+	function	delete_template_triggers(1663,50848
+	function	copy_template_triggers(1710,52176
+	function	update_template_dependences_for_host(1745,52988
+	function	get_triggers_overview(1779,53904
+	function	get_function_by_functionid(1965,60126
+	function	calculate_availability(1980,60405
+	function	trigger_dependent_rec(2124,63155
+	function	trigger_dependent(2160,63946
+	function	trigger_get_N_functionid(2178,64260
+	function	trigger_get_func_value(2214,64979
+
+frontends/php/include/forms.inc.php,1589
+	function	insert_slideshow_form(29,983
+	function	insert_drule_form(162,5135
+	function	insert_httpstep_form(315,10272
+	function	insert_httptest_form(346,11439
+	function	insert_configuration_form(512,17240
+	function	insert_node_form(539,18172
+	function	insert_new_message_form(640,21264
+	function	insert_user_form(677,22234
+	function	insert_usergroups_form(953,30956
+	function	get_rights_of_elements_table(1105,36188
+	function	insert_item_selection_form(1188,38899
+	function	insert_item_form(1468,53166
+	function	insert_mass_update_item_form(1926,68554
+	function	insert_copy_elements_to_forms(2125,78025
+	function	insert_login_form(2202,80495
+	function	insert_trigger_form(2217,80954
+	function insert_trigger_comment_form(2348,85102
+	function	insert_graph_form(2364,85873
+	function	insert_graphitem_form(2560,92480
+	function	insert_value_mapping_form(2681,96202
+	function	insert_action_form(2765,98576
+	function	insert_media_type_form(3305,118096
+	function	insert_image_form(3382,120839
+	function insert_screen_form(3441,122575
+	function	insert_media_form(3768,134532
+	function	insert_housekeeper_form(3825,136203
+	function	insert_work_period_form(3843,136791
+	function	insert_other_parameters_form(3858,137232
+	function	insert_host_form(3885,138155
+	function	insert_hostgroups_form(4163,146838
+	function	insert_sites_form(4235,149065
+	function	insert_host_profile_form(4285,150480
+	function insert_application_form(4330,152096
+	function insert_map_form(4400,154054
+	function insert_map_element_form(4484,156613
+	function insert_map_link_form(4691,163891
+
+frontends/php/include/defines.inc.php,19724
+	define('XML_TAG_ZABBIX_EXPORT'XML_TAG_ZABBIX_EXPORT22,771
+	define('XML_TAG_HOSTS'XML_TAG_HOSTS23,823
+	define('XML_TAG_HOST'XML_TAG_HOST24,860
+	define('XML_TAG_GROUPS'XML_TAG_GROUPS25,895
+	define('XML_TAG_GROUP'XML_TAG_GROUP26,933
+	define('XML_TAG_APPLICATIONS'XML_TAG_APPLICATIONS27,970
+	define('XML_TAG_APPLICATION'XML_TAG_APPLICATION28,1020
+	define('XML_TAG_ITEMS'XML_TAG_ITEMS29,1068
+	define('XML_TAG_ITEM'XML_TAG_ITEM30,1105
+	define('XML_TAG_TRIGGERS'XML_TAG_TRIGGERS31,1140
+	define('XML_TAG_TRIGGER'XML_TAG_TRIGGER32,1182
+	define('XML_TAG_GRAPHS'XML_TAG_GRAPHS33,1222
+	define('XML_TAG_GRAPH'XML_TAG_GRAPH34,1260
+	define('XML_TAG_GRAPH_ELEMENT'XML_TAG_GRAPH_ELEMENT35,1297
+	define('XML_TAG_GRAPH_ELEMENTS'XML_TAG_GRAPH_ELEMENTS36,1349
+	define('XML_TAG_SCREENS'XML_TAG_SCREENS37,1402
+	define('XML_TAG_SCREEN'XML_TAG_SCREEN38,1442
+	define('XML_TAG_SCREEN_ELEMENT'XML_TAG_SCREEN_ELEMENT39,1480
+	define('XML_TAG_SCREEN_ELEMENTS'XML_TAG_SCREEN_ELEMENTS40,1533
+	define('PAGE_TYPE_HTML'PAGE_TYPE_HTML42,1590
+	define('PAGE_TYPE_IMAGE'PAGE_TYPE_IMAGE43,1620
+	define('PAGE_TYPE_XML'PAGE_TYPE_XML44,1651
+	define('T_ZBX_STR'T_ZBX_STR46,1682
+	define('T_ZBX_INT'T_ZBX_INT47,1709
+	define('T_ZBX_DBL'T_ZBX_DBL48,1736
+	define('T_ZBX_PERIOD'T_ZBX_PERIOD49,1763
+	define('T_ZBX_IP'T_ZBX_IP50,1793
+	define('T_ZBX_CLR'T_ZBX_CLR51,1819
+	define('T_ZBX_PORTS'T_ZBX_PORTS52,1846
+	define('T_ZBX_IP_RANGE'T_ZBX_IP_RANGE53,1875
+	define('T_ZBX_INT_RANGE'T_ZBX_INT_RANGE54,1906
+	define('O_MAND'O_MAND56,1939
+	define('O_OPT'O_OPT57,1963
+	define('O_NO'O_NO58,1987
+	define('P_SYS'P_SYS60,2011
+	define('P_UNSET_EMPTY'P_UNSET_EMPTY61,2035
+	define('P_ACT'P_ACT65,2144
+	define('P_NZERO'P_NZERO66,2169
+	define('IMAGE_FORMAT_PNG'IMAGE_FORMAT_PNG69,2215
+	define('IMAGE_FORMAT_JPEG'IMAGE_FORMAT_JPEG70,2260
+	define('IMAGE_FORMAT_TEXT'IMAGE_FORMAT_TEXT71,2307
+	define('AUDIT_ACTION_ADD'AUDIT_ACTION_ADD74,2381
+	define('AUDIT_ACTION_UPDATE'AUDIT_ACTION_UPDATE75,2414
+	define('AUDIT_ACTION_DELETE'AUDIT_ACTION_DELETE76,2450
+	define('AUDIT_ACTION_LOGIN'AUDIT_ACTION_LOGIN77,2486
+	define('AUDIT_ACTION_LOGOUT'AUDIT_ACTION_LOGOUT78,2521
+	define('AUDIT_RESOURCE_USER'AUDIT_RESOURCE_USER80,2558
+	define('AUDIT_RESOURCE_ZABBIX_CONFIG'AUDIT_RESOURCE_ZABBIX_CONFIG82,2634
+	define('AUDIT_RESOURCE_MEDIA_TYPE'AUDIT_RESOURCE_MEDIA_TYPE83,2678
+	define('AUDIT_RESOURCE_HOST'AUDIT_RESOURCE_HOST84,2719
+	define('AUDIT_RESOURCE_ACTION'AUDIT_RESOURCE_ACTION85,2755
+	define('AUDIT_RESOURCE_GRAPH'AUDIT_RESOURCE_GRAPH86,2793
+	define('AUDIT_RESOURCE_GRAPH_ELEMENT'AUDIT_RESOURCE_GRAPH_ELEMENT87,2830
+	define('AUDIT_RESOURCE_USER_GROUP'AUDIT_RESOURCE_USER_GROUP91,3013
+	define('AUDIT_RESOURCE_APPLICATION'AUDIT_RESOURCE_APPLICATION92,3055
+	define('AUDIT_RESOURCE_TRIGGER'AUDIT_RESOURCE_TRIGGER93,3098
+	define('AUDIT_RESOURCE_HOST_GROUP'AUDIT_RESOURCE_HOST_GROUP94,3137
+	define('AUDIT_RESOURCE_ITEM'AUDIT_RESOURCE_ITEM95,3179
+	define('AUDIT_RESOURCE_IMAGE'AUDIT_RESOURCE_IMAGE96,3216
+	define('AUDIT_RESOURCE_VALUE_MAP'AUDIT_RESOURCE_VALUE_MAP97,3254
+	define('AUDIT_RESOURCE_IT_SERVICE'AUDIT_RESOURCE_IT_SERVICE98,3295
+	define('AUDIT_RESOURCE_MAP'AUDIT_RESOURCE_MAP99,3337
+	define('AUDIT_RESOURCE_SCREEN'AUDIT_RESOURCE_SCREEN100,3373
+	define('AUDIT_RESOURCE_NODE'AUDIT_RESOURCE_NODE101,3412
+	define('AUDIT_RESOURCE_SCENARIO'AUDIT_RESOURCE_SCENARIO102,3449
+	define('AUDIT_RESOURCE_DISCOVERY_RULE'AUDIT_RESOURCE_DISCOVERY_RULE103,3489
+	define('AUDIT_RESOURCE_SLIDESHOW'AUDIT_RESOURCE_SLIDESHOW104,3535
+	define('AUDIT_RESOURCE_SITE'AUDIT_RESOURCE_SITE105,3576
+	define('CONDITION_TYPE_HOST_GROUP'CONDITION_TYPE_HOST_GROUP107,3614
+	define('CONDITION_TYPE_HOST'CONDITION_TYPE_HOST108,3655
+	define('CONDITION_TYPE_TRIGGER'CONDITION_TYPE_TRIGGER109,3691
+	define('CONDITION_TYPE_TRIGGER_NAME'CONDITION_TYPE_TRIGGER_NAME110,3729
+	define('CONDITION_TYPE_TRIGGER_SEVERITY'CONDITION_TYPE_TRIGGER_SEVERITY111,3772
+	define('CONDITION_TYPE_TRIGGER_VALUE'CONDITION_TYPE_TRIGGER_VALUE112,3818
+	define('CONDITION_TYPE_TIME_PERIOD'CONDITION_TYPE_TIME_PERIOD113,3862
+	define('CONDITION_TYPE_DHOST_IP'CONDITION_TYPE_DHOST_IP114,3904
+	define('CONDITION_TYPE_DSERVICE_TYPE'CONDITION_TYPE_DSERVICE_TYPE115,3943
+	define('CONDITION_TYPE_DSERVICE_PORT'CONDITION_TYPE_DSERVICE_PORT116,3987
+	define('CONDITION_TYPE_DSTATUS'CONDITION_TYPE_DSTATUS117,4031
+	define('CONDITION_TYPE_DUPTIME'CONDITION_TYPE_DUPTIME118,4070
+	define('CONDITION_TYPE_DVALUE'CONDITION_TYPE_DVALUE119,4109
+	define('CONDITION_OPERATOR_EQUAL'CONDITION_OPERATOR_EQUAL121,4149
+	define('CONDITION_OPERATOR_NOT_EQUAL'CONDITION_OPERATOR_NOT_EQUAL122,4189
+	define('CONDITION_OPERATOR_LIKE'CONDITION_OPERATOR_LIKE123,4233
+	define('CONDITION_OPERATOR_NOT_LIKE'CONDITION_OPERATOR_NOT_LIKE124,4272
+	define('CONDITION_OPERATOR_IN'CONDITION_OPERATOR_IN125,4315
+	define('CONDITION_OPERATOR_MORE_EQUAL'CONDITION_OPERATOR_MORE_EQUAL126,4353
+	define('CONDITION_OPERATOR_LESS_EQUAL'CONDITION_OPERATOR_LESS_EQUAL127,4398
+	define('CONDITION_OPERATOR_NOT_IN'CONDITION_OPERATOR_NOT_IN128,4443
+	define('HOST_STATUS_MONITORED'HOST_STATUS_MONITORED130,4485
+	define('HOST_STATUS_NOT_MONITORED'HOST_STATUS_NOT_MONITORED131,4523
+	define('HOST_STATUS_TEMPLATE'HOST_STATUS_TEMPLATE133,4605
+	define('HOST_STATUS_DELETED'HOST_STATUS_DELETED134,4642
+	define('HOST_AVAILABLE_UNKNOWN'HOST_AVAILABLE_UNKNOWN136,4679
+	define('HOST_AVAILABLE_TRUE'HOST_AVAILABLE_TRUE137,4717
+	define('HOST_AVAILABLE_FALSE'HOST_AVAILABLE_FALSE138,4753
+	define('MAP_LABEL_TYPE_LABEL'MAP_LABEL_TYPE_LABEL140,4791
+	define('MAP_LABEL_TYPE_IP'MAP_LABEL_TYPE_IP141,4826
+	define('MAP_LABEL_TYPE_NAME'MAP_LABEL_TYPE_NAME142,4858
+	define('MAP_LABEL_TYPE_STATUS'MAP_LABEL_TYPE_STATUS143,4892
+	define('MAP_LABEL_TYPE_NOTHING'MAP_LABEL_TYPE_NOTHING144,4928
+	define('MAP_LABEL_LOC_BOTTOM'MAP_LABEL_LOC_BOTTOM146,4966
+	define('MAP_LABEL_LOC_LEFT'MAP_LABEL_LOC_LEFT147,5003
+	define('MAP_LABEL_LOC_RIGHT'MAP_LABEL_LOC_RIGHT148,5038
+	define('MAP_LABEL_LOC_TOP'MAP_LABEL_LOC_TOP149,5074
+	define('SYSMAP_ELEMENT_TYPE_HOST'SYSMAP_ELEMENT_TYPE_HOST151,5109
+	define('SYSMAP_ELEMENT_TYPE_MAP'SYSMAP_ELEMENT_TYPE_MAP152,5149
+	define('SYSMAP_ELEMENT_TYPE_TRIGGER'SYSMAP_ELEMENT_TYPE_TRIGGER153,5188
+	define('SYSMAP_ELEMENT_TYPE_HOST_GROUP'SYSMAP_ELEMENT_TYPE_HOST_GROUP154,5231
+	define('SYSMAP_ELEMENT_ICON_ON'SYSMAP_ELEMENT_ICON_ON156,5277
+	define('SYSMAP_ELEMENT_ICON_OFF'SYSMAP_ELEMENT_ICON_OFF157,5315
+	define('SYSMAP_ELEMENT_ICON_UNKNOWN'SYSMAP_ELEMENT_ICON_UNKNOWN158,5354
+	define('ITEM_TYPE_ZABBIX'ITEM_TYPE_ZABBIX160,5398
+	define('ITEM_TYPE_SNMPV1'ITEM_TYPE_SNMPV1161,5429
+	define('ITEM_TYPE_TRAPPER'ITEM_TYPE_TRAPPER162,5460
+	define('ITEM_TYPE_SIMPLE'ITEM_TYPE_SIMPLE163,5492
+	define('ITEM_TYPE_SNMPV2C'ITEM_TYPE_SNMPV2C164,5523
+	define('ITEM_TYPE_INTERNAL'ITEM_TYPE_INTERNAL165,5555
+	define('ITEM_TYPE_SNMPV3'ITEM_TYPE_SNMPV3166,5588
+	define('ITEM_TYPE_ZABBIX_ACTIVE'ITEM_TYPE_ZABBIX_ACTIVE167,5619
+	define('ITEM_TYPE_AGGREGATE'ITEM_TYPE_AGGREGATE168,5657
+	define('ITEM_TYPE_HTTPTEST'ITEM_TYPE_HTTPTEST169,5691
+	define('ITEM_TYPE_EXTERNAL'ITEM_TYPE_EXTERNAL170,5724
+	define('ITEM_VALUE_TYPE_FLOAT'ITEM_VALUE_TYPE_FLOAT172,5759
+	define('ITEM_VALUE_TYPE_STR'ITEM_VALUE_TYPE_STR173,5795
+	define('ITEM_VALUE_TYPE_LOG'ITEM_VALUE_TYPE_LOG174,5829
+	define('ITEM_VALUE_TYPE_UINT64'ITEM_VALUE_TYPE_UINT64175,5863
+	define('ITEM_VALUE_TYPE_TEXT'ITEM_VALUE_TYPE_TEXT176,5900
+	define('ITEM_STATUS_ACTIVE'ITEM_STATUS_ACTIVE178,5936
+	define('ITEM_STATUS_DISABLED'ITEM_STATUS_DISABLED179,5969
+	define('ITEM_STATUS_NOTSUPPORTED'ITEM_STATUS_NOTSUPPORTED180,6004
+	define('ITEM_SNMPV3_SECURITYLEVEL_NOAUTHNOPRIV'ITEM_SNMPV3_SECURITYLEVEL_NOAUTHNOPRIV182,6044
+	define('ITEM_SNMPV3_SECURITYLEVEL_AUTHNOPRIV'ITEM_SNMPV3_SECURITYLEVEL_AUTHNOPRIV183,6097
+	define('ITEM_SNMPV3_SECURITYLEVEL_AUTHPRIV'ITEM_SNMPV3_SECURITYLEVEL_AUTHPRIV184,6148
+	define('GRAPH_ITEM_DRAWTYPE_LINE'GRAPH_ITEM_DRAWTYPE_LINE186,6198
+	define('GRAPH_ITEM_DRAWTYPE_FILLED_REGION'GRAPH_ITEM_DRAWTYPE_FILLED_REGION187,6239
+	define('GRAPH_ITEM_DRAWTYPE_BOLD_LINE'GRAPH_ITEM_DRAWTYPE_BOLD_LINE188,6288
+	define('GRAPH_ITEM_DRAWTYPE_DOT'GRAPH_ITEM_DRAWTYPE_DOT189,6334
+	define('GRAPH_ITEM_DRAWTYPE_DASHED_LINE'GRAPH_ITEM_DRAWTYPE_DASHED_LINE190,6374
+	define('MAP_LINK_DRAWTYPE_LINE'MAP_LINK_DRAWTYPE_LINE192,6422
+	define('MAP_LINK_DRAWTYPE_BOLD_LINE'MAP_LINK_DRAWTYPE_BOLD_LINE193,6461
+	define('MAP_LINK_DRAWTYPE_DOT'MAP_LINK_DRAWTYPE_DOT194,6505
+	define('MAP_LINK_DRAWTYPE_DASHED_LINE'MAP_LINK_DRAWTYPE_DASHED_LINE195,6544
+	define('SERVICE_ALGORITHM_NONE'SERVICE_ALGORITHM_NONE197,6591
+	define('SERVICE_ALGORITHM_MAX'SERVICE_ALGORITHM_MAX198,6628
+	define('SERVICE_ALGORITHM_MIN'SERVICE_ALGORITHM_MIN199,6664
+	define('TRIGGER_VALUE_FALSE'TRIGGER_VALUE_FALSE201,6701
+	define('TRIGGER_VALUE_TRUE'TRIGGER_VALUE_TRUE202,6735
+	define('TRIGGER_VALUE_UNKNOWN'TRIGGER_VALUE_UNKNOWN203,6768
+	define('TRIGGER_BLINK_PERIOD'TRIGGER_BLINK_PERIOD205,6806
+	define('TRIGGER_SEVERITY_NOT_CLASSIFIED'TRIGGER_SEVERITY_NOT_CLASSIFIED207,6845
+	define('TRIGGER_SEVERITY_INFORMATION'TRIGGER_SEVERITY_INFORMATION208,6892
+	define('TRIGGER_SEVERITY_WARNING'TRIGGER_SEVERITY_WARNING209,6937
+	define('TRIGGER_SEVERITY_AVERAGE'TRIGGER_SEVERITY_AVERAGE210,6978
+	define('TRIGGER_SEVERITY_HIGH'TRIGGER_SEVERITY_HIGH211,7019
+	define('TRIGGER_SEVERITY_DISASTER'TRIGGER_SEVERITY_DISASTER212,7058
+	define('ALERT_STATUS_NOT_SENT'ALERT_STATUS_NOT_SENT214,7101
+	define('ALERT_STATUS_SENT'ALERT_STATUS_SENT215,7137
+	define('ALERT_TYPE_EMAIL'ALERT_TYPE_EMAIL217,7170
+	define('ALERT_TYPE_EXEC'ALERT_TYPE_EXEC218,7201
+	define('ALERT_TYPE_SMS'ALERT_TYPE_SMS219,7231
+	define('ALERT_TYPE_JABBER'ALERT_TYPE_JABBER220,7260
+	define('ACTION_STATUS_ENABLED'ACTION_STATUS_ENABLED222,7293
+	define('ACTION_STATUS_DISABLED'ACTION_STATUS_DISABLED223,7329
+	define('OPERATION_TYPE_MESSAGE'OPERATION_TYPE_MESSAGE225,7367
+	define('OPERATION_TYPE_COMMAND'OPERATION_TYPE_COMMAND226,7405
+	define('OPERATION_TYPE_HOST_ADD'OPERATION_TYPE_HOST_ADD227,7443
+	define('OPERATION_TYPE_HOST_REMOVE'OPERATION_TYPE_HOST_REMOVE228,7482
+	define('OPERATION_TYPE_GROUP_ADD'OPERATION_TYPE_GROUP_ADD229,7524
+	define('OPERATION_TYPE_GROUP_REMOVE'OPERATION_TYPE_GROUP_REMOVE230,7564
+	define('OPERATION_TYPE_TEMPLATE_ADD'OPERATION_TYPE_TEMPLATE_ADD231,7607
+	define('OPERATION_TYPE_TEMPLATE_REMOVE'OPERATION_TYPE_TEMPLATE_REMOVE232,7650
+	define('ACTION_EVAL_TYPE_AND_OR'ACTION_EVAL_TYPE_AND_OR234,7696
+	define('ACTION_EVAL_TYPE_AND'ACTION_EVAL_TYPE_AND235,7734
+	define('ACTION_EVAL_TYPE_OR'ACTION_EVAL_TYPE_OR236,7769
+	define('TRIGGER_STATUS_ENABLED'TRIGGER_STATUS_ENABLED238,7804
+	define('TRIGGER_STATUS_DISABLED'TRIGGER_STATUS_DISABLED239,7841
+	define('TRIGGER_STATUS_UNKNOWN'TRIGGER_STATUS_UNKNOWN240,7879
+	define('OPERATION_OBJECT_USER'OPERATION_OBJECT_USER242,7917
+	define('OPERATION_OBJECT_GROUP'OPERATION_OBJECT_GROUP243,7955
+	define('LOGFILE_SEVERITY_NOT_CLASSIFIED'LOGFILE_SEVERITY_NOT_CLASSIFIED245,7994
+	define('LOGFILE_SEVERITY_INFORMATION'LOGFILE_SEVERITY_INFORMATION246,8040
+	define('LOGFILE_SEVERITY_WARNING'LOGFILE_SEVERITY_WARNING247,8083
+	define('LOGFILE_SEVERITY_AVERAGE'LOGFILE_SEVERITY_AVERAGE248,8122
+	define('LOGFILE_SEVERITY_HIGH'LOGFILE_SEVERITY_HIGH249,8161
+	define('LOGFILE_SEVERITY_DISASTER'LOGFILE_SEVERITY_DISASTER250,8197
+	define('LOGFILE_SEVERITY_AUDIT_SUCCESS'LOGFILE_SEVERITY_AUDIT_SUCCESS251,8237
+	define('LOGFILE_SEVERITY_AUDIT_FAILURE'LOGFILE_SEVERITY_AUDIT_FAILURE252,8282
+	define('SCREEN_RESOURCE_GRAPH'SCREEN_RESOURCE_GRAPH254,8328
+	define('SCREEN_RESOURCE_SIMPLE_GRAPH'SCREEN_RESOURCE_SIMPLE_GRAPH255,8365
+	define('SCREEN_RESOURCE_MAP'SCREEN_RESOURCE_MAP256,8409
+	define('SCREEN_RESOURCE_PLAIN_TEXT'SCREEN_RESOURCE_PLAIN_TEXT257,8444
+	define('SCREEN_RESOURCE_HOSTS_INFO'SCREEN_RESOURCE_HOSTS_INFO258,8486
+	define('SCREEN_RESOURCE_TRIGGERS_INFO'SCREEN_RESOURCE_TRIGGERS_INFO259,8528
+	define('SCREEN_RESOURCE_SERVER_INFO'SCREEN_RESOURCE_SERVER_INFO260,8573
+	define('SCREEN_RESOURCE_CLOCK'SCREEN_RESOURCE_CLOCK261,8616
+	define('SCREEN_RESOURCE_SCREEN'SCREEN_RESOURCE_SCREEN262,8653
+	define('SCREEN_RESOURCE_TRIGGERS_OVERVIEW'SCREEN_RESOURCE_TRIGGERS_OVERVIEW263,8691
+	define('SCREEN_RESOURCE_DATA_OVERVIEW'SCREEN_RESOURCE_DATA_OVERVIEW264,8740
+	define('SCREEN_RESOURCE_URL'SCREEN_RESOURCE_URL265,8786
+	define('SCREEN_RESOURCE_ACTIONS'SCREEN_RESOURCE_ACTIONS266,8822
+	define('SCREEN_RESOURCE_EVENTS'SCREEN_RESOURCE_EVENTS267,8862
+	define('HALIGN_DEFAULT'HALIGN_DEFAULT270,8915
+	define('HALIGN_CENTER'HALIGN_CENTER271,8944
+	define('HALIGN_LEFT'HALIGN_LEFT272,8973
+	define('HALIGN_RIGHT'HALIGN_RIGHT273,9000
+	define('VALIGN_DEFAULT'VALIGN_DEFAULT275,9029
+	define('VALIGN_MIDDLE'VALIGN_MIDDLE276,9058
+	define('VALIGN_TOP'VALIGN_TOP277,9087
+	define('VALIGN_BOTTOM'VALIGN_BOTTOM278,9113
+	define('STYLE_HORISONTAL'STYLE_HORISONTAL281,9167
+	define('STYLE_VERTICAL'STYLE_VERTICAL282,9199
+        define('TIME_TYPE_LOCAL'TIME_TYPE_LOCAL285,9253
+        define('TIME_TYPE_SERVER'TIME_TYPE_SERVER286,9291
+	define('FILTER_TAST_SHOW'FILTER_TAST_SHOW288,9331
+	define('FILTER_TAST_HIDE'FILTER_TAST_HIDE289,9363
+	define('FILTER_TAST_MARK'FILTER_TAST_MARK290,9395
+	define('FILTER_TAST_INVERT_MARK'FILTER_TAST_INVERT_MARK291,9427
+	define('MARK_COLOR_RED'MARK_COLOR_RED293,9467
+	define('MARK_COLOR_GREEN'MARK_COLOR_GREEN294,9497
+	define('MARK_COLOR_BLUE'MARK_COLOR_BLUE295,9529
+	define('PROFILE_TYPE_UNKNOWN'PROFILE_TYPE_UNKNOWN297,9561
+	define('PROFILE_TYPE_ARRAY'PROFILE_TYPE_ARRAY298,9597
+	define('PROFILE_TYPE_INT'PROFILE_TYPE_INT299,9631
+	define('PROFILE_TYPE_STR'PROFILE_TYPE_STR300,9663
+	define('CALC_FNC_MIN'CALC_FNC_MIN302,9696
+	define('CALC_FNC_AVG'CALC_FNC_AVG303,9724
+	define('CALC_FNC_MAX'CALC_FNC_MAX304,9752
+	define('CALC_FNC_ALL'CALC_FNC_ALL305,9780
+	define('SERVICE_TIME_TYPE_UPTIME'SERVICE_TIME_TYPE_UPTIME308,9811
+	define('SERVICE_TIME_TYPE_DOWNTIME'SERVICE_TIME_TYPE_DOWNTIME309,9851
+	define('SERVICE_TIME_TYPE_ONETIME_DOWNTIME'SERVICE_TIME_TYPE_ONETIME_DOWNTIME310,9893
+	define('USER_TYPE_ZABBIX_USER'USER_TYPE_ZABBIX_USER312,9944
+	define('USER_TYPE_ZABBIX_ADMIN'USER_TYPE_ZABBIX_ADMIN313,9982
+	define('USER_TYPE_SUPER_ADMIN'USER_TYPE_SUPER_ADMIN314,10020
+	define('PERM_MAX'PERM_MAX316,10059
+	define('PERM_READ_WRITE'PERM_READ_WRITE317,10084
+	define('PERM_READ_ONLY'PERM_READ_ONLY318,10115
+	define('PERM_READ_LIST'PERM_READ_LIST319,10145
+	define('PERM_DENY'PERM_DENY320,10175
+	define('PERM_RES_STRING_LINE'PERM_RES_STRING_LINE322,10202
+	define('PERM_RES_IDS_ARRAY'PERM_RES_IDS_ARRAY323,10284
+	define('PERM_RES_DATA_ARRAY'PERM_RES_DATA_ARRAY324,10366
+	define('PERM_MODE_NE'PERM_MODE_NE326,10403
+	define('PERM_MODE_EQ'PERM_MODE_EQ327,10431
+	define('PERM_MODE_GT'PERM_MODE_GT328,10459
+	define('PERM_MODE_LT'PERM_MODE_LT329,10487
+	define('PERM_MODE_LE'PERM_MODE_LE330,10515
+	define('PERM_MODE_GE'PERM_MODE_GE331,10543
+	define('RESOURCE_TYPE_NODE'RESOURCE_TYPE_NODE333,10572
+	define('RESOURCE_TYPE_GROUP'RESOURCE_TYPE_GROUP334,10607
+	define('PARAM_TYPE_SECONDS'PARAM_TYPE_SECONDS336,10644
+	define('PARAM_TYPE_COUNTS'PARAM_TYPE_COUNTS337,10678
+	define('ZBX_NODE_REMOTE'ZBX_NODE_REMOTE339,10712
+	define('ZBX_NODE_LOCAL'ZBX_NODE_LOCAL340,10743
+	define('ZBX_NODE_MASTER'ZBX_NODE_MASTER341,10773
+	define('ZBX_FLAG_TRIGGER'ZBX_FLAG_TRIGGER343,10805
+	define('ZBX_FLAG_EVENT'ZBX_FLAG_EVENT344,10837
+	define('HTTPTEST_STATUS_ACTIVE'HTTPTEST_STATUS_ACTIVE346,10868
+	define('HTTPTEST_STATUS_DISABLED'HTTPTEST_STATUS_DISABLED347,10906
+	define('HTTPTEST_STATE_IDLE'HTTPTEST_STATE_IDLE349,10947
+	define('HTTPTEST_STATE_BUSY'HTTPTEST_STATE_BUSY350,10982
+	define('HTTPTEST_STATE_UNKNOWN'HTTPTEST_STATE_UNKNOWN351,11017
+	define('HTTPSTEP_ITEM_TYPE_RSPCODE'HTTPSTEP_ITEM_TYPE_RSPCODE353,11055
+	define('HTTPSTEP_ITEM_TYPE_TIME'HTTPSTEP_ITEM_TYPE_TIME354,11097
+	define('HTTPSTEP_ITEM_TYPE_IN'HTTPSTEP_ITEM_TYPE_IN355,11136
+	define('HTTPSTEP_ITEM_TYPE_LASTSTEP'HTTPSTEP_ITEM_TYPE_LASTSTEP356,11174
+	define('EVENT_SOURCE_TRIGGERS'EVENT_SOURCE_TRIGGERS358,11218
+	define('EVENT_SOURCE_DISCOVERY'EVENT_SOURCE_DISCOVERY359,11256
+	define('EVENT_OBJECT_TRIGGER'EVENT_OBJECT_TRIGGER361,11295
+	define('EVENT_OBJECT_DHOST'EVENT_OBJECT_DHOST362,11332
+	define('EVENT_OBJECT_DSERVICE'EVENT_OBJECT_DSERVICE363,11367
+	define('DOBJECT_STATUS_UP'DOBJECT_STATUS_UP365,11406
+	define('DOBJECT_STATUS_DOWN'DOBJECT_STATUS_DOWN366,11439
+	define('DRULE_STATUS_ACTIVE'DRULE_STATUS_ACTIVE368,11475
+	define('DRULE_STATUS_DISABLED'DRULE_STATUS_DISABLED369,11511
+	define('DSVC_STATUS_ACTIVE'DSVC_STATUS_ACTIVE371,11550
+	define('DSVC_STATUS_DISABLED'DSVC_STATUS_DISABLED372,11585
+	define('SVC_SSH'SVC_SSH374,11623
+	define('SVC_LDAP'SVC_LDAP375,11646
+	define('SVC_SMTP'SVC_SMTP376,11670
+	define('SVC_FTP'SVC_FTP377,11694
+	define('SVC_HTTP'SVC_HTTP378,11717
+	define('SVC_POP'SVC_POP379,11741
+	define('SVC_NNTP'SVC_NNTP380,11764
+	define('SVC_IMAP'SVC_IMAP381,11788
+	define('SVC_TCP'SVC_TCP382,11812
+	define('SVC_AGENT'SVC_AGENT383,11835
+	define('SVC_SNMPv1'SVC_SNMPv1384,11860
+	define('SVC_SNMPv2'SVC_SNMPv2385,11887
+	define('DHOST_STATUS_ACTIVE'DHOST_STATUS_ACTIVE387,11915
+	define('DHOST_STATUS_DISABLED'DHOST_STATUS_DISABLED388,11951
+	define('BR'BR390,11991
+	define('SPACE'SPACE391,12017
+	define('RARR'RARR392,12045
+	define('ZBX_EREG_SPACES'ZBX_EREG_SPACES394,12073
+	define('ZBX_EREG_INTERNAL_NAMES'ZBX_EREG_INTERNAL_NAMES395,12124
+	define('ZBX_EREG_KEY_NAME'ZBX_EREG_KEY_NAME396,12195
+	define('ZBX_EREG_PARAMS'ZBX_EREG_PARAMS397,12266
+	define('ZBX_EREG_SIGN'ZBX_EREG_SIGN398,12317
+	define('ZBX_EREG_NUMBER'ZBX_EREG_NUMBER399,12365
+	define('ZBX_EREG_DNS_FORMAT'ZBX_EREG_DNS_FORMAT402,12528
+	define('ZBX_EREG_HOST_FORMAT'ZBX_EREG_HOST_FORMAT403,12589
+	define('ZBX_EREG_NODE_FORMAT'ZBX_EREG_NODE_FORMAT404,12647
+	define('ZBX_EREG_ITEM_KEY_FORMAT'ZBX_EREG_ITEM_KEY_FORMAT405,12705
+	define('ZBX_KEY_ID'ZBX_KEY_ID406,12799
+	define('ZBX_KEY_NAME_ID'ZBX_KEY_NAME_ID407,12825
+	define('ZBX_KEY_PARAM_ID'ZBX_KEY_PARAM_ID408,12856
+	define('ZBX_EREG_FUNCTION_FORMAT'ZBX_EREG_FUNCTION_FORMAT409,12888
+	define('ZBX_EREG_SIMPLE_EXPRESSION_FORMAT'ZBX_EREG_SIMPLE_EXPRESSION_FORMAT411,12984
+	define('ZBX_EREG_MACRO_NAME_FORMAT'ZBX_EREG_MACRO_NAME_FORMAT412,13123
+	define('ZBX_SIMPLE_EXPRESSION_HOST_ID'ZBX_SIMPLE_EXPRESSION_HOST_ID414,13181
+	define('ZBX_SIMPLE_EXPRESSION_KEY_ID'ZBX_SIMPLE_EXPRESSION_KEY_ID415,13226
+	define('ZBX_SIMPLE_EXPRESSION_KEY_NAME_ID'ZBX_SIMPLE_EXPRESSION_KEY_NAME_ID416,13283
+	define('ZBX_SIMPLE_EXPRESSION_KEY_PARAM_ID'ZBX_SIMPLE_EXPRESSION_KEY_PARAM_ID417,13350
+	define('ZBX_SIMPLE_EXPRESSION_FUNCTION_ID'ZBX_SIMPLE_EXPRESSION_FUNCTION_ID418,13419
+	define('ZBX_SIMPLE_EXPRESSION_FUNCTION_NAME_ID'ZBX_SIMPLE_EXPRESSION_FUNCTION_NAME_ID419,13468
+	define('ZBX_SIMPLE_EXPRESSION_FUNCTION_PARAM_ID'ZBX_SIMPLE_EXPRESSION_FUNCTION_PARAM_ID420,13522
+	define('ZBX_EREG_EXPRESSION_TOKEN_FORMAT'ZBX_EREG_EXPRESSION_TOKEN_FORMAT422,13579
+	define('ZBX_EXPRESSION_LEFT_ID'ZBX_EXPRESSION_LEFT_ID424,13729
+	define('ZBX_EXPRESSION_SIMPLE_EXPRESSION_ID'ZBX_EXPRESSION_SIMPLE_EXPRESSION_ID425,13767
+	define('ZBX_EXPRESSION_MACRO_ID'ZBX_EXPRESSION_MACRO_ID426,13818
+	define('ZBX_EXPRESSION_RIGHT_ID'ZBX_EXPRESSION_RIGHT_ID427,13858
+	define('ZBX_MIN_PERIOD'ZBX_MIN_PERIOD432,14007
+	define('ZBX_MAX_PERIOD'ZBX_MAX_PERIOD433,14040
+	define('ZBX_PERIOD_DEFAULT'ZBX_PERIOD_DEFAULT434,14082
+	define('ZBX_HAVE_IPV6'ZBX_HAVE_IPV6436,14130
+
+frontends/php/include/setup.inc.php,831
+	function zbx_is_callable(22,771
+	class CSetupWizard 30,886
+		function CSetupWizard(39,1032
+		function GetConfig(61,1840
+		function SetConfig(65,1974
+		function GetStep(70,2066
+		function DoNext(74,2134
+		function DoBack(83,2288
+		function BodyToString(93,2443
+		function GetList(121,3409
+		function GetState(135,3725
+		function Stage0(141,3831
+		function Stage1(151,4289
+		function get_test_result(174,4828
+		function Stage2(191,5222
+		function Stage3(334,9111
+		function Stage4(369,10371
+		function Stage5(407,11456
+		function Stage6(432,12707
+		function Stage7(489,14397
+		function CheckConnection(497,14579
+		function CreateTables(554,16103
+		function LoadData(598,17012
+		function CheckConfigurationFile(639,17829
+		function EventHandler(711,19654
+		function GetNewConfigurationFileContent(818,22873
+
+frontends/php/include/media.inc.php,531
+	function	media_type2str(23,771
+	function	media_severity2str(36,1054
+	function	get_media_by_mediaid(58,1892
+	function	delete_media_by_mediatypeid(76,2202
+	function	delete_alerts_by_mediatypeid(84,2379
+	function	get_mediatype_by_mediatypeid(90,2525
+	function	delete_mediatype(108,2854
+	function	update_mediatype(119,3106
+	function	add_mediatype(139,3952
+	function	add_media(166,4926
+	function	update_media(189,5541
+	function	delete_media(209,6067
+	function	activate_media(216,6190
+	function	disactivate_media(223,6326
+
+frontends/php/include/classes/cmap.inc.php,293
+	class CMap 22,771
+		function CMap(25,812
+		function AddRectArea(30,902
+		function AddArea(34,1031
+		function AddItem(38,1149
+	class CArea 47,1337
+		function CArea(49,1366
+		function SetCoords(57,1556
+		function SetShape(74,2018
+		function SetHref(81,2184
+		function SetAlt(88,2347
+
+frontends/php/include/classes/cflashclock.mod.php,123
+	class CFlashClock 22,771
+		function CFlashClock(27,844
+		function SetTimeType(40,1297
+		function BodyToString(47,1498
+
+frontends/php/include/classes/graph.inc.php,1847
+	define("GRAPH_YAXIS_TYPE_CALCULATED"GRAPH_YAXIS_TYPE_CALCULATED25,851
+	define("GRAPH_YAXIS_TYPE_FIXED"GRAPH_YAXIS_TYPE_FIXED26,893
+	define("GRAPH_YAXIS_SIDE_LEFT"GRAPH_YAXIS_SIDE_LEFT28,931
+	define("GRAPH_YAXIS_SIDE_RIGHT"GRAPH_YAXIS_SIDE_RIGHT29,967
+	define("GRAPH_ITEM_SIMPLE"GRAPH_ITEM_SIMPLE31,1005
+	define("GRAPH_ITEM_AGGREGATED"GRAPH_ITEM_AGGREGATED32,1040
+	define("GRAPH_TYPE_NORMAL"GRAPH_TYPE_NORMAL34,1078
+	define("GRAPH_TYPE_STACKED"GRAPH_TYPE_STACKED35,1111
+	define('ZBX_MAX_TREND_DIFF'ZBX_MAX_TREND_DIFF37,1146
+	define('ZBX_GRAPH_MAX_SKIP_CELL'ZBX_GRAPH_MAX_SKIP_CELL39,1185
+	define('ZBX_GRAPH_MAX_SKIP_DELAY'ZBX_GRAPH_MAX_SKIP_DELAY40,1225
+	class	Graph42,1266
+		function Graph(94,2023
+		function updateShifts(154,3095
+		function initColors(174,3532
+		function ShowWorkPeriod(229,5231
+		function ShowTriggers(234,5324
+		function AddItem(239,5414
+		function setPeriod(266,6739
+		function setYAxisMin(271,6804
+		function setYAxisMax(276,6877
+		function setYAxisType(281,6950
+		function SetSTime(286,7027
+		function setFrom(294,7248
+		function setWidth(299,7305
+		function setHeight(309,7536
+		function setBorder(317,7679
+		function getLastValue(322,7744
+		function drawSmallRectangle(342,8275
+		function drawRectangle(353,8509
+		function period2str(366,8797
+		function drawHeader(389,9510
+		function setHeader(414,9985
+		function drawGrid(419,10050
+		function drawWorkPeriod(447,11119
+		function calcTriggers(504,12547
+		function drawTriggers(550,14370
+		function drawLogo(568,14732
+		function GetColor(573,14884
+		function drawLegend(596,15456
+		function drawElement(683,18186
+		function calculateMinY(800,22268
+		function calculateMaxY(884,24144
+		function selectData(959,25746
+		function DrawLeftSide(1162,31412
+		function DrawRightSide(1185,32057
+		function Draw(1208,32724
+
+frontends/php/include/classes/ctextbox.inc.php,360
+	class CTextBox 22,771
+		function CTextBox(27,848
+		function SetReadonly(38,1199
+		function SetValue(45,1351
+		function SetSize(49,1429
+	class CPassBox 56,1508
+		function CPassBox(59,1557
+	class CNumericBox 66,1707
+		function CNumericBox(68,1746
+	class CIpBox84,2430
+		function CIPBox(88,2479
+		function ToString(116,3431
+		function Show(129,3658
+
+frontends/php/include/classes/ctable.inc.php,771
+	class CCol 22,771
+		function CCol(24,810
+		function SetAlign(30,941
+		function SetRowSpan(34,1021
+		function SetColSpan(38,1113
+		function SetWidth(42,1204
+	class CRow 47,1300
+		function CRow(49,1339
+		function SetAlign(55,1470
+		function AddItem(59,1550
+		function SetWidth(77,2032
+	class CTable 82,2127
+		function CTable(94,2345
+		function SetOddRowClass(112,2707
+		function SetEvenRowClass(116,2786
+		function SetAlign(120,2867
+		function SetCellPadding(124,2947
+		function SetCellSpacing(128,3047
+		function PrepareRow(132,3145
+		function SetHeader(156,3856
+		function SetFooter(168,4192
+		function AddRow(177,4518
+		function ShowRow(183,4664
+		function GetNumRows(188,4790
+		function StartToString(192,4845
+		function EndToString(198,4957
+
+frontends/php/include/classes/ctriggerinfo.mod.php,191
+	class CTriggersInfo 22,771
+		function CTriggersInfo(29,869
+		function SetOrientation(39,1101
+		function SetNodeid(47,1305
+		function HideHeader(52,1379
+		function BodyToString(57,1443
+
+frontends/php/include/classes/ctree.inc.php,362
+class CTree{21,763
+function CTree(34,892
+function GetTree(52,1222
+function MakeHeaders(57,1278
+function SimpleHTML(72,1577
+function MakeSHTMLRow(93,2050
+function MakeSImgStr(121,2662
+function CountDepth(164,3967
+function CreateJS(185,4623
+function GetImg(215,5500
+function CheckTree(230,5869
+function Destroy(247,6172
+function getUserAlias(251,6216
+
+frontends/php/include/classes/ctextarea.inc.php,171
+	class CTextArea 22,771
+		function CTextArea(25,817
+		function SetReadonly(37,1191
+		function SetValue(44,1343
+		function SetRows(48,1416
+		function SetCols(53,1498
+
+frontends/php/include/classes/ccolor.inc.php,401
+	function insert_show_color_picker_javascript(25,820
+function GetPos(91,2448
+function hide_color_picker(107,2704
+function show_color_picker(118,2946
+function create_color_picker(136,3336
+function set_color(148,3600
+function set_color_by_name(156,3770
+	class CColorCell 182,4214
+		function	CColorCell(184,4249
+		function	SetAction(193,4592
+	class CColor 201,4728
+		function CColor(204,4774
+
+frontends/php/include/classes/ctag.inc.php,934
+	function destroy_objects(22,771
+	function unpack_object(33,966
+	function implode_objects(54,1310
+	class CObject64,1531
+		function CObject(66,1549
+		function ToString(75,1679
+		function Show(82,1809
+		function Destroy(84,1879
+		function CleanItems(91,2028
+		function ItemsCount(92,2084
+		function AddItem(93,2143
+	class CTag 109,2399
+		function CTag(124,2642
+		function ShowStart(151,3187
+		function ShowBody(152,3243
+		function ShowEnd(153,3297
+		function StartToString(155,3350
+		function BodyToString(165,3589
+		function EndToString(174,3773
+		function ToString(180,3934
+		function SetName(190,4131
+		function GetName(200,4349
+		function SetClass(206,4466
+		function DelOption(215,4626
+		function &GetOption(GetOption219,4695
+		function SetHint(227,4836
+		function OnClick(247,5296
+		function AddAction(252,5384
+		function AddOption(258,5572
+		function SetEnabled(266,5743
+		function error(279,6172
+
+frontends/php/include/classes/cpumenu.inc.php,208
+	class CPUMenu22,771
+		function CPUMenu(30,864
+		function GetOnActionJS(53,1671
+		function InsertJavaScript(60,1859
+			define('CPUMENU_INSERTJAVASCRIPT_INSERTED'CPUMENU_INSERTJAVASCRIPT_INSERTED63,1953
+
+frontends/php/include/classes/clink.inc.php,133
+	class CLink 22,771
+		function CLink(25,813
+		function SetAction(39,1214
+		function SetUrl(46,1381
+		function SetTarget(50,1452
+
+frontends/php/include/classes/cvar.inc.php,170
+		function CVarTag(25,829
+		function SetValue(32,1009
+		function CVar(44,1190
+		function SetValue(52,1328
+		function ParseValue(61,1480
+		function ToString(76,1780
+
+frontends/php/include/classes/chostsinfo.mod.php,123
+	class CHostsInfo 22,771
+		function CHostsInfo(25,823
+		function SetOrientation(33,978
+		function BodyToString(41,1182
+
+frontends/php/include/classes/cfile.inc.php,74
+	class CFile 22,771
+		function CFile 25,813
+		function SetFile(33,1015
+
+frontends/php/include/classes/cformtable.inc.php,435
+	class CFormTable 22,771
+		function CFormTable(33,988
+		function SetAction(65,1845
+		function SetName(75,2089
+		function SetAlign(82,2265
+		function SetTitle(89,2430
+		function SetHelp(103,2720
+		function AddVar(118,3123
+		function AddItemToTopRow(122,3216
+		function AddRow(126,3300
+		function AddSpanRow(152,3918
+		function AddItemToBottomRow(165,4226
+		function SetTableClass(169,4311
+		function BodyToString(176,4431
+
+frontends/php/include/classes/cserverinfo.mod.php,90
+	class CServerInfo 22,771
+		function CServerInfo(24,808
+		function BodyToString(29,881
+
+frontends/php/include/classes/ccheckbox.inc.php,413
+	class CCheckBox 22,771
+		function CCheckBox(25,817
+		function SetEnabled(35,1140
+		function SetChecked(42,1332
+		function SetAction(50,1590
+	class CVisibilityBox 56,1700
+		function CVisibilityBox(58,1743
+		function ToString(77,2320
+		function ShowJavascript(93,2699
+			define('CVISIBILITYBOX_JAVASCRIPT_INSERTED'CVISIBILITYBOX_JAVASCRIPT_INSERTED96,2792
+	function visibility_status_changeds(101,2907
+
+frontends/php/include/classes/cform.inc.php,164
+	class CForm 22,771
+		function CForm(25,813
+		function SetMethod(32,1006
+		function SetAction(36,1095
+		function SetEnctype(53,1338
+		function AddVar(63,1597
+
+frontends/php/include/classes/ccombobox.inc.php,779
+	class CComboItem 24,819
+		function CComboItem(27,866
+		function SetValue(39,1147
+		function GetValue(43,1227
+		function SetCaption(47,1294
+		function SetSelected(51,1370
+	class CComboBox 61,1630
+		function CComboBox(67,1707
+		function SetAction(77,1999
+		function SetValue(81,2102
+		function AddItem(85,2169
+	class CListBox 100,2562
+		function CListBox(103,2612
+		function SetSize(110,2839
+	function	inseret_javascript_for_editable_combobox(116,2914
+		define('EDITABLE_COMBOBOX_SCRIPT_INSERTTED'EDITABLE_COMBOBOX_SCRIPT_INSERTTED120,3031
+		function CEditableComboBoxInit(124,3144
+		function CEditableComboBoxOnChange(146,3562
+	class CEditableComboBox 173,4072
+		function CEditableComboBox(175,4118
+		function AddItem(184,4450
+		function ToString(195,4746
+
+frontends/php/include/classes/clist.inc.php,160
+	class CListItem 22,771
+		function CListItem(25,817
+	class CList 34,955
+		function CList(37,997
+		function PrepareItem(44,1155
+		function AddItem(53,1309
+
+frontends/php/include/classes/ctableinfo.inc.php,56
+	class CTableInfo 22,771
+		function CTableInfo(25,820
+
+frontends/php/include/classes/cspan.inc.php,46
+	class CSpan 22,771
+		function CSpan(25,813
+
+frontends/php/include/classes/cimg.inc.php,188
+	class CImg 22,771
+		function CImg(25,812
+		function SetSrc(45,1270
+		function SetAltText(53,1446
+		function SetMap(61,1632
+		function SetWidth(74,1914
+		function SetHeight(82,2178
+
+frontends/php/include/classes/cflash.inc.php,290
+		function CFlashEmbed(24,820
+		function SetWidth(37,1309
+		function SetHeight(41,1383
+		function SetSrc(45,1458
+		function CParam(53,1575
+		function CFlash(67,1812
+		function SetWidth(84,2438
+		function SetHeight(89,2562
+		function SetSrc(94,2689
+		function BodyToString(99,2819
+
+frontends/php/include/classes/cbutton.inc.php,487
+	class CButton 22,771
+		function CButton(24,813
+		function SetAction(35,1171
+		function SetTitle(39,1253
+		function SetAccessKey(43,1342
+		function SetType(51,1564
+	class CButtonCancel 56,1643
+		function CButtonCancel(57,1681
+		function SetVars(63,1869
+	class CButtonQMessage 75,2057
+		function CButtonQMessage(82,2145
+		function SetVars(93,2408
+		function SetMessage(100,2614
+		function SetAction(110,2859
+	class CButtonDelete 131,3288
+		function CButtonDelete(133,3336
+
+frontends/php/include/classes/chelp.inc.php,46
+	class CHelp 22,771
+		function CHelp(25,814
+
+frontends/php/include/classes/ciframe.inc.php,169
+	class CIFrame 22,771
+		function CIFrame(25,815
+		function SetSrc(40,1204
+		function SetWidth(52,1458
+		function SetHeight(65,1712
+		function SetScrolling(78,1970
+
+frontends/php/include/actions.inc.php,1026
+	function	action_accessiable(25,814
+	function	check_permission_for_action_conditions(73,2142
+	function	get_action_by_actionid(118,3326
+	function	add_action_condition(136,3630
+	function	add_action_operation(153,4060
+	function	add_action(172,4606
+	function	update_action(229,5888
+	function	delete_action(281,7179
+	function	condition_operator2str(297,7583
+	function	condition_type2str(314,8121
+	function	condition_value2str(336,9024
+	function	get_condition_desc(388,10324
+	define('LONG_DESCRITION'LONG_DESCRITION395,10534
+	define('SHORT_DESCRITION'SHORT_DESCRITION396,10565
+	function get_operation_desc(397,10597
+	function	get_conditions_by_eventsource(468,12658
+	function	get_operations_by_eventsource(494,13345
+	function	operation_type2str(517,13937
+	function	get_operators_by_conditiontype(534,14538
+	function	update_action_status(599,16365
+	function validate_condition(604,16505
+	function	validate_operation(685,18452
+	function validate_commands(745,19900
+	function get_history_of_actions(776,20765
+
+frontends/php/include/js.inc.php,366
+function zbx_jsvalue(12,163
+function zbx_add_post_js(49,1062
+function	insert_sizeable_graph(56,1161
+function	get_dynamic_chart(66,1348
+function insert_showhint_javascript(90,1994
+	define('SHOW_HINT_SCRIPT_INSERTTED'SHOW_HINT_SCRIPT_INSERTTED92,2084
+function Redirect(97,2202
+function	play_sound(110,2513
+function	SetFocus(125,2902
+function	Alert(133,3102
+
+frontends/php/include/events.inc.php,211
+	function	event_source2str(22,770
+	function	get_history_of_triggers_events(32,977
+	function	get_history_of_discovery_events(141,4089
+function event_initial_time(213,5766
+function get_latest_events(222,5969
+
+frontends/php/include/dbstat.inc.php,32
+  function avg_row_length(5,45
+
+frontends/php/include/items.inc.php,1166
+	function	item_type2str(35,977
+	function	item_value_type2str(67,1999
+	function	item_status2str(93,2686
+	function	item_status2style(118,3222
+	function	update_item_in_group(132,3540
+	function	delete_item_from_group(145,4508
+	function	add_item_to_group(171,4989
+	function	add_item(187,6208
+	function	update_item_status(337,11072
+	function	update_item(353,11757
+	function	smart_update_item(468,15543
+	function	delete_template_items(541,18107
+	function	copy_item_to_host(585,19103
+	function	copy_template_items(630,20345
+	function	activate_item(682,21740
+	function	disable_item(696,22169
+	function	&get_items_by_hostid(get_items_by_hostid710,22565
+	function	get_item_by_itemid(715,22676
+	function	delete_item(731,23293
+	function	get_n_param(787,24757
+	function	item_description(806,25028
+	function	get_realhost_by_itemid(818,25213
+	function get_items_data_overview(839,25635
+	function get_same_applications_for_host(993,31015
+	function get_applications_by_itemid(1013,31894
+	function	delete_history_by_itemid(1030,32714
+	function	delete_trends_by_itemid(1064,34399
+	function	format_lastvalue(1076,34779
+	function	item_get_history(1146,36457
+
+frontends/php/include/audit.inc.php,98
+	function	audit_resource2str(22,770
+	function add_audit_if(53,2166
+	function add_audit(61,2328
+
+frontends/php/include/discovery.inc.php,474
+	function	check_right_on_discovery(24,810
+	function	discovery_check_type2str(39,1126
+	function	discovery_status2str(60,1672
+	function	discovery_status2style(72,1934
+	function	discovery_object_status2str(84,2179
+	function	get_discovery_rule_by_druleid(95,2399
+	function	set_discovery_rule_status(100,2532
+	function	add_discovery_check(105,2678
+	function	add_discovery_rule(118,3094
+	function	update_discovery_rule(143,3769
+	function	delete_discovery_rule(164,4378
+
+frontends/php/report4.php,400
+			function get_time(120,3660
+			function format_time(121,3719
+			function format_time2(122,3774
+			function get_time(128,3930
+			function format_time(129,4006
+			function format_time2(130,4062
+			function get_time(136,4215
+			function format_time(137,4291
+			function format_time2(138,4348
+			function get_time(145,4538
+			function format_time(154,4735
+			function format_time2(155,4795
+
+frontends/php/audit.php,57
+	define('ZBX_PAGE_DO_REFRESH'ZBX_PAGE_DO_REFRESH28,915
+
+frontends/php/popup_trexpr.php,122
+	define('ZBX_PAGE_NO_MENU'ZBX_PAGE_NO_MENU28,922
+function add_var_to_opener_obj(236,6850
+function InsertText(246,7120
+
+frontends/php/popup_right.php,119
+	define('ZBX_PAGE_NO_MENU'ZBX_PAGE_NO_MENU27,881
+function add_var_to_opener_obj(51,1699
+function add_right(61,1969
+
+frontends/php/popup_users.php,118
+	define('ZBX_PAGE_NO_MENU'ZBX_PAGE_NO_MENU28,918
+function add_var_to_opener_obj(53,1613
+function add_user(63,1883
+
+frontends/php/services_form.php,51
+	define('ZBX_PAGE_NO_MENU'ZBX_PAGE_NO_MENU29,930
+
+frontends/php/httpdetails.php,58
+	define('ZBX_PAGE_DO_REFRESH'ZBX_PAGE_DO_REFRESH29,1025
+
+frontends/php/history.php,112
+		define('ZBX_PAGE_NO_MENU'ZBX_PAGE_NO_MENU31,1027
+		define('ZBX_PAGE_DO_REFRESH'ZBX_PAGE_DO_REFRESH35,1072
+
+frontends/php/popup_media.php,120
+	define('ZBX_PAGE_NO_MENU'ZBX_PAGE_NO_MENU31,1019
+function add_var_to_opener_obj(58,1873
+function add_media(68,2143
+
+frontends/php/popup.php,128
+	define('ZBX_PAGE_NO_MENU'ZBX_PAGE_NO_MENU92,2528
+	function get_window_opener(152,4839
+function add_item_variable(669,20137
+
+frontends/php/maps.php,109
+		define('ZBX_PAGE_NO_MENU'ZBX_PAGE_NO_MENU29,917
+	define('ZBX_PAGE_DO_REFRESH'ZBX_PAGE_DO_REFRESH32,954
+
+frontends/php/exp_imp.php,57
+		function &zbx_array_val_inc(zbx_array_val_inc93,2939
+
+frontends/php/queue.php,57
+	define('ZBX_PAGE_DO_REFRESH'ZBX_PAGE_DO_REFRESH28,916
+
+frontends/php/vtext.php,69
+	define('ZBX_PAGE_NO_AUTHERIZATION'ZBX_PAGE_NO_AUTHERIZATION22,772
+
+frontends/php/latest.php,57
+	define('ZBX_PAGE_DO_REFRESH'ZBX_PAGE_DO_REFRESH28,958
+
+frontends/php/srv_status.php,57
+	define('ZBX_PAGE_DO_REFRESH'ZBX_PAGE_DO_REFRESH28,925
+
+frontends/php/popup_usrgrp.php,91
+	define('ZBX_PAGE_NO_MENU'ZBX_PAGE_NO_MENU28,919
+function add_var_to_opener_obj(52,1498
+
+frontends/php/overview.php,141
+	define('ZBX_PAGE_DO_REFRESH'ZBX_PAGE_DO_REFRESH30,998
+	define("SHOW_TRIGGERS"SHOW_TRIGGERS36,1085
+	define("SHOW_DATA"SHOW_DATA37,1113
+
+frontends/php/report3.php,450
+	define("YEAR_LEFT_SHIFT"YEAR_LEFT_SHIFT44,1390
+			function get_time(102,3119
+			function format_time(103,3178
+			function format_time2(104,3233
+			function get_time(110,3389
+			function format_time(111,3465
+			function format_time2(112,3521
+			function get_time(118,3674
+			function format_time(119,3750
+			function format_time2(120,3807
+			function get_time(127,3997
+			function format_time(136,4194
+			function format_time2(137,4254
+
+frontends/php/tr_status.php,111
+	define('ZBX_PAGE_DO_REFRESH'ZBX_PAGE_DO_REFRESH79,2023
+		define('ZBX_PAGE_NO_MENU'ZBX_PAGE_NO_MENU82,2095
+
+frontends/php/actions.php,95
+	define('ZBX_PAGE_DO_REFRESH'ZBX_PAGE_DO_REFRESH28,925
+	define("PAGE_SIZE"PAGE_SIZE32,1003
+
+frontends/php/events.php,96
+	define('ZBX_PAGE_DO_REFRESH'ZBX_PAGE_DO_REFRESH30,1004
+	define('PAGE_SIZE'PAGE_SIZE42,1268
+
+frontends/php/setup.php,53
+		define('ZBX_PAGE_NO_MENU'ZBX_PAGE_NO_MENU34,1018
+
+frontends/php/popup_httpstep.php,158
+	define('ZBX_PAGE_NO_MENU'ZBX_PAGE_NO_MENU31,1033
+function add_var_to_opener_obj(63,2200
+function add_httpstep(82,2614
+function update_httpstep(124,3730
+
+frontends/php/httpmon.php,58
+	define('ZBX_PAGE_DO_REFRESH'ZBX_PAGE_DO_REFRESH29,1026
+
+frontends/php/report5.php,0
+
+frontends/php/discoveryconf.php,0
+
+frontends/php/httpconf.php,0
+
+frontends/php/chart.php,0
+
+frontends/php/screenconf.php,0
+
+frontends/php/image.php,0
+
+frontends/php/config.php,0
+
+frontends/php/acknow.php,0
+
+frontends/php/report2.php,0
+
+frontends/php/tr_comments.php,0
+
+frontends/php/chart2.php,0
+
+frontends/php/instal.php,0
+
+frontends/php/tr_events.php,0
+
+frontends/php/screenedit.php,0
+
+frontends/php/discovery.php,0
+
+frontends/php/graphs.php,0
+
+frontends/php/users.php,0
+
+frontends/php/triggers.php,0
+
+frontends/php/chart_sla.php,0
+
+frontends/php/chart3.php,0
+
+frontends/php/media_types.php,0
+
+frontends/php/chart4.php,0
+
+frontends/php/chart5.php,0
+
+frontends/php/sysmap.php,0
+
+frontends/php/services.php,0
+
+frontends/php/include/locales/hu_hu.inc.php,0
+
+frontends/php/include/locales/fr_fr.inc.php,0
+
+frontends/php/include/locales/sp_sp.inc.php,0
+
+frontends/php/include/locales/ja_jp.inc.php,0
+
+frontends/php/include/locales/cn_zh.inc.php,0
+
+frontends/php/include/locales/sv_se.inc.php,0
+
+frontends/php/include/locales/en_gb.inc.php,0
+
+frontends/php/include/locales/de_de.inc.php,0
+
+frontends/php/include/locales/ru_ru.inc.php,0
+
+frontends/php/include/locales/nl_nl.inc.php,0
+
+frontends/php/include/locales/it_it.inc.php,0
+
+frontends/php/include/locales/pt_br.inc.php,0
+
+frontends/php/include/locales/lv_lv.inc.php,0
+
+frontends/php/profile.php,0
+
+frontends/php/report1.php,0
+
+frontends/php/map.php,0
+
+frontends/php/hostprofiles.php,0
+
+frontends/php/items.php,0
+
+frontends/php/sysmaps.php,0
+
+frontends/php/actionconf.php,0
+
+frontends/php/hosts.php,0
+
+frontends/php/nodes.php,0
+
+frontends/php/index.php,0
