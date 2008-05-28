@@ -140,7 +140,16 @@ $copy_asis = ":new.field||''''";
 $oracle_copy{"before"} = "
 set define off
 
-create or replace and compile java source named system.\"TReplicate2MySQL\" as
+create or replace type system.TDMLRepCmd
+as object
+(
+  csqlCmd varchar2(4000)
+);
+/
+
+create or replace and resolve java source named system.\"TReplicate2MySQL\"
+as
+
 import java.io.*;
 import java.sql.*;
 import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
@@ -165,12 +174,128 @@ public class TReplicate2MySQL
  }
 }
 /
+
 create or replace package system.Replicate2MySQL
 as
-  procedure RunSQL(csqlCmd in varchar2) as language java name 'TReplicate2MySQL.RunSQL(java.lang.String)';
+  procedure RunSQL(csqlCmd in varchar2);
+  procedure PostRunSQL
+  (
+    context in raw,
+    reginfo in sys.aq$_reg_info,
+    descr in sys.aq$_descriptor,
+    payload in varchar2,
+    payloadl in number
+  );  
+end;
+/
+
+create or replace package body system.Replicate2MySQL
+as
+  procedure RunSQL_Immediate(csqlCmd in varchar2) is language java name 'TReplicate2MySQL.RunSQL(java.lang.String)';
+  procedure PostRunSQL
+  (
+    context in raw,
+    reginfo in sys.aq$_reg_info,
+    descr in sys.aq$_descriptor,
+    payload in varchar2,
+    payloadl in number
+  )
+  is 
+    optsDeq Dbms_AQ.Dequeue_Options_T;
+    prpMsg Dbms_AQ.Message_Properties_T;
+    hMsg raw(16);
+    msgReplCmd TDMLRepCmd;
+  begin
+    optsDeq.msgid := descr.msg_id;
+    optsDeq.consumer_name := descr.consumer_name;
+    Dbms_AQ.Dequeue
+    (
+      queue_name => descr.queue_name,
+      dequeue_options => optsDeq,
+      message_properties => prpMsg,
+      payload => msgReplCmd,
+      msgid => hMsg
+    );
+    RunSQL_Immediate(msgReplCmd.csqlCmd);
+    commit;
+  end;
+    
+  procedure RunSQL(csqlCmd in varchar2)
+  is 
+    optsEnq  dbms_aq.enqueue_options_t;
+    prpMsg dbms_aq.message_properties_t;
+    idMsg       RAW(16);
+  --  rcpt_list dbms_aq.aq$_recipient_list_t;
+  begin
+    Dbms_AQ.Enqueue
+    (
+      queue_name => 'system.q_replcmd',
+      enqueue_options => optsEnq,
+      message_properties => prpMsg,
+      payload => TDMLRepCmd(csqlCmd),
+      msgid => idMsg
+    );
+  end;
+end;
+/
+
+begin
+  Dbms_AQAdm.Create_Queue_Table
+  (
+    queue_table => 'system.tq_replcmd',
+    multiple_consumers => true,
+    queue_payload_type => 'system.TDMLRepCmd',
+    primary_instance => 1,
+    secondary_instance => 2
+  );
+end;
+/
+
+begin
+  Dbms_AQAdm.Create_Queue
+  (
+    queue_name  => 'system.q_replcmd',
+    queue_table => 'system.tq_replcmd'
+  );
+end;
+/
+
+begin
+  dbms_aqadm.add_subscriber
+  (
+    queue_name => 'system.q_replcmd',
+    subscriber => sys.aq$_agent( 'recipient', null, null )
+  );
+end;
+/
+
+declare
+  regCallback sys.aq$_reg_info;
+  lstReg sys.aq$_reg_info_list;
+begin
+  regCallback := sys.AQ$_reg_info
+  (
+    'system.q_replcmd:recipient',
+    Dbms_AQ.Namespace_AQ,
+    'plsql://system.Replicate2MySQL.PostRunSQL?PR=1',
+    HEXTORAW('FF')
+  );
+  lstReg := sys.AQ$_reg_info_list(regCallback);
+  Dbms_AQ.Register(reg_list => lstReg, reg_count => 1);
+  commit;
+end;
+/
+
+begin
+  Dbms_AQAdm.Start_Queue
+  (
+    queue_name  => 'system.q_replcmd'
+  );
 end;
 /
 grant execute on replicate2mysql to zabbix;
+/
+create public synonym Repicate2MySQL for system.Replicate2MySQL;
 /
 ";
 
