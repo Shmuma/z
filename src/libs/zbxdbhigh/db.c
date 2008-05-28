@@ -58,19 +58,9 @@ void    DBconnect(int flag)
 		switch(err) {
 			case ZBX_DB_OK:
 				break;
-			case ZBX_DB_DOWN:
-				if(flag == ZBX_DB_CONNECT_EXIT)
-				{
-					exit(FAIL);
-				}
-				else
-				{
-					zabbix_log(LOG_LEVEL_DEBUG, "Database is down. Reconnecting in 10 seconds");
-					zbx_sleep(10);
-				}
-				break;
-			default:
-				exit(FAIL);
+		default:
+			zabbix_log(LOG_LEVEL_DEBUG, "Database is down. Reconnecting in 10 seconds");
+			zbx_sleep(10);
 		}
 	} while(ZBX_DB_OK != err);
 }
