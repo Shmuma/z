@@ -163,7 +163,10 @@ int	EXECUTE_STR(const char *cmd, const char *param, unsigned flags, AGENT_RESULT
 
 #else /* not _WINDOWS */
 
-	FILE	*hRead = NULL;
+	pid_t	p;
+	int out[2] = {-1, -1}, err[2] = {-1, -1}, i, out_v, err_v, status;
+	char* shell;
+	fd_set fds;
 
 #endif /* _WINDOWS */
 
@@ -171,12 +174,13 @@ int	EXECUTE_STR(const char *cmd, const char *param, unsigned flags, AGENT_RESULT
 
 	char	stat_buf[128];
 	char	*cmd_result=NULL;
+	char	*cmd_error=NULL;
 	char	*command=NULL;
 	int	len;
 
-        assert(result);
+	assert(result);
 
-        init_result(result);
+	init_result(result);
 
 	cmd_result = zbx_dsprintf(cmd_result,"");
 	memset(stat_buf, 0, sizeof(stat_buf));
@@ -236,47 +240,79 @@ int	EXECUTE_STR(const char *cmd, const char *param, unsigned flags, AGENT_RESULT
 		
 
 #else /* not _WINDOWS */
+	shell = getenv ("SHELL");
+	if (!shell)
+		shell = "/bin/sh";
+
 	command = zbx_dsprintf(command, "%s", param);
 
-	if(0 == (hRead = popen(command,"r")))
-	{
-		switch (errno)
-		{
-			case	EINTR:	ret = SYSINFO_RET_TIMEOUT;
-			default:	ret = SYSINFO_RET_FAIL;
-		}
+	/* initialize pipes for stdout and stderr */
+	pipe (out);
+	pipe (err);
+
+	p = fork ();
+
+	if (p < 0) {
+		zabbix_log (LOG_LEVEL_WARNING, "Cannot fork child process");
+		ret = SYSINFO_RET_FAIL;
 		goto lbl_exit;
 	}
 
-	;
-	/* Read process output */
-	while( (len = fread(stat_buf, 1, sizeof(stat_buf)-1, hRead)) > 0 )
-	{
-		cmd_result = zbx_strdcat(cmd_result, stat_buf);
-		memset(stat_buf, 0, sizeof(stat_buf));
-	}
+	/* child process */
+	if (p == 0) {
+		/* close all file descriptors, except out[1] and err[1] */
+		for (i = 0; i < 4096; i++)
+			if (i != out[1] && i != err[1])
+				close (i);
 
-	if(0 != ferror(hRead))
-	{
-		switch (errno)
-		{
-			case	EINTR:	ret = SYSINFO_RET_TIMEOUT;
-			default:	ret = SYSINFO_RET_FAIL;
+		dup2 (out[1], 1);
+		dup2 (err[1], 2);
+		execl (shell, shell, "-c", command, NULL);
+	}
+	else { /* parent process */
+		/* close write descriptors */
+		close (out[1]);
+		close (err[1]);
+
+		FD_ZERO (&fds);
+		FD_SET (out[0], &fds);
+		FD_SET (err[0], &fds);
+		out_v = err_v = 1;
+
+		while (select (out[0] > err[0] ? out[0] + 1 : err[0] + 1, &fds, NULL, NULL, NULL)) {
+			if (FD_ISSET (out[0], &fds)) {
+			/* read data */
+				while ((len = read (out[0], stat_buf, sizeof (stat_buf)-1)) > 0) {
+					/* remember */
+					stat_buf[len] = 0;
+					cmd_result = zbx_strdcat (cmd_result, stat_buf);
+				}
+				if (len <= 0)
+					out_v = 0;
+			}
+			if (FD_ISSET (err[0], &fds)) {
+				/* read data */
+				while ((len = read (err[0], stat_buf, sizeof (stat_buf)-1)) > 0) {
+					stat_buf[len] = 0;
+					cmd_error = zbx_strdcat (cmd_error, stat_buf);
+				}
+				if (len <= 0)
+					err_v = 0;
+			}
+
+			FD_ZERO (&fds);
+			if (out_v)
+				FD_SET (out[0], &fds);
+			if (err_v)
+				FD_SET (err[0], &fds);
+			if (!out_v && !err_v)
+				break;
 		}
-		goto lbl_exit;
+		waitpid (p, &status, 0);
 	}
 
-	if(pclose(hRead) == -1)
-	{
-		switch (errno)
-		{
-			case	EINTR:	ret = SYSINFO_RET_TIMEOUT;
-			default:	ret = SYSINFO_RET_FAIL;
-		}
-		goto lbl_exit;
-	}
-
-	hRead = NULL;
+	close (out[0]);
+	close (err[0]);
 
 #endif /* _WINDOWS */
 
@@ -284,14 +320,8 @@ int	EXECUTE_STR(const char *cmd, const char *param, unsigned flags, AGENT_RESULT
 
 	zbx_rtrim(cmd_result,"\n\r\0");
 
-	/* We got EOL only */
-	if(cmd_result[0] == '\0')
-	{
-		ret = SYSINFO_RET_FAIL;
-		goto lbl_exit;
-	}
-
-	zabbix_log(LOG_LEVEL_DEBUG, "Run remote command [%s] Result [%d] [%.20s]...", command, strlen(cmd_result), cmd_result);
+	zabbix_log(LOG_LEVEL_DEBUG, "Run remote command [%s] Result [%d] [%.20s] (stderr: [%d] [%.20s])...", 
+		   command, strlen(cmd_result), cmd_result, cmd_error ? strlen (cmd_error) : 0, cmd_error ? cmd_error : "");
 
 	SET_TEXT_RESULT(result, strdup(cmd_result));
 
@@ -303,11 +333,19 @@ lbl_exit:
 	if ( hWrite )	{ CloseHandle(hWrite);	hWrite = NULL; }
 	if ( hRead)	{ CloseHandle(hRead);	hRead = NULL; }
 #else /* not _WINDOWS */
-	if ( hRead )	{ pclose(hRead);	hRead = NULL; }
+	if (out[0] >= 0)
+		close (out[0]);
+	if (out[1] >= 0)
+		close (out[1]);
+	if (err[0] >= 0)
+		close (err[0]);
+	if (err[1] >= 0)
+		close (err[1]);
 #endif /* _WINDOWS */
 
 	zbx_free(command)
 	zbx_free(cmd_result);
+	zbx_free(cmd_error);
 
 	return ret;
 }
