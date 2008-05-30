@@ -31,6 +31,7 @@ typedef struct zbx_result_s {
 	char		*str;
 	char		*text;
 	char		*msg;
+	char		*err;
 } AGENT_RESULT;
 
 /* agent result types */
@@ -39,7 +40,7 @@ typedef struct zbx_result_s {
 #define AR_STRING	4
 #define AR_MESSAGE	8
 #define AR_TEXT		16
-
+#define AR_ERROR	32
 
 /* SET RESULT */
 
@@ -67,6 +68,12 @@ typedef struct zbx_result_s {
 	(res)->text = (char*)(val); \
 	} 
 
+#define SET_ERR_RESULT(res, val) \
+	{ \
+	(res)->type |= AR_ERROR; \
+	(res)->err = (char*)(val); \
+	}
+
 #define SET_MSG_RESULT(res, val) \
 	{ \
 	(res)->type |= AR_MESSAGE; \
@@ -80,6 +87,7 @@ typedef struct zbx_result_s {
 #define ISSET_STR(res)	((res)->type & AR_STRING)
 #define ISSET_TEXT(res)	((res)->type & AR_TEXT)
 #define ISSET_MSG(res)	((res)->type & AR_MESSAGE)
+#define ISSET_ERR(res)	((res)->type & AR_ERROR)
 
 /* UNSER RESULT */
 
@@ -111,6 +119,14 @@ typedef struct zbx_result_s {
 		}                                \
 	}
 
+#define UNSET_ERR_RESULT(res)                   \
+	{                                        \
+		if((res)->type & AR_ERROR){       \
+			zbx_free((res)->err);   \
+			(res)->type &= ~AR_ERROR; \
+		}                                \
+	}
+
 #define UNSET_MSG_RESULT(res)                       \
 	{                                           \
 		if((res)->type & AR_MESSAGE){       \
@@ -126,6 +142,7 @@ typedef struct zbx_result_s {
 		if(!(exc_type & AR_STRING))	UNSET_STR_RESULT(res)	\
 		if(!(exc_type & AR_TEXT))	UNSET_TEXT_RESULT(res)	\
 		if(!(exc_type & AR_MESSAGE))	UNSET_MSG_RESULT(res)	\
+		if(!(exc_type & AR_ERROR))	UNSET_ERR_RESULT(res)	\
 	}
 
 
@@ -137,6 +154,7 @@ typedef struct zbx_result_s {
 #define GET_STR_RESULT(res)	((char**)get_result_value_by_type(res, AR_STRING))
 #define GET_TEXT_RESULT(res)	((char**)get_result_value_by_type(res, AR_TEXT))
 #define GET_MSG_RESULT(res)	((char**)get_result_value_by_type(res, AR_MESSAGE))
+#define GET_ERR_RESULT(res)	((char**)get_result_value_by_type(res, AR_ERROR))
 
 void    *get_result_value_by_type(AGENT_RESULT *result, int require_type);
 

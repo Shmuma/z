@@ -326,7 +326,8 @@ static int	send_value(
 		long			*lastlogsize,
 		unsigned long	*timestamp,
 		const char		*source, 
-		unsigned short	*severity
+		unsigned short	*severity,
+		const char		*error
 	)
 {
 	zbx_sock_t	s;
@@ -335,7 +336,7 @@ static int	send_value(
 	int		ret;
 
 	if (SUCCEED == (ret = zbx_tcp_connect(&s, host, port, CONFIG_TIMEOUT, NULL))) {
-		request = comms_create_request(hostname, key, value, lastlogsize, timestamp, source, severity);
+		request = comms_create_request(hostname, key, value, error, lastlogsize, timestamp, source, severity);
 
 		zabbix_log(LOG_LEVEL_DEBUG, "XML before sending [%s]",request);
 
@@ -452,6 +453,7 @@ static int	process_active_checks(char *server, unsigned short port)
 	register int	i, s_count, p_count;
 
 	char	**pvalue;
+	char	**perror;
 
 	int		now, send_err = SUCCEED, ret = SUCCEED;
 
@@ -512,6 +514,7 @@ static int	process_active_checks(char *server, unsigned short port)
 									&active_metrics[i].lastlogsize,
 									NULL,
 									NULL,
+									NULL,
 									NULL
 								);
 
@@ -541,6 +544,7 @@ static int	process_active_checks(char *server, unsigned short port)
 								active_metrics[i].key,
 								"ZBX_NOTSUPPORTED",
 								&active_metrics[i].lastlogsize,
+								NULL,
 								NULL,
 								NULL,
 								NULL
@@ -582,7 +586,8 @@ static int	process_active_checks(char *server, unsigned short port)
 									&active_metrics[i].lastlogsize,
 									&timestamp,
 									source,
-									&severity
+									&severity,
+									NULL
 								);
 
 						s_count++;
@@ -614,6 +619,7 @@ static int	process_active_checks(char *server, unsigned short port)
 								&active_metrics[i].lastlogsize,
 								NULL,
 								NULL,
+								NULL,
 								NULL
 							);
 				}
@@ -626,10 +632,12 @@ static int	process_active_checks(char *server, unsigned short port)
 
 			if( NULL == (pvalue = GET_TEXT_RESULT(&result)) )
 				pvalue = GET_MSG_RESULT(&result);
+			perror = GET_ERR_RESULT (&result);
 
 			if(pvalue)
 			{
-				zabbix_log( LOG_LEVEL_DEBUG, "For key [%s] received value [%s]", active_metrics[i].key, *pvalue);
+				zabbix_log( LOG_LEVEL_DEBUG, "For key [%s] received value [%s], etderr [%s]", active_metrics[i].key, *pvalue, 
+					    (perror && *perror) ? *perror : "");
 
 				send_err = send_value(
 						server,
@@ -640,7 +648,8 @@ static int	process_active_checks(char *server, unsigned short port)
 						NULL,
 						NULL,
 						NULL,
-						NULL
+						NULL,
+						perror ? *perror : NULL
 					);
 
 				/* if send failed, store value in buffer */
