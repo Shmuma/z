@@ -16,7 +16,7 @@
 -- along with this program; if not, write to the Free Software
 -- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 --
-
+-- set define off
 --
 -- Dumping data for table `ids`
 --
@@ -26,7 +26,6 @@ INSERT INTO `ids` VALUES (0,'events','event_send_lastid',0);
 --
 -- Dumping data for table `config`
 --
-set define off
 
 INSERT INTO config VALUES (1,365,365,600,'1-5,00:00-24:00',7);
 
