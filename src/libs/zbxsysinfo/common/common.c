@@ -285,7 +285,8 @@ int	EXECUTE_STR(const char *cmd, const char *param, unsigned flags, AGENT_RESULT
 				while ((len = read (out[0], stat_buf, sizeof (stat_buf)-1)) > 0) {
 					/* remember */
 					stat_buf[len] = 0;
-					cmd_result = zbx_strdcat (cmd_result, stat_buf);
+					if (!cmd_result || strlen (cmd_result) < 1024)
+						cmd_result = zbx_strdcat (cmd_result, stat_buf);
 				}
 				if (len <= 0)
 					out_v = 0;
