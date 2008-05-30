@@ -609,6 +609,7 @@ char*	comms_create_request(
 	const char		*host,
 	const char		*key,
 	const char		*data,
+	const char		*error,
 	long			*lastlogsize,
 	unsigned long	*timestamp,
 	const char		*source,

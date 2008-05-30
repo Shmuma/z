@@ -38,6 +38,7 @@ char*	comms_create_request(
 	const char		*host,
 	const char		*key,
 	const char		*data,
+	const char		*error,
 	long			*lastlogsize,
 	unsigned long	*timestamp,
 	const char		*source,
@@ -66,6 +67,9 @@ char*	comms_create_request(
 	ADD_XML_DATA("host",	host);
 	ADD_XML_DATA("key",		key);
 	ADD_XML_DATA("data",	data);
+
+	if (error)
+		ADD_XML_DATA ("error", error);
 
 	if(lastlogsize)
 	{

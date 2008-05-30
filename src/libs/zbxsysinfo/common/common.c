@@ -285,8 +285,7 @@ int	EXECUTE_STR(const char *cmd, const char *param, unsigned flags, AGENT_RESULT
 				while ((len = read (out[0], stat_buf, sizeof (stat_buf)-1)) > 0) {
 					/* remember */
 					stat_buf[len] = 0;
-					if (!cmd_result || strlen (cmd_result) < 1024)
-						cmd_result = zbx_strdcat (cmd_result, stat_buf);
+					cmd_result = zbx_strdcat (cmd_result, stat_buf);
 				}
 				if (len <= 0)
 					out_v = 0;
@@ -295,7 +294,8 @@ int	EXECUTE_STR(const char *cmd, const char *param, unsigned flags, AGENT_RESULT
 				/* read data */
 				while ((len = read (err[0], stat_buf, sizeof (stat_buf)-1)) > 0) {
 					stat_buf[len] = 0;
-					cmd_error = zbx_strdcat (cmd_error, stat_buf);
+					if (!cmd_error || strlen (cmd_error) < 1024)
+						cmd_error = zbx_strdcat (cmd_error, stat_buf);
 				}
 				if (len <= 0)
 					err_v = 0;
@@ -325,6 +325,8 @@ int	EXECUTE_STR(const char *cmd, const char *param, unsigned flags, AGENT_RESULT
 		   command, strlen(cmd_result), cmd_result, cmd_error ? strlen (cmd_error) : 0, cmd_error ? cmd_error : "");
 
 	SET_TEXT_RESULT(result, strdup(cmd_result));
+	if (cmd_error)
+		SET_ERR_RESULT(result, strdup(cmd_error));
 
 	ret = SYSINFO_RET_OK;
 
