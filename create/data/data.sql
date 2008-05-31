@@ -6613,6 +6613,6 @@ INSERT INTO sysmaps_elements VALUES (2,2,10017,0,19,19,19,'ZABBIX Server',NULL,1
 -- Dumping data for table `sites`
 --
 
-INSERT INTO sites VALUES (0,'Default site','Default site description');
+INSERT INTO sites VALUES (0,'Default','Default monitoring server site');
 
 commit;
