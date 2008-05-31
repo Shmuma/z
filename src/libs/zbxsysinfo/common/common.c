@@ -294,7 +294,10 @@ int	EXECUTE_STR(const char *cmd, const char *param, unsigned flags, AGENT_RESULT
 				/* read data */
 				while ((len = read (err[0], stat_buf, sizeof (stat_buf)-1)) > 0) {
 					stat_buf[len] = 0;
-					if (!cmd_error || strlen (cmd_error) < 1024)
+					for (i = 0; i < len; i++)
+					    if (isspace (stat_buf[i]))
+						stat_buf[i] = ' ';
+					if (!cmd_error || strlen (cmd_error) < 256)
 						cmd_error = zbx_strdcat (cmd_error, stat_buf);
 				}
 				if (len <= 0)
