@@ -266,7 +266,7 @@ void	calc_timestamp(char *line,int *timestamp, char *format)
  * Comments: for trapper server process                                       *
  *                                                                            *
  ******************************************************************************/
-int	process_data(zbx_sock_t *sock,char *server,char *key,char *value,char *lastlogsize, char *timestamp,
+int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* error, char *lastlogsize, char *timestamp,
 		char *source, char *severity, char* when)
 {
 	AGENT_RESULT	agent;
@@ -278,12 +278,13 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value,char *lastl
 	char	server_esc[MAX_STRING_LEN];
 	char	key_esc[MAX_STRING_LEN];
 
-	zabbix_log( LOG_LEVEL_DEBUG, "In process_data([%s],[%s],[%s],[%s],[%s])",
+	zabbix_log( LOG_LEVEL_DEBUG, "In process_data([%s],[%s],[%s],[%s],[%s],[%s])",
 		server,
 		key,
 		value,
 		lastlogsize,
-		when);
+		when,
+		error);
 
 	init_result(&agent);
 
@@ -348,6 +349,8 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value,char *lastl
 
 	zabbix_log( LOG_LEVEL_DEBUG, "Processing [%s]",
 		value);
+
+	DBupdate_item_stderr (item.itemid, error);
 
 	if(strcmp(value,"ZBX_NOTSUPPORTED") ==0)
 	{

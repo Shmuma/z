@@ -948,6 +948,29 @@ void DBupdate_host_availability(zbx_uint64_t hostid,int available,int clock, cha
 	return;
 }
 
+
+int	DBupdate_item_stderr (zbx_uint64_t itemid, char* error)
+{
+	char	error_esc[MAX_STRING_LEN];
+
+	zabbix_log(LOG_LEVEL_DEBUG,"In DBupdate_item_stderr()");
+
+	if (error != NULL)
+	{
+		DBescape_string(error,error_esc,MAX_STRING_LEN);
+	}
+	else
+	{
+		strscpy(error_esc,"");
+	}
+
+	/* '%s ' - space to make Oracle happy */
+	DBexecute ("update items set stderr='%s ' where itemid=" ZBX_FS_UI64, error_esc, itemid);
+
+	return SUCCEED;
+}
+
+
 int	DBupdate_item_status_to_notsupported(zbx_uint64_t itemid, char *error)
 {
 	char	error_esc[MAX_STRING_LEN];
