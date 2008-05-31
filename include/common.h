@@ -617,7 +617,7 @@ char*	comms_create_request(
 	unsigned short	*severity
 	);
 
-int	comms_parse_response(char *xml,char *host,char *key, char *data, char *lastlogsize, char *timestamp,
+int	comms_parse_response(char *xml,char *host,char *key, char *data, char* error, char *lastlogsize, char *timestamp,
 	       char *source, char *severity, int maxlen);
 
 int	comms_parse_multi_response (char *xml,char *host,char *key, char *data,
