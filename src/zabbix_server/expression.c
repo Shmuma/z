@@ -756,6 +756,7 @@ static void	expand_trigger_description_constants(
 #define MVAR_TIME			"{TIME}"
 #define MVAR_ITEM_LASTVALUE		"{ITEM.LASTVALUE}"
 #define MVAR_ITEM_NAME			"{ITEM.NAME}"
+#define MVAR_ITEM_STDERR		"{ITEM.STDERR}"
 #define MVAR_TRIGGER_COMMENT		"{TRIGGER.COMMENT}"
 #define MVAR_TRIGGER_ID			"{TRIGGER.ID}"
 #define MVAR_TRIGGER_KEY		"{TRIGGER.KEY}"
@@ -1211,6 +1212,34 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 
 				replace_to = zbx_dsprintf(replace_to, "%s",
 					tmp);
+			}
+
+			DBfree_result(result);
+		}
+		else if (macro_type & (MACRO_TYPE_MESSAGE_SUBJECT | MACRO_TYPE_MESSAGE_BODY | MACRO_TYPE_TRIGGER_DESCRIPTION) &&
+			strncmp(pr, MVAR_ITEM_STDERR, strlen(MVAR_ITEM_STDERR)) == 0)
+		{
+			var_len = strlen(MVAR_ITEM_STDERR);
+
+			result = DBselect("select distinct i.stderr from triggers t, functions f,items i, hosts h"
+				" where t.triggerid=" ZBX_FS_UI64 " and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid"
+				" order by i.description",
+				event->objectid);
+
+			row=DBfetch(result);
+
+			if(!row || DBis_null(row[0])==SUCCEED)
+			{
+				zabbix_log( LOG_LEVEL_DEBUG, "No ITEM.STDERR in substitute_simple_macros. Triggerid [" ZBX_FS_UI64 "]",
+					event->objectid);
+
+				replace_to = zbx_dsprintf(replace_to, "%s",
+					STR_UNKNOWN_VARIABLE);
+			}
+			else
+			{
+				replace_to = zbx_dsprintf(replace_to, "%s",
+					row[0]);
 			}
 
 			DBfree_result(result);
