@@ -1176,6 +1176,7 @@
 	'S_DISABLE_SELECTED_TRIGGERS_Q'=>	'Disable selected triggers?',
 	'S_DELETE_SELECTED_TRIGGERS_Q'=>	'Delete selected triggers?',
 	'S_CHANGE'=>				'Change',
+	'S_STDERR'=>				'Message',
 	'S_TRIGGER_UPDATED'=>			'Trigger updated',
 	'S_CANNOT_UPDATE_TRIGGER'=>		'Cannot update trigger',
 	'S_DEPENDS_ON'=>			'Depends on',

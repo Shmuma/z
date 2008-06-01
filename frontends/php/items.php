@@ -744,7 +744,7 @@ include_once "include/page_header.php";
 			S_KEY,nbsp(S_UPDATE_INTERVAL),
 			S_HISTORY,S_TRENDS,S_TYPE,S_STATUS,
 			$show_applications ? S_APPLICATIONS : null,
-			S_ERROR));
+			S_ERROR."[".S_STDERR."]"));
 
 		$from_tables['i'] = 'items i'; /* NOTE: must be added as last element to use left join */
     
@@ -783,14 +783,20 @@ include_once "include/page_header.php";
 					"?group_itemid%5B%5D=".$db_item["itemid"].
 					"&group_task=".($db_item["status"] ? "Activate+selected" : "Disable+selected"),
 					item_status2style($db_item["status"])));
+
+			$stderr = "";
+			if (trim ($db_item["stderr"]) != "")
+			{
+				$stderr = "[".trim ($db_item["stderr"])."]";
+			}
 	
 			if($db_item["error"] == "")
 			{
-				$error=new CCol(SPACE,"off");
+				$error=new CCol($stderr,"off");
 			}
 			else
 			{
-				$error=new CCol($db_item["error"],"on");
+				$error=new CCol($db_item["error"].$stderr,"on");
 			}
 
 			$applications = $show_applications ? implode(', ', get_applications_by_itemid($db_item["itemid"], 'name')) : null;
