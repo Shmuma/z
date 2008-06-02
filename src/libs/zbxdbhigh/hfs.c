@@ -16,6 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 **/
+
 #include "common.h"
 #include "log.h"
 #include "hfs.h"
@@ -25,13 +26,6 @@
 # endif
 
 static int make_directories (const char* path);
-
-
-typedef enum {
-    IT_UINT64 = 0,
-    IT_DOUBLE,
-} item_type_t;
-
 
 /* internal structures */
 typedef struct hfs_meta_item {
@@ -46,11 +40,11 @@ typedef struct hfs_meta {
     int blocks;
     int last_delay;
     item_type_t last_type;
+    off_t last_ofs;
     hfs_meta_item_t* meta;
 } hfs_meta_t;
 
 typedef void (*fold_fn_t) (void* db_val, void* state);
-
 
 static hfs_meta_t* read_meta (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock);
 static void free_meta (hfs_meta_t* meta);
@@ -80,7 +74,7 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
     hfs_meta_item_t item, *ip;
     hfs_meta_t* meta;
     int fd;
-    int i, j, r;
+    int i, j, r, extra, eextra;
     unsigned char v = 0xff;
     off_t size, ofs;
 
@@ -92,37 +86,43 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
     meta = read_meta (hfs_base_dir, itemid, clock);
 
     make_directories (p_meta);
-    zabbix_log(LOG_LEVEL_DEBUG, "HFS: meta read: delays: %d %d, blocks %d", meta->last_delay, delay, meta->blocks);
+    zabbix_log(LOG_LEVEL_DEBUG, "HFS: meta read: delays: %d %d, blocks %d, ofs %u", meta->last_delay, delay, meta->blocks, meta->last_ofs);
 
     /* should we start a new block? */
     if (meta->last_delay != delay || type != meta->last_type) {
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: appending new block for item %llu", itemid);
 	item.start = item.end = clock;
-        item.type = type;
+	item.type = type;
 
 	/* analyze current value */
 	item.delay = delay;
 	if (meta->blocks) {
 	    ip = meta->meta + (meta->blocks-1);
 	    zabbix_log(LOG_LEVEL_DEBUG, "HFS: there is another block on way: %u, %u, %d, %llu", ip->start, ip->end, ip->delay, ip->ofs);
-	    item.ofs = ip->ofs + (1 + (ip->end - ip->start) / ip->delay) * len;
+	    item.ofs = meta->last_ofs + len;
 	}
 	else
 	    item.ofs = 0;
 
 	/* append block to meta */
-	fd = open (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+	fd = open (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IWGRP | S_IWOTH);
 	meta->blocks++;
 	meta->last_delay = delay;
-        meta->last_type = type;
+	meta->last_type = type;
+
+	/* when new data file is created, last_ofs is zero */
+	if (meta->last_ofs)
+	    meta->last_ofs += len;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: blocks <- %u", meta->blocks);
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: delay <- %u", meta->last_delay);
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: type <- %u", meta->last_type);
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS: last_ofs <- %u", meta->last_ofs);
 
 	write (fd, &meta->blocks, sizeof (meta->blocks));
 	write (fd, &meta->last_delay, sizeof (meta->last_delay));
 	write (fd, &meta->last_type, sizeof (meta->last_type));
+	write (fd, &meta->last_ofs, sizeof (meta->last_type));
 	lseek (fd, sizeof (hfs_meta_item_t)*(meta->blocks-1), SEEK_CUR);
 	write (fd, &item, sizeof (item));
 	close (fd);
@@ -137,7 +137,7 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
 	close (fd);
     }
     else {
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS: extending existing block for item %llu", itemid);
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS: extending existing block for item %llu, last ofs %u", itemid, meta->last_ofs);
 
 	/* check for gaps in block */
 	ip = meta->meta + (meta->blocks-1);
@@ -149,31 +149,51 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
 	/* fill missing values with FFs */
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: check for gaps. Now %d, last %d, delay %d, delta %d", clock, ip->end, delay, clock - ip->end);
 
-	if (clock - ip->end >= delay*2) {
-	    ofs = lseek (fd, ip->ofs + ((ip->end - ip->start + 2*ip->delay)/ip->delay)*len, SEEK_SET);
-	    zabbix_log(LOG_LEVEL_DEBUG, "HFS: there are gaps of size %d items (%d bytes per item)", (clock - ip->end - delay) / delay, len);
-	    zabbix_log(LOG_LEVEL_DEBUG, "HFS gaps: cur %u, size %u", ofs, size);
+	meta->last_ofs += len;
+	lseek (fd, meta->last_ofs, SEEK_SET);
 
-	    for (i = 0; i < (clock - ip->end - ip->delay) / delay; i++)
-		for (j = 0; j < len; j++)
-		    write (fd, &v, sizeof (v));
+	extra = (clock - ip->end) / delay;
+
+	/* if value appeared before it's time */
+	if (extra >= 1) {
+            /* check for time-based items count differs from offset-based */
+            eextra = (ip->end - ip->start) / delay - (meta->last_ofs - ip->ofs) / len;
+
+            if (eextra > 0) {
+                zabbix_log(LOG_LEVEL_CRIT, "HFS: there is disagree of time-based items count with offset based. Perform alignment. Count=%d", eextra);
+		for (i = 0; i < eextra; i++)
+		    for (j = 0; j < len; j++)
+			write (fd, &v, sizeof (v));
+                meta->last_ofs += eextra * len;
+            }
+
+	    if (extra > 1) {
+		extra--;
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS: there are gaps of size %d items", extra);
+
+		for (i = 0; i < extra; i++)
+		    for (j = 0; j < len; j++)
+			write (fd, &v, sizeof (v));
+		meta->last_ofs += extra * len;
+	    }            
+
+	    write (fd, value, len);
+	    close (fd);
+
+	    /* update meta */
+	    ip->end = clock;
+
+	    fd = open (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+
+	    lseek (fd, sizeof (meta->blocks) * 3, SEEK_SET);
+	    write (fd, &meta->last_ofs, sizeof (meta->last_ofs));
+
+	    lseek (fd, sizeof (hfs_meta_item_t) * (meta->blocks-1), SEEK_CUR);
+	    write (fd, ip, sizeof (hfs_meta_item_t));
+	    close (fd);
 	}
-	else {
-	    ofs = lseek (fd, ip->ofs + ((clock - ip->start + ip->delay)/ip->delay)*len, SEEK_SET);
-	    zabbix_log(LOG_LEVEL_DEBUG, "HFS: cur %u, size %u", ofs, size);
-	}
-
-	write (fd, value, len);
-	close (fd);
-
-	/* update meta */
-	ip->end = clock;
-
-	fd = open (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
-
-	lseek (fd, sizeof (meta->blocks) * 3 + sizeof (hfs_meta_item_t) * (meta->blocks-1), SEEK_SET);
-	write (fd, ip, sizeof (hfs_meta_item_t));
-	close (fd);
+	else
+	    zabbix_log(LOG_LEVEL_DEBUG, "HFS: value appeared earlier than expected. Now %d, but next must be at %d", clock, ip->end + delay);
     }
 
     free_meta (meta);
@@ -282,7 +302,7 @@ static void foldl_time (const char* hfs_base_dir, zbx_uint64_t itemid, int ts, v
 	p_data = get_name (hfs_base_dir, itemid, ts, 0);
 	fd = open (p_data, O_RDONLY);
 
-	if (fd >= 0) {
+	if (fd != -1) {
 	    lseek (fd, ofs, SEEK_SET);
 	    while (read (fd, &value, sizeof (value)) > 0)
 		fn (&value, init_res);
@@ -358,14 +378,13 @@ static hfs_meta_t* read_meta (const char* hfs_base_dir, zbx_uint64_t itemid, tim
 	return NULL;
     }
 
-    f = fopen (path, "rb");
-
     /* if we have no file, create empty one */
-    if (!f) {
-	zabbix_log(LOG_LEVEL_DEBUG, "file open failed: %s", path);
+    if ((f = fopen (path, "rb")) == NULL) {
+	zabbix_log(LOG_LEVEL_DEBUG, "%s: file open failed: %s", path, strerror(errno));
 	res->blocks = 0;
 	res->last_delay = 0;
-        res->last_type = IT_DOUBLE;
+	res->last_type = IT_DOUBLE;
+	res->last_ofs = 0;
 	res->meta = NULL;
 	free (path);
 	return res;
@@ -373,9 +392,15 @@ static hfs_meta_t* read_meta (const char* hfs_base_dir, zbx_uint64_t itemid, tim
 
     free (path);
 
-    fread (&res->blocks, sizeof (res->blocks), 1, f);
-    fread (&res->last_delay, sizeof (res->last_delay), 1, f);
-    fread (&res->last_type, sizeof (res->last_type), 1, f);
+    if (fread (&res->blocks, sizeof (res->blocks), 1, f) != 1 ||
+	fread (&res->last_delay, sizeof (res->last_delay), 1, f) != 1 ||
+	fread (&res->last_type, sizeof (res->last_type), 1, f) != 1 ||
+	fread (&res->last_ofs, sizeof (res->last_ofs), 1, f) != 1)
+    {
+	fclose (f);
+	free (res);
+	return NULL;
+    }
 
     res->meta = (hfs_meta_item_t*)malloc (sizeof (hfs_meta_item_t)*res->blocks);
 
@@ -929,7 +954,6 @@ zbx_uint64_t HFS_get_delta_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, i
     return state.max - state.min;
 }
 
-
 double HFS_get_delta_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
 {
     typedef struct {
@@ -958,4 +982,294 @@ double HFS_get_delta_float (const char* hfs_base_dir, zbx_uint64_t itemid, int p
     return state.max - state.min;
 }
 
+static int
+HFS_find_meta(const char *hfs_base_dir, zbx_uint64_t itemid, time_t from_ts, hfs_meta_t **res) {
+	int i, block = 0;
+	time_t ts = from_ts;
+	hfs_meta_t *meta = NULL;
+	hfs_meta_item_t *ip = NULL;
 
+#ifdef DEBUG_legion
+	fprintf(stderr, "It HFS_find_meta(hfs_base_dir=%s, itemid=%lld, from=%d, res)\n", hfs_base_dir, itemid, from_ts);
+	fflush(stderr);
+#endif
+	(*res) = NULL;
+
+	while (ts > 0) {
+		char *path;
+
+		i = -1;
+		if ((path = get_name (hfs_base_dir, itemid, ts, 1)) != NULL) {
+			i = access(path, R_OK);
+			free(path);
+		}
+
+		if (i == -1) {
+			ts = get_next_data_ts(ts);
+			continue;
+		}
+
+		if ((meta = read_meta(hfs_base_dir, itemid, ts)) == NULL)
+			return -1; // Somethig real bad happend :(
+
+		if (meta->blocks > 0)
+			break;
+
+		free_meta(meta);
+		meta = NULL;
+
+		ts = get_next_data_ts(ts);
+	}
+
+	if ((meta == NULL) || (meta->blocks == 0)) {
+		free_meta(meta);
+		return -1;
+	}
+
+	(*res) = meta;
+//	if (from_ts <= ts)
+//		return block;
+
+	for (i = 0; i < meta->blocks; i++) {
+		ip = meta->meta + i;
+		if (ip->start <= ts && ts <= ip->end)
+			return i;
+	}
+
+	/* Interesting situation:
+	   Meta file was found, from_ts not in past, but timestamp not found in blocks
+	*/
+	free_meta(meta);
+	(*res) = NULL;
+	return -1;
+}
+
+size_t
+HFSread_item (const char *hfs_base_dir, size_t sizex, zbx_uint64_t itemid, time_t graph_from_ts, time_t graph_to_ts, time_t from_ts, time_t to_ts, hfs_item_value_t **result)
+{
+	item_value_u max, min, val;
+	time_t ts = from_ts;
+	size_t items = 0, result_size = 0;
+	int z, p, x, finish_loop = 0, block;
+	long cur_group, group = -1;
+
+	p = (graph_to_ts - graph_from_ts);
+	z = (p - graph_from_ts % p);
+	x = (sizex - 1);
+
+	max.d = 0.0;
+	min.d = 0.0;
+
+#ifdef DEBUG_legion
+	fprintf(stderr, "In HFSread_item(hfs_base_dir=%s, sizex=%d, itemid=%lld, graph_from=%d, graph_to=%d, from=%d, to=%d)\n",
+			hfs_base_dir, x, itemid, graph_from_ts, graph_to_ts, from_ts, to_ts);
+	fflush(stderr);
+#endif
+	while (!finish_loop) {
+		int fd = 0;
+		char *p_data = NULL;
+		hfs_meta_t *meta = NULL;
+		hfs_meta_item_t *ip;
+		off_t ofs;
+
+		if ((block = HFS_find_meta(hfs_base_dir, itemid, ts, &meta)) == -1)
+			break;
+
+		ip = meta->meta + block;
+
+		if (group == -1)
+			group = (long) (x * ((ts + z) % p) / p);
+
+		if ((p_data = get_name (hfs_base_dir, itemid, ts, 0)) == NULL) {
+			zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get file name");
+			finish_loop = 1;
+			goto nextloop;
+		}
+
+		if ((ofs = find_meta_ofs (ts, meta)) == -1) {
+			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: %d: unable to get offset in file", p_data, ts);
+			finish_loop = 1;
+			goto nextloop;
+		}
+
+		if ((fd = open (p_data, O_RDONLY)) == -1) {
+			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
+			finish_loop = 1;
+			goto nextloop;
+		}
+
+		if (lseek (fd, ofs, SEEK_SET) == -1) {
+			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to change file offset: %s", p_data, strerror(errno));
+			finish_loop = 1;
+			goto nextloop;
+		}
+
+		while (read (fd, &val.l, sizeof (val.l)) > 0) {
+			ts += ip->delay;
+
+			if (!is_valid_val(&val.l))
+				continue;
+
+			if (result_size <= items) {
+				result_size += alloc_item_values;
+				*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * result_size));
+			}
+
+			cur_group = (long) (x * ((ts + z) % p) / p);
+
+			if (group != cur_group) {
+				(*result)[items].type  = ip->type;
+				(*result)[items].group = group;
+				(*result)[items].clock = ts;
+				(*result)[items].max = max;
+				(*result)[items].min = min;
+
+				if (ip->type == IT_DOUBLE)
+					(*result)[items].avg.d = ((max.d + min.d) / 2);
+				else
+					(*result)[items].avg.l = ((max.l + min.l) / 2);
+
+				group = cur_group;
+				max.d = 0.0;
+				min.d = 0.0;
+				items++;
+			}
+
+			if (ip->type == IT_DOUBLE) {
+				max.d = ((max.d > val.d) ? max.d : val.d);
+				min.d = ((max.d < val.d) ? max.d : val.d);
+			}
+			else {
+				max.l = ((max.l > val.l) ? max.l : val.l);
+				min.l = ((max.l < val.l) ? max.l : val.l);
+			}
+
+			if (ts >= to_ts) {
+				finish_loop = 1;
+				break;
+			}
+
+			if (ts >= ip->end) {
+				block++;
+
+				if (block >= meta->blocks)
+					/* We have read all blocks and we need another meta. */
+					break;
+
+				ip = meta->meta + block;
+			}
+    		}
+nextloop:
+		if (fd > 0 && (fd = close(fd)) == -1)
+			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
+
+		if (p_data) {
+			free (p_data);
+			p_data = NULL;
+		}
+
+		free_meta (meta);
+		meta = NULL;
+
+		ts = get_next_data_ts (ts);
+	}
+
+	if (result_size > items)
+		*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * items));
+#ifdef DEBUG_legion
+	fprintf(stderr, "Out HFSread_item()\n");
+	fflush(stderr);
+#endif
+	return items;
+}
+
+int
+HFSread_count(const char* hfs_base_dir, zbx_uint64_t itemid, int count, void* init_res, read_count_fn_t fn)
+{
+	int i;
+	char *p_data = NULL;
+	int fd = 0, ts = time (NULL)-1;
+	hfs_meta_item_t *ip = NULL;
+	hfs_meta_t *meta = NULL;
+	item_value_u val;
+	off_t ofs;
+
+#ifdef DEBUG_legion
+	fprintf(stderr, "In HFSread_count(hfs_base_dir=%s, itemid=%lld, count=%d, res, func)\n",
+			hfs_base_dir, itemid, count);
+	fflush(stderr);
+#endif
+
+	while (count > 0 && ts > 0) {
+		if ((meta = read_meta(hfs_base_dir, itemid, ts)) == NULL)
+			return -1; // Somethig real bad happend :(
+
+		if (meta->blocks == 0)
+			break;
+
+		if ((p_data = get_name(hfs_base_dir, itemid, ts, 0)) == NULL) {
+			zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get file name");
+			break; // error
+		}
+
+		if ((fd = open (p_data, O_RDONLY)) == -1) {
+			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
+			break; // error
+		}
+
+		if ((ofs = lseek(fd, meta->last_ofs, SEEK_SET)) == -1) {
+			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to change file offset: %s", p_data, strerror(errno));
+			break; // error
+		}
+
+		for (i = (meta->blocks-1); i >= 0; i--) {
+			ip = meta->meta + i;
+			ts = ip->end;
+
+			while (count > 0 && ip->start <= ts) {
+				if ((ofs = lseek(fd, (ofs - sizeof(val.l)), SEEK_SET)) == -1) {
+					zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to change file offset: %s", p_data, strerror(errno));
+					goto end;
+				}
+
+				if (read(fd, &val.l, sizeof (val.l)) == -1) {
+					zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to read data: %s", p_data, strerror(errno));
+					goto end;
+				}
+
+				if (is_valid_val(&val.l)) {
+					fn (ip->type, val, ts, init_res);
+					count--;
+				}
+
+				ts = (ts - ip->delay);
+			}
+
+			if (count == 0)
+				goto end;
+		}
+
+		if ((fd = close(fd)) == -1)
+			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
+
+		if (p_data) {
+			free(p_data);
+			p_data = NULL;
+		}
+
+		free_meta(meta);
+		meta = NULL;
+
+		ts = get_prev_data_ts (ts);
+	}
+end:
+	if (fd != 0 && close(fd) == -1)
+		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
+
+	if (p_data)
+		free(p_data);
+
+	free_meta(meta);
+
+	return count;
+}
