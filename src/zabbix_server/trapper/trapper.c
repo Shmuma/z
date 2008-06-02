@@ -40,9 +40,9 @@
 static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 {
 	char	*line,*host;
-	char	*server,*key,*value_string;
+	char	*server,*key,*value_string, *error = NULL;
 	char	copy[MAX_STRING_LEN];
-	char	host_dec[MAX_STRING_LEN],key_dec[MAX_STRING_LEN],value_dec[MAX_STRING_LEN];
+	char	host_dec[MAX_STRING_LEN],key_dec[MAX_STRING_LEN],value_dec[MAX_STRING_LEN],error_dec[MAX_STRING_LEN];
 	char	lastlogsize[MAX_STRING_LEN];
 	char	timestamp[MAX_STRING_LEN];
 	char	source[MAX_STRING_LEN];
@@ -128,9 +128,10 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 
 			if (strncmp (s, "<req>", 5) == 0)
 			{
-				comms_parse_response(s,host_dec,key_dec,value_dec,lastlogsize,timestamp,source,severity,sizeof(host_dec)-1);
+				comms_parse_response(s,host_dec,key_dec,value_dec,error_dec,lastlogsize,timestamp,source,severity,sizeof(host_dec)-1);
 				server=host_dec;
 				value_string=value_dec;
+				error = error_dec;
 				key=key_dec;
 			}
 
@@ -146,7 +147,7 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 					value_string = value_dec;
 					key = key_dec;
 					/* insert history value. It doesn't support  */
-					ret = process_data(sock,server,key,value_string, NULL, NULL, NULL, NULL, timestamp);
+					ret = process_data(sock,server,key,value_string, NULL, NULL, NULL, NULL, NULL, timestamp);
 					if (ret != SUCCEED)
 						break;
 				}
@@ -190,7 +191,7 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 		if (key)
 		{
 			DBbegin();
-			ret=process_data(sock,server,key,value_string,lastlogsize,timestamp,source,severity, NULL);
+			ret=process_data(sock,server,key,value_string,error,lastlogsize,timestamp,source,severity, NULL);
 			DBcommit();
 		}
 		

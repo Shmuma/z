@@ -240,6 +240,7 @@ void	free_result(AGENT_RESULT *result)
 	UNSET_STR_RESULT(result);
 	UNSET_TEXT_RESULT(result);
 	UNSET_MSG_RESULT(result);
+	UNSET_ERR_RESULT(result);
 }
 
 void	init_result(AGENT_RESULT *result)
@@ -785,6 +786,9 @@ void	*get_result_value_by_type(AGENT_RESULT *result, int require_type)
 			break;
 		case AR_MESSAGE:
 			if(ISSET_MSG(result))	return (void*)(&result->msg);
+			break;
+		case AR_ERROR:
+			if(ISSET_ERR(result))	return (void*)(&result->err);
 			break;
 		default:
 			break;

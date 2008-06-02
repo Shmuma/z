@@ -38,6 +38,7 @@ char*	comms_create_request(
 	const char		*host,
 	const char		*key,
 	const char		*data,
+	const char		*error,
 	long			*lastlogsize,
 	unsigned long	*timestamp,
 	const char		*source,
@@ -67,6 +68,10 @@ char*	comms_create_request(
 	ADD_XML_DATA("key",		key);
 	ADD_XML_DATA("data",	data);
 
+	if (error) {
+		ADD_XML_DATA ("error", error);
+	}
+
 	if(lastlogsize)
 	{
 		tmp_str = zbx_dsprintf(NULL, "%li", *lastlogsize);
@@ -93,7 +98,7 @@ char*	comms_create_request(
 	return zbx_strdcat(request, "</req>");
 }
 
-int	comms_parse_response(char *xml,char *host,char *key, char *data, char *lastlogsize, char *timestamp,
+int	comms_parse_response(char *xml,char *host,char *key, char *data, char* error, char *lastlogsize, char *timestamp,
 	       char *source, char *severity, int maxlen)
 {
 	int ret = SUCCEED;
@@ -102,6 +107,7 @@ int	comms_parse_response(char *xml,char *host,char *key, char *data, char *lastl
 	char host_b64[MAX_STRING_LEN];
 	char key_b64[MAX_STRING_LEN];
 	char data_b64[MAX_STRING_LEN];
+	char error_b64[MAX_STRING_LEN];
 	char lastlogsize_b64[MAX_STRING_LEN];
 	char timestamp_b64[MAX_STRING_LEN];
 	char source_b64[ZBX_MAX_B64_LEN];
@@ -110,6 +116,7 @@ int	comms_parse_response(char *xml,char *host,char *key, char *data, char *lastl
 	assert(key);
 	assert(host);
 	assert(data);
+	assert(error);
 	assert(lastlogsize);
 	assert(timestamp);
 	assert(source);
@@ -118,6 +125,7 @@ int	comms_parse_response(char *xml,char *host,char *key, char *data, char *lastl
 	memset(host_b64,0,sizeof(host_b64));
 	memset(key_b64,0,sizeof(key_b64));
 	memset(data_b64,0,sizeof(data_b64));
+	memset(error_b64,0,sizeof(data_b64));
 	memset(lastlogsize_b64,0,sizeof(lastlogsize_b64));
 	memset(timestamp_b64,0,sizeof(timestamp_b64));
 	memset(source_b64,0,sizeof(source_b64));
@@ -126,6 +134,7 @@ int	comms_parse_response(char *xml,char *host,char *key, char *data, char *lastl
 	xml_get_data(xml, "host", host_b64, sizeof(host_b64)-1);
 	xml_get_data(xml, "key", key_b64, sizeof(key_b64)-1);
 	xml_get_data(xml, "data", data_b64, sizeof(data_b64)-1);
+	xml_get_data(xml, "error", error_b64, sizeof(error_b64)-1);
 	xml_get_data(xml, "lastlogsize", lastlogsize_b64, sizeof(lastlogsize_b64)-1);
 	xml_get_data(xml, "timestamp", timestamp_b64, sizeof(timestamp_b64)-1);
 	xml_get_data(xml, "source", source_b64, sizeof(source_b64)-1);
@@ -134,6 +143,7 @@ int	comms_parse_response(char *xml,char *host,char *key, char *data, char *lastl
 	memset(key,0,maxlen);
 	memset(host,0,maxlen);
 	memset(data,0,maxlen);
+	memset(error,0,maxlen);
 	memset(lastlogsize,0,maxlen);
 	memset(timestamp,0,maxlen);
 	memset(source,0,maxlen);
@@ -142,6 +152,7 @@ int	comms_parse_response(char *xml,char *host,char *key, char *data, char *lastl
 	str_base64_decode(host_b64, host, &i);
 	str_base64_decode(key_b64, key, &i);
 	str_base64_decode(data_b64, data, &i);
+	str_base64_decode(error_b64, error, &i);
 	str_base64_decode(lastlogsize_b64, lastlogsize, &i);
 	str_base64_decode(timestamp_b64, timestamp, &i);
 	str_base64_decode(source_b64, source, &i);

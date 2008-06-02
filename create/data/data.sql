@@ -16,7 +16,7 @@
 -- along with this program; if not, write to the Free Software
 -- Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 --
-
+-- set define off
 --
 -- Dumping data for table `ids`
 --
@@ -26,7 +26,6 @@ INSERT INTO `ids` VALUES (0,'events','event_send_lastid',0);
 --
 -- Dumping data for table `config`
 --
-set define off
 
 INSERT INTO config VALUES (1,365,365,600,'1-5,00:00-24:00',7);
 
@@ -6614,6 +6613,6 @@ INSERT INTO sysmaps_elements VALUES (2,2,10017,0,19,19,19,'ZABBIX Server',NULL,1
 -- Dumping data for table `sites`
 --
 
-INSERT INTO sites VALUES (0,'Default site','Default site description');
+INSERT INTO sites VALUES (0,'Default','Default monitoring server site');
 
 commit;

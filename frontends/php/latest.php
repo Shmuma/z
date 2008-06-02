@@ -178,7 +178,7 @@ include_once "include/page_header.php";
 		is_show_subnodes() ? S_NODE : null,
 		$_REQUEST["hostid"] ==0 ? S_HOST : NULL,
 		($link->ToString()).SPACE.S_DESCRIPTION,
-		S_LAST_CHECK,S_LAST_VALUE,S_CHANGE,S_HISTORY));
+		S_LAST_CHECK,S_LAST_VALUE,S_CHANGE,S_STDERR,S_HISTORY));
 	$table->ShowStart();
 
 	$compare_host = ($_REQUEST["hostid"] > 0)?(' and h.hostid='.$_REQUEST['hostid']):'';
@@ -238,6 +238,7 @@ include_once "include/page_header.php";
 			{
 				$actions=new CLink(S_HISTORY,"history.php?action=showvalues&period=3600&itemid=".$db_item["itemid"],"action");
 			}
+			$stderr = $db_item["stderr"];
 			array_push($app_rows, new CRow(array(
 				is_show_subnodes() ? SPACE : null,
 				$_REQUEST["hostid"] > 0 ? NULL : SPACE,
@@ -245,6 +246,7 @@ include_once "include/page_header.php";
 				$lastclock,
 				new CCol($lastvalue, $lastvalue=='-' ? 'center' : null),
 				$change,
+				$stderr,
 				$actions
 				)));
 		}
@@ -263,7 +265,7 @@ include_once "include/page_header.php";
 
 			$col = new CCol(array($link,SPACE,bold($db_app["name"]),
 				SPACE."(".$item_cnt.SPACE.S_ITEMS.")"));
-			$col->SetColSpan(5);
+			$col->SetColSpan(6);
 
 			$table->ShowRow(array(
 					get_node_name_by_elid($db_app['hostid']),
@@ -351,6 +353,7 @@ include_once "include/page_header.php";
 			{
 				$actions=new CLink(S_HISTORY,"history.php?action=showvalues&period=3600&itemid=".$db_item["itemid"],"action");
 			}
+			$stderr = $db_item["stderr"];
 			array_push($app_rows, new CRow(array(
 				is_show_subnodes() ? SPACE : null,//get_node_name_by_elid($db_item['itemid']) : null,
 				$_REQUEST["hostid"] > 0 ? NULL : SPACE,//$db_item["host"],
@@ -358,6 +361,7 @@ include_once "include/page_header.php";
 				$lastclock,
 				new CCol($lastvalue, $lastvalue == '-' ? 'center' : null),
 				$change,
+				$stderr,
 				$actions
 				)));
 		}
@@ -379,7 +383,7 @@ include_once "include/page_header.php";
 	
 				$col = new CCol(array($link,SPACE,bold(S_MINUS_OTHER_MINUS),
 					SPACE."(".$item_cnt.SPACE.S_ITEMS.")"));
-				$col->SetColSpan(5);
+				$col->SetColSpan(6);
 				
 				$table->ShowRow(array(
 						get_node_name_by_elid($db_appitem['hostid']),

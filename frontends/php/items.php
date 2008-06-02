@@ -744,14 +744,14 @@ include_once "include/page_header.php";
 			S_KEY,nbsp(S_UPDATE_INTERVAL),
 			S_HISTORY,S_TRENDS,S_TYPE,S_STATUS,
 			$show_applications ? S_APPLICATIONS : null,
-			S_ERROR));
+			S_ERROR."[".S_STDERR."]"));
 
 		$from_tables['i'] = 'items i'; /* NOTE: must be added as last element to use left join */
     
-  	$query_history_size = 0;
-  	$query_trends_size = 0;
+		$query_history_size = 0;
+		$query_trends_size = 0;
 
-    $db_items = DBselect('select distinct th.host as template_host,th.hostid as template_hostid, h.host, i.* '.
+		$db_items = DBselect('select distinct th.host as template_host,th.hostid as template_hostid, h.host, i.* '.
 			' from '.implode(',', $from_tables).
 			' left join items ti on i.templateid=ti.itemid left join hosts th on ti.hostid=th.hostid '.
 			' where '.implode(' and ', $where_case).' order by h.host,i.description,i.key_,i.itemid');
@@ -783,41 +783,35 @@ include_once "include/page_header.php";
 					"?group_itemid%5B%5D=".$db_item["itemid"].
 					"&group_task=".($db_item["status"] ? "Activate+selected" : "Disable+selected"),
 					item_status2style($db_item["status"])));
+
+			$stderr = "";
+			if (trim ($db_item["stderr"]) != "")
+			{
+				$stderr = "[".trim ($db_item["stderr"])."]";
+			}
 	
 			if($db_item["error"] == "")
 			{
-				$error=new CCol(SPACE,"off");
+				$error=new CCol($stderr,"off");
 			}
 			else
 			{
-				$error=new CCol($db_item["error"],"on");
+				$error=new CCol($db_item["error"].$stderr,"on");
 			}
 
 			$applications = $show_applications ? implode(', ', get_applications_by_itemid($db_item["itemid"], 'name')) : null;
 
-      $row_history_size =
-        $ROW_SIZE["HISTORY"][$db_item["value_type"]] *
-        $db_item["history"] *
-        3600 * 24 /
-        $db_item["delay"];
-      $query_history_size = $query_history_size + $row_history_size;
+			$row_history_size = $ROW_SIZE["HISTORY"][$db_item["value_type"]] * $db_item["history"] * 3600 * 24 / $db_item["delay"];
+			$query_history_size = $query_history_size + $row_history_size;
+			$row_trends_size = 0;
 
-      if ($db_item["value_type"] == ITEM_VALUE_TYPE_UINT64 ||
-        $db_item["value_type"] == ITEM_VALUE_TYPE_FLOAT) {
-
-        $row_trends_size =
-          $ROW_SIZE["TRENDS"] *
-          $db_item["trends"] *
-          3600 * 24 /
-          3600
-        ;
-      }
-      else {
-        $row_trends_size = 0;
-      }
-      $query_trends_size = $query_trends_size + $row_trends_size;
+			if ($db_item["value_type"] == ITEM_VALUE_TYPE_UINT64 || $db_item["value_type"] == ITEM_VALUE_TYPE_FLOAT) 
+			{
+				$row_trends_size = $ROW_SIZE["TRENDS"] * $db_item["trends"] * 3600 * 24 / 3600;
+			}
+			$query_trends_size = $query_trends_size + $row_trends_size;
 			
-      $chkBox = new CCheckBox("group_itemid[]",null,null,$db_item["itemid"]);
+			$chkBox = new CCheckBox("group_itemid[]",null,null,$db_item["itemid"]);
 			//if($db_item["templateid"] > 0) $chkBox->SetEnabled(false);
 			$table->AddRow(array(
 				$show_host ? $db_item['host'] : null,
@@ -850,10 +844,10 @@ include_once "include/page_header.php";
 
 		$form->AddItem($table);
 
-  	$table_sum  = new CTableInfo();
-    $table_sum->AddRow(new CCol("<strong>" . S_APPROX_HISTORY_SIZE . "</strong>: " . mem2str($query_history_size, 0) . " (+/- 10%)", "ccol"));
-    $table_sum->AddRow(new CCol("<strong>" . S_APPROX_TRENDS_SIZE . "</strong>: " . mem2str($query_trends_size, 0) . " (+/- 10%)", "ccol"));
-  	$form->AddItem($table_sum);
+		$table_sum  = new CTableInfo();
+		$table_sum->AddRow(new CCol("<strong>" . S_APPROX_HISTORY_SIZE . "</strong>: " . mem2str($query_history_size, 0) . " (+/- 10%)", "ccol"));
+		$table_sum->AddRow(new CCol("<strong>" . S_APPROX_TRENDS_SIZE . "</strong>: " . mem2str($query_trends_size, 0) . " (+/- 10%)", "ccol"));
+		$form->AddItem($table_sum);
 
 		$form->Show();
 	}
