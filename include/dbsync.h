@@ -554,6 +554,7 @@ static	ZBX_TABLE	tables[]={
 		{"delay_flex",	ZBX_TYPE_CHAR,	ZBX_SYNC},
 		{"params",	ZBX_TYPE_TEXT,	ZBX_SYNC},
 		{"siteid",	ZBX_TYPE_ID,	ZBX_SYNC},
+		{"stderr",	ZBX_TYPE_CHAR,	ZBX_SYNC},
 		{0}
 		}
 	},
