@@ -12,7 +12,7 @@ ZEND_DECLARE_MODULE_GLOBALS(zabbix)
 
 static zend_function_entry php_zabbix_functions[] = {
 	PHP_FE(zabbix_hfs_read, NULL)
-//	PHP_FE(zabbix_hfs_last, NULL)
+	PHP_FE(zabbix_hfs_last, NULL)
 	{NULL, NULL, NULL}
 };
 
@@ -100,6 +100,12 @@ PHP_FUNCTION(zabbix_hfs_read)
 	n = HFSread_item(ZABBIX_GLOBAL(hfs_base_dir), sizex, itemid, graph_from, graph_to, from, to, &res);
 
 	for (i = 0; i < n; i++) {
+		char *buf = NULL;
+		zval *max, *min, *avg;
+		MAKE_STD_ZVAL(max);
+		MAKE_STD_ZVAL(min);
+		MAKE_STD_ZVAL(avg);
+
 		MAKE_STD_ZVAL(z_obj);
 		object_init(z_obj);
 
@@ -109,15 +115,27 @@ PHP_FUNCTION(zabbix_hfs_read)
 		add_property_long (z_obj, "i",		res[i].group);
 
 		if (res[i].type == IT_DOUBLE) {
-			add_property_double (z_obj, "avg", res[i].avg.d);
-			add_property_double (z_obj, "max", res[i].max.d);
-			add_property_double (z_obj, "min", res[i].min.d);
+			ZVAL_DOUBLE(avg, res[i].avg.d);
+			ZVAL_DOUBLE(max, res[i].max.d);
+			ZVAL_DOUBLE(min, res[i].min.d);
 		}
 		else {
-			add_property_long   (z_obj, "avg", res[i].avg.l);
-			add_property_long   (z_obj, "max", res[i].max.l);
-			add_property_long   (z_obj, "min", res[i].min.l);
+			asprintf(&buf, "%lld", res[i].avg.l);
+			ZVAL_STRING(avg, buf, 1);
+			free(buf);
+
+			asprintf(&buf, "%lld", res[i].max.l);
+			ZVAL_STRING(max, buf, 1);
+			free(buf);
+
+			asprintf(&buf, "%lld", res[i].min.l);
+			ZVAL_STRING(min, buf, 1);
+			free(buf);
 		}
+
+		add_property_zval(z_obj, "avg", avg);
+		add_property_zval(z_obj, "max", max);
+		add_property_zval(z_obj, "min", min);
 
 		add_next_index_object(return_value, z_obj TSRMLS_CC);
 	}
@@ -125,15 +143,73 @@ PHP_FUNCTION(zabbix_hfs_read)
 }
 /* }}} */
 
+struct item {
+	item_type_t	type;
+	time_t		clock;
+	item_value_u	value;
+};
+
+struct items_array {
+	size_t count;
+	struct item *items;
+};
+
+read_count_fn_t
+hfs_last_functor (item_type_t type, item_value_u val, time_t timestamp, void *ptr)
+{
+	struct items_array *res = ptr;
+	struct item *elem = (res->items + res->count);
+
+	elem->type  = type;
+	elem->clock = timestamp;
+	elem->value = val;
+	res->count++;
+}
+
+
 /* {{{ proto array zabbix_hfs_last(int itemid, int count) */
-/*
 PHP_FUNCTION(zabbix_hfs_last)
 {
-	int count, itemid;
+	int i, count, itemid;
+	struct items_array res;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ll", &itemid, &count) == FAILURE)
 		RETURN_FALSE;
 
-//	foldl_count (hfs_base_dir, itemid, period, &sum, functor);
-}*/
+        if (array_init(return_value) == FAILURE)
+		RETURN_FALSE;
+
+	res.count = 0;
+
+	if ((res.items = malloc(sizeof(struct item) * count)) == NULL)
+		RETURN_FALSE;
+
+	if (HFSread_count(ZABBIX_GLOBAL(hfs_base_dir), itemid, count, &res, hfs_last_functor) != 0)
+		RETURN_FALSE;
+
+	for (i = 0; i < res.count; i++) {
+		char *buf = NULL;
+		struct item *elem = (res.items + i);
+		zval *z_obj, *value;
+
+		MAKE_STD_ZVAL(value);
+		MAKE_STD_ZVAL(z_obj);
+		object_init(z_obj);
+
+		if (elem->type == IT_DOUBLE) {
+			ZVAL_DOUBLE(value, elem->value.d);
+		}
+		else {
+			asprintf(&buf, "%lld", elem->value.l);
+			ZVAL_STRING(value, buf, 1);
+			free(buf);
+		}
+
+		add_property_long(z_obj, "clock", elem->clock);
+		add_property_zval(z_obj, "value", value);
+		add_next_index_object(return_value, z_obj TSRMLS_CC);
+	}
+
+	free(res.items);
+}
 /* }}} */
