@@ -466,23 +466,30 @@ include_once "include/page_header.php";
 			}
 
 COpt::profiling_start("history");
-			while($row=DBfetch($result))
+			$result = DBselect("select valuemapid from items where itemid=".$_REQUEST["itemid"]);
+			$valuemapid = DBfetch($result);
+
+			$arr = zabbix_hfs_last($_REQUEST["itemid"], 500);
+
+			foreach ($arr as $obj)
+				$obj->valuemapid = $valuemapid[0];
+
+			foreach ($arr as $obj)
 			{
-				
 				if($DB_TYPE == "ORACLE" && $item_type == ITEM_VALUE_TYPE_TEXT)
 				{
-					if(isset($row["value"]))
-						$row["value"] = $row["value"]->load();
+					if(isset($obj->value))
+						$obj->value = $obj->value->load();
 					else
-						$row["value"] = "";
+						$obj->value = "";
 				}
 
-				if($row["valuemapid"] > 0)
-					$value = replace_value_by_map($row["value"], $row["valuemapid"]);
+				if($obj->valuemapid > 0)
+					$value = replace_value_by_map($obj->value, $obj->valuemapid);
 				else
-					$value = $row["value"]; 
+					$value = $obj->value;
 
-				$new_row = array(date("Y.M.d H:i:s",$row["clock"]));
+				$new_row = array(date("Y.M.d H:i:s",$obj->clock));
 				if(in_array($item_type,array(ITEM_VALUE_TYPE_FLOAT,ITEM_VALUE_TYPE_UINT64)))
 				{
 					array_push($new_row,$value);
@@ -497,10 +504,12 @@ COpt::profiling_start("history");
 				}
 				else
 				{
-					echo date("Y-m-d H:i:s",$row["clock"]);
-					echo "\t".$row["clock"]."\t".$row["value"]."\n";
+					echo date("Y-m-d H:i:s",$obj->clock);
+					echo "\t".$obj->clock."\t".$obj->value."\n";
 				}
 			}
+			unset($arr);
+
 			if(!isset($_REQUEST["plaintext"]))
 				$table->ShowEnd();	// to solve memory leak we call 'Show' method by steps
 			else
