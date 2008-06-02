@@ -172,6 +172,9 @@ int	CONFIG_REFRESH_UNSUPPORTED	= 0;
 /* Zabbix server sturtup time */
 int     CONFIG_SERVER_STARTUP_TIME      = 0;
 
+/* Path to store History on disk (directory). If not specified, old DB engine used. */
+char	*CONFIG_HFS_PATH		= NULL;
+
 /******************************************************************************
  *                                                                            *
  * Function: init_config                                                      *
@@ -231,6 +234,7 @@ void	init_config(void)
 		{"ServerMode",&CONFIG_SERVER_MODE,0,TYPE_STRING,PARM_OPT,0,0},
 		{"ServerMasterIp",&CONFIG_MASTER_IP,0,TYPE_STRING,PARM_OPT,0,0},
 		{"ServerMasterPort",&CONFIG_MASTER_PORT,0,TYPE_INT,PARM_OPT,0,0},
+		{"ServerHistoryFSPath",&CONFIG_HFS_PATH,0,TYPE_STRING,PARM_OPT,0,0},
 		{0}
 	};
 
