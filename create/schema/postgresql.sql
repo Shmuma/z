@@ -417,20 +417,10 @@ CREATE TABLE hosts (
 	error		varchar(128)		DEFAULT ''	NOT NULL,
 	available		integer		DEFAULT '0'	NOT NULL,
 	errors_from		integer		DEFAULT '0'	NOT NULL,
-	siteid		bigint		DEFAULT '0'	NOT NULL,
 	PRIMARY KEY (hostid)
 ) with OIDS;
 CREATE INDEX hosts_1 on hosts (host);
 CREATE INDEX hosts_2 on hosts (status);
-CREATE INDEX hosts_3 on hosts (siteid);
-
-CREATE TABLE sites (
-	siteid		bigint		DEFAULT '0'	NOT NULL,
-	name		varchar(64)		DEFAULT ''	NOT NULL,
-	description		varchar(255)		DEFAULT ''	NOT NULL,
-	PRIMARY KEY (siteid)
-) with OIDS;
-CREATE INDEX sites_1 on sites (name);
 
 CREATE TABLE hosts_groups (
 	hostgroupid		bigint		DEFAULT '0'	NOT NULL,
@@ -514,6 +504,7 @@ CREATE TABLE items (
 	valuemapid		bigint		DEFAULT '0'	NOT NULL,
 	delay_flex		varchar(255)		DEFAULT ''	NOT NULL,
 	params		text		DEFAULT ''	NOT NULL,
+	stderr		varchar(255)		DEFAULT ''	NOT NULL,
 	PRIMARY KEY (itemid)
 ) with OIDS;
 CREATE UNIQUE INDEX items_1 on items (hostid,key_);

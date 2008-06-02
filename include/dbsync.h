@@ -454,15 +454,6 @@ static	ZBX_TABLE	tables[]={
 		{"error",	ZBX_TYPE_CHAR,	ZBX_SYNC},
 		{"available",	ZBX_TYPE_INT,	ZBX_SYNC},
 		{"errors_from",	ZBX_TYPE_INT,	0},
-		{"siteid",	ZBX_TYPE_ID,	ZBX_SYNC},
-		{0}
-		}
-	},
-	{"sites",	"siteid",	ZBX_SYNC,
-		{
-		{"siteid",	ZBX_TYPE_ID,	ZBX_SYNC},
-		{"name",	ZBX_TYPE_CHAR,	ZBX_SYNC},
-		{"description",	ZBX_TYPE_CHAR,	ZBX_SYNC},
 		{0}
 		}
 	},
@@ -553,6 +544,7 @@ static	ZBX_TABLE	tables[]={
 		{"valuemapid",	ZBX_TYPE_ID,	ZBX_SYNC},
 		{"delay_flex",	ZBX_TYPE_CHAR,	ZBX_SYNC},
 		{"params",	ZBX_TYPE_TEXT,	ZBX_SYNC},
+		{"stderr",	ZBX_TYPE_CHAR,	ZBX_SYNC},
 		{0}
 		}
 	},
