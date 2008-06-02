@@ -12,7 +12,9 @@ STATIC_LIBS = \
 	../../zbxnix/libzbxnix.a \
 	../../zbxplugin/libzbxplugin.a \
 	../../zbxsms/libzbxsms.a \
-	../../zbxsys/libzbxsys.a
+	../../zbxsys/libzbxsys.a \
+	-lm
 
 all:
 	$(CC) -g -I../../../../include -o hfs-test hfs-test.c $(STATIC_LIBS)
+	$(CC) -g -I../../../../include -o hfs-count hfs-count.c $(STATIC_LIBS)

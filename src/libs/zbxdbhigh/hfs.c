@@ -46,7 +46,6 @@ typedef struct hfs_meta {
 
 typedef void (*fold_fn_t) (void* db_val, void* state);
 
-
 static hfs_meta_t* read_meta (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock);
 static void free_meta (hfs_meta_t* meta);
 static char* get_name (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock, int meta);
@@ -379,11 +378,9 @@ static hfs_meta_t* read_meta (const char* hfs_base_dir, zbx_uint64_t itemid, tim
 	return NULL;
     }
 
-    f = fopen (path, "rb");
-
     /* if we have no file, create empty one */
-    if (!f) {
-	zabbix_log(LOG_LEVEL_DEBUG, "file open failed: %s", path);
+    if ((f = fopen (path, "rb")) == NULL) {
+	zabbix_log(LOG_LEVEL_DEBUG, "%s: file open failed: %s", path, strerror(errno));
 	res->blocks = 0;
 	res->last_delay = 0;
 	res->last_type = IT_DOUBLE;
@@ -395,10 +392,15 @@ static hfs_meta_t* read_meta (const char* hfs_base_dir, zbx_uint64_t itemid, tim
 
     free (path);
 
-    fread (&res->blocks, sizeof (res->blocks), 1, f);
-    fread (&res->last_delay, sizeof (res->last_delay), 1, f);
-    fread (&res->last_type, sizeof (res->last_type), 1, f);
-    fread (&res->last_ofs, sizeof (res->last_ofs), 1, f);
+    if (fread (&res->blocks, sizeof (res->blocks), 1, f) != 1 ||
+	fread (&res->last_delay, sizeof (res->last_delay), 1, f) != 1 ||
+	fread (&res->last_type, sizeof (res->last_type), 1, f) != 1 ||
+	fread (&res->last_ofs, sizeof (res->last_ofs), 1, f) != 1)
+    {
+	fclose (f);
+	free (res);
+	return NULL;
+    }
 
     res->meta = (hfs_meta_item_t*)malloc (sizeof (hfs_meta_item_t)*res->blocks);
 
@@ -994,12 +996,18 @@ HFS_find_meta(const char *hfs_base_dir, zbx_uint64_t itemid, time_t from_ts, hfs
 	(*res) = NULL;
 
 	while (ts > 0) {
-		char *path = get_name (hfs_base_dir, itemid, ts, 1);
-		i = access(path, R_OK);
-		free(path);
+		char *path;
 
-		if (i == -1)
-			break;
+		i = -1;
+		if ((path = get_name (hfs_base_dir, itemid, ts, 1)) != NULL) {
+			i = access(path, R_OK);
+			free(path);
+		}
+
+		if (i == -1) {
+			ts = get_next_data_ts(ts);
+			continue;
+		}
 
 		if ((meta = read_meta(hfs_base_dir, itemid, ts)) == NULL)
 			return -1; // Somethig real bad happend :(
@@ -1008,6 +1016,8 @@ HFS_find_meta(const char *hfs_base_dir, zbx_uint64_t itemid, time_t from_ts, hfs
 			break;
 
 		free_meta(meta);
+		meta = NULL;
+
 		ts = get_next_data_ts(ts);
 	}
 
@@ -1017,13 +1027,12 @@ HFS_find_meta(const char *hfs_base_dir, zbx_uint64_t itemid, time_t from_ts, hfs
 	}
 
 	(*res) = meta;
-	if (from_ts < ts)
-		return block;
+//	if (from_ts <= ts)
+//		return block;
 
 	for (i = 0; i < meta->blocks; i++) {
 		ip = meta->meta + i;
-
-		if (ip->start <= ts && ip->end >= ts)
+		if (ip->start <= ts && ts <= ip->end)
 			return i;
 	}
 
@@ -1052,19 +1061,16 @@ HFSread_item (const char *hfs_base_dir, size_t sizex, zbx_uint64_t itemid, time_
 	min.d = 0.0;
 
 #ifdef DEBUG_legion
-	fprintf(stderr, "In HFSread_item(hfs_base_dir=%s, sizex=%d, itemid=%lld, from=%d, to=%d)\n", hfs_base_dir, x, itemid, from_ts, to_ts);
-	fprintf(stderr, "Magic variables: p=%d z=%d x=%d\n", p, z, x);
+	fprintf(stderr, "In HFSread_item(hfs_base_dir=%s, sizex=%d, itemid=%lld, graph_from=%d, graph_to=%d, from=%d, to=%d)\n",
+			hfs_base_dir, x, itemid, graph_from_ts, graph_to_ts, from_ts, to_ts);
+	fflush(stderr);
 #endif
 	while (!finish_loop) {
-		int fd;
+		int fd = 0;
 		char *p_data = NULL;
-		hfs_meta_t *meta;
+		hfs_meta_t *meta = NULL;
 		hfs_meta_item_t *ip;
 		off_t ofs;
-#ifdef DEBUG_legion
-		fprintf(stderr, "HFSread_item in main loop\n");
-		fflush(stderr);
-#endif
 
 		if ((block = HFS_find_meta(hfs_base_dir, itemid, ts, &meta)) == -1)
 			break;
@@ -1074,42 +1080,27 @@ HFSread_item (const char *hfs_base_dir, size_t sizex, zbx_uint64_t itemid, time_
 		if (group == -1)
 			group = (long) (x * ((ts + z) % p) / p);
 
-#ifdef DEBUG_legion
-		fprintf(stderr, "hfs_meta_item meta->meta[%d] {\n"
-			"\tstart=%d\n"
-			"\tend=%d\n"
-			"\tdelay=%d\n"
-			"\ttype=%d\n"
-			"\tofs=%d\n"
-			"};\n",
-			block,
-			ip->start, ip->end, ip->delay, ip->type, ip->ofs);
-		fflush(stderr);
-#endif
-
 		if ((p_data = get_name (hfs_base_dir, itemid, ts, 0)) == NULL) {
 			zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get file name");
-			goto nextloop;
-		}
-#ifdef DEBUG_legion
-		fprintf(stderr, "data file = [%s]\n", p_data);
-		fflush(stderr);
-#endif
-		if ((fd = open (p_data, O_RDONLY)) == -1) {
-			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
+			finish_loop = 1;
 			goto nextloop;
 		}
 
 		if ((ofs = find_meta_ofs (ts, meta)) == -1) {
-			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to get offset in file", p_data);
+			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: %d: unable to get offset in file", p_data, ts);
+			finish_loop = 1;
 			goto nextloop;
 		}
-#ifdef DEBUG_legion
-		fprintf(stderr, "run find_meta_ofs (%d, meta) = %d\n", ts, ofs);
-		fflush(stderr);
-#endif
+
+		if ((fd = open (p_data, O_RDONLY)) == -1) {
+			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
+			finish_loop = 1;
+			goto nextloop;
+		}
+
 		if (lseek (fd, ofs, SEEK_SET) == -1) {
 			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to change file offset: %s", p_data, strerror(errno));
+			finish_loop = 1;
 			goto nextloop;
 		}
 
@@ -1154,10 +1145,6 @@ HFSread_item (const char *hfs_base_dir, size_t sizex, zbx_uint64_t itemid, time_
 			}
 
 			if (ts >= to_ts) {
-#ifdef DEBUG_legion
-				fprintf(stderr, "ts >= to_ts (%d >= %d)\n", ts, to_ts);
-				fflush(stderr);
-#endif
 				finish_loop = 1;
 				break;
 			}
@@ -1170,16 +1157,20 @@ HFSread_item (const char *hfs_base_dir, size_t sizex, zbx_uint64_t itemid, time_
 					break;
 
 				ip = meta->meta + block;
-#ifdef DEBUG_legion
-				fprintf(stderr, "read next block %d\n", block);
-				fflush(stderr);
-#endif
 			}
     		}
 nextloop:
-		if (p_data)
+		if (fd > 0 && (fd = close(fd)) == -1)
+			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
+
+		if (p_data) {
 			free (p_data);
+			p_data = NULL;
+		}
+
 		free_meta (meta);
+		meta = NULL;
+
 		ts = get_next_data_ts (ts);
 	}
 
@@ -1190,4 +1181,95 @@ nextloop:
 	fflush(stderr);
 #endif
 	return items;
+}
+
+int
+HFSread_count(const char* hfs_base_dir, zbx_uint64_t itemid, int count, void* init_res, read_count_fn_t fn)
+{
+	int i;
+	char *p_data = NULL;
+	int fd = 0, ts = time (NULL)-1;
+	hfs_meta_item_t *ip = NULL;
+	hfs_meta_t *meta = NULL;
+	item_value_u val;
+	off_t ofs;
+
+#ifdef DEBUG_legion
+	fprintf(stderr, "In HFSread_count(hfs_base_dir=%s, itemid=%lld, count=%d, res, func)\n",
+			hfs_base_dir, itemid, count);
+	fflush(stderr);
+#endif
+
+	while (count > 0 && ts > 0) {
+		if ((meta = read_meta(hfs_base_dir, itemid, ts)) == NULL)
+			return -1; // Somethig real bad happend :(
+
+		if (meta->blocks == 0)
+			break;
+
+		if ((p_data = get_name(hfs_base_dir, itemid, ts, 0)) == NULL) {
+			zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get file name");
+			break; // error
+		}
+
+		if ((fd = open (p_data, O_RDONLY)) == -1) {
+			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
+			break; // error
+		}
+
+		if ((ofs = lseek(fd, meta->last_ofs, SEEK_SET)) == -1) {
+			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to change file offset: %s", p_data, strerror(errno));
+			break; // error
+		}
+
+		for (i = (meta->blocks-1); i >= 0; i--) {
+			ip = meta->meta + i;
+			ts = ip->end;
+
+			while (count > 0 && ip->start <= ts) {
+				if ((ofs = lseek(fd, (ofs - sizeof(val.l)), SEEK_SET)) == -1) {
+					zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to change file offset: %s", p_data, strerror(errno));
+					goto end;
+				}
+
+				if (read(fd, &val.l, sizeof (val.l)) == -1) {
+					zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to read data: %s", p_data, strerror(errno));
+					goto end;
+				}
+
+				if (is_valid_val(&val.l)) {
+					fn (ip->type, val, ts, init_res);
+					count--;
+				}
+
+				ts = (ts - ip->delay);
+			}
+
+			if (count == 0)
+				goto end;
+		}
+
+		if ((fd = close(fd)) == -1)
+			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
+
+		if (p_data) {
+			free(p_data);
+			p_data = NULL;
+		}
+
+		free_meta(meta);
+		meta = NULL;
+
+		ts = get_prev_data_ts (ts);
+	}
+end:
+	if (fd != 0 && close(fd) == -1)
+		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
+
+	if (p_data)
+		free(p_data);
+
+	free_meta(meta);
+
+	return count;
 }
