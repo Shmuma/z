@@ -43,40 +43,40 @@ typedef struct hfs_item_value {
 
 typedef void (*read_count_fn_t) (item_type_t type, item_value_u val, time_t timestamp, void *res);
 
-void		HFSadd_history (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, double value, int clock);
-void		HFSadd_history_uint (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, int clock);
-size_t		HFSread_item (const char* hfs_base_dir, size_t x, zbx_uint64_t itemid, time_t graph_from, time_t graph_to, time_t from, time_t to, hfs_item_value_t **result);
-int		HFSread_count(const char* hfs_base_dir, zbx_uint64_t itemid, int count, void* init_res, read_count_fn_t fn);
+void		HFSadd_history (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, double value, int clock);
+void		HFSadd_history_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, int clock);
+size_t		HFSread_item (const char* hfs_base_dir, const char* siteid, size_t x, zbx_uint64_t itemid, time_t graph_from, time_t graph_to, time_t from, time_t to, hfs_item_value_t **result);
+int		HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, void* init_res, read_count_fn_t fn);
 
 
-zbx_uint64_t	HFS_get_count (const char* hfs_base_dir, zbx_uint64_t itemid, int from);
-zbx_uint64_t	HFS_get_count_u64_eq (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
-zbx_uint64_t	HFS_get_count_u64_ne (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
-zbx_uint64_t	HFS_get_count_u64_gt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
-zbx_uint64_t	HFS_get_count_u64_lt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
-zbx_uint64_t	HFS_get_count_u64_ge (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
-zbx_uint64_t	HFS_get_count_u64_le (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value);
+zbx_uint64_t	HFS_get_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from);
+zbx_uint64_t	HFS_get_count_u64_eq (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, zbx_uint64_t value);
+zbx_uint64_t	HFS_get_count_u64_ne (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, zbx_uint64_t value);
+zbx_uint64_t	HFS_get_count_u64_gt (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, zbx_uint64_t value);
+zbx_uint64_t	HFS_get_count_u64_lt (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, zbx_uint64_t value);
+zbx_uint64_t	HFS_get_count_u64_ge (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, zbx_uint64_t value);
+zbx_uint64_t	HFS_get_count_u64_le (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, zbx_uint64_t value);
 
-zbx_uint64_t	HFS_get_count_float_eq (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
-zbx_uint64_t	HFS_get_count_float_ne (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
-zbx_uint64_t	HFS_get_count_float_gt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
-zbx_uint64_t	HFS_get_count_float_lt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
-zbx_uint64_t	HFS_get_count_float_ge (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
-zbx_uint64_t	HFS_get_count_float_le (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value);
+zbx_uint64_t	HFS_get_count_float_eq (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, double value);
+zbx_uint64_t	HFS_get_count_float_ne (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, double value);
+zbx_uint64_t	HFS_get_count_float_gt (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, double value);
+zbx_uint64_t	HFS_get_count_float_lt (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, double value);
+zbx_uint64_t	HFS_get_count_float_ge (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, double value);
+zbx_uint64_t	HFS_get_count_float_le (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, double value);
 
-zbx_uint64_t	HFS_get_sum_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
-double		HFS_get_sum_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
+zbx_uint64_t	HFS_get_sum_u64 (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds);
+double		HFS_get_sum_float (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds);
 
-double		HFS_get_avg_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
-double		HFS_get_avg_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
+double		HFS_get_avg_u64 (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds);
+double		HFS_get_avg_float (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds);
 
-zbx_uint64_t	HFS_get_min_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
-double		HFS_get_min_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
+zbx_uint64_t	HFS_get_min_u64 (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds);
+double		HFS_get_min_float (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds);
 
-zbx_uint64_t	HFS_get_max_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
-double		HFS_get_max_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
+zbx_uint64_t	HFS_get_max_u64 (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds);
+double		HFS_get_max_float (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds);
 
-zbx_uint64_t	HFS_get_delta_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
-double		HFS_get_delta_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds);
+zbx_uint64_t	HFS_get_delta_u64 (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds);
+double		HFS_get_delta_float (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds);
 
 #endif

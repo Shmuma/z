@@ -471,7 +471,7 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 				{
 					if(GET_UI64_RESULT(value))
 						if (CONFIG_HFS_PATH)
-							HFSadd_history_uint (CONFIG_HFS_PATH, item->itemid, item->delay, value->ui64, now);
+							HFSadd_history_uint (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay, value->ui64, now);
 						else
 							DBadd_history_uint(item->itemid,value->ui64,now);
 				}
@@ -479,7 +479,7 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 				{
 				    if(GET_DBL_RESULT(value))
 					if (CONFIG_HFS_PATH)
-						HFSadd_history (CONFIG_HFS_PATH, item->itemid, item->delay, value->dbl, now);
+						HFSadd_history (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay, value->dbl, now);
 					else
 						DBadd_history(item->itemid,value->dbl,now);
 				}
@@ -493,7 +493,7 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 					if(GET_DBL_RESULT(value) && (item->prevorgvalue_null == 0) && (item->prevorgvalue_dbl <= value->dbl) && (now != item->lastclock))
 					{
 						if (CONFIG_HFS_PATH)
-							HFSadd_history (CONFIG_HFS_PATH, item->itemid, item->delay, 
+							HFSadd_history (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay, 
 								(value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock), now);
 						else
 							DBadd_history(
@@ -507,7 +507,7 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 					if(GET_UI64_RESULT(value) && (item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= value->ui64) && (now != item->lastclock))
 					{
 						if (CONFIG_HFS_PATH)
-							HFSadd_history_uint (CONFIG_HFS_PATH, item->itemid, item->delay, 
+							HFSadd_history_uint (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay, 
 								(value->ui64 - item->prevorgvalue_uint64)/(now-item->lastclock), now);
 						else
 							DBadd_history_uint(
@@ -526,7 +526,7 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 					if(GET_DBL_RESULT(value) && (item->prevorgvalue_null == 0) && (item->prevorgvalue_dbl <= value->dbl) )
 					{
 						if (CONFIG_HFS_PATH)
-							HFSadd_history (CONFIG_HFS_PATH, item->itemid, item->delay, value->dbl-item->prevorgvalue_dbl, now);
+							HFSadd_history (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay, value->dbl-item->prevorgvalue_dbl, now);
 						else
 							DBadd_history(item->itemid, (value->dbl - item->prevorgvalue_dbl), now);
 					}
@@ -536,7 +536,7 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 					if(GET_UI64_RESULT(value) && (item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= value->ui64) )
 					{
 						if (CONFIG_HFS_PATH)
-							HFSadd_history_uint (CONFIG_HFS_PATH, item->itemid, item->delay, 
+							HFSadd_history_uint (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay, 
 								value->ui64-item->prevorgvalue_uint64, now);
 						else
 							DBadd_history_uint(item->itemid, value->ui64 - item->prevorgvalue_uint64, now);

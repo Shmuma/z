@@ -1706,6 +1706,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 /*	item->valuemapid=atoi(row[34]); */
 	item->delay_flex=row[35];
 	item->host_dns=row[36];
+	item->siteid=row[37];
 }
 
 /*

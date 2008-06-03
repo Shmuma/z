@@ -46,29 +46,29 @@ typedef struct hfs_meta {
 
 typedef void (*fold_fn_t) (void* db_val, void* state);
 
-static hfs_meta_t* read_meta (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock);
+static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock);
 static void free_meta (hfs_meta_t* meta);
-static char* get_name (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock, int meta);
-static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len, item_type_t type);
+static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int meta);
+static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len, item_type_t type);
 static off_t find_meta_ofs (int time, hfs_meta_t* meta);
 static int get_next_data_ts (int ts);
 static int get_prev_data_ts (int ts);
-static void foldl_time (const char* hfs_base_dir, zbx_uint64_t itemid, int ts, void* init_res, fold_fn_t fn);
-static void foldl_count (const char* hfs_base_dir, zbx_uint64_t itemid, int count, void* init_res, fold_fn_t fn);
+static void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int ts, void* init_res, fold_fn_t fn);
+static void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, void* init_res, fold_fn_t fn);
 static int is_valid_val (void* val);
 
 
 /*
   Routine adds double value to HistoryFS storage.
 */
-void HFSadd_history (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, double value, int clock)
+void HFSadd_history (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, double value, int clock)
 {
     zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_history()");
-    store_value (hfs_base_dir, itemid, clock, delay, &value, sizeof (double), IT_DOUBLE);
+    store_value (hfs_base_dir, siteid, itemid, clock, delay, &value, sizeof (double), IT_DOUBLE);
 }
 
 
-static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len, item_type_t type)
+static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len, item_type_t type)
 {
     char *p_meta, *p_data;
     hfs_meta_item_t item, *ip;
@@ -80,10 +80,10 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
 
     zabbix_log(LOG_LEVEL_DEBUG, "HFS: store_value()");
 
-    p_meta = get_name (hfs_base_dir, itemid, clock, 1);
-    p_data = get_name (hfs_base_dir, itemid, clock, 0);
+    p_meta = get_name (hfs_base_dir, siteid, itemid, clock, 1);
+    p_data = get_name (hfs_base_dir, siteid, itemid, clock, 0);
 
-    meta = read_meta (hfs_base_dir, itemid, clock);
+    meta = read_meta (hfs_base_dir, siteid, itemid, clock);
 
     make_directories (p_meta);
     zabbix_log(LOG_LEVEL_DEBUG, "HFS: meta read: delays: %d %d, blocks %d, ofs %u", meta->last_delay, delay, meta->blocks, meta->last_ofs);
@@ -208,10 +208,10 @@ static int store_value (const char* hfs_base_dir, zbx_uint64_t itemid, time_t cl
 /*
   Routine adds uint64 value to HistoryFS storage.
 */
-void HFSadd_history_uint (const char* hfs_base_dir, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, int clock)
+void HFSadd_history_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, int clock)
 {
     zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_history()");
-    store_value (hfs_base_dir, itemid, clock, delay, &value, sizeof (zbx_uint64_t), IT_UINT64);
+    store_value (hfs_base_dir, siteid, itemid, clock, delay, &value, sizeof (zbx_uint64_t), IT_UINT64);
 }
 
 
@@ -273,7 +273,7 @@ static int make_directories (const char* path)
 /*
   Performs folding of values of historical data into some state. We filter values according to time.
 */
-static void foldl_time (const char* hfs_base_dir, zbx_uint64_t itemid, int ts, void* init_res, fold_fn_t fn)
+static void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int ts, void* init_res, fold_fn_t fn)
 {
     char *p_data;
     hfs_meta_t* meta;
@@ -284,7 +284,7 @@ static void foldl_time (const char* hfs_base_dir, zbx_uint64_t itemid, int ts, v
     zabbix_log(LOG_LEVEL_DEBUG, "HFS_foldl_time (%s, %llu, %u)", hfs_base_dir, itemid, ts);
 
     while (1) {
-	meta = read_meta (hfs_base_dir, itemid, ts);
+	meta = read_meta (hfs_base_dir, siteid, itemid, ts);
 
 	if (!meta)
 	    break;
@@ -299,7 +299,7 @@ static void foldl_time (const char* hfs_base_dir, zbx_uint64_t itemid, int ts, v
 	zabbix_log(LOG_LEVEL_DEBUG, "Offset for TS %u is %u (%x) (%u)", ts, ofs, ofs, time(NULL)-ts);
 
 	/* open data file and count amount of valid items */
-	p_data = get_name (hfs_base_dir, itemid, ts, 0);
+	p_data = get_name (hfs_base_dir, siteid, itemid, ts, 0);
 	fd = open (p_data, O_RDONLY);
 
 	if (fd != -1) {
@@ -320,7 +320,7 @@ static void foldl_time (const char* hfs_base_dir, zbx_uint64_t itemid, int ts, v
 /*
   Performs folding of values of historical data into some state. We filter values according to count of values.
 */
-static void foldl_count (const char* hfs_base_dir, zbx_uint64_t itemid, int count, void* init_res, fold_fn_t fn)
+static void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, void* init_res, fold_fn_t fn)
 {
     char *p_data;
     int fd, ts = time (NULL)-1;
@@ -330,7 +330,7 @@ static void foldl_count (const char* hfs_base_dir, zbx_uint64_t itemid, int coun
     zabbix_log(LOG_LEVEL_DEBUG, "HFS_foldl_count (%s, %llu, %u)", hfs_base_dir, itemid, count);
 
     while (count > 0) {
-	p_data = get_name (hfs_base_dir, itemid, ts, 0);
+	p_data = get_name (hfs_base_dir, siteid, itemid, ts, 0);
 	fd = open (p_data, O_RDONLY);
 
 	if (fd < 0)
@@ -362,9 +362,9 @@ static int is_valid_val (void* val)
 }
 
 
-static hfs_meta_t* read_meta (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock)
+static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock)
 {
-    char* path = get_name (hfs_base_dir, itemid, clock, 1);
+    char* path = get_name (hfs_base_dir, siteid, itemid, clock, 1);
     hfs_meta_t* res;
     FILE* f;
 
@@ -430,17 +430,17 @@ static void free_meta (hfs_meta_t* meta)
 }
 
 
-static char* get_name (const char* hfs_base_dir, zbx_uint64_t itemid, time_t clock, int meta)
+static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int meta)
 {
     char* res;
-    int len = strlen (hfs_base_dir) + 100;
+    int len = strlen (hfs_base_dir) + strlen (siteid) + 100;
 
     res = (char*)malloc (len);
 
     if (!res)
 	return NULL;
 
-    zbx_snprintf (res, len, "%s/%llu/%u.%s", hfs_base_dir, itemid, (unsigned int)(clock / (time_t)1000000),
+    zbx_snprintf (res, len, "%s/%s/%llu/%u.%s", hfs_base_dir, siteid, itemid, (unsigned int)(clock / (time_t)1000000),
 		  meta ? "meta" : "data");
 
     return res;
@@ -483,7 +483,7 @@ static int get_prev_data_ts (int ts)
 }
 
 
-zbx_uint64_t HFS_get_count (const char* hfs_base_dir, zbx_uint64_t itemid, int from)
+zbx_uint64_t HFS_get_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from)
 {
     void functor (void* db, void* state)
     {
@@ -492,12 +492,12 @@ zbx_uint64_t HFS_get_count (const char* hfs_base_dir, zbx_uint64_t itemid, int f
     }
 
     zbx_uint64_t val = 0;
-    foldl_time (hfs_base_dir, itemid, from, &val, functor);
+    foldl_time (hfs_base_dir, siteid, itemid, from, &val, functor);
     return val;
 }
 
 
-zbx_uint64_t HFS_get_count_u64_eq (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
+zbx_uint64_t HFS_get_count_u64_eq (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, zbx_uint64_t value)
 {
     typedef struct {
 	zbx_uint64_t val, count;
@@ -513,12 +513,12 @@ zbx_uint64_t HFS_get_count_u64_eq (const char* hfs_base_dir, zbx_uint64_t itemid
     state.val = value;
     state.count = 0;
 
-    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    foldl_time (hfs_base_dir, siteid, itemid, from, &state, functor);
     return state.count;
 }
 
 
-zbx_uint64_t HFS_get_count_u64_ne (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
+zbx_uint64_t HFS_get_count_u64_ne (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, zbx_uint64_t value)
 {
     typedef struct {
 	zbx_uint64_t val, count;
@@ -534,12 +534,12 @@ zbx_uint64_t HFS_get_count_u64_ne (const char* hfs_base_dir, zbx_uint64_t itemid
     state.val = value;
     state.count = 0;
 
-    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    foldl_time (hfs_base_dir, siteid, itemid, from, &state, functor);
     return state.count;
 }
 
 
-zbx_uint64_t HFS_get_count_u64_gt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
+zbx_uint64_t HFS_get_count_u64_gt (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, zbx_uint64_t value)
 {
     typedef struct {
 	zbx_uint64_t val, count;
@@ -555,12 +555,12 @@ zbx_uint64_t HFS_get_count_u64_gt (const char* hfs_base_dir, zbx_uint64_t itemid
     state.val = value;
     state.count = 0;
 
-    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    foldl_time (hfs_base_dir, siteid, itemid, from, &state, functor);
     return state.count;
 }
 
 
-zbx_uint64_t HFS_get_count_u64_lt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
+zbx_uint64_t HFS_get_count_u64_lt (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, zbx_uint64_t value)
 {
     typedef struct {
 	zbx_uint64_t val, count;
@@ -576,12 +576,12 @@ zbx_uint64_t HFS_get_count_u64_lt (const char* hfs_base_dir, zbx_uint64_t itemid
     state.val = value;
     state.count = 0;
 
-    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    foldl_time (hfs_base_dir, siteid, itemid, from, &state, functor);
     return state.count;
 }
 
 
-zbx_uint64_t HFS_get_count_u64_ge (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
+zbx_uint64_t HFS_get_count_u64_ge (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, zbx_uint64_t value)
 {
     typedef struct {
 	zbx_uint64_t val, count;
@@ -597,12 +597,12 @@ zbx_uint64_t HFS_get_count_u64_ge (const char* hfs_base_dir, zbx_uint64_t itemid
     state.val = value;
     state.count = 0;
 
-    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    foldl_time (hfs_base_dir, siteid, itemid, from, &state, functor);
     return state.count;
 }
 
 
-zbx_uint64_t HFS_get_count_u64_le (const char* hfs_base_dir, zbx_uint64_t itemid, int from, zbx_uint64_t value)
+zbx_uint64_t HFS_get_count_u64_le (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, zbx_uint64_t value)
 {
     typedef struct {
 	zbx_uint64_t val, count;
@@ -618,12 +618,12 @@ zbx_uint64_t HFS_get_count_u64_le (const char* hfs_base_dir, zbx_uint64_t itemid
     state.val = value;
     state.count = 0;
 
-    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    foldl_time (hfs_base_dir, siteid, itemid, from, &state, functor);
     return state.count;
 }
 
 
-zbx_uint64_t HFS_get_count_float_eq (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value)
+zbx_uint64_t HFS_get_count_float_eq (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, double value)
 {
     typedef struct {
 	double val;
@@ -640,12 +640,12 @@ zbx_uint64_t HFS_get_count_float_eq (const char* hfs_base_dir, zbx_uint64_t item
     state.val = value;
     state.count = 0;
 
-    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    foldl_time (hfs_base_dir, siteid, itemid, from, &state, functor);
     return state.count;
 }
 
 
-zbx_uint64_t HFS_get_count_float_ne (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value)
+zbx_uint64_t HFS_get_count_float_ne (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, double value)
 {
     typedef struct {
 	double val;
@@ -662,12 +662,12 @@ zbx_uint64_t HFS_get_count_float_ne (const char* hfs_base_dir, zbx_uint64_t item
     state.val = value;
     state.count = 0;
 
-    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    foldl_time (hfs_base_dir, siteid, itemid, from, &state, functor);
     return state.count;
 }
 
 
-zbx_uint64_t HFS_get_count_float_gt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value)
+zbx_uint64_t HFS_get_count_float_gt (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, double value)
 {
     typedef struct {
 	double val;
@@ -684,12 +684,12 @@ zbx_uint64_t HFS_get_count_float_gt (const char* hfs_base_dir, zbx_uint64_t item
     state.val = value;
     state.count = 0;
 
-    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    foldl_time (hfs_base_dir, siteid, itemid, from, &state, functor);
     return state.count;
 }
 
 
-zbx_uint64_t HFS_get_count_float_lt (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value)
+zbx_uint64_t HFS_get_count_float_lt (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, double value)
 {
     typedef struct {
 	double val;
@@ -706,12 +706,12 @@ zbx_uint64_t HFS_get_count_float_lt (const char* hfs_base_dir, zbx_uint64_t item
     state.val = value;
     state.count = 0;
 
-    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    foldl_time (hfs_base_dir, siteid, itemid, from, &state, functor);
     return state.count;
 }
 
 
-zbx_uint64_t HFS_get_count_float_ge (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value)
+zbx_uint64_t HFS_get_count_float_ge (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, double value)
 {
     typedef struct {
 	double val;
@@ -728,12 +728,12 @@ zbx_uint64_t HFS_get_count_float_ge (const char* hfs_base_dir, zbx_uint64_t item
     state.val = value;
     state.count = 0;
 
-    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    foldl_time (hfs_base_dir, siteid, itemid, from, &state, functor);
     return state.count;
 }
 
 
-zbx_uint64_t HFS_get_count_float_le (const char* hfs_base_dir, zbx_uint64_t itemid, int from, double value)
+zbx_uint64_t HFS_get_count_float_le (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, double value)
 {
     typedef struct {
 	double val;
@@ -750,12 +750,12 @@ zbx_uint64_t HFS_get_count_float_le (const char* hfs_base_dir, zbx_uint64_t item
     state.val = value;
     state.count = 0;
 
-    foldl_time (hfs_base_dir, itemid, from, &state, functor);
+    foldl_time (hfs_base_dir, siteid, itemid, from, &state, functor);
     return state.count;
 }
 
 
-zbx_uint64_t HFS_get_sum_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
+zbx_uint64_t HFS_get_sum_u64 (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds)
 {
     void functor (void* db, void* state)
     {
@@ -766,15 +766,15 @@ zbx_uint64_t HFS_get_sum_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int
     zbx_uint64_t sum = 0;
 
     if (seconds)
-	foldl_time (hfs_base_dir, itemid, period, &sum, functor);
+	foldl_time (hfs_base_dir, siteid, itemid, period, &sum, functor);
     else
-	foldl_count (hfs_base_dir, itemid, period, &sum, functor);
+	foldl_count (hfs_base_dir, siteid, itemid, period, &sum, functor);
 
     return sum;
 }
 
 
-double HFS_get_sum_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
+double HFS_get_sum_float (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds)
 {
     void functor (void* db, void* state)
     {
@@ -785,15 +785,15 @@ double HFS_get_sum_float (const char* hfs_base_dir, zbx_uint64_t itemid, int per
     double sum = 0;
 
     if (seconds)
-	foldl_time (hfs_base_dir, itemid, period, &sum, functor);
+	foldl_time (hfs_base_dir, siteid, itemid, period, &sum, functor);
     else
-	foldl_count (hfs_base_dir, itemid, period, &sum, functor);
+	foldl_count (hfs_base_dir, siteid, itemid, period, &sum, functor);
 
     return sum;
 }
 
 
-double HFS_get_avg_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
+double HFS_get_avg_u64 (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds)
 {
     typedef struct {
 	zbx_uint64_t count, sum;
@@ -811,15 +811,15 @@ double HFS_get_avg_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int perio
     state.sum = state.count = 0;
 
     if (seconds)
-	foldl_time (hfs_base_dir, itemid, period, &state, functor);
+	foldl_time (hfs_base_dir, siteid, itemid, period, &state, functor);
     else
-	foldl_count (hfs_base_dir, itemid, period, &state, functor);
+	foldl_count (hfs_base_dir, siteid, itemid, period, &state, functor);
 
     return (double)state.sum / (double)state.count;
 }
 
 
-double HFS_get_avg_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
+double HFS_get_avg_float (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds)
 {
     typedef struct {
 	zbx_uint64_t count;
@@ -838,15 +838,15 @@ double HFS_get_avg_float (const char* hfs_base_dir, zbx_uint64_t itemid, int per
     state.sum = state.count = 0;
 
     if (seconds)
-	foldl_time (hfs_base_dir, itemid, period, &state, functor);
+	foldl_time (hfs_base_dir, siteid, itemid, period, &state, functor);
     else
-	foldl_count (hfs_base_dir, itemid, period, &state, functor);
+	foldl_count (hfs_base_dir, siteid, itemid, period, &state, functor);
 
     return (double)state.sum / (double)state.count;
 }
 
 
-zbx_uint64_t HFS_get_min_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
+zbx_uint64_t HFS_get_min_u64 (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds)
 {
     void functor (void* db, void* state)
     {
@@ -858,15 +858,15 @@ zbx_uint64_t HFS_get_min_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int
     zbx_uint64_t min = ULLONG_MAX;
 
     if (seconds)
-	foldl_time (hfs_base_dir, itemid, period, &min, functor);
+	foldl_time (hfs_base_dir, siteid, itemid, period, &min, functor);
     else
-	foldl_count (hfs_base_dir, itemid, period, &min, functor);
+	foldl_count (hfs_base_dir, siteid, itemid, period, &min, functor);
 
     return min;
 }
 
 
-double HFS_get_min_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
+double HFS_get_min_float (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds)
 {
     void functor (void* db, void* state)
     {
@@ -878,15 +878,15 @@ double HFS_get_min_float (const char* hfs_base_dir, zbx_uint64_t itemid, int per
     double min = 1e300;
 
     if (seconds)
-	foldl_time (hfs_base_dir, itemid, period, &min, functor);
+	foldl_time (hfs_base_dir, siteid, itemid, period, &min, functor);
     else
-	foldl_count (hfs_base_dir, itemid, period, &min, functor);
+	foldl_count (hfs_base_dir, siteid, itemid, period, &min, functor);
 
     return min;
 }
 
 
-zbx_uint64_t HFS_get_max_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
+zbx_uint64_t HFS_get_max_u64 (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds)
 {
     void functor (void* db, void* state)
     {
@@ -898,15 +898,15 @@ zbx_uint64_t HFS_get_max_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int
     zbx_uint64_t max = 0;
 
     if (seconds)
-	foldl_time (hfs_base_dir, itemid, period, &max, functor);
+	foldl_time (hfs_base_dir, siteid, itemid, period, &max, functor);
     else
-	foldl_count (hfs_base_dir, itemid, period, &max, functor);
+	foldl_count (hfs_base_dir, siteid, itemid, period, &max, functor);
 
     return max;
 }
 
 
-double HFS_get_max_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
+double HFS_get_max_float (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds)
 {
     void functor (void* db, void* state)
     {
@@ -918,15 +918,15 @@ double HFS_get_max_float (const char* hfs_base_dir, zbx_uint64_t itemid, int per
     double max = 0;
 
     if (seconds)
-	foldl_time (hfs_base_dir, itemid, period, &max, functor);
+	foldl_time (hfs_base_dir, siteid, itemid, period, &max, functor);
     else
-	foldl_count (hfs_base_dir, itemid, period, &max, functor);
+	foldl_count (hfs_base_dir, siteid, itemid, period, &max, functor);
 
     return max;
 }
 
 
-zbx_uint64_t HFS_get_delta_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
+zbx_uint64_t HFS_get_delta_u64 (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds)
 {
     typedef struct {
 	zbx_uint64_t min, max;
@@ -947,14 +947,14 @@ zbx_uint64_t HFS_get_delta_u64 (const char* hfs_base_dir, zbx_uint64_t itemid, i
     state.max = 0;
 
     if (seconds)
-	foldl_time (hfs_base_dir, itemid, period, &state, functor);
+	foldl_time (hfs_base_dir, siteid, itemid, period, &state, functor);
     else
-	foldl_count (hfs_base_dir, itemid, period, &state, functor);
+	foldl_count (hfs_base_dir, siteid, itemid, period, &state, functor);
 
     return state.max - state.min;
 }
 
-double HFS_get_delta_float (const char* hfs_base_dir, zbx_uint64_t itemid, int period, int seconds)
+double HFS_get_delta_float (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds)
 {
     typedef struct {
 	double min, max;
@@ -975,15 +975,15 @@ double HFS_get_delta_float (const char* hfs_base_dir, zbx_uint64_t itemid, int p
     state.max = 0;
 
     if (seconds)
-	foldl_time (hfs_base_dir, itemid, period, &state, functor);
+	foldl_time (hfs_base_dir, siteid, itemid, period, &state, functor);
     else
-	foldl_count (hfs_base_dir, itemid, period, &state, functor);
+	foldl_count (hfs_base_dir, siteid, itemid, period, &state, functor);
 
     return state.max - state.min;
 }
 
 static int
-HFS_find_meta(const char *hfs_base_dir, zbx_uint64_t itemid, time_t from_ts, hfs_meta_t **res) {
+HFS_find_meta(const char *hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t from_ts, hfs_meta_t **res) {
 	int i, block = 0;
 	time_t ts = from_ts;
 	hfs_meta_t *meta = NULL;
@@ -999,7 +999,7 @@ HFS_find_meta(const char *hfs_base_dir, zbx_uint64_t itemid, time_t from_ts, hfs
 		char *path;
 
 		i = -1;
-		if ((path = get_name (hfs_base_dir, itemid, ts, 1)) != NULL) {
+		if ((path = get_name (hfs_base_dir, siteid, itemid, ts, 1)) != NULL) {
 			i = access(path, R_OK);
 			free(path);
 		}
@@ -1009,7 +1009,7 @@ HFS_find_meta(const char *hfs_base_dir, zbx_uint64_t itemid, time_t from_ts, hfs
 			continue;
 		}
 
-		if ((meta = read_meta(hfs_base_dir, itemid, ts)) == NULL)
+		if ((meta = read_meta(hfs_base_dir, siteid, itemid, ts)) == NULL)
 			return -1; // Somethig real bad happend :(
 
 		if (meta->blocks > 0)
@@ -1045,7 +1045,7 @@ HFS_find_meta(const char *hfs_base_dir, zbx_uint64_t itemid, time_t from_ts, hfs
 }
 
 size_t
-HFSread_item (const char *hfs_base_dir, size_t sizex, zbx_uint64_t itemid, time_t graph_from_ts, time_t graph_to_ts, time_t from_ts, time_t to_ts, hfs_item_value_t **result)
+HFSread_item (const char *hfs_base_dir, const char* siteid, size_t sizex, zbx_uint64_t itemid, time_t graph_from_ts, time_t graph_to_ts, time_t from_ts, time_t to_ts, hfs_item_value_t **result)
 {
 	item_value_u max, min, val;
 	time_t ts = from_ts;
@@ -1072,7 +1072,7 @@ HFSread_item (const char *hfs_base_dir, size_t sizex, zbx_uint64_t itemid, time_
 		hfs_meta_item_t *ip;
 		off_t ofs;
 
-		if ((block = HFS_find_meta(hfs_base_dir, itemid, ts, &meta)) == -1)
+		if ((block = HFS_find_meta(hfs_base_dir, siteid, itemid, ts, &meta)) == -1)
 			break;
 
 		ip = meta->meta + block;
@@ -1080,7 +1080,7 @@ HFSread_item (const char *hfs_base_dir, size_t sizex, zbx_uint64_t itemid, time_
 		if (group == -1)
 			group = (long) (x * ((ts + z) % p) / p);
 
-		if ((p_data = get_name (hfs_base_dir, itemid, ts, 0)) == NULL) {
+		if ((p_data = get_name (hfs_base_dir, siteid, itemid, ts, 0)) == NULL) {
 			zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get file name");
 			finish_loop = 1;
 			goto nextloop;
@@ -1184,7 +1184,7 @@ nextloop:
 }
 
 int
-HFSread_count(const char* hfs_base_dir, zbx_uint64_t itemid, int count, void* init_res, read_count_fn_t fn)
+HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, void* init_res, read_count_fn_t fn)
 {
 	int i;
 	char *p_data = NULL;
@@ -1201,13 +1201,13 @@ HFSread_count(const char* hfs_base_dir, zbx_uint64_t itemid, int count, void* in
 #endif
 
 	while (count > 0 && ts > 0) {
-		if ((meta = read_meta(hfs_base_dir, itemid, ts)) == NULL)
+		if ((meta = read_meta(hfs_base_dir, siteid, itemid, ts)) == NULL)
 			return -1; // Somethig real bad happend :(
 
 		if (meta->blocks == 0)
 			break;
 
-		if ((p_data = get_name(hfs_base_dir, itemid, ts, 0)) == NULL) {
+		if ((p_data = get_name(hfs_base_dir, siteid, itemid, ts, 0)) == NULL) {
 			zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get file name");
 			break; // error
 		}
