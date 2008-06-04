@@ -958,7 +958,7 @@
 
 		function selectData()
 		{
-			global $DB_TYPE, $HISTORY_STORAGE;
+			global $DB_TYPE;
 
 			$this->data = array();
 
@@ -992,40 +992,6 @@
 					$to_time	= $this->to_time;
 				}
 
-				if ($HISTORY_STORAGE == "DB") {
-					$calc_field = 'round('.$x.'*(mod(clock+'.$z.','.$p.'))/('.$p.'),0)'; /* required for 'group by' support of Oracle */
-					$sql_arr = array();
-					if(($this->period / $this->sizeX) <= (ZBX_MAX_TREND_DIFF / ZBX_GRAPH_MAX_SKIP_CELL))
-					{
-						array_push($sql_arr,
-							'select itemid,'.$calc_field.' as i,'.
-							' count(*) as count,avg(value) as avg,min(value) as min,'.
-							' max(value) as max,max(clock) as clock'.
-							' from history where itemid='.$this->items[$i]['itemid'].' and clock>='.$from_time.
-							' and clock<='.$to_time.' group by itemid,'.$calc_field
-							,
-
-							'select itemid,'.$calc_field.' as i,'.
-							' count(*) as count,avg(value) as avg,min(value) as min,'.
-							' max(value) as max,max(clock) as clock'.
-							' from history_uint where itemid='.$this->items[$i]['itemid'].' and clock>='.$from_time.
-							' and clock<='.$to_time.' group by itemid,'.$calc_field
-							);
-					}
-					else
-					{
-						array_push($sql_arr,
-							'select itemid,'.$calc_field.' as i,'.
-							' sum(num) as count,avg(value_avg) as avg,min(value_min) as min,'.
-							' max(value_max) as max,max(clock) as clock'.
-							' from trends where itemid='.$this->items[$i]['itemid'].' and clock>='.$from_time.
-							' and clock<='.$to_time.' group by itemid,'.$calc_field
-							);
-
-						$this->items[$i]['delay'] = max(($this->items[$i]['delay']*ZBX_GRAPH_MAX_DELAY),ZBX_MAX_TREND_DIFF)/ZBX_GRAPH_MAX_DELAY + 1;
-					}
-				}
-
 				$curr_data = &$this->data[$this->items[$i]["itemid"]][$type];
 				$curr_data->count = NULL;
 				$curr_data->min = NULL;
@@ -1033,26 +999,35 @@
 				$curr_data->avg = NULL;
 				$curr_data->clock = NULL;
 
-				if ($HISTORY_STORAGE == "DB") {
-					foreach($sql_arr as $sql)
+				if(($this->period / $this->sizeX) > (ZBX_MAX_TREND_DIFF / ZBX_GRAPH_MAX_SKIP_CELL));
+				{
+					$calc_field = 'round('.$x.'*(mod(clock+'.$z.','.$p.'))/('.$p.'),0)'; /* required for 'group by' support of Oracle */
+
+					$sql = 'select itemid,'.$calc_field.' as i,'.
+						' sum(num) as count,avg(value_avg) as avg,min(value_min) as min,'.
+						' max(value_max) as max,max(clock) as clock'.
+						' from trends where itemid='.$this->items[$i]['itemid'].' and clock>='.$from_time.
+						' and clock<='.$to_time.' group by itemid,'.$calc_field
+						);
+
+					$this->items[$i]['delay'] = max(($this->items[$i]['delay']*ZBX_GRAPH_MAX_DELAY),ZBX_MAX_TREND_DIFF)/ZBX_GRAPH_MAX_DELAY + 1;
+
+					$result=DBselect($sql);
+					while($row=DBfetch($result))
 					{
-						$result=DBselect($sql);
-						while($row=DBfetch($result))
-						{
-							$idx=$row["i"];
-							$curr_data->count[$idx]	= $row["count"];
-							$curr_data->min[$idx]	= $row["min"];
-							$curr_data->max[$idx]	= $row["max"];
-							$curr_data->avg[$idx]	= $row["avg"];
-							$curr_data->clock[$idx]	= $row["clock"];
-							$curr_data->shift_min[$idx] = 0;
-							$curr_data->shift_max[$idx] = 0;
-							$curr_data->shift_avg[$idx] = 0;
-						}
-						unset($row);
+						$idx=$row["i"];
+						$curr_data->count[$idx]	= $row["count"];
+						$curr_data->min[$idx]	= $row["min"];
+						$curr_data->max[$idx]	= $row["max"];
+						$curr_data->avg[$idx]	= $row["avg"];
+						$curr_data->clock[$idx]	= $row["clock"];
+						$curr_data->shift_min[$idx] = 0;
+						$curr_data->shift_max[$idx] = 0;
+						$curr_data->shift_avg[$idx] = 0;
 					}
+					unset($row);
 				}
-				elseif ($HISTORY_STORAGE == "HFS") {
+				else {
 					$arr = zabbix_hfs_read($this->sizeX, $this->items[$i]['itemid'],
 								$this->from_time, $this->to_time,
 								$from_time, $to_time);
@@ -1070,6 +1045,7 @@
 						$curr_data->shift_avg[$idx] = 0;
 					}
 					unset($arr);
+					unset($obj);
 				}
 
 				/* calculate missed points */

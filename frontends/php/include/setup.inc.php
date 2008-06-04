@@ -847,7 +847,6 @@ $DB_DATABASE	= "'.$this->GetConfig('DB_DATABASE'	,'unknown').'";
 $DB_USER	= "'.$this->GetConfig('DB_USER'		,'unknown').'";
 $DB_PASSWORD	= "'.$this->GetConfig('DB_PASSWORD'	,'').'";
 
-$HISTORY_STORAGE	= "DB"; /* DB/HFS */
 $IMAGE_FORMAT_DEFAULT	= IMAGE_FORMAT_PNG;
 ?>';
 		}
