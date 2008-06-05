@@ -81,23 +81,25 @@ static inline int add_next_index_object(zval *arg, zval *tmp TSRMLS_DC)
 }
 /* }}} */
 
-/* {{{ proto array zabbix_hfs_read(int itemid, int sizex, int graph_from_time, int graph_to_time, int from_time, int to_time) */
+/* {{{ proto array zabbix_hfs_read(char *site, int itemid, int sizex, int graph_from_time, int graph_to_time, int from_time, int to_time) */
 PHP_FUNCTION(zabbix_hfs_read)
 {
 	size_t n = 0;
 	zval *z_obj;
+	char *site = NULL;
+	int site_len = 0;
 	hfs_item_value_t *res = NULL;
 	int i, sizex, itemid = 0;
 	time_t graph_from = 0, graph_to = 0;
 	time_t from = 0, to = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "llllll", &sizex, &itemid, &graph_from, &graph_to, &from, &to) == FAILURE)
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sllllll", &site, &site_len, &sizex, &itemid, &graph_from, &graph_to, &from, &to) == FAILURE)
 		RETURN_FALSE;
 
         if (array_init(return_value) == FAILURE)
 		RETURN_FALSE;
 
-	n = HFSread_item(ZABBIX_GLOBAL(hfs_base_dir), sizex, itemid, graph_from, graph_to, from, to, &res);
+	n = HFSread_item(ZABBIX_GLOBAL(hfs_base_dir), site, sizex, itemid, graph_from, graph_to, from, to, &res);
 
 	for (i = 0; i < n; i++) {
 		char *buf = NULL;
@@ -167,13 +169,15 @@ hfs_last_functor (item_type_t type, item_value_u val, time_t timestamp, void *pt
 }
 
 
-/* {{{ proto array zabbix_hfs_last(int itemid, int count) */
+/* {{{ proto array zabbix_hfs_last(char *site, int itemid, int count) */
 PHP_FUNCTION(zabbix_hfs_last)
 {
 	int i, count, itemid;
+	char *site = NULL;
+	int site_len = 0;
 	struct items_array res;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ll", &itemid, &count) == FAILURE)
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll", &site, &site_len, &itemid, &count) == FAILURE)
 		RETURN_FALSE;
 
         if (array_init(return_value) == FAILURE)
@@ -184,7 +188,7 @@ PHP_FUNCTION(zabbix_hfs_last)
 	if ((res.items = malloc(sizeof(struct item) * count)) == NULL)
 		RETURN_FALSE;
 
-	if (HFSread_count(ZABBIX_GLOBAL(hfs_base_dir), itemid, count, &res, hfs_last_functor) != 0)
+	if (HFSread_count(ZABBIX_GLOBAL(hfs_base_dir), site, itemid, count, &res, hfs_last_functor) != 0)
 		RETURN_FALSE;
 
 	for (i = 0; i < res.count; i++) {

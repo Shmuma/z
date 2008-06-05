@@ -466,13 +466,12 @@ include_once "include/page_header.php";
 			}
 
 COpt::profiling_start("history");
-			$result = DBselect("select valuemapid from items where itemid=".$_REQUEST["itemid"]);
-			$valuemapid = DBfetch($result);
+			$item = get_item_by_itemid($_REQUEST["itemid"]);
 
-			$arr = zabbix_hfs_last($_REQUEST["itemid"], 500);
+			$arr = zabbix_hfs_last($item["sitename"],$_REQUEST["itemid"], 500);
 
 			foreach ($arr as $obj)
-				$obj->valuemapid = $valuemapid[0];
+				$obj->valuemapid = $item["valuemapid"];
 
 			foreach ($arr as $obj)
 			{

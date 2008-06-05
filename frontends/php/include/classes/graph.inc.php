@@ -999,7 +999,7 @@
 				$curr_data->avg = NULL;
 				$curr_data->clock = NULL;
 
-				if(($this->period / $this->sizeX) > (ZBX_MAX_TREND_DIFF / ZBX_GRAPH_MAX_SKIP_CELL));
+				if(($this->period / $this->sizeX) > (ZBX_MAX_TREND_DIFF / ZBX_GRAPH_MAX_SKIP_CELL))
 				{
 					$calc_field = 'round('.$x.'*(mod(clock+'.$z.','.$p.'))/('.$p.'),0)'; /* required for 'group by' support of Oracle */
 
@@ -1007,8 +1007,7 @@
 						' sum(num) as count,avg(value_avg) as avg,min(value_min) as min,'.
 						' max(value_max) as max,max(clock) as clock'.
 						' from trends where itemid='.$this->items[$i]['itemid'].' and clock>='.$from_time.
-						' and clock<='.$to_time.' group by itemid,'.$calc_field
-						);
+						' and clock<='.$to_time.' group by itemid,'.$calc_field;
 
 					$this->items[$i]['delay'] = max(($this->items[$i]['delay']*ZBX_GRAPH_MAX_DELAY),ZBX_MAX_TREND_DIFF)/ZBX_GRAPH_MAX_DELAY + 1;
 
@@ -1028,7 +1027,8 @@
 					unset($row);
 				}
 				else {
-					$arr = zabbix_hfs_read($this->sizeX, $this->items[$i]['itemid'],
+					$arr = zabbix_hfs_read($this->items[$i]['sitename'],
+								$this->sizeX, $this->items[$i]['itemid'],
 								$this->from_time, $this->to_time,
 								$from_time, $to_time);
 

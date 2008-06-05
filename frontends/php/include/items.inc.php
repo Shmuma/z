@@ -714,7 +714,10 @@
 
 	function	get_item_by_itemid($itemid)
 	{
-		$row = DBfetch(DBselect("select * from items where itemid=$itemid")); 
+		$row = DBfetch(DBselect("select items.*, sites.name as sitename ".
+					"from items, sites ".
+					"where items.itemid=$itemid ".
+					"and items.siteid = sites.siteid"));
 		if($row)
 		{
 			return	$row;
