@@ -4,6 +4,7 @@ noinst_LIBRARIES = libzbxdbhigh.a
 
 libzbxdbhigh_a_SOURCES = \
 	host.c \
-	db.c
+	db.c \
+	hfs.c
 
 libzbxdbhigh_a_CFLAGS = -I@top_srcdir@/src/zabbix_server/
