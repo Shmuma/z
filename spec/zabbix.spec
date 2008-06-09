@@ -5,7 +5,7 @@ Version: 1.4.4
 Release: yandex_1
 Group: System Environment/Daemons
 License: GPL
-Source: %{realname}-%{version}_yandex1.tar.gz
+Source: %{realname}-%{version}_yandex2.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
 BuildPrereq: mysql, mysql-devel, net-snmp-devel, setproctitle-devel, iksemel-devel, pkgconfig
 Requires: mysql, net-snmp, setproctitle, iksemel
@@ -28,7 +28,7 @@ Group: System Environment/Daemons
 the zabbix network monitor agent.
 
 %prep
-%setup -q -n %{realname}-%{version}_yandex1
+%setup -q -n %{realname}-%{version}_yandex2
 
 %build
 %configure --enable-server --enable-agent --with-mysql --with-jabber --with-net-snmp
@@ -146,6 +146,9 @@ install -m 755 misc/init.d/redhat/zabbix_server %{buildroot}%{_sysconfdir}/init.
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_get
 
 %changelog
+* Thu Jun 6 2008 Max Lapan <lapan_mv@yandex-team.ru>
+- Implemented History FS for storage and retrive historical data on distributed filesystem.
+
 * Fri Jan 29 2005 Dirk Datzert <dirk@datzert.de>
 - update to 1.1aplha6
 

@@ -2,12 +2,12 @@
 
 Name: zabbix-oracle
 Version: 1.4.4
-Release: yandex_1
+Release: yandex_2
 Group: System Environment/Daemons
 License: GPL
-Source: %{realname}-%{version}_yandex1.tar.gz
+Source: %{realname}-%{version}_yandex2.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
-BuildPrereq: libsqlora8-devel, net-snmp-devel, setproctitle-devel, iksemel-devel, pkgconfig
+BuildPrereq: libsqlora8-devel, net-snmp-devel, setproctitle-devel, iksemel-devel, pkgconfig, php-devel
 Requires: libsqlora8, net-snmp, setproctitle, iksemel
 Summary: A network monitor.
 
@@ -17,6 +17,7 @@ Summary: A network monitor.
 %define zabbix_log 		%{_localstatedir}/log/zabbix
 %define zabbix_spool 		%{_localstatedir}/spool/zabbix
 %define zabbix_www		/var/www/html/zabbix
+%define zabbix_php_module       /usr/lib64/php/modules
 
 %description
 zabbix is a network monitor.
@@ -30,7 +31,7 @@ Requires: php
 A php frontent to zabbix.
 
 %prep
-%setup -q -n %{realname}-%{version}_yandex1
+%setup -q -n %{realname}-%{version}_yandex2
 
 %build
 %configure --enable-server --with-oracle --with-jabber --with-net-snmp
@@ -91,6 +92,12 @@ install -m 755 misc/init.d/redhat/zabbix_server %{buildroot}%{_sysconfdir}/init.
 # frontend
 cp -r frontends/php/* %{buildroot}%{zabbix_www}/
 
+# HFS module
+cd src/php5-zabbix/
+phpize
+./configure --with-zabbix --prefix=%{buildroot}
+make install INSTALL_ROOT=%{buildroot}
+
 %files
 %defattr(-,root,root)
 %doc AUTHORS COPYING NEWS README INSTALL create upgrades
@@ -102,8 +109,12 @@ cp -r frontends/php/* %{buildroot}%{zabbix_www}/
 %files -n zabbix-phpfrontend
 %defattr(0644,root,root,0755)
 %{zabbix_www}
+%{zabbix_php_module}
 
 %changelog
+* Thu Jun 6 2008 Max Lapan <lapan_mv@yandex-team.ru>
+- Implemented History FS for storage and retrive historical data on distributed filesystem.
+
 * Fri Jan 29 2005 Dirk Datzert <dirk@datzert.de>
 - update to 1.1aplha6
 
