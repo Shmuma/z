@@ -343,6 +343,7 @@ dist-hook:
 	$(srcdir)/gen.pl postgresql > $(distdir)/postgresql.sql
 	$(srcdir)/gen.pl sqlite > $(distdir)/sqlite.sql
 	$(srcdir)/gen.pl oracle > $(distdir)/oracle.sql
+	$(srcdir)/gen.pl oracle_copy > $(distdir)/oracle_copy.sql
 	$(srcdir)/gen.pl c > $(top_distdir)/include/dbsync.h
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
