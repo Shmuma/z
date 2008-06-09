@@ -88,10 +88,10 @@
 #	endif /* __va_copy */
 #endif /* va_copy */
 
-#ifdef snprintf
-#undef snprintf
-#endif
-#define snprintf	ERROR_DO_NOT_USE_SNPRINTF_FUNCTION_TRY_TO_USE_ZBX_SNPRINTF
+//#ifdef snprintf
+//#undef snprintf
+//#endif
+//#define snprintf	ERROR_DO_NOT_USE_SNPRINTF_FUNCTION_TRY_TO_USE_ZBX_SNPRINTF
 
 #ifdef sprintf
 #undef sprintf
