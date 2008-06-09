@@ -1,5 +1,6 @@
 #define _GNU_SOURCE
 #include <stdio.h>
+#include <stdarg.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -7,6 +8,8 @@
 
 #include "php_zabbix.h"
 #include "hfs.h"
+
+#define __zbx_zbx_snprintf snprinf
 
 ZEND_DECLARE_MODULE_GLOBALS(zabbix)
 
@@ -64,6 +67,20 @@ PHP_MINFO_FUNCTION(zabbix)
 	php_info_print_table_row(1, "Zabbix Support", "enabled");
 	php_info_print_table_end();
 }
+
+void
+__zbx_zabbix_log(int level, const char *fmt, ...) {
+	va_list ap;
+	va_start(ap, fmt);
+	fprintf(stderr, "zabbix: ");
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, "\n");
+	fflush(stderr);
+	va_end(ap);
+}
+#ifndef zabbix_log
+#define zabbix_log __zbx_zabbix_log
+#endif
 
 /* {{{ add_next_index_object
  */
