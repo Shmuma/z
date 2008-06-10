@@ -425,7 +425,7 @@ COpt::savesqlrequest($query);
 						$column_type  = ocicolumntype($cursor, $field);
 						$field_is_null = ocicolumnisnull($cursor, $field);
 
-						if ($field_is_null && str_in_array($column_type,$text_datatypes))
+						if ($field_is_null && in_array($column_type,$text_datatypes))
 							$result[strtolower($k)] = '';
 						else
 							$result[strtolower($k)] = $row[$k];
