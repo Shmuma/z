@@ -1140,7 +1140,7 @@ HFSread_item (const char *hfs_base_dir, const char* siteid, size_t sizex, zbx_ui
 	time_t ts = from_ts;
 	size_t items = 0, result_size = 0;
 	int z, p, x, finish_loop = 0, block;
-	long cur_group, group = -1;
+	long values = 0, cur_group, group = -1;
 
 	p = (graph_to_ts - graph_from_ts);
 	z = (p - graph_from_ts % p);
@@ -1149,11 +1149,10 @@ HFSread_item (const char *hfs_base_dir, const char* siteid, size_t sizex, zbx_ui
 	max.d = 0.0;
 	min.d = 0.0;
 
-#ifdef DEBUG_legion
-	fprintf(stderr, "In HFSread_item(hfs_base_dir=%s, sizex=%d, itemid=%lld, graph_from=%d, graph_to=%d, from=%d, to=%d)\n",
-			hfs_base_dir, x, itemid, graph_from_ts, graph_to_ts, from_ts, to_ts);
-	fflush(stderr);
-#endif
+	zabbix_log(LOG_LEVEL_DEBUG,
+		"In HFSread_item(hfs_base_dir=%s, sizex=%d, itemid=%lld, graph_from=%d, graph_to=%d, from=%d, to=%d)\n",
+		hfs_base_dir, x, itemid, graph_from_ts, graph_to_ts, from_ts, to_ts);
+
 	while (!finish_loop) {
 		int fd = -1;
 		char *p_data = NULL;
@@ -1195,6 +1194,7 @@ HFSread_item (const char *hfs_base_dir, const char* siteid, size_t sizex, zbx_ui
 
 		while (read (fd, &val.l, sizeof (val.l)) > 0) {
 			ts += ip->delay;
+			values++;
 
 			if (!is_valid_val(&val.l))
 				continue;
@@ -1222,6 +1222,10 @@ HFSread_item (const char *hfs_base_dir, const char* siteid, size_t sizex, zbx_ui
 				max.d = 0.0;
 				min.d = 0.0;
 				items++;
+			} else {
+				zabbix_log(LOG_LEVEL_DEBUG,
+					"HFS: HFSread_item: value rejected (%ld != %ld)",
+					group, cur_group);
 			}
 
 			if (ip->type == IT_DOUBLE) {
@@ -1265,10 +1269,11 @@ nextloop:
 
 	if (result_size > items)
 		*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * items));
-#ifdef DEBUG_legion
-	fprintf(stderr, "Out HFSread_item() = %d\n", items);
-	fflush(stderr);
-#endif
+
+	zabbix_log(LOG_LEVEL_DEBUG,
+		"HFS: HFSread_item: Out items=%d values=%d\n",
+		items, values);
+
 	return items;
 }
 

@@ -42,6 +42,8 @@ ZEND_GET_MODULE(zabbix)
 PHP_INI_BEGIN()
 STD_PHP_INI_ENTRY("zabbix.hfs_base_dir", "/tmp/hfs", PHP_INI_ALL, OnUpdateString,
                   hfs_base_dir, zend_zabbix_globals, zabbix_globals)
+STD_PHP_INI_BOOLEAN("zabbix.debug",      "0",        PHP_INI_ALL, OnUpdateBool,
+		  debug,        zend_zabbix_globals, zabbix_globals)
 PHP_INI_END()
 
 char *progname = "test";
@@ -70,6 +72,9 @@ PHP_MINFO_FUNCTION(zabbix)
 
 void
 __zbx_zabbix_log(int level, const char *fmt, ...) {
+	if (level == LOG_LEVEL_DEBUG && !ZABBIX_GLOBAL(debug))
+		return;
+
 	va_list ap;
 	va_start(ap, fmt);
 	fprintf(stderr, "zabbix: ");
