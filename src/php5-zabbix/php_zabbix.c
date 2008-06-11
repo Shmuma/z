@@ -112,9 +112,11 @@ PHP_FUNCTION(zabbix_hfs_read)
 	char *site = NULL;
 	int site_len = 0;
 	hfs_item_value_t *res = NULL;
-	int i, sizex, itemid = 0;
+	int i;
 	time_t graph_from = 0, graph_to = 0;
 	time_t from = 0, to = 0;
+	size_t sizex = 0;
+	long long itemid = 0;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sllllll", &site, &site_len, &sizex, &itemid, &graph_from, &graph_to, &from, &to) == FAILURE)
 		RETURN_FALSE;
