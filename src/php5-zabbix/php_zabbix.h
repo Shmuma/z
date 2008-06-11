@@ -21,6 +21,7 @@ PHP_FUNCTION(zabbix_hfs_last);
 
 ZEND_BEGIN_MODULE_GLOBALS(zabbix)
 char *hfs_base_dir;
+int debug;
 ZEND_END_MODULE_GLOBALS(zabbix)
 
 #ifdef ZTS
