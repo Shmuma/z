@@ -9,6 +9,7 @@
 #include "php_zabbix.h"
 #include "hfs.h"
 
+#define LOG_LEVEL_DEBUG 4
 #define __zbx_zbx_snprintf snprinf
 
 ZEND_DECLARE_MODULE_GLOBALS(zabbix)
