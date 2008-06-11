@@ -529,7 +529,7 @@ static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_
     if (!res)
 	return NULL;
 
-    snprintf (res, len, "%s/%s/%llu/%u.%s", hfs_base_dir, siteid, itemid, (unsigned int)(clock / (time_t)1000000),
+    snprintf (res, len, "%s/%s/items/%llu/%u.%s", hfs_base_dir, siteid, itemid, (unsigned int)(clock / (time_t)1000000),
 		  meta ? "meta" : "data");
 
     return res;
