@@ -21,6 +21,10 @@
 #include "log.h"
 #include "hfs.h"
 
+#include <unistd.h>
+#include <fcntl.h>
+
+
 # ifndef ULLONG_MAX
 #  define ULLONG_MAX    18446744073709551615ULL
 # endif
@@ -46,9 +50,17 @@ typedef struct hfs_meta {
 
 typedef void (*fold_fn_t) (void* db_val, void* state);
 
+
+enum name_kind_t {
+	NK_ItemData,
+	NK_ItemMeta,
+	NK_HostState,
+};
+
+
 static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock);
 static void free_meta (hfs_meta_t* meta);
-static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int meta);
+static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, name_kind_t kind);
 static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len, item_type_t type);
 static off_t find_meta_ofs (int time, hfs_meta_t* meta);
 static int get_next_data_ts (int ts);
@@ -56,6 +68,9 @@ static int get_prev_data_ts (int ts);
 static void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int ts, void* init_res, fold_fn_t fn);
 static void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, void* init_res, fold_fn_t fn);
 static int is_valid_val (void* val);
+
+static int obtain_lock (int fd, int write);
+static int release_lock (int fd, int write);
 
 
 /*
@@ -129,8 +144,8 @@ static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64
 	return retval;
     }
 
-    p_meta = get_name (hfs_base_dir, siteid, itemid, clock, 1);
-    p_data = get_name (hfs_base_dir, siteid, itemid, clock, 0);
+    p_meta = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemMeta);
+    p_data = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemData);
 
     make_directories (p_meta);
     zabbix_log(LOG_LEVEL_DEBUG, "HFS: meta read: delays: %d %d, blocks %d, ofs %u", meta->last_delay, delay, meta->blocks, meta->last_ofs);
@@ -293,7 +308,6 @@ err_exit:
 }
 
 
-
 /*
   Routine adds uint64 value to HistoryFS storage.
 */
@@ -358,6 +372,58 @@ static int make_directories (const char* path)
 }
 
 
+/*
+   fcntl wrappers
+ */
+int obtain_lock (int fd, int write)
+{
+	struct flock fls;
+
+	fls.l_type = write ? F_WRLCK : F_RDLCK;
+	fls.l_whence = SEEK_SET;
+	fls.l_start = 0;
+	fls.l_len = 0;
+
+	while (1) {
+		if (fcntl (fd, write ? F_SETLKW : F_SETLK, &fls) < 0) {
+			if (errno == EINTR)
+				continue;
+			zabbix_log(LOG_LEVEL_ERR, "HFS_obtain_lock: fcntl() error = %d", errno);
+			return 0;
+		}
+		else
+			break;
+	}
+
+	return 1;
+}
+
+
+int release_lock (int fd, int write)
+{
+	struct flock fls;
+
+	fls.l_type = F_UNLCK;
+	fls.l_whence = SEEK_SET;
+	fls.l_start = 0;
+	fls.l_len = 0;
+
+	while (1) {
+		if (fcntl (fd, write ? F_SETLKW : F_SETLK, &fls) < 0) {
+			if (errno == EINTR)
+				continue;
+			zabbix_log(LOG_LEVEL_ERR, "HFS_release_lock: fcntl() error = %d", errno);
+			return 0;
+		}
+		else
+			break;
+	}
+
+	return 1;
+}
+
+
+
 
 /*
   Performs folding of values of historical data into some state. We filter values according to time.
@@ -388,7 +454,7 @@ static void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64
 	zabbix_log(LOG_LEVEL_DEBUG, "Offset for TS %u is %u (%x) (%u)", ts, ofs, ofs, time(NULL)-ts);
 
 	/* open data file and count amount of valid items */
-	p_data = get_name (hfs_base_dir, siteid, itemid, ts, 0);
+	p_data = get_name (hfs_base_dir, siteid, itemid, ts, NK_ItemData);
 	fd = open (p_data, O_RDONLY);
 
 	if (fd != -1) {
@@ -419,7 +485,7 @@ static void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint6
     zabbix_log(LOG_LEVEL_DEBUG, "HFS_foldl_count (%s, %llu, %u)", hfs_base_dir, itemid, count);
 
     while (count > 0) {
-	p_data = get_name (hfs_base_dir, siteid, itemid, ts, 0);
+	p_data = get_name (hfs_base_dir, siteid, itemid, ts, NK_ItemData);
 	fd = open (p_data, O_RDONLY);
 
 	if (fd < 0)
@@ -453,7 +519,7 @@ static int is_valid_val (void* val)
 
 static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock)
 {
-    char* path = get_name (hfs_base_dir, siteid, itemid, clock, 1);
+    char* path = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemData);
     hfs_meta_t* res;
     FILE* f;
 
@@ -519,7 +585,7 @@ static void free_meta (hfs_meta_t* meta)
 }
 
 
-static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int meta)
+static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, name_kind_t kind)
 {
     char* res;
     int len = strlen (hfs_base_dir) + strlen (siteid) + 100;
@@ -529,8 +595,16 @@ static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_
     if (!res)
 	return NULL;
 
-    snprintf (res, len, "%s/%s/items/%llu/%u.%s", hfs_base_dir, siteid, itemid, (unsigned int)(clock / (time_t)1000000),
-		  meta ? "meta" : "data");
+    switch (kind) {
+    case NK_ItemData:
+    case NK_ItemMeta:
+	    snprintf (res, len, "%s/%s/items/%llu/%u.%s", hfs_base_dir, siteid, itemid, (unsigned int)(clock / (time_t)1000000),
+		      kind == NK_ItemMeta ? "meta" : "data");
+	    return res;
+    case NK_HostState:
+	    snprintf (res, len, "%s/%s/hosts/%llu.state", hfs_base_dir, siteid, itemid);
+	    return res;
+    }
 
     return res;
 }
@@ -1366,3 +1440,44 @@ end:
 
 	return count;
 }
+
+
+/*
+   Stores host availability in FS.
+
+ */
+void HFS_update_host_availability (const char* hfs_base_dir, const char* siteid, zbx_uint64_t hostid, int available, int clock, const char* error)
+{
+	char* name = get_name (hfs_base_dir, siteid, hostid, 0, NK_HostState);
+	int fd, len;
+
+	if (!name)
+		return;
+
+	/* open file for writing */
+	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+	free (name);
+
+	if (fd < 0)
+		return;
+
+	/* place write lock on that file or wait for unlock */
+	if (!obtain_lock (fd, 1)) {
+		close (fd);
+		return;
+	}
+
+	/* lock obtained, write data */
+	len = error ? strlen (error) : 0;
+	write (fd, &available, sizeof (available));
+	write (fd, &clock, sizeof (clock));
+	write (fd, &len, sizeof (len));
+	if (len)
+		write (fd, error, len+1);
+
+	/* release lock */
+	release_lock (fd, 1);
+	close (fd);
+}
+

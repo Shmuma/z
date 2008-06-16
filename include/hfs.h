@@ -79,4 +79,7 @@ double		HFS_get_max_float (const char* hfs_base_dir, const char* siteid, zbx_uin
 zbx_uint64_t	HFS_get_delta_u64 (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds);
 double		HFS_get_delta_float (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int period, int seconds);
 
+/* HFS per-object statuses which updated on monitoring pair and should be visible on ztops */
+void		HFS_update_host_availability (const char* hfs_base_dir, const char* siteid, zbx_uint64_t hostid, int available, int clock, const char* error);
+
 #endif
