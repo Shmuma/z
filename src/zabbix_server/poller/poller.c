@@ -34,6 +34,8 @@
 
 #include "daemon.h"
 
+extern char* CONFIG_HFS_PATH;
+
 AGENT_RESULT    result;
 
 int	poller_type;

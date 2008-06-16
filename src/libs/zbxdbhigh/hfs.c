@@ -51,11 +51,11 @@ typedef struct hfs_meta {
 typedef void (*fold_fn_t) (void* db_val, void* state);
 
 
-enum name_kind_t {
+typedef enum {
 	NK_ItemData,
 	NK_ItemMeta,
 	NK_HostState,
-};
+} name_kind_t;
 
 
 static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock);
@@ -519,7 +519,7 @@ static int is_valid_val (void* val)
 
 static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock)
 {
-    char* path = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemData);
+    char* path = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemMeta);
     hfs_meta_t* res;
     FILE* f;
 
@@ -1162,7 +1162,7 @@ HFS_find_meta(const char *hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
 		char *path;
 
 		i = -1;
-		if ((path = get_name (hfs_base_dir, siteid, itemid, ts, 1)) != NULL) {
+		if ((path = get_name (hfs_base_dir, siteid, itemid, ts, NK_ItemMeta)) != NULL) {
 			i = access(path, R_OK);
 			free(path);
 		}
@@ -1242,7 +1242,7 @@ HFSread_item (const char *hfs_base_dir, const char* siteid, size_t sizex, zbx_ui
 		if (group == -1)
 			group = (long) (x * ((ts + z) % p) / p);
 
-		if ((p_data = get_name (hfs_base_dir, siteid, itemid, ts, 0)) == NULL) {
+		if ((p_data = get_name (hfs_base_dir, siteid, itemid, ts, NK_ItemData)) == NULL) {
 			zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get file name");
 			finish_loop = 1;
 			goto nextloop;
@@ -1375,7 +1375,7 @@ HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
 		if (meta->blocks == 0)
 			break;
 
-		if ((p_data = get_name(hfs_base_dir, siteid, itemid, ts, 0)) == NULL) {
+		if ((p_data = get_name(hfs_base_dir, siteid, itemid, ts, NK_ItemData)) == NULL) {
 			zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get file name");
 			break; // error
 		}
