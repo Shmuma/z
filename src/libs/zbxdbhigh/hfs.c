@@ -1485,7 +1485,7 @@ void HFS_update_host_availability (const char* hfs_base_dir, const char* siteid,
 		write (fd, error, len+1);
 
 	/* truncate file */
-	ftruncate (fd, lseek (fd, 0, SEEK_CUR))
+	ftruncate (fd, lseek (fd, 0, SEEK_CUR));
 
 	/* release lock */
 	release_lock (fd, 1);
