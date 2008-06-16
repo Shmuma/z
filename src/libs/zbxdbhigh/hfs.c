@@ -1444,26 +1444,34 @@ end:
 
 /*
    Stores host availability in FS.
-
  */
 void HFS_update_host_availability (const char* hfs_base_dir, const char* siteid, zbx_uint64_t hostid, int available, int clock, const char* error)
 {
 	char* name = get_name (hfs_base_dir, siteid, hostid, 0, NK_HostState);
 	int fd, len;
 
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_host_availability entered");
+
 	if (!name)
 		return;
+
+	zabbix_log(LOG_LEVEL_DEBUG, "got name %s", name);
+
+	make_directories (name);
 
 	/* open file for writing */
 	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	free (name);
 
-	if (fd < 0)
+	if (fd < 0) {
+		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
 		return;
+	}
 
 	/* place write lock on that file or wait for unlock */
 	if (!obtain_lock (fd, 1)) {
+		zabbix_log(LOG_LEVEL_DEBUG, "Cannot obtain write lock, error = %d", errno);
 		close (fd);
 		return;
 	}
@@ -1476,8 +1484,13 @@ void HFS_update_host_availability (const char* hfs_base_dir, const char* siteid,
 	if (len)
 		write (fd, error, len+1);
 
+	/* truncate file */
+	ftruncate (fd, lseek (fd, 0, SEEK_CUR))
+
 	/* release lock */
 	release_lock (fd, 1);
 	close (fd);
+
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_host_availability leave");
 }
 
