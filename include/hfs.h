@@ -81,5 +81,6 @@ double		HFS_get_delta_float (const char* hfs_base_dir, const char* siteid, zbx_u
 
 /* HFS per-object statuses which updated on monitoring pair and should be visible on ztops */
 void		HFS_update_host_availability (const char* hfs_base_dir, const char* siteid, zbx_uint64_t hostid, int available, int clock, const char* error);
+int		HFS_get_host_availability (const char* hfs_base_dir, const char* siteid, zbx_uint64_t hostid, int* available, int* clock, char** error);
 
 #endif

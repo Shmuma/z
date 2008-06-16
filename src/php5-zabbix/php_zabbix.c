@@ -17,6 +17,7 @@ ZEND_DECLARE_MODULE_GLOBALS(zabbix)
 static zend_function_entry php_zabbix_functions[] = {
 	PHP_FE(zabbix_hfs_read, NULL)
 	PHP_FE(zabbix_hfs_last, NULL)
+	PHP_FE(zabbix_hfs_host_availability, NULL)
 	{NULL, NULL, NULL}
 };
 
@@ -240,5 +241,42 @@ PHP_FUNCTION(zabbix_hfs_last)
 	}
 
 	free(res.items);
+}
+/* }}} */
+
+
+/* {{{ proto object zabbix_hfs_host_availability(char *site, int hostid) */
+PHP_FUNCTION(zabbix_hfs_host_availability)
+{
+	int hostid;
+	char *site = NULL;
+	int site_len = 0, available, clock;
+	char* error = NULL;
+	zval* zerror;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl", &site, &site_len, &hostid) == FAILURE)
+		RETURN_FALSE;
+
+	if (!HFS_get_host_availability (ZABBIX_GLOBAL(hfs_base_dir), site, hostid, &available, &clock, &error))
+		RETURN_FALSE;
+
+        if (object_init(return_value) == FAILURE)
+		RETURN_FALSE;
+
+	MAKE_STD_ZVAL (zerror);
+
+	if (error) {
+		ZVAL_STRING (zerror, error, 1);
+	}
+	else {
+		ZVAL_EMPTY_STRING (zerror);
+	}
+
+	add_property_long (return_value, "available", available);
+	add_property_long (return_value, "clock", clock);
+	add_property_zval (return_value, "error", zerror);
+
+	if (error)
+		free (error);
 }
 /* }}} */

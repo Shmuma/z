@@ -1494,3 +1494,53 @@ void HFS_update_host_availability (const char* hfs_base_dir, const char* siteid,
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_host_availability leave");
 }
 
+
+/* Obtain host attributes stored in HFS. If successfull, return 1. If something goes wrong, return 0. */
+int HFS_get_host_availability (const char* hfs_base_dir, const char* siteid, zbx_uint64_t hostid, int* available, int* clock, char** error)
+{
+	char* name = get_name (hfs_base_dir, siteid, hostid, 0, NK_HostState);
+
+	int fd, len;
+
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_host_availability entered");
+
+	if (!name)
+		return 0;
+
+	/* open file for writing */
+	fd = open (name, O_RDONLY);
+
+	free (name);
+
+	if (fd < 0) {
+		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
+		return 0;
+	}
+
+	/* obtain read lock */
+
+	if (!obtain_lock (fd, 0)) {
+		zabbix_log(LOG_LEVEL_DEBUG, "Cannot obtain read lock, error = %d", errno);
+		close (fd);
+		return 0;
+	}
+
+	/* reading data */
+	read (fd, available, sizeof (*available));
+	read (fd, clock, sizeof (*clock));
+	read (fd, &len, sizeof (len));
+
+	if (len) {
+		*error = (char*)malloc (len+1);
+		read (fd, *error, len+1);
+	}
+	else
+		*error = NULL;
+
+	/* release read lock */
+	release_lock (fd, 0);
+	close (fd);
+
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_host_availability leave");
+	return 1;
+}
