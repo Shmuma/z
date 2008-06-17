@@ -445,9 +445,11 @@ char* read_str (int fd)
 	int len;
 	char* res = NULL;
 
-	read (fd, &len, sizeof (len));
+	if (read (fd, &len, sizeof (len)) < sizeof (len))
+		return NULL;
+
 	if (fd) {
-		res = (char*)malloc (len+1);
+		res = (char*)calloc (len+1, 1);
 		if (res)
 			read (fd, res, len+1);
 	}
