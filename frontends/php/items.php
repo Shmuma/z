@@ -543,6 +543,9 @@ include_once "include/page_header.php";
 		$where_case[] = 'i.hostid=h.hostid';
 		$where_case[] = 'h.hostid in ('.$accessible_hosts.')';
 
+		$from_tables['s'] = 'sites s';
+		$where_case[] = 'h.siteid = s.siteid';
+
 		update_profile("external_filter",$_REQUEST['external_filter'] = get_request("external_filter" ,get_profile("external_filter", 0)));
 
 		if($_REQUEST['external_filter'])
@@ -751,7 +754,7 @@ include_once "include/page_header.php";
 		$query_history_size = 0;
 		$query_trends_size = 0;
 
-		$db_items = DBselect('select distinct th.host as template_host,th.hostid as template_hostid, h.host, i.* '.
+		$db_items = DBselect('select distinct th.host as template_host,th.hostid as template_hostid, h.host, s.name as siteid, i.* '.
 			' from '.implode(',', $from_tables).
 			' left join items ti on i.templateid=ti.itemid left join hosts th on ti.hostid=th.hostid '.
 			' where '.implode(' and ', $where_case).' order by h.host,i.description,i.key_,i.itemid');
@@ -779,10 +782,16 @@ include_once "include/page_header.php";
 				$db_item["itemid"].url_param("hostid").url_param("groupid"),
 				'action'));
 
-			$status=new CCol(new CLink(item_status2str($db_item["status"]),
+			// we should keep in mind that we may have updated status in HFS
+			$db_status = $db_item["status"];
+			$hfs_status = zabbix_hfs_item_status ($db_item["siteid"], $db_item["itemid"]);
+			if ($hfs_status->status == ITEM_STATUS_DISABLED)
+				$db_status = ITEM_STATUS_DISABLED;
+
+			$status=new CCol(new CLink(item_status2str($db_status),
 					"?group_itemid%5B%5D=".$db_item["itemid"].
-					"&group_task=".($db_item["status"] ? "Activate+selected" : "Disable+selected"),
-					item_status2style($db_item["status"])));
+					"&group_task=".($db_status ? "Activate+selected" : "Disable+selected"),
+					item_status2style($db_status)));
 
 			$stderr = "";
 			if (trim ($db_item["stderr"]) != "")
