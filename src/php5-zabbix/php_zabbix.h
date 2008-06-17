@@ -20,6 +20,7 @@ PHP_FUNCTION(zabbix_hfs_read);
 PHP_FUNCTION(zabbix_hfs_last);
 PHP_FUNCTION(zabbix_hfs_host_availability);
 PHP_FUNCTION(zabbix_hfs_item_status);
+PHP_FUNCTION(zabbix_hfs_item_stderr);
 
 ZEND_BEGIN_MODULE_GLOBALS(zabbix)
 char *hfs_base_dir;

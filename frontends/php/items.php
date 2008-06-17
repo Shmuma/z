@@ -784,9 +784,12 @@ include_once "include/page_header.php";
 
 			// we should keep in mind that we may have updated status in HFS
 			$db_status = $db_item["status"];
+			$db_error = $db_item["error"];
 			$hfs_status = zabbix_hfs_item_status ($db_item["sitename"], $db_item["itemid"]);
-			if (is_object ($hfs_status) && $hfs_status->status == ITEM_STATUS_NOTSUPPORTED)
+			if (is_object ($hfs_status) && $hfs_status->status == ITEM_STATUS_NOTSUPPORTED) {
 				$db_status = ITEM_STATUS_NOTSUPPORTED;
+				$db_error = $hfs_status->error;
+			}
 
 			$status=new CCol(new CLink(item_status2str($db_status),
 					"?group_itemid%5B%5D=".$db_item["itemid"].
@@ -794,18 +797,23 @@ include_once "include/page_header.php";
 					item_status2style($db_status)));
 
 			$stderr = "";
-			if (trim ($db_item["stderr"]) != "")
+			$db_stderr = $db_item["stderr"];
+			$hfs_stderr = zabbix_hfs_item_stderr ($db_item["sitename"], $db_item["itemid"]);
+			if (is_object ($hfs_stderr))
+				$db_stderr = $hfs_stderr->stderr;
+
+			if (trim ($db_stderr) != "")
 			{
-				$stderr = "[".trim ($db_item["stderr"])."]";
+				$stderr = "[".trim ($db_stderr)."]";
 			}
 	
-			if($db_item["error"] == "")
+			if($db_error == "")
 			{
 				$error=new CCol($stderr,"off");
 			}
 			else
 			{
-				$error=new CCol($db_item["error"].$stderr,"on");
+				$error=new CCol($db_error.$stderr,"on");
 			}
 
 			$applications = $show_applications ? implode(', ', get_applications_by_itemid($db_item["itemid"], 'name')) : null;
