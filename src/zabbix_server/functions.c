@@ -699,12 +699,16 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 					{
 						DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_UI64 "',"
 						"lastvalue='" ZBX_FS_UI64 "',lastclock=%d where itemid=" ZBX_FS_UI64,
-							calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex,now),
+							nextcheck,
 							value->ui64,
 							((zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64))/(now-item->lastclock),
 							(int)now,
 							item->itemid);
 						SET_UI64_RESULT(value, (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64)/(now-item->lastclock));
+						HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+									    item->lastvalue_uint64, 
+									    (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64)/(now-item->lastclock), 
+									    value->ui64);
 					}
 					else
 					{
@@ -716,6 +720,10 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 							(int)now,
 							item->itemid);
 						SET_UI64_RESULT(value, (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64));
+						HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+									    item->lastvalue_uint64, 
+									    (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64), 
+									    value->ui64);
 					}
 				}
 				else
@@ -725,6 +733,8 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 						value->ui64,
 						(int)now,
 						item->itemid);
+						HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+									    item->lastvalue_uint64, value->ui64, value->ui64);
 				}
 			}
 		}
@@ -746,6 +756,8 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 						(int)now,
 						item->itemid);
 					SET_DBL_RESULT(value, (double)(value->dbl - item->prevorgvalue_dbl));
+					HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+								    item->lastvalue_dbl, value->dbl - item->prevorgvalue_dbl, value->dbl);
 				}
 				else
 				{
@@ -754,6 +766,8 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 						value->dbl,
 						(int)now,
 						item->itemid);
+						HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+									    item->lastvalue_dbl, value->dbl, value->dbl);
 				}
 			}
 		}
@@ -771,6 +785,10 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 						(int)now,
 						item->itemid);
 					SET_UI64_RESULT(value, (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64));
+					HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+								    item->lastvalue_uint64, 
+								    (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64), 
+								    value->ui64);
 				}
 				else
 				{
@@ -779,6 +797,9 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 						value->ui64,
 						(int)now,
 						item->itemid);
+						HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+									    item->lastvalue_uint64, 
+									    value->ui64, value->ui64);
 				}
 			}
 		}
