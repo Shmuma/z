@@ -754,7 +754,7 @@ include_once "include/page_header.php";
 		$query_history_size = 0;
 		$query_trends_size = 0;
 
-		$db_items = DBselect('select distinct th.host as template_host,th.hostid as template_hostid, h.host, s.name as siteid, i.* '.
+		$db_items = DBselect('select distinct th.host as template_host,th.hostid as template_hostid, h.host, s.name as sitename, i.* '.
 			' from '.implode(',', $from_tables).
 			' left join items ti on i.templateid=ti.itemid left join hosts th on ti.hostid=th.hostid '.
 			' where '.implode(' and ', $where_case).' order by h.host,i.description,i.key_,i.itemid');
@@ -784,9 +784,9 @@ include_once "include/page_header.php";
 
 			// we should keep in mind that we may have updated status in HFS
 			$db_status = $db_item["status"];
-			$hfs_status = zabbix_hfs_item_status ($db_item["siteid"], $db_item["itemid"]);
-			if ($hfs_status->status == ITEM_STATUS_DISABLED)
-				$db_status = ITEM_STATUS_DISABLED;
+			$hfs_status = zabbix_hfs_item_status ($db_item["sitename"], $db_item["itemid"]);
+			if (is_object ($hfs_status) && $hfs_status->status == ITEM_STATUS_NOTSUPPORTED)
+				$db_status = ITEM_STATUS_NOTSUPPORTED;
 
 			$status=new CCol(new CLink(item_status2str($db_status),
 					"?group_itemid%5B%5D=".$db_item["itemid"].
