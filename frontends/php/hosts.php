@@ -791,15 +791,17 @@ include_once "include/page_header.php";
 					else
 						$status=S_UNKNOWN;
 
-					if($row["available"] == HOST_AVAILABLE_TRUE)	
+					$avail_obj = zabbix_hfs_host_availability ($row["site_name"], $row["hostid"]);
+
+					if($avail_obj->available == HOST_AVAILABLE_TRUE)
 						$available=new CCol(S_AVAILABLE,"off");
-					else if($row["available"] == HOST_AVAILABLE_FALSE)
+					else if($avail_obj->available == HOST_AVAILABLE_FALSE)
 						$available=new CCol(S_NOT_AVAILABLE,"on");
-					else if($row["available"] == HOST_AVAILABLE_UNKNOWN)
+					else if($avail_obj->available == HOST_AVAILABLE_UNKNOWN)
 						$available=new CCol(S_UNKNOWN,"unknown");
 
-					if($row["error"] == "")	$error = new CCol(SPACE,"off");
-					else			$error = new CCol($row["error"],"on");
+					if($avail_obj->error == "")	$error = new CCol(SPACE,"off");
+					else			$error = new CCol($avail_obj->error,"on");
 
 					$site = $row["site_name"];
 				}
