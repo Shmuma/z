@@ -1672,7 +1672,7 @@ void HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, z
 
 
 
-void HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
+void HFS_update_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
 				 int lastclock, int nextcheck, const char* prevvalue, const char* lastvalue, const char* prevorgvalue)
 {
 	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemValues);

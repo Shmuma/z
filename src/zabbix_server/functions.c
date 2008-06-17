@@ -624,17 +624,17 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 			item->itemid);
 
 		switch (item->value_type) {
-		case ITEM_VALUE_TYPE_TEXT:
+		case ITEM_VALUE_TYPE_STR:
 			HFS_update_item_values_str (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
 						    item->lastvalue_null ? NULL : item->lastvalue_str, value->str, NULL);
 			break;
 		case ITEM_VALUE_TYPE_FLOAT:
 			HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
-						    item->lastvalue_null ? 0.0 : item->lastvalue_dbl, value->str, NULL);
+						    item->lastvalue_null ? 0.0 : item->lastvalue_dbl, value->dbl, 0.0);
 			break;
 		case ITEM_VALUE_TYPE_UINT64:
 			HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
-						    item->lastvalue_null ? 0 : item->lastvalue_uint64, value->str, NULL);
+						    item->lastvalue_null ? 0 : item->lastvalue_uint64, value->ui64, 0);
 			break;
 		}
 	}
