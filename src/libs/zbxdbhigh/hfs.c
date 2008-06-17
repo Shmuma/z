@@ -1567,7 +1567,7 @@ int HFS_get_host_availability (const char* hfs_base_dir, const char* siteid, zbx
 
 
 void HFS_update_item_values (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
-			     int nextcheck, const char* prevvalue, const char* lastvalue, const char* prevorgvalue)
+			     int lastclock, int nextcheck, const char* prevvalue, const char* lastvalue, const char* prevorgvalue)
 {
 	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemValues);
 	int fd;
@@ -1599,6 +1599,7 @@ void HFS_update_item_values (const char* hfs_base_dir, const char* siteid, zbx_u
 	}
 
 	/* lock obtained, write data */
+	write (fd, &lastclock, sizeof (lastclock));
 	write (fd, &nextcheck, sizeof (nextcheck));
 	write_str (fd, prevvalue);
 	write_str (fd, lastvalue);
@@ -1616,9 +1617,9 @@ void HFS_update_item_values (const char* hfs_base_dir, const char* siteid, zbx_u
 
 
 int HFS_get_item_values (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
-			  int* nextcheck, char** prevvalue, char** lastvalue, char** prevorgvalue)
+			 int* lastclock, int* nextcheck, char** prevvalue, char** lastvalue, char** prevorgvalue)
 {
-	char* name = get_name (hfs_base_dir, siteid, hostid, 0, NK_ItemValues);
+	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemValues);
 	int fd;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_values entered");
@@ -1644,6 +1645,7 @@ int HFS_get_item_values (const char* hfs_base_dir, const char* siteid, zbx_uint6
 	}
 
 	/* reading data */
+	read (fd, lastclock, sizeof (*lastclock));
 	read (fd, nextcheck, sizeof (*nextcheck));
 	*prevvalue = read_str (fd);
 	*lastvalue = read_str (fd);

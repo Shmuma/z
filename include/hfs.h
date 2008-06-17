@@ -85,9 +85,9 @@ void		HFS_update_host_availability (const char* hfs_base_dir, const char* siteid
 int		HFS_get_host_availability (const char* hfs_base_dir, const char* siteid, zbx_uint64_t hostid, 
 					   int* available, int* clock, char** error);
 
-void		HFS_update_item_values (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
+void		HFS_update_item_values (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int lastclock,
 					int nextcheck, const char* prevvalue, const char* lastvalue, const char* prevorgvalue);
-int		HFS_get_item_values (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
+int		HFS_get_item_values (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int* lastclock,
 				     int* nextcheck, char** prevvalue, char** lastvalue, char** prevorgvalue);
 
 #endif
