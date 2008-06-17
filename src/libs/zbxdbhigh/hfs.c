@@ -55,6 +55,7 @@ typedef enum {
 	NK_ItemData,
 	NK_ItemMeta,
 	NK_HostState,
+	NK_ItemValues,
 } name_kind_t;
 
 
@@ -71,6 +72,10 @@ static int is_valid_val (void* val);
 
 static int obtain_lock (int fd, int write);
 static int release_lock (int fd, int write);
+
+
+static void write_str (int fd, const char* str);
+static char* read_str (int fd);
 
 
 /*
@@ -423,6 +428,30 @@ int release_lock (int fd, int write)
 }
 
 
+void write_str (int fd, const char* str)
+{
+	int len = str ? strlen (str) : 0;
+
+	write (fd, &len, sizeof (len));
+	if (len)
+		write (fd, str, len+1);
+}
+
+
+char* read_str (int fd)
+{
+	int len;
+	char* res = NULL;
+
+	read (fd, &len, sizeof (len));
+	if (fd) {
+		res = (char*)malloc (len+1);
+		if (res)
+			read (fd, res, len+1);
+	}
+
+	return res;
+}
 
 
 /*
@@ -600,10 +629,13 @@ static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_
     case NK_ItemMeta:
 	    snprintf (res, len, "%s/%s/items/%llu/%u.%s", hfs_base_dir, siteid, itemid, (unsigned int)(clock / (time_t)1000000),
 		      kind == NK_ItemMeta ? "meta" : "data");
-	    return res;
+	    break;
     case NK_HostState:
 	    snprintf (res, len, "%s/%s/hosts/%llu.state", hfs_base_dir, siteid, itemid);
-	    return res;
+	    break;
+    case NK_ItemValues:
+	    snprintf (res, len, "%s/%s/items/%llu/values.dat", hfs_base_dir, siteid, itemid);
+	    break;
     }
 
     return res;
@@ -1448,7 +1480,7 @@ end:
 void HFS_update_host_availability (const char* hfs_base_dir, const char* siteid, zbx_uint64_t hostid, int available, int clock, const char* error)
 {
 	char* name = get_name (hfs_base_dir, siteid, hostid, 0, NK_HostState);
-	int fd, len;
+	int fd;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_host_availability entered");
 
@@ -1477,12 +1509,9 @@ void HFS_update_host_availability (const char* hfs_base_dir, const char* siteid,
 	}
 
 	/* lock obtained, write data */
-	len = error ? strlen (error) : 0;
 	write (fd, &available, sizeof (available));
 	write (fd, &clock, sizeof (clock));
-	write (fd, &len, sizeof (len));
-	if (len)
-		write (fd, error, len+1);
+	write_str (fd, error);
 
 	/* truncate file */
 	ftruncate (fd, lseek (fd, 0, SEEK_CUR));
@@ -1499,15 +1528,14 @@ void HFS_update_host_availability (const char* hfs_base_dir, const char* siteid,
 int HFS_get_host_availability (const char* hfs_base_dir, const char* siteid, zbx_uint64_t hostid, int* available, int* clock, char** error)
 {
 	char* name = get_name (hfs_base_dir, siteid, hostid, 0, NK_HostState);
-
-	int fd, len;
+	int fd;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_host_availability entered");
 
 	if (!name)
 		return 0;
 
-	/* open file for writing */
+	/* open file for reading */
 	fd = open (name, O_RDONLY);
 
 	free (name);
@@ -1518,7 +1546,6 @@ int HFS_get_host_availability (const char* hfs_base_dir, const char* siteid, zbx
 	}
 
 	/* obtain read lock */
-
 	if (!obtain_lock (fd, 0)) {
 		zabbix_log(LOG_LEVEL_DEBUG, "Cannot obtain read lock, error = %d", errno);
 		close (fd);
@@ -1528,19 +1555,104 @@ int HFS_get_host_availability (const char* hfs_base_dir, const char* siteid, zbx
 	/* reading data */
 	read (fd, available, sizeof (*available));
 	read (fd, clock, sizeof (*clock));
-	read (fd, &len, sizeof (len));
-
-	if (len) {
-		*error = (char*)malloc (len+1);
-		read (fd, *error, len+1);
-	}
-	else
-		*error = NULL;
+	*error = read_str (fd);
 
 	/* release read lock */
 	release_lock (fd, 0);
 	close (fd);
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_host_availability leave");
+	return 1;
+}
+
+
+void HFS_update_item_values (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
+			     int nextcheck, const char* prevvalue, const char* lastvalue, const char* prevorgvalue)
+{
+	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemValues);
+	int fd;
+
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_values entered");
+
+	if (!name)
+		return;
+
+	zabbix_log(LOG_LEVEL_DEBUG, "got name %s", name);
+
+	make_directories (name);
+
+	/* open file for writing */
+	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+	free (name);
+
+	if (fd < 0) {
+		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
+		return;
+	}
+
+	/* place write lock on that file or wait for unlock */
+	if (!obtain_lock (fd, 1)) {
+		zabbix_log(LOG_LEVEL_DEBUG, "Cannot obtain write lock, error = %d", errno);
+		close (fd);
+		return;
+	}
+
+	/* lock obtained, write data */
+	write (fd, &nextcheck, sizeof (nextcheck));
+	write_str (fd, prevvalue);
+	write_str (fd, lastvalue);
+	write_str (fd, prevorgvalue);
+
+	/* truncate file */
+	ftruncate (fd, lseek (fd, 0, SEEK_CUR));
+
+	/* release lock */
+	release_lock (fd, 1);
+	close (fd);
+
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_values leave");
+}
+
+
+int HFS_get_item_values (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
+			  int* nextcheck, char** prevvalue, char** lastvalue, char** prevorgvalue)
+{
+	char* name = get_name (hfs_base_dir, siteid, hostid, 0, NK_ItemValues);
+	int fd;
+
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_values entered");
+
+	if (!name)
+		return 0;
+
+	/* open file for reading */
+	fd = open (name, O_RDONLY);
+
+	free (name);
+
+	if (fd < 0) {
+		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
+		return 0;
+	}
+
+	/* obtain read lock */
+	if (!obtain_lock (fd, 0)) {
+		zabbix_log(LOG_LEVEL_DEBUG, "Cannot obtain read lock, error = %d", errno);
+		close (fd);
+		return 0;
+	}
+
+	/* reading data */
+	read (fd, nextcheck, sizeof (*nextcheck));
+	*prevvalue = read_str (fd);
+	*lastvalue = read_str (fd);
+	*prevorgvalue = read_str (fd);
+
+	/* release read lock */
+	release_lock (fd, 0);
+	close (fd);
+
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_values leave");
 	return 1;
 }
