@@ -622,8 +622,21 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 			value_esc,
 			(int)now,
 			item->itemid);
-		HFS_update_item_values (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
-					item->lastvalue_str, value->str, value->prevorgvalue_str);
+
+		switch (item->value_type) {
+		case ITEM_VALUE_TYPE_TEXT:
+			HFS_update_item_values_str (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+						    item->lastvalue_null ? NULL : item->lastvalue_str, value->str, NULL);
+			break;
+		case ITEM_VALUE_TYPE_FLOAT:
+			HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+						    item->lastvalue_null ? 0.0 : item->lastvalue_dbl, value->str, NULL);
+			break;
+		case ITEM_VALUE_TYPE_UINT64:
+			HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+						    item->lastvalue_null ? 0 : item->lastvalue_uint64, value->str, NULL);
+			break;
+		}
 	}
 	/* Logic for delta as speed of change */
 	else if(item->delta == ITEM_STORE_SPEED_PER_SECOND)
@@ -646,10 +659,9 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 							(int)now,
 							item->itemid);
 						SET_DBL_RESULT(value, (double)(value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock));
-						snprintf (value_esc, sizeof (value_esc), "%f", (value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock));
-						HFS_update_item_values (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
-									item->lastvalue_str, value_esc,
-									value->str);
+						HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+									item->lastvalue_dbl, (value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock),
+									value->dbl);
 					}
 					else
 					{
@@ -661,9 +673,8 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 							(int)now,
 							item->itemid);
 						SET_DBL_RESULT(value, (double)(value->dbl - item->prevorgvalue_dbl));
-						snprintf (value_esc, sizeof (value_esc), "%f", value->dbl - item->prevorgvalue_dbl);
-						HFS_update_item_values (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
-									item->lastvalue_str, value_esc, value->str);
+						HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+									    item->lastvalue_dbl, value->dbl - item->prevorgvalue_dbl, value->dbl);
 					}
 				}
 				else
@@ -673,9 +684,8 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 						value->dbl,
 						(int)now,
 						item->itemid);
-					snprintf (value_esc, sizeof (value_esc), "%f", value->dbl);
-					HFS_update_item_values (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
-								item->lastvalue_str, value_esc, value->str);
+					HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+								    item->lastvalue_dbl, value->dbl, value->dbl);
 				}
 			}
 		}

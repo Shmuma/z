@@ -1566,13 +1566,13 @@ int HFS_get_host_availability (const char* hfs_base_dir, const char* siteid, zbx
 }
 
 
-void HFS_update_item_values (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
-			     int lastclock, int nextcheck, const char* prevvalue, const char* lastvalue, const char* prevorgvalue)
+void HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
+			     int lastclock, int nextcheck, double prevvalue, double lastvalue, double prevorgvalue)
 {
 	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemValues);
-	int fd;
+	int fd, kind;
 
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_values entered");
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_values_dbl entered");
 
 	if (!name)
 		return;
@@ -1601,6 +1601,114 @@ void HFS_update_item_values (const char* hfs_base_dir, const char* siteid, zbx_u
 	/* lock obtained, write data */
 	write (fd, &lastclock, sizeof (lastclock));
 	write (fd, &nextcheck, sizeof (nextcheck));
+	kind = 0;
+	write (fd, &kind, sizeof (kind));
+	write (fd, &prevvalue, sizeof (prevvalue));
+	write (fd, &lastvalue, sizeof (lastvalue));
+	write (fd, &prevorgvalue, sizeof (prevorgvalue));
+
+	/* truncate file */
+	ftruncate (fd, lseek (fd, 0, SEEK_CUR));
+
+	/* release lock */
+	release_lock (fd, 1);
+	close (fd);
+
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_values_dbl leave");
+}
+
+
+
+void HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
+				 int lastclock, int nextcheck, zbx_uint64_t prevvalue, zbx_uint64_t lastvalue, zbx_uint64_t prevorgvalue)
+{
+	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemValues);
+	int fd, kind;
+
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_values_int entered");
+
+	if (!name)
+		return;
+
+	zabbix_log(LOG_LEVEL_DEBUG, "got name %s", name);
+
+	make_directories (name);
+
+	/* open file for writing */
+	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+	free (name);
+
+	if (fd < 0) {
+		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
+		return;
+	}
+
+	/* place write lock on that file or wait for unlock */
+	if (!obtain_lock (fd, 1)) {
+		zabbix_log(LOG_LEVEL_DEBUG, "Cannot obtain write lock, error = %d", errno);
+		close (fd);
+		return;
+	}
+
+	/* lock obtained, write data */
+	write (fd, &lastclock, sizeof (lastclock));
+	write (fd, &nextcheck, sizeof (nextcheck));
+	kind = 1;
+	write (fd, &kind, sizeof (kind));
+	write (fd, &prevvalue, sizeof (prevvalue));
+	write (fd, &lastvalue, sizeof (lastvalue));
+	write (fd, &prevorgvalue, sizeof (prevorgvalue));
+
+	/* truncate file */
+	ftruncate (fd, lseek (fd, 0, SEEK_CUR));
+
+	/* release lock */
+	release_lock (fd, 1);
+	close (fd);
+
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_values_int leave");
+}
+
+
+
+void HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
+				 int lastclock, int nextcheck, const char* prevvalue, const char* lastvalue, const char* prevorgvalue)
+{
+	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemValues);
+	int fd, kind;
+
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_values_str entered");
+
+	if (!name)
+		return;
+
+	zabbix_log(LOG_LEVEL_DEBUG, "got name %s", name);
+
+	make_directories (name);
+
+	/* open file for writing */
+	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+	free (name);
+
+	if (fd < 0) {
+		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
+		return;
+	}
+
+	/* place write lock on that file or wait for unlock */
+	if (!obtain_lock (fd, 1)) {
+		zabbix_log(LOG_LEVEL_DEBUG, "Cannot obtain write lock, error = %d", errno);
+		close (fd);
+		return;
+	}
+
+	/* lock obtained, write data */
+	write (fd, &lastclock, sizeof (lastclock));
+	write (fd, &nextcheck, sizeof (nextcheck));
+	kind = 2;
+	write (fd, &kind, sizeof (kind));
 	write_str (fd, prevvalue);
 	write_str (fd, lastvalue);
 	write_str (fd, prevorgvalue);
@@ -1612,8 +1720,9 @@ void HFS_update_item_values (const char* hfs_base_dir, const char* siteid, zbx_u
 	release_lock (fd, 1);
 	close (fd);
 
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_values leave");
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_values_str leave");
 }
+
 
 
 int HFS_get_item_values (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
