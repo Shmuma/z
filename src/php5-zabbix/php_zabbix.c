@@ -321,7 +321,7 @@ PHP_FUNCTION(zabbix_hfs_item_status)
 
 
 /* {{{ proto object zabbix_hfs_item_stderr(char *site, int itemid) */
-PHP_FUNCTION(zabbix_hfs_item_status)
+PHP_FUNCTION(zabbix_hfs_item_stderr)
 {
 	int itemid;
 	char *site = NULL;
