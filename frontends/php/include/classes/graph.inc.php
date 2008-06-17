@@ -1031,6 +1031,8 @@
 								$this->sizeX, $this->items[$i]['itemid'],
 								$this->from_time, $this->to_time,
 								$from_time, $to_time);
+					if (!is_array($arr))
+						$arr = array();
 
 					foreach($arr as $obj)
 					{
