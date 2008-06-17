@@ -1946,3 +1946,76 @@ void HFS_update_item_stderr (const char* hfs_base_dir, const char* siteid, zbx_u
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_stderr leave");
 }
+
+
+int HFS_get_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int* status, char** error)
+{
+	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemStatus);
+	int fd;
+
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_status entered");
+	if (!name)
+		return 0;
+
+	/* open file for reading */
+	fd = open (name, O_RDONLY);
+	free (name);
+
+	if (fd < 0) {
+		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
+		return 0;
+	}
+
+	/* obtain read lock */
+	if (!obtain_lock (fd, 0)) {
+		zabbix_log(LOG_LEVEL_DEBUG, "Cannot obtain read lock, error = %d", errno);
+		close (fd);
+		return 0;
+	}
+
+	/* reading data */
+	read (fd, status, sizeof (*status));
+	*error = read_str (fd);
+
+	/* release read lock */
+	release_lock (fd, 0);
+	close (fd);
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_status leave");
+	return 1;
+}
+
+
+int HFS_get_item_stderr (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, char** stderr)
+{
+	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemStderr);
+	int fd;
+
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_stderr entered");
+	if (!name)
+		return 0;
+
+	/* open file for reading */
+	fd = open (name, O_RDONLY);
+	free (name);
+
+	if (fd < 0) {
+		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
+		return 0;
+	}
+
+	/* obtain read lock */
+	if (!obtain_lock (fd, 0)) {
+		zabbix_log(LOG_LEVEL_DEBUG, "Cannot obtain read lock, error = %d", errno);
+		close (fd);
+		return 0;
+	}
+
+	/* reading data */
+	*stderr = read_str (fd);
+
+	/* release read lock */
+	release_lock (fd, 0);
+	close (fd);
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_stderr leave");
+	return 1;
+}

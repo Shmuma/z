@@ -101,5 +101,7 @@ int		HFS_get_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_
 void		HFS_update_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int status, const char* error);
 void		HFS_update_item_stderr (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, const char* stderr);
 
+int		HFS_get_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int* status, char** error);
+int		HFS_get_item_stderr (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, char** stderr);
 
 #endif
