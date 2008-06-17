@@ -356,6 +356,7 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 		value);
 
 	DBupdate_item_stderr (item.itemid, error);
+	HFS_update_item_stderr (CONFIG_HFS_PATH, item.siteid, item.itemid, error);
 
 	if(strcmp(value,"ZBX_NOTSUPPORTED") ==0)
 	{
@@ -366,6 +367,7 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 				item.key,
 				item.host_name);
 			DBupdate_item_status_to_notsupported(item.itemid, "Not supported by ZABBIX agent");
+			HFS_update_item_status (CONFIG_HFS_PATH, item.siteid, item.itemid, ITEM_STATUS_NOTSUPPORTED, "Not supported by ZABBIX agent");
 	}
 	else
 	{
@@ -733,8 +735,8 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 						value->ui64,
 						(int)now,
 						item->itemid);
-						HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
-									    item->lastvalue_uint64, value->ui64, value->ui64);
+					HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+								    item->lastvalue_uint64, value->ui64, value->ui64);
 				}
 			}
 		}
@@ -766,8 +768,8 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 						value->dbl,
 						(int)now,
 						item->itemid);
-						HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
-									    item->lastvalue_dbl, value->dbl, value->dbl);
+					HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+								    item->lastvalue_dbl, value->dbl, value->dbl);
 				}
 			}
 		}
@@ -797,9 +799,9 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 						value->ui64,
 						(int)now,
 						item->itemid);
-						HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
-									    item->lastvalue_uint64, 
-									    value->ui64, value->ui64);
+					HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+								    item->lastvalue_uint64, 
+								    value->ui64, value->ui64);
 				}
 			}
 		}
@@ -828,6 +830,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 		DBexecute("update items set status=%d where itemid=" ZBX_FS_UI64,
 			ITEM_STATUS_ACTIVE,
 			item->itemid);
+		HFS_update_item_status (CONFIG_HFS_PATH, item->siteid, item->itemid, ITEM_STATUS_ACTIVE, NULL);
 	}
 
 	/* Required for nodata() */
