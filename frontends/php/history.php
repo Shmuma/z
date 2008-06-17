@@ -469,6 +469,8 @@ COpt::profiling_start("history");
 			$item = get_item_by_itemid($_REQUEST["itemid"]);
 
 			$arr = zabbix_hfs_last($item["sitename"],$_REQUEST["itemid"], 500);
+			if (!is_array($arr))
+				$arr = array();
 
 			foreach ($arr as $obj)
 				$obj->valuemapid = $item["valuemapid"];
