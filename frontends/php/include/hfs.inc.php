@@ -65,4 +65,19 @@ function zbx_hfs_item_stderr ($db_item)
 }
 
 
+function zbx_hfs_get_item_values ($db_item)
+{
+	$res = array ("lastclock" => $db_item["lastclock"], "prevvalue" => $db_item["prevvalue"], "lastvalue" => $db_item["lastvalue"]);
+
+	if (!zbx_hfs_available ())
+		return $res;
+
+	$val = zabbix_hfs_item_values ($db_item["sitename"], $db_item["itemid"], $db_item["value_type"]);
+
+	if (is_array ($val))
+		return $val;
+
+	return $res;
+}
+
 ?>

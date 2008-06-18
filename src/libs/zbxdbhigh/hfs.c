@@ -1738,7 +1738,7 @@ int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_u
 			     int* nextcheck, double* prevvalue, double* lastvalue, double* prevorgvalue)
 {
 	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemValues);
-	int fd;
+	int fd, kind;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_values_dbl entered");
 	if (!name)
@@ -1763,6 +1763,15 @@ int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_u
 	/* reading data */
 	read (fd, lastclock, sizeof (*lastclock));
 	read (fd, nextcheck, sizeof (*nextcheck));
+	read (fd, &kind, sizeof (kind));
+	
+	if (kind != 0) {
+		release_lock (fd, 0);
+		close (fd);
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_values_dbl error. Incorrect type (%d)", kind);	
+		return 0;
+	}
+
 	read (fd, prevvalue, sizeof (*prevvalue));
 	read (fd, lastvalue, sizeof (*lastvalue));
 	read (fd, prevorgvalue, sizeof (*prevorgvalue));
@@ -1804,6 +1813,15 @@ int HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_u
 	/* reading data */
 	read (fd, lastclock, sizeof (*lastclock));
 	read (fd, nextcheck, sizeof (*nextcheck));
+	read (fd, &kind, sizeof (kind));
+	
+	if (kind != 1) {
+		release_lock (fd, 0);
+		close (fd);
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_values_int error. Incorrect type (%d)", kind);	
+		return 0;
+	}
+
 	read (fd, prevvalue, sizeof (*prevvalue));
 	read (fd, lastvalue, sizeof (*lastvalue));
 	read (fd, prevorgvalue, sizeof (*prevorgvalue));
@@ -1846,6 +1864,15 @@ int HFS_get_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_u
 	/* reading data */
 	read (fd, lastclock, sizeof (*lastclock));
 	read (fd, nextcheck, sizeof (*nextcheck));
+	read (fd, &kind, sizeof (kind));
+	
+	if (kind != 2) {
+		release_lock (fd, 0);
+		close (fd);
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_values_str error. Incorrect type (%d)", kind);	
+		return 0;
+	}
+
 	*prevvalue = read_str (fd);
 	*lastvalue = read_str (fd);
 	*prevorgvalue = read_str (fd);

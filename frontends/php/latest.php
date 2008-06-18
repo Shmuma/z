@@ -185,14 +185,14 @@ include_once "include/page_header.php";
 
 	$any_app_exist = false;
 		
-	$db_applications = DBselect("select distinct h.host,h.hostid,a.* from applications a,hosts h ".
+	$db_applications = DBselect("select distinct h.host,h.hostid,a.*,s.name as sitename from applications a,hosts h".
 		" where a.hostid=h.hostid".$compare_host.' and h.hostid in ('.$availiable_hosts.')'.
 		" and h.status=".HOST_STATUS_MONITORED." order by a.name,a.applicationid,h.host");
 	while($db_app = DBfetch($db_applications))
 	{		
-		$db_items = DBselect("select distinct i.* from items i,items_applications ia".
+		$db_items = DBselect("select distinct i.*,s.name as sitename from items i,items_applications ia, hosts h, sites s".
 			" where ia.applicationid=".$db_app["applicationid"]." and i.itemid=ia.itemid".
-			" and i.status=".ITEM_STATUS_ACTIVE.
+			" and i.status=".ITEM_STATUS_ACTIVE." and i.hostid = h.hostid and h.siteid = s.siteid ".
 			" order by i.description, i.itemid");
 
 		$app_rows = array();
@@ -206,23 +206,25 @@ include_once "include/page_header.php";
 			++$item_cnt;
 			if(!in_array($db_app["applicationid"],$_REQUEST["applications"]) && !isset($show_all_apps)) continue;
 
-			if(isset($db_item["lastclock"]))
-				$lastclock=date(S_DATE_FORMAT_YMDHMS,$db_item["lastclock"]);
+			$hfs_data = zbx_hfs_get_item_values ($db_items);
+
+			if(isset($hfs_data["lastclock"]))
+				$lastclock=date(S_DATE_FORMAT_YMDHMS,$hfs_data["lastclock"]);
 			else
 				$lastclock = new CCol('-', 'center');
 
 			$lastvalue=format_lastvalue($db_item);
 
-			if( isset($db_item["lastvalue"]) && isset($db_item["prevvalue"]) &&
-				($db_item["value_type"] == 0) && ($db_item["lastvalue"]-$db_item["prevvalue"] != 0) )
+			if( isset($hfs_data["lastvalue"]) && isset($hfs_data["prevvalue"]) &&
+				($db_item["value_type"] == 0) && ($hfs_data["lastvalue"]-$hfs_data["prevvalue"] != 0) )
 			{
-				if($db_item["lastvalue"]-$db_item["prevvalue"]<0)
+				if($hfs_data["lastvalue"]-$hfs_data["prevvalue"]<0)
 				{
-					$change=convert_units($db_item["lastvalue"]-$db_item["prevvalue"],$db_item["units"]);
+					$change=convert_units($hfs_data["lastvalue"]-$hfs_data["prevvalue"],$db_item["units"]);
 				}
 				else
 				{
-					$change="+".convert_units($db_item["lastvalue"]-$db_item["prevvalue"],$db_item["units"]);
+					$change="+".convert_units($hfs_data["lastvalue"]-$hfs_data["prevvalue"],$db_item["units"]);
 				}
 				$change=nbsp($change);
 			}
@@ -238,7 +240,7 @@ include_once "include/page_header.php";
 			{
 				$actions=new CLink(S_HISTORY,"history.php?action=showvalues&period=3600&itemid=".$db_item["itemid"],"action");
 			}
-			$stderr = $db_item["stderr"];
+			$stderr = zbx_hfs_item_stderr ($db_item);
 			array_push($app_rows, new CRow(array(
 				is_show_subnodes() ? SPACE : null,
 				$_REQUEST["hostid"] > 0 ? NULL : SPACE,
