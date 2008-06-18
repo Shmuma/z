@@ -792,9 +792,10 @@ include_once "include/page_header.php";
 					item_status2style($db_status)));
 
 			$stderr = "";
+			$db_stderr = zbx_hfs_item_stderr ($db_item);
 			if (trim ($db_stderr) != "")
 			{
-				$stderr = "[".trim (zbx_hfs_stderr ($db_item))."]";
+				$stderr = "[".trim ($db_stderr)."]";
 			}
 	
 			if($db_error == "")
