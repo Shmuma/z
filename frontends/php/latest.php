@@ -22,6 +22,7 @@
 	require_once "include/config.inc.php";
 	require_once "include/hosts.inc.php";
 	require_once "include/items.inc.php";
+	require_once "include/hfs.inc.php";
 
 	$page["title"] = "S_LATEST_VALUES";
 	$page["file"] = "latest.php";
@@ -185,7 +186,7 @@ include_once "include/page_header.php";
 
 	$any_app_exist = false;
 		
-	$db_applications = DBselect("select distinct h.host,h.hostid,a.*,s.name as sitename from applications a,hosts h".
+	$db_applications = DBselect("select distinct h.host,h.hostid,a.*from applications a,hosts h".
 		" where a.hostid=h.hostid".$compare_host.' and h.hostid in ('.$availiable_hosts.')'.
 		" and h.status=".HOST_STATUS_MONITORED." order by a.name,a.applicationid,h.host");
 	while($db_app = DBfetch($db_applications))
@@ -206,25 +207,28 @@ include_once "include/page_header.php";
 			++$item_cnt;
 			if(!in_array($db_app["applicationid"],$_REQUEST["applications"]) && !isset($show_all_apps)) continue;
 
-			$hfs_data = zbx_hfs_get_item_values ($db_items);
+			$hfs_data = zbx_hfs_get_item_values ($db_item);
+			$db_item["lastclock"] = $hfs_data["lastclock"];
+			$db_item["lastvalue"] = $hfs_data["lastvalue"];
+			$db_item["prevvalue"] = $hfs_data["prevvalue"];
 
-			if(isset($hfs_data["lastclock"]))
-				$lastclock=date(S_DATE_FORMAT_YMDHMS,$hfs_data["lastclock"]);
+			if(isset($db_item["lastclock"]))
+				$lastclock=date(S_DATE_FORMAT_YMDHMS,$db_item["lastclock"]);
 			else
 				$lastclock = new CCol('-', 'center');
 
 			$lastvalue=format_lastvalue($db_item);
 
-			if( isset($hfs_data["lastvalue"]) && isset($hfs_data["prevvalue"]) &&
-				($db_item["value_type"] == 0) && ($hfs_data["lastvalue"]-$hfs_data["prevvalue"] != 0) )
+			if( isset($db_item["lastvalue"]) && isset($db_item["prevvalue"]) &&
+				($db_item["value_type"] == 0) && ($db_item["lastvalue"]-$db_item["prevvalue"] != 0) )
 			{
-				if($hfs_data["lastvalue"]-$hfs_data["prevvalue"]<0)
+				if($db_item["lastvalue"]-$db_item["prevvalue"]<0)
 				{
-					$change=convert_units($hfs_data["lastvalue"]-$hfs_data["prevvalue"],$db_item["units"]);
+					$change=convert_units($db_item["lastvalue"]-$db_item["prevvalue"],$db_item["units"]);
 				}
 				else
 				{
-					$change="+".convert_units($hfs_data["lastvalue"]-$hfs_data["prevvalue"],$db_item["units"]);
+					$change="+".convert_units($db_item["lastvalue"]-$db_item["prevvalue"],$db_item["units"]);
 				}
 				$change=nbsp($change);
 			}
