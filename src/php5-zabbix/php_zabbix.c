@@ -390,8 +390,12 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 	case ITEM_VALUE_TYPE_STR:
 		if (!HFS_get_item_values_str (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, &lastclock, &nextcheck, &s_prev, &s_last, &s_prevorg))
 			RETURN_FALSE;
-		add_assoc_str (return_value, "prevvalue", d_prev);
-		add_assoc_str (return_value, "lastvalue", d_last);
+		if (s_prev)
+			add_assoc_str (return_value, "prevvalue", s_prev);
+		if (s_last)
+			add_assoc_str (return_value, "lastvalue", s_last);
+		if (s_prevorg)
+			free (s_prevorg);
 		break;
 
 	case ITEM_VALUE_TYPE_UINT64:
@@ -400,11 +404,9 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 
 		asprintf(&buf, "%lld", i_prev);
 		add_assoc_str (return_value, "prevvalue", buf);
-		free(buf);
 
 		asprintf(&buf, "%lld", i_last);
 		add_assoc_str (return_value, "lastvalue", buf);
-		free(buf);
 		break;
 
 	default:
