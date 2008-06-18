@@ -1788,7 +1788,7 @@ int HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_u
 			     int* nextcheck, zbx_uint64_t* prevvalue, zbx_uint64_t* lastvalue, zbx_uint64_t* prevorgvalue)
 {
 	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemValues);
-	int fd;
+	int fd, kind;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_values_int entered");
 	if (!name)
@@ -1839,7 +1839,7 @@ int HFS_get_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_u
 			 int* lastclock, int* nextcheck, char** prevvalue, char** lastvalue, char** prevorgvalue)
 {
 	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemValues);
-	int fd;
+	int fd, kind;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_values_str entered");
 	if (!name)
