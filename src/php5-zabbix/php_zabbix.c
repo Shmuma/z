@@ -203,7 +203,7 @@ hfs_last_functor (item_type_t type, item_value_u val, time_t timestamp, void *pt
 PHP_FUNCTION(zabbix_hfs_last)
 {
 	int i, count;
-	long long itemid;
+	long long itemid = 0;
 	char *site = NULL;
 	int site_len = 0;
 	struct items_array res;
@@ -253,7 +253,7 @@ PHP_FUNCTION(zabbix_hfs_last)
 /* {{{ proto object zabbix_hfs_host_availability(char *site, int hostid) */
 PHP_FUNCTION(zabbix_hfs_host_availability)
 {
-	long long hostid;
+	long long hostid = 0;
 	char *site = NULL;
 	int site_len = 0, available, clock;
 	char* error = NULL;
@@ -290,7 +290,7 @@ PHP_FUNCTION(zabbix_hfs_host_availability)
 /* {{{ proto object zabbix_hfs_item_status(char *site, int itemid) */
 PHP_FUNCTION(zabbix_hfs_item_status)
 {
-	long long itemid;
+	long long itemid = 0;
 	char *site = NULL;
 	int site_len = 0, status;
 	char* error = NULL;
@@ -326,7 +326,7 @@ PHP_FUNCTION(zabbix_hfs_item_status)
 /* {{{ proto object zabbix_hfs_item_stderr(char *site, int itemid) */
 PHP_FUNCTION(zabbix_hfs_item_stderr)
 {
-	long long itemid;
+	long long itemid = 0;
 	char *site = NULL;
 	int site_len = 0;
 	char* error = NULL;
@@ -363,7 +363,7 @@ PHP_FUNCTION(zabbix_hfs_item_stderr)
 /* {{{ proto array zabbix_hfs_item_values(char *site, int itemid, int type) */
 PHP_FUNCTION(zabbix_hfs_item_values)
 {
-	long long itemid;
+	long long itemid = 0;
 	char *site = NULL;
 	int site_len = 0, type;
 	int lastclock, nextcheck;
