@@ -396,7 +396,7 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 		}
 		if (s_last) {
 			add_assoc_string (return_value, "lastvalue", s_last, 1);
-			free (s_prev);
+			free (s_last);
 		}
 		if (s_prevorg)
 			free (s_prevorg);
