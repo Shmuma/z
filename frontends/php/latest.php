@@ -301,14 +301,15 @@ include_once "include/page_header.php";
 	
 	while($db_appitem = DBfetch($db_appitems)){
 
-		$sql = 'SELECT h.host,h.hostid,i.* '.
-				' FROM hosts h, items i LEFT JOIN items_applications ia ON ia.itemid=i.itemid'.
+		$sql = 'SELECT h.host,h.hostid,i.*,s.name as sitename '.
+				' FROM hosts h, items i, sites s LEFT JOIN items_applications ia ON ia.itemid=i.itemid'.
 				' WHERE ia.itemid is NULL '.
 					' AND h.hostid=i.hostid '.
 					' AND h.status='.HOST_STATUS_MONITORED.
 					' AND i.status='.ITEM_STATUS_ACTIVE.
 					$compare_host.
 					' AND h.hostid='.$db_appitem['hostid'].
+					' and s.siteid = h.siteid '.
 				' ORDER BY i.description,i.itemid';
 				
 		$db_items = DBselect($sql);
@@ -318,6 +319,11 @@ include_once "include/page_header.php";
 		
 		while($db_item = DBfetch($db_items))
 		{
+			$hfs_data = zbx_hfs_get_item_values ($db_item);
+			$db_item["lastclock"] = $hfs_data["lastclock"];
+			$db_item["lastvalue"] = $hfs_data["lastvalue"];
+			$db_item["prevvalue"] = $hfs_data["prevvalue"];
+
 			$description = item_description($db_item["description"],$db_item["key_"]);
 	
 			if( '' != $_REQUEST["select"] && !stristr($description, $_REQUEST["select"]) ) continue;
