@@ -792,7 +792,7 @@ include_once "include/page_header.php";
 					else
 						$status=S_UNKNOWN;
 
-					$avail_obj = zbx_hfs_host_availability ($row["sitename"], $row["hostid"]);
+					$avail_obj = zbx_hfs_host_availability ($row);
 
 					if($avail_obj["available"] == HOST_AVAILABLE_TRUE)
 						$available=new CCol(S_AVAILABLE,"off");
