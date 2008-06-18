@@ -23,8 +23,8 @@
 	require_once "include/hosts.inc.php";
 	require_once "include/items.inc.php";
 	require_once "include/forms.inc.php";
-  
-  require_once "include/dbstat.inc.php";
+	require_once "include/hfs.inc.php";
+	require_once "include/dbstat.inc.php";
 
         $page["title"] = "S_CONFIGURATION_OF_ITEMS";
         $page["file"] = "items.php";
@@ -543,6 +543,9 @@ include_once "include/page_header.php";
 		$where_case[] = 'i.hostid=h.hostid';
 		$where_case[] = 'h.hostid in ('.$accessible_hosts.')';
 
+		$from_tables['s'] = 'sites s';
+		$where_case[] = 'h.siteid = s.siteid';
+
 		update_profile("external_filter",$_REQUEST['external_filter'] = get_request("external_filter" ,get_profile("external_filter", 0)));
 
 		if($_REQUEST['external_filter'])
@@ -751,7 +754,7 @@ include_once "include/page_header.php";
 		$query_history_size = 0;
 		$query_trends_size = 0;
 
-		$db_items = DBselect('select distinct th.host as template_host,th.hostid as template_hostid, h.host, i.* '.
+		$db_items = DBselect('select distinct th.host as template_host,th.hostid as template_hostid, h.host, s.name as sitename, i.* '.
 			' from '.implode(',', $from_tables).
 			' left join items ti on i.templateid=ti.itemid left join hosts th on ti.hostid=th.hostid '.
 			' where '.implode(' and ', $where_case).' order by h.host,i.description,i.key_,i.itemid');
@@ -779,24 +782,29 @@ include_once "include/page_header.php";
 				$db_item["itemid"].url_param("hostid").url_param("groupid"),
 				'action'));
 
-			$status=new CCol(new CLink(item_status2str($db_item["status"]),
+			$stat = zbx_hfs_item_status ($db_item);
+			$db_status = $stat["status"];
+			$db_error = $stat["error"];
+
+			$status=new CCol(new CLink(item_status2str($db_status),
 					"?group_itemid%5B%5D=".$db_item["itemid"].
-					"&group_task=".($db_item["status"] ? "Activate+selected" : "Disable+selected"),
-					item_status2style($db_item["status"])));
+					"&group_task=".($db_status ? "Activate+selected" : "Disable+selected"),
+					item_status2style($db_status)));
 
 			$stderr = "";
-			if (trim ($db_item["stderr"]) != "")
+			$db_stderr = zbx_hfs_item_stderr ($db_item);
+			if (trim ($db_stderr) != "")
 			{
-				$stderr = "[".trim ($db_item["stderr"])."]";
+				$stderr = "[".trim ($db_stderr)."]";
 			}
 	
-			if($db_item["error"] == "")
+			if($db_error == "")
 			{
 				$error=new CCol($stderr,"off");
 			}
 			else
 			{
-				$error=new CCol($db_item["error"].$stderr,"on");
+				$error=new CCol($db_error.$stderr,"on");
 			}
 
 			$applications = $show_applications ? implode(', ', get_applications_by_itemid($db_item["itemid"], 'name')) : null;
