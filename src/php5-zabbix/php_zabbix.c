@@ -44,17 +44,6 @@ ZEND_GET_MODULE(zabbix)
 #endif
 
 
-/* Item value types */
-typedef enum
-{
-	ITEM_VALUE_TYPE_FLOAT = 0,
-	ITEM_VALUE_TYPE_STR,
-	ITEM_VALUE_TYPE_LOG,
-	ITEM_VALUE_TYPE_UINT64,
-	ITEM_VALUE_TYPE_TEXT
-} zbx_item_value_type_t;
-
-
 
 PHP_INI_BEGIN()
 STD_PHP_INI_ENTRY("zabbix.hfs_base_dir", "/tmp/hfs", PHP_INI_ALL, OnUpdateString,
@@ -377,7 +366,7 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 	long long itemid;
 	char *site = NULL;
 	int site_len = 0, type;
-	int lastclock, int nextcheck;
+	int lastclock, nextcheck;
 	char* buf = NULL;
 
 	double d_prev, d_last, d_prevorg;
