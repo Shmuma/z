@@ -302,7 +302,7 @@ include_once "include/page_header.php";
 	while($db_appitem = DBfetch($db_appitems)){
 
 		$sql = 'SELECT h.host,h.hostid,i.*,s.name as sitename '.
-				' FROM hosts h, items i, sites s LEFT JOIN items_applications ia ON ia.itemid=i.itemid'.
+				' FROM hosts h, sites s, items i LEFT JOIN items_applications ia ON ia.itemid=i.itemid'.
 				' WHERE ia.itemid is NULL '.
 					' AND h.hostid=i.hostid '.
 					' AND h.status='.HOST_STATUS_MONITORED.
