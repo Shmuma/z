@@ -23,8 +23,8 @@
 	require_once "include/hosts.inc.php";
 	require_once "include/items.inc.php";
 	require_once "include/forms.inc.php";
-  
-  require_once "include/dbstat.inc.php";
+	require_once "include/hfs.inc.php";
+	require_once "include/dbstat.inc.php";
 
         $page["title"] = "S_CONFIGURATION_OF_ITEMS";
         $page["file"] = "items.php";
@@ -782,14 +782,9 @@ include_once "include/page_header.php";
 				$db_item["itemid"].url_param("hostid").url_param("groupid"),
 				'action'));
 
-			// we should keep in mind that we may have updated status in HFS
-			$db_status = $db_item["status"];
-			$db_error = $db_item["error"];
-			$hfs_status = zabbix_hfs_item_status ($db_item["sitename"], $db_item["itemid"]);
-			if (is_object ($hfs_status) && $hfs_status->status == ITEM_STATUS_NOTSUPPORTED) {
-				$db_status = ITEM_STATUS_NOTSUPPORTED;
-				$db_error = $hfs_status->error;
-			}
+			$stat = zbx_hfs_item_status ($db_item);
+			$db_status = $stat["status"];
+			$db_error = $stat["error"];
 
 			$status=new CCol(new CLink(item_status2str($db_status),
 					"?group_itemid%5B%5D=".$db_item["itemid"].
@@ -797,14 +792,9 @@ include_once "include/page_header.php";
 					item_status2style($db_status)));
 
 			$stderr = "";
-			$db_stderr = $db_item["stderr"];
-			$hfs_stderr = zabbix_hfs_item_stderr ($db_item["sitename"], $db_item["itemid"]);
-			if (is_object ($hfs_stderr))
-				$db_stderr = $hfs_stderr->stderr;
-
 			if (trim ($db_stderr) != "")
 			{
-				$stderr = "[".trim ($db_stderr)."]";
+				$stderr = "[".trim (zbx_hfs_stderr ($db_item))."]";
 			}
 	
 			if($db_error == "")
