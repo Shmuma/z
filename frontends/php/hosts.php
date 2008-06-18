@@ -22,6 +22,7 @@
 	require_once "include/config.inc.php";
 	require_once "include/hosts.inc.php";
 	require_once "include/forms.inc.php";
+	require_once "include/hfs.inc.php";
 
 	$page["title"] = "S_HOSTS";
 	$page["file"] = "hosts.php";
@@ -728,7 +729,7 @@ include_once "include/page_header.php";
 				S_ACTIONS
 				));
 		
-			$sql="select h.*,s.name as site_name from";
+			$sql="select h.*,s.name as sitename from";
 			if(isset($_REQUEST["groupid"]))
 			{
 				$sql .= " hosts h, hosts_groups hg, sites s where";
@@ -791,19 +792,19 @@ include_once "include/page_header.php";
 					else
 						$status=S_UNKNOWN;
 
-					$avail_obj = zabbix_hfs_host_availability ($row["site_name"], $row["hostid"]);
+					$avail_obj = zbx_hfs_host_availability ($row["sitename"], $row["hostid"]);
 
-					if($avail_obj->available == HOST_AVAILABLE_TRUE)
+					if($avail_obj["available"] == HOST_AVAILABLE_TRUE)
 						$available=new CCol(S_AVAILABLE,"off");
-					else if($avail_obj->available == HOST_AVAILABLE_FALSE)
+					else if($avail_obj["available"] == HOST_AVAILABLE_FALSE)
 						$available=new CCol(S_NOT_AVAILABLE,"on");
-					else if($avail_obj->available == HOST_AVAILABLE_UNKNOWN)
+					else if($avail_obj["available"] == HOST_AVAILABLE_UNKNOWN)
 						$available=new CCol(S_UNKNOWN,"unknown");
 
-					if($avail_obj->error == "")	$error = new CCol(SPACE,"off");
-					else			$error = new CCol($avail_obj->error,"on");
+					if($avail_obj["error"] == "")	$error = new CCol(SPACE,"off");
+					else			$error = new CCol($avail_obj["error"],"on");
 
-					$site = $row["site_name"];
+					$site = $row["sitename"];
 				}
 
 				$popup_menu_actions = array(

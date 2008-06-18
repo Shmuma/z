@@ -10,6 +10,24 @@ function zbx_hfs_available ()
 }
 
 
+// Routine returns correct hosts's availability and error.
+// db_item array must have 'hostid' and 'sitename' entries.
+function zbx_hfs_host_availability ($db_item)
+{
+	$res = array ("available" => $db_item["available"], "error" => $db_item["error"]);
+
+	if (!zbx_hfs_available ()) 
+		return $res;
+
+	$hfs_status = zabbix_hfs_host_availability ($db_item["sitename"], $db_item["hostid"]);
+
+	if (is_object ($hfs_status))
+		$res = array ("available" => $hfs_status->available, "error" => $hfs_status->error);
+
+	return $res;
+}
+
+
 // Routine returns correct item's status and error.
 // db_item array must have 'itemid' and 'sitename' entries.
 function zbx_hfs_item_status ($db_item)
