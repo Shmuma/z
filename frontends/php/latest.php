@@ -22,6 +22,7 @@
 	require_once "include/config.inc.php";
 	require_once "include/hosts.inc.php";
 	require_once "include/items.inc.php";
+	require_once "include/hfs.inc.php";
 
 	$page["title"] = "S_LATEST_VALUES";
 	$page["file"] = "latest.php";
@@ -185,14 +186,14 @@ include_once "include/page_header.php";
 
 	$any_app_exist = false;
 		
-	$db_applications = DBselect("select distinct h.host,h.hostid,a.* from applications a,hosts h ".
+	$db_applications = DBselect("select distinct h.host,h.hostid,a.*from applications a,hosts h".
 		" where a.hostid=h.hostid".$compare_host.' and h.hostid in ('.$availiable_hosts.')'.
 		" and h.status=".HOST_STATUS_MONITORED." order by a.name,a.applicationid,h.host");
 	while($db_app = DBfetch($db_applications))
 	{		
-		$db_items = DBselect("select distinct i.* from items i,items_applications ia".
+		$db_items = DBselect("select distinct i.*,s.name as sitename from items i,items_applications ia, hosts h, sites s".
 			" where ia.applicationid=".$db_app["applicationid"]." and i.itemid=ia.itemid".
-			" and i.status=".ITEM_STATUS_ACTIVE.
+			" and i.status=".ITEM_STATUS_ACTIVE." and i.hostid = h.hostid and h.siteid = s.siteid ".
 			" order by i.description, i.itemid");
 
 		$app_rows = array();
@@ -205,6 +206,11 @@ include_once "include/page_header.php";
 
 			++$item_cnt;
 			if(!in_array($db_app["applicationid"],$_REQUEST["applications"]) && !isset($show_all_apps)) continue;
+
+			$hfs_data = zbx_hfs_get_item_values ($db_item);
+			$db_item["lastclock"] = $hfs_data["lastclock"];
+			$db_item["lastvalue"] = $hfs_data["lastvalue"];
+			$db_item["prevvalue"] = $hfs_data["prevvalue"];
 
 			if(isset($db_item["lastclock"]))
 				$lastclock=date(S_DATE_FORMAT_YMDHMS,$db_item["lastclock"]);
@@ -238,7 +244,7 @@ include_once "include/page_header.php";
 			{
 				$actions=new CLink(S_HISTORY,"history.php?action=showvalues&period=3600&itemid=".$db_item["itemid"],"action");
 			}
-			$stderr = $db_item["stderr"];
+			$stderr = zbx_hfs_item_stderr ($db_item);
 			array_push($app_rows, new CRow(array(
 				is_show_subnodes() ? SPACE : null,
 				$_REQUEST["hostid"] > 0 ? NULL : SPACE,
@@ -295,14 +301,15 @@ include_once "include/page_header.php";
 	
 	while($db_appitem = DBfetch($db_appitems)){
 
-		$sql = 'SELECT h.host,h.hostid,i.* '.
-				' FROM hosts h, items i LEFT JOIN items_applications ia ON ia.itemid=i.itemid'.
+		$sql = 'SELECT h.host,h.hostid,i.*,s.name as sitename '.
+				' FROM hosts h, sites s, items i LEFT JOIN items_applications ia ON ia.itemid=i.itemid'.
 				' WHERE ia.itemid is NULL '.
 					' AND h.hostid=i.hostid '.
 					' AND h.status='.HOST_STATUS_MONITORED.
 					' AND i.status='.ITEM_STATUS_ACTIVE.
 					$compare_host.
 					' AND h.hostid='.$db_appitem['hostid'].
+					' and s.siteid = h.siteid '.
 				' ORDER BY i.description,i.itemid';
 				
 		$db_items = DBselect($sql);
@@ -312,6 +319,11 @@ include_once "include/page_header.php";
 		
 		while($db_item = DBfetch($db_items))
 		{
+			$hfs_data = zbx_hfs_get_item_values ($db_item);
+			$db_item["lastclock"] = $hfs_data["lastclock"];
+			$db_item["lastvalue"] = $hfs_data["lastvalue"];
+			$db_item["prevvalue"] = $hfs_data["prevvalue"];
+
 			$description = item_description($db_item["description"],$db_item["key_"]);
 	
 			if( '' != $_REQUEST["select"] && !stristr($description, $_REQUEST["select"]) ) continue;
