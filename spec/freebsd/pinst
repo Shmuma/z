@@ -1,0 +1,15 @@
+#!/bin/sh
+# Script was taken from mysql323-server port, and modified
+# to suit zabbix needs
+
+[ -n "${PACKAGE_BUILDING}" ] && exit 0
+
+PATH=/bin:/usr/sbin
+
+USER=zabbix
+GROUP=${USER}
+UID=122
+GID=${UID}
+
+# change owner for installed empty directories
+chown zabbix:zabbix /var/run/zabbix /var/log/zabbix
