@@ -24,6 +24,8 @@
 typedef enum {
     IT_UINT64 = 0,
     IT_DOUBLE,
+    IT_TRENDS_UINT64,
+    IT_TRENDS_DOUBLE,
 } item_type_t;
 
 typedef union {

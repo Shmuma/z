@@ -54,6 +54,8 @@ typedef void (*fold_fn_t) (void* db_val, void* state);
 typedef enum {
 	NK_ItemData,
 	NK_ItemMeta,
+	NK_TrendItemData,
+	NK_TrendItemMeta,
 	NK_HostState,
 	NK_ItemValues,
 	NK_ItemStatus,
@@ -61,7 +63,7 @@ typedef enum {
 } name_kind_t;
 
 
-static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock);
+static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int trend);
 static void free_meta (hfs_meta_t* meta);
 static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, name_kind_t kind);
 static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len, item_type_t type);
@@ -78,6 +80,25 @@ static int release_lock (int fd, int write);
 
 static void write_str (int fd, const char* str);
 static char* read_str (int fd);
+
+
+
+inline int is_trend_type (item_type_t type)
+{
+    switch (type) {
+    case IT_DOUBLE:
+    case IT_UINT64:
+        return 0;
+
+    case IT_TRENDS_DOUBLE:
+    case IT_TRENDS_UINT64:
+        return 1;
+
+    default:
+        return 0;
+    }
+}
+
 
 
 /*
@@ -144,17 +165,18 @@ static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64
     off_t eextra;
     off_t size, ofs;
     int retval = 1;
+    int is_trend = is_trend_type (type);
 
     zabbix_log(LOG_LEVEL_DEBUG, "HFS: store_value()");
 
-    if ((meta = read_meta (hfs_base_dir, siteid, itemid, clock)) == NULL) {
+    if ((meta = read_meta (hfs_base_dir, siteid, itemid, clock, is_trend)) == NULL) {
 	zabbix_log(LOG_LEVEL_CRIT, "HFS: store_value(): read_meta(%s, %s, %llu, %d) == NULL",
 		    hfs_base_dir, siteid, itemid, clock);
 	return retval;
     }
 
-    p_meta = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemMeta);
-    p_data = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemData);
+    p_meta = get_name (hfs_base_dir, siteid, itemid, clock, is_trend ? NK_TrendItemMeta : NK_ItemMeta);
+    p_data = get_name (hfs_base_dir, siteid, itemid, clock, is_trend ? NK_TrendItemData : NK_ItemData);
 
     make_directories (p_meta);
     zabbix_log(LOG_LEVEL_DEBUG, "HFS: meta read: delays: %d %d, blocks %d, ofs %u", meta->last_delay, delay, meta->blocks, meta->last_ofs);
@@ -474,7 +496,7 @@ static void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64
     zabbix_log(LOG_LEVEL_DEBUG, "HFS_foldl_time (%s, %llu, %u)", hfs_base_dir, itemid, ts);
 
     while (1) {
-	meta = read_meta (hfs_base_dir, siteid, itemid, ts);
+	meta = read_meta (hfs_base_dir, siteid, itemid, ts, 0);
 
 	if (!meta)
 	    break;
@@ -552,9 +574,9 @@ static int is_valid_val (void* val)
 }
 
 
-static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock)
+static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int trend)
 {
-    char* path = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemMeta);
+    char* path = get_name (hfs_base_dir, siteid, itemid, clock, trend ? NK_TrendItemMeta : NK_ItemMeta);
     hfs_meta_t* res;
     FILE* f;
 
@@ -635,6 +657,10 @@ static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_
     case NK_ItemMeta:
 	    snprintf (res, len, "%s/%s/items/%llu/%u.%s", hfs_base_dir, siteid, itemid, (unsigned int)(clock / (time_t)1000000),
 		      kind == NK_ItemMeta ? "meta" : "data");
+    case NK_TrendItemData:
+    case NK_TrendItemMeta:
+	    snprintf (res, len, "%s/%s/items/%llu/%u_trends.%s", hfs_base_dir, siteid, itemid, (unsigned int)(clock / (time_t)1000000),
+		      kind == NK_TrendItemMeta ? "meta" : "data");
 	    break;
     case NK_HostState:
 	    snprintf (res, len, "%s/%s/hosts/%llu.state", hfs_base_dir, siteid, itemid);
@@ -1216,7 +1242,7 @@ HFS_find_meta(const char *hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
 			continue;
 		}
 
-		if ((meta = read_meta(hfs_base_dir, siteid, itemid, ts)) == NULL)
+		if ((meta = read_meta(hfs_base_dir, siteid, itemid, ts, 0)) == NULL)
 			return -1; // Somethig real bad happend :(
 
 		if (meta->blocks > 0)
@@ -1434,7 +1460,7 @@ HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
 #endif
 
 	while (count > 0 && ts > 0) {
-		if ((meta = read_meta(hfs_base_dir, siteid, itemid, ts)) == NULL)
+            if ((meta = read_meta(hfs_base_dir, siteid, itemid, ts, 0)) == NULL)
 			return -1; // Somethig real bad happend :(
 
 		if (meta->blocks == 0)
