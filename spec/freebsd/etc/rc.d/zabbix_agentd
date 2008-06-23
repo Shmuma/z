@@ -1,0 +1,16 @@
+#!/bin/sh
+# PROVIDE: zabbix_agentd
+# REQUIRE: DAEMON
+# KEYWORD: shutdown
+
+. /etc/rc.subr
+
+name="zabbix_agentd"
+rcvar=${name}_enable
+load_rc_config $name
+eval : \${${rcvar}='NO'}
+
+command="/sbin/${name}"
+required_files="/etc/zabbix/${name}.conf"
+
+run_rc_command "$1"
