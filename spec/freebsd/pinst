@@ -13,3 +13,7 @@ GID=${UID}
 
 # change owner for installed empty directories
 chown zabbix:zabbix /var/run/zabbix /var/log/zabbix
+
+# replace hostname in config file to FQDN
+NAME=$(hostname -f)
+CONF=/etc/zabbix/zabbix_agentd.conf
