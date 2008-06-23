@@ -1283,9 +1283,6 @@ HFSread_item (const char *hfs_base_dir, const char* siteid, size_t sizex, zbx_ui
 
 		ip = meta->meta + block;
 
-		if (group == -1)
-			group = (long) (x * ((ts + z) % p) / p);
-
 		if ((p_data = get_name (hfs_base_dir, siteid, itemid, ts, NK_ItemData)) == NULL) {
 			zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get file name");
 			finish_loop = 1;
@@ -1323,6 +1320,8 @@ HFSread_item (const char *hfs_base_dir, const char* siteid, size_t sizex, zbx_ui
 			}
 
 			cur_group = (long) (x * ((ts + z) % p) / p);
+			if (group == -1)
+				group = cur_group;
 
 			if (group != cur_group) {
 				(*result)[items].type  = ip->type;
