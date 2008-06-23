@@ -1504,12 +1504,12 @@ void HFS_update_host_availability (const char* hfs_base_dir, const char* siteid,
 	/* open file for writing */
 	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
-	free (name);
-
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
+		free (name);
 		return;
 	}
+	free (name);
 
 	/* place write lock on that file or wait for unlock */
 	if (!obtain_lock (fd, 1)) {
@@ -1548,12 +1548,12 @@ int HFS_get_host_availability (const char* hfs_base_dir, const char* siteid, zbx
 	/* open file for reading */
 	fd = open (name, O_RDONLY);
 
-	free (name);
-
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
+		free (name);
 		return 0;
 	}
+	free (name);
 
 	/* obtain read lock */
 	if (!obtain_lock (fd, 0)) {
@@ -1594,12 +1594,12 @@ void HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, z
 	/* open file for writing */
 	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
-	free (name);
-
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
+		free (name);
 		return;
 	}
+	free (name);
 
 	/* place write lock on that file or wait for unlock */
 	if (!obtain_lock (fd, 1)) {
@@ -1647,12 +1647,12 @@ void HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, z
 	/* open file for writing */
 	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
-	free (name);
-
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
+		free (name);
 		return;
 	}
+	free (name);
 
 	/* place write lock on that file or wait for unlock */
 	if (!obtain_lock (fd, 1)) {
@@ -1700,12 +1700,12 @@ void HFS_update_item_values_str (const char* hfs_base_dir, const char* siteid, z
 	/* open file for writing */
 	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
-	free (name);
-
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
+		free (name);
 		return;
 	}
+	free (name);
 
 	/* place write lock on that file or wait for unlock */
 	if (!obtain_lock (fd, 1)) {
@@ -1746,12 +1746,12 @@ int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_u
 
 	/* open file for reading */
 	fd = open (name, O_RDONLY);
-	free (name);
-
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
+		free (name);
 		return 0;
 	}
+	free (name);
 
 	/* obtain read lock */
 	if (!obtain_lock (fd, 0)) {
@@ -1796,12 +1796,12 @@ int HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_u
 
 	/* open file for reading */
 	fd = open (name, O_RDONLY);
-	free (name);
-
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
+		free (name);
 		return 0;
 	}
+	free (name);
 
 	/* obtain read lock */
 	if (!obtain_lock (fd, 0)) {
@@ -1847,12 +1847,12 @@ int HFS_get_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_u
 
 	/* open file for reading */
 	fd = open (name, O_RDONLY);
-	free (name);
-
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
+		free (name);
 		return 0;
 	}
+	free (name);
 
 	/* obtain read lock */
 	if (!obtain_lock (fd, 0)) {
@@ -1903,12 +1903,12 @@ void HFS_update_item_status (const char* hfs_base_dir, const char* siteid, zbx_u
 	/* open file for writing */
 	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
-	free (name);
-
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
+		free (name);
 		return;
 	}
+	free (name);
 
 	/* place write lock on that file or wait for unlock */
 	if (!obtain_lock (fd, 1)) {
@@ -1949,12 +1949,12 @@ void HFS_update_item_stderr (const char* hfs_base_dir, const char* siteid, zbx_u
 	/* open file for writing */
 	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
-	free (name);
-
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
+		free (name);
 		return;
 	}
+	free (name);
 
 	/* place write lock on that file or wait for unlock */
 	if (!obtain_lock (fd, 1)) {
@@ -1988,12 +1988,12 @@ int HFS_get_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint6
 
 	/* open file for reading */
 	fd = open (name, O_RDONLY);
-	free (name);
-
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
+		free (name);
 		return 0;
 	}
+	free (name);
 
 	/* obtain read lock */
 	if (!obtain_lock (fd, 0)) {
@@ -2025,12 +2025,12 @@ int HFS_get_item_stderr (const char* hfs_base_dir, const char* siteid, zbx_uint6
 
 	/* open file for reading */
 	fd = open (name, O_RDONLY);
-	free (name);
-
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_DEBUG, "Cannot open file %s, error = %d", name, errno);
+		free (name);
 		return 0;
 	}
+	free (name);
 
 	/* obtain read lock */
 	if (!obtain_lock (fd, 0)) {
