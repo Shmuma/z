@@ -29,6 +29,9 @@
 #  define ULLONG_MAX    18446744073709551615ULL
 # endif
 
+
+#define HFS_TRENDS_INTERVAL 3600
+
 static int make_directories (const char* path);
 
 /* internal structures */
@@ -49,6 +52,23 @@ typedef struct hfs_meta {
 } hfs_meta_t;
 
 typedef void (*fold_fn_t) (void* db_val, void* state);
+
+
+typedef struct hfs_trend {
+    int count;
+    union {
+        zbx_uint64_t i;
+        double d;
+    } min;
+    union {
+        zbx_uint64_t i;
+        double d;
+    } max;
+    union {
+        zbx_uint64_t i;
+        double d;
+    } avg;
+} hfs_trend_t;
 
 
 typedef enum {
@@ -77,9 +97,10 @@ static int is_valid_val (void* val);
 static int obtain_lock (int fd, int write);
 static int release_lock (int fd, int write);
 
-
 static void write_str (int fd, const char* str);
 static char* read_str (int fd);
+
+static void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t type);
 
 
 
@@ -109,6 +130,75 @@ void HFSadd_history (const char* hfs_base_dir, const char* siteid, zbx_uint64_t 
     zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_history()");
     store_value (hfs_base_dir, siteid, itemid, clock, delay, &value, sizeof (double), IT_DOUBLE);
 }
+
+
+
+/*
+  Routine adds uint64 value to HistoryFS storage.
+*/
+void HFSadd_history_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, int clock)
+{
+    zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_history_uint()");   
+    store_value (hfs_base_dir, siteid, itemid, clock, delay, &value, sizeof (zbx_uint64_t), IT_UINT64);
+}
+
+
+/*
+  Routine updates trends
+  */
+void HFSadd_trend (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, double value, int clock)
+{
+    hfs_trend_t trend;
+
+    trend.count = 1;
+    trend.min.d = value;
+    trend.max.d = value;
+    trend.avg.d = value;
+
+    zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_trend()");
+    store_value (hfs_base_dir, siteid, itemid, clock, HFS_TRENDS_INTERVAL, &trend, sizeof (hfs_trend_t), IT_TRENDS_DOUBLE);   
+}
+
+
+void HFSadd_trend_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t value, int clock)
+{
+    hfs_trend_t trend;
+
+    trend.count = 1;
+    trend.min.d = value;
+    trend.max.d = value;
+    trend.avg.d = value;
+
+    zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_trend_uint()");
+    store_value (hfs_base_dir, siteid, itemid, clock, HFS_TRENDS_INTERVAL, &trend, sizeof (hfs_trend_t), IT_TRENDS_UINT64);
+}
+
+
+
+static void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t type)
+{
+    new->count += old.count;
+
+    switch (type) {
+    case IT_TRENDS_UINT64:
+        if (new.avg.i < old.max.i)
+            new.max.i = old.max.i;
+        if (new.avg.i > old.min.i)
+            new.min.i = old.min.i;
+        new.avg.i = (old.avg.i * old.count + new.avg.i) / new.count;
+        break;
+
+    case IT_TRENDS_DOUBLE:
+        if (new.avg.d < old.max.d)
+            new.max.d = old.max.d;
+        if (new.avg.d > old.min.d)
+            new.min.d = old.min.d;
+        new.avg.d = (old.avg.d * old.count + new.avg.d) / new.count;
+        break;
+    }
+}
+
+
 
 static void xfree(void *ptr)
 {
@@ -166,6 +256,7 @@ static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64
     off_t size, ofs;
     int retval = 1;
     int is_trend = is_trend_type (type);
+    hfs_trend_t trend;
 
     zabbix_log(LOG_LEVEL_DEBUG, "HFS: store_value()");
 
@@ -253,7 +344,7 @@ static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64
 	/* check for gaps in block */
 	ip = meta->meta + (meta->blocks-1);
 
-	if ((fd = xopen (p_data, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
+	if ((fd = xopen (p_data, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
 		goto err_exit;
 
 	if (((size = xlseek (p_data, fd, 0, SEEK_END)) == -1) ||
@@ -270,7 +361,7 @@ static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64
 	extra = (clock - ip->end) / delay;
 
 	/* if value appeared before it's time */
-	if (extra >= 1) {
+	if (extra >= 1 || is_trend) {
             /* check for time-based items count differs from offset-based */
             eextra = (ip->end - ip->start) / delay - (meta->last_ofs - ip->ofs) / len;
 
@@ -295,6 +386,18 @@ static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64
 		    }
 		meta->last_ofs += extra * len;
 	    }            
+
+            /* if this is trend, we must handle the case when such item is already exists. 
+               In that case we must recalculate new values. */
+            if (is_trend && extra <= 0) {
+                zabbix_log(LOG_LEVEL_DEBUG, "HFS: trend item is already exists, perform averaging");
+                /* read old trend value */
+                if (read (p_data, fd, &trend, sizeof (trend)) != sizeof (trend))
+                    goto err_exit;
+                recalculate_trend ((hfs_trend_t*)value, trend, type);
+                if (xlseek (p_data, fd, -sizeof (hfs_trend_t), SEEK_CUR) == -1)
+                    goto err_exit;
+            }
 
 	    if (xwrite (p_data, fd, value, len) == -1)
 		goto err_exit;
@@ -336,16 +439,6 @@ err_exit:
     xfree (p_data);
 
     return retval;
-}
-
-
-/*
-  Routine adds uint64 value to HistoryFS storage.
-*/
-void HFSadd_history_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, int clock)
-{
-    zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_history()");
-    store_value (hfs_base_dir, siteid, itemid, clock, delay, &value, sizeof (zbx_uint64_t), IT_UINT64);
 }
 
 
