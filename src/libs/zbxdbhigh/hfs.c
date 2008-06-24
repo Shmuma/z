@@ -1257,11 +1257,12 @@ HFSread_item (const char *hfs_base_dir, const char* siteid, size_t sizex, zbx_ui
 	item_value_u max, min, val;
 	time_t ts = from_ts;
 	size_t items = 0, result_size = 0;
-	int z, p, x, finish_loop = 0, block;
+	int finish_loop = 0, block;
+	long z, p, x;
 	long values = 0, count = 0, cur_group, group = -1;
 
 	p = (graph_to_ts - graph_from_ts);
-	z = ((p - graph_from_ts) % p);
+	z = (p - graph_from_ts % p);
 	x = (sizex - 1);
 
 	max.d = 0.0;
@@ -1270,6 +1271,10 @@ HFSread_item (const char *hfs_base_dir, const char* siteid, size_t sizex, zbx_ui
 	zabbix_log(LOG_LEVEL_DEBUG,
 		"In HFSread_item(hfs_base_dir=%s, sizex=%d, itemid=%lld, graph_from=%d, graph_to=%d, from=%d, to=%d)\n",
 		hfs_base_dir, x, itemid, graph_from_ts, graph_to_ts, from_ts, to_ts);
+
+	zabbix_log(LOG_LEVEL_DEBUG,
+		"HFS: HFSread_item: Magic numbers: p=%d, z=%d, x=%d\n",
+		p, z, x);
 
 	while (!finish_loop) {
 		int fd = -1;
@@ -1290,6 +1295,14 @@ HFSread_item (const char *hfs_base_dir, const char* siteid, size_t sizex, zbx_ui
 			*/
 			finish_loop = 1;
 			goto nextloop;
+		}
+
+		if (ip->start > ts) {
+			/*          graph_from_ts   graph_to_ts
+			   --------|---------------|------------> Time
+				^ ip->start
+			*/
+			ts = ip->start;
 		}
 
 		if ((p_data = get_name (hfs_base_dir, siteid, itemid, ts, NK_ItemData)) == NULL) {
@@ -1317,6 +1330,11 @@ HFSread_item (const char *hfs_base_dir, const char* siteid, size_t sizex, zbx_ui
 		}
 
 		while (read (fd, &val.l, sizeof (val.l)) > 0) {
+
+			cur_group = (long) (x * ((ts + z) % p) / p);
+			if (group == -1)
+				group = cur_group;
+
 			ts += ip->delay;
 			values++;
 
@@ -1327,10 +1345,6 @@ HFSread_item (const char *hfs_base_dir, const char* siteid, size_t sizex, zbx_ui
 				result_size += alloc_item_values;
 				*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * result_size));
 			}
-
-			cur_group = (long) (x * ((ts + z) % p) / p);
-			if (group == -1)
-				group = cur_group;
 
 			if (group != cur_group) {
 				(*result)[items].type  = ip->type;
