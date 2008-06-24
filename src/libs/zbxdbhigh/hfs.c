@@ -156,7 +156,7 @@ void HFSadd_trend (const char* hfs_base_dir, const char* siteid, zbx_uint64_t it
     trend.avg.d = value;
 
     zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_trend()");
-    store_value (hfs_base_dir, siteid, itemid, clock, HFS_TRENDS_INTERVAL, &trend, sizeof (hfs_trend_t), IT_TRENDS_DOUBLE);   
+    store_value (hfs_base_dir, siteid, itemid, clock - clock % HFS_TRENDS_INTERVAL, HFS_TRENDS_INTERVAL, &trend, sizeof (hfs_trend_t), IT_TRENDS_DOUBLE);   
 }
 
 
@@ -165,12 +165,12 @@ void HFSadd_trend_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64
     hfs_trend_t trend;
 
     trend.count = 1;
-    trend.min.d = value;
-    trend.max.d = value;
-    trend.avg.d = value;
+    trend.min.i = value;
+    trend.max.i = value;
+    trend.avg.i = value;
 
     zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_trend_uint()");
-    store_value (hfs_base_dir, siteid, itemid, clock, HFS_TRENDS_INTERVAL, &trend, sizeof (hfs_trend_t), IT_TRENDS_UINT64);
+    store_value (hfs_base_dir, siteid, itemid, clock - clock % HFS_TRENDS_INTERVAL, HFS_TRENDS_INTERVAL, &trend, sizeof (hfs_trend_t), IT_TRENDS_UINT64);
 }
 
 
@@ -360,7 +360,8 @@ static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64
 
 	extra = (clock - ip->end) / delay;
 
-	/* if value appeared before it's time */
+	/* if value appeared before it's time, drop it. Overwise fill gaps with empty entries and write actual data.
+	   Other case is trends management. All it's data is */
 	if (extra >= 1 || is_trend) {
             /* check for time-based items count differs from offset-based */
             eextra = (ip->end - ip->start) / delay - (meta->last_ofs - ip->ofs) / len;
@@ -390,12 +391,17 @@ static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64
             /* if this is trend, we must handle the case when such item is already exists. 
                In that case we must recalculate new values. */
             if (is_trend && extra <= 0) {
+		/* if we just update value, remain the same last_ofs */
+		meta->last_ofs -= len;
+
                 zabbix_log(LOG_LEVEL_DEBUG, "HFS: trend item is already exists, perform averaging");
                 /* read old trend value */
+                if (xlseek (p_data, fd, meta->last_ofs - sizeof (hfs_trend_t), SEEK_SET) == -1)
+                    goto err_exit;
                 if (read (fd, &trend, sizeof (trend)) != sizeof (trend))
                     goto err_exit;
                 recalculate_trend ((hfs_trend_t*)value, trend, type);
-                if (xlseek (p_data, fd, -sizeof (hfs_trend_t), SEEK_CUR) == -1)
+                if (xlseek (p_data, fd, meta->last_ofs - sizeof (hfs_trend_t), SEEK_SET) == -1)
                     goto err_exit;
             }
 
