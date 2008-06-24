@@ -750,6 +750,7 @@ static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_
     case NK_ItemMeta:
 	    snprintf (res, len, "%s/%s/items/%llu/%u.%s", hfs_base_dir, siteid, itemid, (unsigned int)(clock / (time_t)1000000),
 		      kind == NK_ItemMeta ? "meta" : "data");
+            break;
     case NK_TrendItemData:
     case NK_TrendItemMeta:
 	    snprintf (res, len, "%s/%s/items/%llu/%u_trends.%s", hfs_base_dir, siteid, itemid, (unsigned int)(clock / (time_t)1000000),
