@@ -142,7 +142,7 @@ PHP_FUNCTION(zabbix_hfs_read)
 		object_init(z_obj);
 
 		add_property_long (z_obj, "itemid",	itemid);
-		add_property_long (z_obj, "count",	1);
+		add_property_long (z_obj, "count",	res[i].count);
 		add_property_long (z_obj, "clock",	res[i].clock);
 		add_property_long (z_obj, "i",		res[i].group);
 

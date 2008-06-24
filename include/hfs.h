@@ -36,6 +36,7 @@ typedef struct hfs_item_value {
 	item_type_t	type;
         time_t		clock;
 	long		group;
+	long		count;
         item_value_u 	max;
         item_value_u	min;
 	item_value_u	avg;

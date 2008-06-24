@@ -1258,10 +1258,10 @@ HFSread_item (const char *hfs_base_dir, const char* siteid, size_t sizex, zbx_ui
 	time_t ts = from_ts;
 	size_t items = 0, result_size = 0;
 	int z, p, x, finish_loop = 0, block;
-	long values = 0, cur_group, group = -1;
+	long values = 0, count = 0, cur_group, group = -1;
 
 	p = (graph_to_ts - graph_from_ts);
-	z = (p - graph_from_ts % p);
+	z = ((p - graph_from_ts) % p);
 	x = (sizex - 1);
 
 	max.d = 0.0;
@@ -1282,6 +1282,15 @@ HFSread_item (const char *hfs_base_dir, const char* siteid, size_t sizex, zbx_ui
 			break;
 
 		ip = meta->meta + block;
+
+		if (graph_to_ts < ip->start) {
+			/*      graph_from_ts   graph_to_ts
+			   ----|---------------|----------------> Time
+			                            ^ ip->start
+			*/
+			finish_loop = 1;
+			goto nextloop;
+		}
 
 		if ((p_data = get_name (hfs_base_dir, siteid, itemid, ts, NK_ItemData)) == NULL) {
 			zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get file name");
@@ -1326,6 +1335,7 @@ HFSread_item (const char *hfs_base_dir, const char* siteid, size_t sizex, zbx_ui
 			if (group != cur_group) {
 				(*result)[items].type  = ip->type;
 				(*result)[items].group = group;
+				(*result)[items].count = count;
 				(*result)[items].clock = ts;
 				(*result)[items].max = max;
 				(*result)[items].min = min;
@@ -1336,14 +1346,12 @@ HFSread_item (const char *hfs_base_dir, const char* siteid, size_t sizex, zbx_ui
 					(*result)[items].avg.l = ((max.l + min.l) / 2);
 
 				group = cur_group;
+				count = 0;
 				max.d = 0.0;
 				min.d = 0.0;
 				items++;
-			} else {
-				zabbix_log(LOG_LEVEL_DEBUG,
-					"HFS: HFSread_item: value rejected (%ld != %ld)",
-					group, cur_group);
 			}
+			count++;
 
 			if (ip->type == IT_DOUBLE) {
 				max.d = ((max.d > val.d) ? max.d : val.d);
