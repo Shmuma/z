@@ -396,12 +396,12 @@ static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64
 
                 zabbix_log(LOG_LEVEL_DEBUG, "HFS: trend item is already exists, perform averaging");
                 /* read old trend value */
-                if (xlseek (p_data, fd, meta->last_ofs - sizeof (hfs_trend_t), SEEK_SET) == -1)
+                if (xlseek (p_data, fd, meta->last_ofs, SEEK_SET) == -1)
                     goto err_exit;
                 if (read (fd, &trend, sizeof (trend)) != sizeof (trend))
                     goto err_exit;
                 recalculate_trend ((hfs_trend_t*)value, trend, type);
-                if (xlseek (p_data, fd, meta->last_ofs - sizeof (hfs_trend_t), SEEK_SET) == -1)
+                if (xlseek (p_data, fd, meta->last_ofs, SEEK_SET) == -1)
                     goto err_exit;
             }
 
