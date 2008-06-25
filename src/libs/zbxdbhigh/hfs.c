@@ -2270,7 +2270,7 @@ void HFSadd_history_str (const char* hfs_base_dir, const char* siteid, zbx_uint6
 
 
 
-void store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, const char* value, item_type_t type)
+int store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, const char* value, item_type_t type)
 {
 	int len = 0, fd;
 	char* p_name = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemString);
@@ -2283,13 +2283,13 @@ void store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t
 	if ((fd = open (p_name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
 		zabbix_log (LOG_LEVEL_DEBUG, "Canot open file %s", p_name);
 		free (p_name);
-		return;
+		return 0;
 	}
 
 	if (!obtain_lock (fd, 1)) {
 		if (close (fd) == -1)
 			zabbix_log(LOG_LEVEL_CRIT, "hfs: store_value_str: close(): %s", strerror(errno));
-		return;
+		return 0;
 	}
 
 	lseek (fd, 0, SEEK_END);
@@ -2304,4 +2304,5 @@ void store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t
 	release_lock (fd, 0);
 
 	close (fd);
+	return 0;
 }
