@@ -5,6 +5,13 @@
 #include "hfs.h"
 
 
+char *progname = "test";
+char title_message[] = "Title";
+char usage_message[] = "Usage";
+char *help_message[] = { "Help", 0 };
+
+
+
 int itemid = 18480;
 
 
