@@ -29,6 +29,9 @@
 #  define ULLONG_MAX    18446744073709551615ULL
 # endif
 
+
+#define HFS_TRENDS_INTERVAL 3600
+
 static int make_directories (const char* path);
 
 /* internal structures */
@@ -51,9 +54,28 @@ typedef struct hfs_meta {
 typedef void (*fold_fn_t) (void* db_val, void* state);
 
 
+typedef struct hfs_trend {
+    int count;
+    union {
+        zbx_uint64_t i;
+        double d;
+    } min;
+    union {
+        zbx_uint64_t i;
+        double d;
+    } max;
+    union {
+        zbx_uint64_t i;
+        double d;
+    } avg;
+} hfs_trend_t;
+
+
 typedef enum {
 	NK_ItemData,
 	NK_ItemMeta,
+	NK_TrendItemData,
+	NK_TrendItemMeta,
 	NK_HostState,
 	NK_ItemValues,
 	NK_ItemStatus,
@@ -61,7 +83,7 @@ typedef enum {
 } name_kind_t;
 
 
-static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock);
+static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int trend);
 static void free_meta (hfs_meta_t* meta);
 static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, name_kind_t kind);
 static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len, item_type_t type);
@@ -75,9 +97,29 @@ static int is_valid_val (void* val);
 static int obtain_lock (int fd, int write);
 static int release_lock (int fd, int write);
 
-
 static void write_str (int fd, const char* str);
 static char* read_str (int fd);
+
+static void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t type);
+
+
+
+inline int is_trend_type (item_type_t type)
+{
+    switch (type) {
+    case IT_DOUBLE:
+    case IT_UINT64:
+        return 0;
+
+    case IT_TRENDS_DOUBLE:
+    case IT_TRENDS_UINT64:
+        return 1;
+
+    default:
+        return 0;
+    }
+}
+
 
 
 /*
@@ -88,6 +130,75 @@ void HFSadd_history (const char* hfs_base_dir, const char* siteid, zbx_uint64_t 
     zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_history()");
     store_value (hfs_base_dir, siteid, itemid, clock, delay, &value, sizeof (double), IT_DOUBLE);
 }
+
+
+
+/*
+  Routine adds uint64 value to HistoryFS storage.
+*/
+void HFSadd_history_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, int clock)
+{
+    zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_history_uint()");   
+    store_value (hfs_base_dir, siteid, itemid, clock, delay, &value, sizeof (zbx_uint64_t), IT_UINT64);
+}
+
+
+/*
+  Routine updates trends
+  */
+void HFSadd_trend (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, double value, int clock)
+{
+    hfs_trend_t trend;
+
+    trend.count = 1;
+    trend.min.d = value;
+    trend.max.d = value;
+    trend.avg.d = value;
+
+    zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_trend()");
+    store_value (hfs_base_dir, siteid, itemid, clock - clock % HFS_TRENDS_INTERVAL, HFS_TRENDS_INTERVAL, &trend, sizeof (hfs_trend_t), IT_TRENDS_DOUBLE);   
+}
+
+
+void HFSadd_trend_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t value, int clock)
+{
+    hfs_trend_t trend;
+
+    trend.count = 1;
+    trend.min.i = value;
+    trend.max.i = value;
+    trend.avg.i = value;
+
+    zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_trend_uint()");
+    store_value (hfs_base_dir, siteid, itemid, clock - clock % HFS_TRENDS_INTERVAL, HFS_TRENDS_INTERVAL, &trend, sizeof (hfs_trend_t), IT_TRENDS_UINT64);
+}
+
+
+
+static void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t type)
+{
+    new->count += old.count;
+
+    switch (type) {
+    case IT_TRENDS_UINT64:
+        if (new->avg.i < old.max.i)
+            new->max.i = old.max.i;
+        if (new->avg.i > old.min.i)
+            new->min.i = old.min.i;
+        new->avg.i = (old.avg.i * old.count + new->avg.i) / new->count;
+        break;
+
+    case IT_TRENDS_DOUBLE:
+        if (new->avg.d < old.max.d)
+            new->max.d = old.max.d;
+        if (new->avg.d > old.min.d)
+            new->min.d = old.min.d;
+        new->avg.d = (old.avg.d * old.count + new->avg.d) / new->count;
+        break;
+    }
+}
+
+
 
 static void xfree(void *ptr)
 {
@@ -144,17 +255,19 @@ static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64
     off_t eextra;
     off_t size, ofs;
     int retval = 1;
+    int is_trend = is_trend_type (type);
+    hfs_trend_t trend;
 
     zabbix_log(LOG_LEVEL_DEBUG, "HFS: store_value()");
 
-    if ((meta = read_meta (hfs_base_dir, siteid, itemid, clock)) == NULL) {
+    if ((meta = read_meta (hfs_base_dir, siteid, itemid, clock, is_trend)) == NULL) {
 	zabbix_log(LOG_LEVEL_CRIT, "HFS: store_value(): read_meta(%s, %s, %llu, %d) == NULL",
 		    hfs_base_dir, siteid, itemid, clock);
 	return retval;
     }
 
-    p_meta = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemMeta);
-    p_data = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemData);
+    p_meta = get_name (hfs_base_dir, siteid, itemid, clock, is_trend ? NK_TrendItemMeta : NK_ItemMeta);
+    p_data = get_name (hfs_base_dir, siteid, itemid, clock, is_trend ? NK_TrendItemData : NK_ItemData);
 
     make_directories (p_meta);
     zabbix_log(LOG_LEVEL_DEBUG, "HFS: meta read: delays: %d %d, blocks %d, ofs %u", meta->last_delay, delay, meta->blocks, meta->last_ofs);
@@ -231,7 +344,7 @@ static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64
 	/* check for gaps in block */
 	ip = meta->meta + (meta->blocks-1);
 
-	if ((fd = xopen (p_data, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
+	if ((fd = xopen (p_data, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
 		goto err_exit;
 
 	if (((size = xlseek (p_data, fd, 0, SEEK_END)) == -1) ||
@@ -247,8 +360,9 @@ static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64
 
 	extra = (clock - ip->end) / delay;
 
-	/* if value appeared before it's time */
-	if (extra >= 1) {
+	/* if value appeared before it's time, drop it. Overwise fill gaps with empty entries and write actual data.
+	   Other case is trends management. All it's data is */
+	if (extra >= 1 || is_trend) {
             /* check for time-based items count differs from offset-based */
             eextra = (ip->end - ip->start) / delay - (meta->last_ofs - ip->ofs) / len;
 
@@ -273,6 +387,23 @@ static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64
 		    }
 		meta->last_ofs += extra * len;
 	    }            
+
+            /* if this is trend, we must handle the case when such item is already exists. 
+               In that case we must recalculate new values. */
+            if (is_trend && extra <= 0) {
+		/* if we just update value, remain the same last_ofs */
+		meta->last_ofs -= len;
+
+                zabbix_log(LOG_LEVEL_DEBUG, "HFS: trend item is already exists, perform averaging");
+                /* read old trend value */
+                if (xlseek (p_data, fd, meta->last_ofs, SEEK_SET) == -1)
+                    goto err_exit;
+                if (read (fd, &trend, sizeof (trend)) != sizeof (trend))
+                    goto err_exit;
+                recalculate_trend ((hfs_trend_t*)value, trend, type);
+                if (xlseek (p_data, fd, meta->last_ofs, SEEK_SET) == -1)
+                    goto err_exit;
+            }
 
 	    if (xwrite (p_data, fd, value, len) == -1)
 		goto err_exit;
@@ -314,16 +445,6 @@ err_exit:
     xfree (p_data);
 
     return retval;
-}
-
-
-/*
-  Routine adds uint64 value to HistoryFS storage.
-*/
-void HFSadd_history_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, int clock)
-{
-    zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_history()");
-    store_value (hfs_base_dir, siteid, itemid, clock, delay, &value, sizeof (zbx_uint64_t), IT_UINT64);
 }
 
 
@@ -474,7 +595,7 @@ static void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64
     zabbix_log(LOG_LEVEL_DEBUG, "HFS_foldl_time (%s, %llu, %u)", hfs_base_dir, itemid, ts);
 
     while (1) {
-	meta = read_meta (hfs_base_dir, siteid, itemid, ts);
+	meta = read_meta (hfs_base_dir, siteid, itemid, ts, 0);
 
 	if (!meta)
 	    break;
@@ -552,9 +673,9 @@ static int is_valid_val (void* val)
 }
 
 
-static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock)
+static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int trend)
 {
-    char* path = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemMeta);
+    char* path = get_name (hfs_base_dir, siteid, itemid, clock, trend ? NK_TrendItemMeta : NK_ItemMeta);
     hfs_meta_t* res;
     FILE* f;
 
@@ -635,6 +756,10 @@ static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_
     case NK_ItemMeta:
 	    snprintf (res, len, "%s/%s/items/%llu/%u.%s", hfs_base_dir, siteid, itemid, (unsigned int)(clock / (time_t)1000000),
 		      kind == NK_ItemMeta ? "meta" : "data");
+            break;
+    case NK_TrendItemData:
+    case NK_TrendItemMeta:
+	    snprintf (res, len, "%s/%s/items/%llu/trends.%s", hfs_base_dir, siteid, itemid, kind == NK_TrendItemMeta ? "meta" : "data");
 	    break;
     case NK_HostState:
 	    snprintf (res, len, "%s/%s/hosts/%llu.state", hfs_base_dir, siteid, itemid);
@@ -1216,7 +1341,7 @@ HFS_find_meta(const char *hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
 			continue;
 		}
 
-		if ((meta = read_meta(hfs_base_dir, siteid, itemid, ts)) == NULL)
+		if ((meta = read_meta(hfs_base_dir, siteid, itemid, ts, 0)) == NULL)
 			return -1; // Somethig real bad happend :(
 
 		if (meta->blocks > 0)
@@ -1434,7 +1559,7 @@ HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
 #endif
 
 	while (count > 0 && ts > 0) {
-		if ((meta = read_meta(hfs_base_dir, siteid, itemid, ts)) == NULL)
+            if ((meta = read_meta(hfs_base_dir, siteid, itemid, ts, 0)) == NULL)
 			return -1; // Somethig real bad happend :(
 
 		if (meta->blocks == 0)
