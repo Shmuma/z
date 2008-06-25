@@ -28,7 +28,7 @@ int main(void) {
 	from=1212148001;
 	to=1212151601;
 
-	n = HFSread_item("/tmp/hfs", sizex, itemid, graph_from, graph_to, from, to, &res);
+	n = HFSread_item("/tmp/hfs", "Default", sizex, itemid, graph_from, graph_to, from, to, &res);
 
 	for (i=0; i<n; i++)
 		printf("res[%d] group=%d clock=%d max=%lld min=%lld\n", i, res[i].group, res[i].clock, res[i].max.l, res[i].min.l);
