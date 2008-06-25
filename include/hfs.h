@@ -45,6 +45,13 @@ typedef struct hfs_item_value {
 	item_value_u	avg;
 } hfs_item_value_t;
 
+
+typedef struct {
+	time_t clock;
+	char* value;
+} hfs_item_str_value_t;
+
+
 typedef void (*read_count_fn_t) (item_type_t type, item_value_u val, time_t timestamp, void *res);
 
 void		HFSadd_history (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, double value, int clock);
@@ -55,6 +62,8 @@ void		HFSadd_trend_uint (const char* hfs_base_dir, const char* siteid, zbx_uint6
 size_t		HFSread_item (const char* hfs_base_dir, const char* siteid, size_t x, zbx_uint64_t itemid, time_t graph_from, time_t graph_to, time_t from, time_t to, hfs_item_value_t **result);
 int		HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, void* init_res, read_count_fn_t fn);
 
+size_t		HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t from, time_t to, hfs_item_str_value_t **result);
+size_t		HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, hfs_item_str_value_t **result);
 
 zbx_uint64_t	HFS_get_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from);
 zbx_uint64_t	HFS_get_count_u64_eq (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, zbx_uint64_t value);

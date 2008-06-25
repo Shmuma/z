@@ -2301,8 +2301,107 @@ int store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t 
 	if (len)
 		write (fd, value, len+1);
 
-	release_lock (fd, 0);
+	release_lock (fd, 1);
 
 	close (fd);
+	return 0;
+}
+
+
+size_t HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t from, time_t to, hfs_item_str_value_t **result)
+{
+	int len = 0, fd, eof = 0;
+	time_t clock;
+	char* p_name = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemString);
+	size_t count = 0;
+	hfs_item_str_value_t* tmp;
+
+	*result = NULL;
+
+	if ((fd = open (p_name, O_RDONLY)) == -1) {
+		zabbix_log (LOG_LEVEL_DEBUG, "HFSread_item_str: Canot open file %s", p_name);
+		free (p_name);
+		return 0;
+	}
+
+	if (!obtain_lock (fd, 0)) {
+		if (close (fd) == -1)
+			zabbix_log(LOG_LEVEL_CRIT, "hfs: store_value_str: close(): %s", strerror(errno));
+		return 0;
+	}
+
+	/* search for start position */
+	while (1) {
+		if (read (fd, &clock, sizeof (clock)) != sizeof (clock)) {
+			eof = 1;
+			break;
+		}
+
+		/* if we run out of data, exit */
+		if (clock > to) {
+			eof = 1;
+			break;
+		}
+
+		/* we find it */
+		if (clock >= from)
+			break;
+
+		/* skip string value */
+		if (read (fd, &len, sizeof (len)) != sizeof (len)) {
+			eof = 1;
+			break;
+		}
+
+		if (lseek (fd, len+1, SEEK_CUR) == (off_t)-1) {
+			eof = 1;
+			break;
+		}
+	}
+
+	if (!eof) {
+		/* read values */
+		while (1) {
+			count++;
+			tmp = (hfs_item_str_value_t*)realloc (*result, count * sizeof (hfs_item_str_value_t));
+
+			/* we have no memory for this, return as is */
+			if (!tmp) {
+				count--;
+				break;
+			}
+
+			(*result)[count-1].clock = clock;
+			(*result)[count-1].value = (char*)malloc (len+1);
+
+			if (!(*result)[count-1].value)
+				break;
+
+			if (read (fd, (*result)[count-1].value, len+1) != len+1) {
+				free ((*result)[count-1].value);
+				count--;
+				break;
+			}
+
+			/* read metadata of next string */
+			if (read (fd, &clock, sizeof (clock)) != sizeof (clock) ||
+			    read (fd, &len, sizeof (len)) != sizeof (len))
+				break;
+
+			if (clock > to)
+				break;
+		}
+	}
+
+	release_lock (fd, 0);
+	close (fd);
+
+	return count;
+	
+}
+
+
+size_t HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, hfs_item_str_value_t **result)
+{
 	return 0;
 }
