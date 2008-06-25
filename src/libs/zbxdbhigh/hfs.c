@@ -770,13 +770,13 @@ static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_
 	    snprintf (res, len, "%s/%s/hosts/%llu.state", hfs_base_dir, siteid, itemid);
 	    break;
     case NK_ItemValues:
-	    snprintf (res, len, "%s/%s/items/%llu/values.dat", hfs_base_dir, siteid, itemid);
+	    snprintf (res, len, "%s/%s/items/%llu/values.data", hfs_base_dir, siteid, itemid);
 	    break;
     case NK_ItemStatus:
-	    snprintf (res, len, "%s/%s/items/%llu/status.dat", hfs_base_dir, siteid, itemid);
+	    snprintf (res, len, "%s/%s/items/%llu/status.data", hfs_base_dir, siteid, itemid);
 	    break;
     case NK_ItemStderr:
-	    snprintf (res, len, "%s/%s/items/%llu/stderr.dat", hfs_base_dir, siteid, itemid);
+	    snprintf (res, len, "%s/%s/items/%llu/stderr.data", hfs_base_dir, siteid, itemid);
 	    break;
     }
 
