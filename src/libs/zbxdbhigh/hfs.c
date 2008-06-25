@@ -2343,15 +2343,15 @@ size_t HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint6
 			break;
 		}
 
-		/* we find it */
-		if (clock >= from)
-			break;
-
 		/* skip string value */
 		if (read (fd, &len, sizeof (len)) != sizeof (len)) {
 			eof = 1;
 			break;
 		}
+
+		/* we find it */
+		if (clock >= from)
+			break;
 
 		if (lseek (fd, len+1, SEEK_CUR) == (off_t)-1) {
 			eof = 1;
