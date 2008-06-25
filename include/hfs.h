@@ -26,6 +26,7 @@ typedef enum {
     IT_DOUBLE,
     IT_TRENDS_UINT64,
     IT_TRENDS_DOUBLE,
+    IT_STRING,
 } item_type_t;
 
 typedef union {
@@ -48,6 +49,7 @@ typedef void (*read_count_fn_t) (item_type_t type, item_value_u val, time_t time
 
 void		HFSadd_history (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, double value, int clock);
 void		HFSadd_history_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, int clock);
+void		HFSadd_history_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int clock, const char* value);
 void		HFSadd_trend (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, double value, int clock);
 void		HFSadd_trend_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t value, int clock);
 size_t		HFSread_item (const char* hfs_base_dir, const char* siteid, size_t x, zbx_uint64_t itemid, time_t graph_from, time_t graph_to, time_t from, time_t to, hfs_item_value_t **result);

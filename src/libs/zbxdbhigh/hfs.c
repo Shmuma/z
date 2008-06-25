@@ -80,6 +80,7 @@ typedef enum {
 	NK_ItemValues,
 	NK_ItemStatus,
 	NK_ItemStderr,
+	NK_ItemString,
 } name_kind_t;
 
 
@@ -87,6 +88,7 @@ static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_
 static void free_meta (hfs_meta_t* meta);
 static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, name_kind_t kind);
 static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len, item_type_t type);
+static int store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, const char* value, item_type_t type);
 static off_t find_meta_ofs (int time, hfs_meta_t* meta);
 static int get_next_data_ts (int ts);
 static int get_prev_data_ts (int ts);
@@ -757,6 +759,9 @@ static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_
 	    snprintf (res, len, "%s/%s/items/%llu/%u.%s", hfs_base_dir, siteid, itemid, (unsigned int)(clock / (time_t)1000000),
 		      kind == NK_ItemMeta ? "meta" : "data");
             break;
+    case NK_ItemString:
+	    snprintf (res, len, "%s/%s/items/%llu/strings.data", hfs_base_dir, siteid, itemid);
+	    break;
     case NK_TrendItemData:
     case NK_TrendItemMeta:
 	    snprintf (res, len, "%s/%s/items/%llu/trends.%s", hfs_base_dir, siteid, itemid, kind == NK_TrendItemMeta ? "meta" : "data");
@@ -2252,4 +2257,51 @@ int HFS_get_item_stderr (const char* hfs_base_dir, const char* siteid, zbx_uint6
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_stderr leave");
 	return 1;
+}
+
+
+
+/* routine appends string to item's  string table */
+void HFSadd_history_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int clock, const char* value)
+{
+	zabbix_log (LOG_LEVEL_DEBUG, "In HFSadd_history_str()");
+	store_value_str (hfs_base_dir, siteid, itemid, clock, value, IT_STRING);
+}
+
+
+
+void store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, const char* value, item_type_t type)
+{
+	int len = 0, fd;
+	char* p_name = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemString);
+
+	if (value)
+		len = strlen (value);
+
+	make_directories (p_name);
+
+	if ((fd = open (p_name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
+		zabbix_log (LOG_LEVEL_DEBUG, "Canot open file %s", p_name);
+		free (p_name);
+		return;
+	}
+
+	if (!obtain_lock (fd, 1)) {
+		if (close (fd) == -1)
+			zabbix_log(LOG_LEVEL_CRIT, "hfs: store_value_str: close(): %s", strerror(errno));
+		return;
+	}
+
+	lseek (fd, 0, SEEK_END);
+
+	free (p_name);
+
+	write (fd, &clock, sizeof (clock));
+	write (fd, &len, sizeof (len));
+	if (len)
+		write (fd, value, len+1);
+
+	release_lock (fd, 0);
+
+	close (fd);
 }
