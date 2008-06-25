@@ -759,8 +759,7 @@ static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_
             break;
     case NK_TrendItemData:
     case NK_TrendItemMeta:
-	    snprintf (res, len, "%s/%s/items/%llu/%u_trends.%s", hfs_base_dir, siteid, itemid, (unsigned int)(clock / (time_t)1000000),
-		      kind == NK_TrendItemMeta ? "meta" : "data");
+	    snprintf (res, len, "%s/%s/items/%llu/trends.%s", hfs_base_dir, siteid, itemid, kind == NK_TrendItemMeta ? "meta" : "data");
 	    break;
     case NK_HostState:
 	    snprintf (res, len, "%s/%s/hosts/%llu.state", hfs_base_dir, siteid, itemid);
