@@ -291,7 +291,7 @@ static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64
 	    item.ofs = 0;
 
 	/* append block to meta */
-	if ((fd = xopen (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IWGRP | S_IWOTH)) == -1)
+	if ((fd = xopen (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
 		goto err_exit;
 
 	meta->blocks++;
@@ -2371,14 +2371,15 @@ size_t HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint6
 				break;
 			}
 
-			(*result)[count-1].clock = clock;
-			(*result)[count-1].value = (char*)malloc (len+1);
+			*result = tmp;
+			tmp[count-1].clock = clock;
+			tmp[count-1].value = (char*)malloc (len+1);
 
-			if (!(*result)[count-1].value)
+			if (!tmp[count-1].value)
 				break;
 
-			if (read (fd, (*result)[count-1].value, len+1) != len+1) {
-				free ((*result)[count-1].value);
+			if (read (fd, tmp[count-1].value, len+1) != len+1) {
+				free (tmp[count-1].value);
 				count--;
 				break;
 			}
