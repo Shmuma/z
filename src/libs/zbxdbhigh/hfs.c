@@ -2357,7 +2357,7 @@ size_t HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint6
 		if (clock >= from)
 			break;
 
-		if (lseek (fd, len + 1 + sizeof (len) * 2, SEEK_CUR) == (off_t)-1) {
+		if (lseek (fd, len + 1 + sizeof (len), SEEK_CUR) == (off_t)-1) {
 			eof = 1;
 			break;
 		}
@@ -2458,15 +2458,15 @@ size_t HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint
 				break;
 			}
 
-			tmp->value = (char*)malloc (len + 1);
-			if (!tmp->value) {
+			tmp[res_count-1]->value = (char*)malloc (len + 1);
+			if (!tmp[res_count-1]->value) {
 				res_count--;
 				break;
 			}
 
-			read (fd, &tmp->clock, sizeof (tmp->clock));
+			read (fd, &tmp[res_count-1]->clock, sizeof (tmp->clock));
 			read (fd, &len, sizeof (len));
-			read (fd, tmp->value, len + 1);
+			read (fd, tmp[res_count]->value, len + 1);
 
 			ofs = lseek (fd, ofs - (sizeof (len)*2 + sizeof (clock) + len + 1), SEEK_CUR);
 			if (ofs == (off_t)-1)
