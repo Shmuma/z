@@ -2441,37 +2441,38 @@ size_t HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint
 		return 0;
 
 	while (res_count < count) {
-		if (read (fd, &len, sizeof (len)) != sizeof (len)) {
-			res_count++;
-			tmp = (hfs_item_str_value_t*)realloc (*result, res_count * sizeof (hfs_item_str_value_t));
+		if (read (fd, &len, sizeof (len)) != sizeof (len))
+			break;
 
-			/* we have no memory for this, return as is */
-			if (!tmp) {
-				res_count--;
-				break;
-			}
+		res_count++;
+		tmp = (hfs_item_str_value_t*)realloc (*result, res_count * sizeof (hfs_item_str_value_t));
 
-			*result = tmp;
-
-			if (lseek (fd, ofs - (sizeof (len) + sizeof (clock) + len + 1), SEEK_SET) == (off_t)-1) {
-				res_count--;
-				break;
-			}
-
-			tmp[res_count-1]->value = (char*)malloc (len + 1);
-			if (!tmp[res_count-1]->value) {
-				res_count--;
-				break;
-			}
-
-			read (fd, &tmp[res_count-1]->clock, sizeof (tmp->clock));
-			read (fd, &len, sizeof (len));
-			read (fd, tmp[res_count]->value, len + 1);
-
-			ofs = lseek (fd, ofs - (sizeof (len)*2 + sizeof (clock) + len + 1), SEEK_CUR);
-			if (ofs == (off_t)-1)
-				break;
+		/* we have no memory for this, return as is */
+		if (!tmp) {
+			res_count--;
+			break;
 		}
+
+		*result = tmp;
+
+		if (lseek (fd, ofs - (sizeof (len) + sizeof (clock) + len + 1), SEEK_SET) == (off_t)-1) {
+			res_count--;
+			break;
+		}
+
+		tmp[res_count-1].value = (char*)malloc (len + 1);
+		if (!tmp[res_count-1].value) {
+			res_count--;
+			break;
+		}
+
+		read (fd, &tmp[res_count-1].clock, sizeof (tmp[res_count-1]->clock));
+		read (fd, &len, sizeof (len));
+		read (fd, tmp[res_count-1].value, len + 1);
+
+		ofs = lseek (fd, ofs - (sizeof (len)*2 + sizeof (clock) + len + 1), SEEK_SET);
+		if (ofs == (off_t)-1)
+			break;
 	}
 
 	release_lock (fd, 0);
