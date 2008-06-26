@@ -2357,7 +2357,7 @@ size_t HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint6
 		if (clock >= from)
 			break;
 
-		if (lseek (fd, len + 1 + sizeof (len), SEEK_CUR) == (off_t)-1) {
+		if (lseek (fd, len + 1 + sizeof (len) * 2, SEEK_CUR) == (off_t)-1) {
 			eof = 1;
 			break;
 		}
@@ -2433,10 +2433,13 @@ size_t HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint
 	free (p_name);
 
 	/* data is empty */
-	ofs = lseek (fd, -sizeof (len), SEEK_END);
+	ofs = lseek (fd, 0, SEEK_END);
 	if (ofs == (off_t)-1)
 		return 0;
-	
+	ofs = lseek (fd, ofs-sizeof (len), SEEK_SET);
+	if (ofs == (off_t)-1)
+		return 0;
+
 	while (res_count < count) {
 		if (read (fd, &len, sizeof (len)) != sizeof (len)) {
 			res_count++;
@@ -2450,7 +2453,7 @@ size_t HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint
 
 			*result = tmp;
 
-			if (lseek (fd, - (sizeof (len) * 2 + sizeof (clock) + len + 1), SEEK_CUR) == (off_t)-1) {
+			if (lseek (fd, ofs - (sizeof (len) + sizeof (clock) + len + 1), SEEK_SET) == (off_t)-1) {
 				res_count--;
 				break;
 			}
@@ -2465,7 +2468,8 @@ size_t HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint
 			read (fd, &len, sizeof (len));
 			read (fd, tmp->value, len + 1);
 
-			if (lseek (fd, - (sizeof (len) + sizeof (clock) + len + 1), SEEK_CUR) == (off_t)-1)
+			ofs = lseek (fd, ofs - (sizeof (len)*2 + sizeof (clock) + len + 1), SEEK_CUR);
+			if (ofs == (off_t)-1)
 				break;
 		}
 	}
