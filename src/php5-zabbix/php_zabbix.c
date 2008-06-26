@@ -201,6 +201,7 @@ PHP_FUNCTION(zabbix_hfs_read_str)
 		char *buf = NULL;
 		zval* val;
 
+		MAKE_STD_ZVAL(z_obj);
 		MAKE_STD_ZVAL(val);
 
 		object_init(z_obj);
@@ -208,10 +209,12 @@ PHP_FUNCTION(zabbix_hfs_read_str)
 		add_property_long (z_obj, "itemid",	itemid);
 		add_property_long (z_obj, "clock",	res[i].clock);
 
-		if (res[i].value)
+		if (res[i].value) {
 			ZVAL_STRING (val, res[i].value, 1);
-		else
+		}
+		else {
 			ZVAL_EMPTY_STRING (val);
+		}
 
 		add_property_zval (z_obj, "value", val);
 		add_next_index_object(return_value, z_obj TSRMLS_CC);
