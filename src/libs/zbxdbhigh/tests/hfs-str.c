@@ -27,5 +27,12 @@ int main(void) {
 	if (res)
 		free (res);
 
+	n = HFSread_count_str("/tmp/hfs", "Default", itemid, 10, &res);
+
+	printf("results = %d\n", n);
+
+	if (res)
+		free (res);
+
 	return 0;
 }
