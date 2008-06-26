@@ -18,6 +18,7 @@ static zend_function_entry php_zabbix_functions[] = {
 	PHP_FE(zabbix_hfs_read, NULL)
 	PHP_FE(zabbix_hfs_last, NULL)
 	PHP_FE(zabbix_hfs_read_str, NULL)
+	PHP_FE(zabbix_hfs_last_str, NULL)
 	PHP_FE(zabbix_hfs_host_availability, NULL)
 	PHP_FE(zabbix_hfs_item_status, NULL)
 	PHP_FE(zabbix_hfs_item_stderr, NULL)
@@ -228,6 +229,7 @@ PHP_FUNCTION(zabbix_hfs_read_str)
 /* }}} */
 
 
+
 struct item {
 	item_type_t	type;
 	time_t		clock;
@@ -301,6 +303,58 @@ PHP_FUNCTION(zabbix_hfs_last)
 	free(res.items);
 }
 /* }}} */
+
+
+/* {{{ proto array zabbix_hfs_last_str(char *site, int itemid, int count) */
+PHP_FUNCTION(zabbix_hfs_last_str)
+{
+	size_t n = 0;
+	zval *z_obj;
+	char *site = NULL;
+	int site_len = 0;
+	hfs_item_str_value_t *res = NULL;
+	int i;
+	long long count = 0;
+	long long itemid = 0;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll", &site, &site_len, &itemid, &count) == FAILURE)
+		RETURN_FALSE;
+
+        if (array_init(return_value) == FAILURE)
+		RETURN_FALSE;
+
+	n = HFSread_count_str(ZABBIX_GLOBAL(hfs_base_dir), site, itemid, count, &res);
+
+	for (i = 0; i < n; i++) {
+		char *buf = NULL;
+		zval* val;
+
+		MAKE_STD_ZVAL(z_obj);
+		MAKE_STD_ZVAL(val);
+
+		object_init(z_obj);
+
+		add_property_long (z_obj, "itemid",	itemid);
+		add_property_long (z_obj, "clock",	res[i].clock);
+
+		if (res[i].value) {
+			ZVAL_STRING (val, res[i].value, 1);
+		}
+		else {
+			ZVAL_EMPTY_STRING (val);
+		}
+
+		add_property_zval (z_obj, "value", val);
+		add_next_index_object(return_value, z_obj TSRMLS_CC);
+		if (res[i].value)
+			free (res[i].value);
+	}
+
+	if (res)
+		free(res);
+}
+/* }}} */
+
 
 
 /* {{{ proto object zabbix_hfs_host_availability(char *site, int hostid) */
