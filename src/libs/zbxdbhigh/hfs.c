@@ -2466,7 +2466,7 @@ size_t HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint
 			break;
 		}
 
-		read (fd, &tmp[res_count-1].clock, sizeof (tmp[res_count-1]->clock));
+		read (fd, &tmp[res_count-1].clock, sizeof (tmp[res_count-1].clock));
 		read (fd, &len, sizeof (len));
 		read (fd, tmp[res_count-1].value, len + 1);
 
