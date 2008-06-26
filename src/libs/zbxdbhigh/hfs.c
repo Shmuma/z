@@ -56,18 +56,9 @@ typedef void (*fold_fn_t) (void* db_val, void* state);
 
 typedef struct hfs_trend {
     int count;
-    union {
-        zbx_uint64_t i;
-        double d;
-    } min;
-    union {
-        zbx_uint64_t i;
-        double d;
-    } max;
-    union {
-        zbx_uint64_t i;
-        double d;
-    } avg;
+    item_value_u	min;
+    item_value_u	max;
+    item_value_u	avg;
 } hfs_trend_t;
 
 
@@ -165,9 +156,9 @@ void HFSadd_trend_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64
     hfs_trend_t trend;
 
     trend.count = 1;
-    trend.min.i = value;
-    trend.max.i = value;
-    trend.avg.i = value;
+    trend.min.l = value;
+    trend.max.l = value;
+    trend.avg.l = value;
 
     zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_trend_uint()");
     store_value (hfs_base_dir, siteid, itemid, clock - clock % HFS_TRENDS_INTERVAL, HFS_TRENDS_INTERVAL, &trend, sizeof (hfs_trend_t), IT_TRENDS_UINT64);
@@ -181,11 +172,11 @@ static void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t ty
 
     switch (type) {
     case IT_TRENDS_UINT64:
-        if (new->avg.i < old.max.i)
-            new->max.i = old.max.i;
-        if (new->avg.i > old.min.i)
-            new->min.i = old.min.i;
-        new->avg.i = (old.avg.i * old.count + new->avg.i) / new->count;
+        if (new->avg.l < old.max.l)
+            new->max.l = old.max.l;
+        if (new->avg.l > old.min.l)
+            new->min.l = old.min.l;
+        new->avg.l = (old.avg.l * old.count + new->avg.l) / new->count;
         break;
 
     case IT_TRENDS_DOUBLE:
