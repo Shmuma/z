@@ -130,7 +130,7 @@ PHP_FUNCTION(zabbix_hfs_read)
 		RETURN_FALSE;
 
 	n = HFSread_item(ZABBIX_GLOBAL(hfs_base_dir), site,
-			    itemid,	HFS_HISTORY,
+			    0,		itemid,
 			    sizex,
 			    graph_from, graph_to,
 			    from,	to,
