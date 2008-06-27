@@ -15,7 +15,8 @@
 ZEND_DECLARE_MODULE_GLOBALS(zabbix)
 
 static zend_function_entry php_zabbix_functions[] = {
-	PHP_FE(zabbix_hfs_read, NULL)
+	PHP_FE(zabbix_hfs_read_history, NULL)
+	PHP_FE(zabbix_hfs_read_trends, NULL)
 	PHP_FE(zabbix_hfs_last, NULL)
 	PHP_FE(zabbix_hfs_read_str, NULL)
 	PHP_FE(zabbix_hfs_last_str, NULL)
@@ -111,8 +112,8 @@ static inline int add_next_index_object(zval *arg, zval *tmp TSRMLS_DC)
 }
 /* }}} */
 
-/* {{{ proto array zabbix_hfs_read(char *site, int itemid, int sizex, int graph_from_time, int graph_to_time, int from_time, int to_time) */
-PHP_FUNCTION(zabbix_hfs_read)
+/* {{{ proto array zabbix_hfs_read_history(char *site, int itemid, int sizex, int graph_from_time, int graph_to_time, int from_time, int to_time) */
+PHP_FUNCTION(zabbix_hfs_read_history)
 {
 	size_t n = 0;
 	zval *z_obj;
@@ -132,7 +133,78 @@ PHP_FUNCTION(zabbix_hfs_read)
 		RETURN_FALSE;
 
 	n = HFSread_item(ZABBIX_GLOBAL(hfs_base_dir), site,
-			    itemid,	HFS_HISTORY,
+			    0,		itemid,
+			    sizex,
+			    graph_from, graph_to,
+			    from,	to,
+			    &res);
+
+	for (i = 0; i < n; i++) {
+		char *buf = NULL;
+		zval *max, *min, *avg;
+		MAKE_STD_ZVAL(max);
+		MAKE_STD_ZVAL(min);
+		MAKE_STD_ZVAL(avg);
+
+		MAKE_STD_ZVAL(z_obj);
+		object_init(z_obj);
+
+		add_property_long (z_obj, "itemid",	itemid);
+		add_property_long (z_obj, "count",	res[i].count);
+		add_property_long (z_obj, "clock",	res[i].clock);
+		add_property_long (z_obj, "i",		res[i].group);
+
+		if (res[i].type == IT_DOUBLE) {
+			ZVAL_DOUBLE(avg, res[i].value.avg.d);
+			ZVAL_DOUBLE(max, res[i].value.max.d);
+			ZVAL_DOUBLE(min, res[i].value.min.d);
+		}
+		else if (res[i].type == IT_UINT64) {
+			asprintf(&buf, "%lld", res[i].value.avg.l);
+			ZVAL_STRING(avg, buf, 1);
+			free(buf);
+
+			asprintf(&buf, "%lld", res[i].value.max.l);
+			ZVAL_STRING(max, buf, 1);
+			free(buf);
+
+			asprintf(&buf, "%lld", res[i].value.min.l);
+			ZVAL_STRING(min, buf, 1);
+			free(buf);
+		}
+
+		add_property_zval(z_obj, "avg", avg);
+		add_property_zval(z_obj, "max", max);
+		add_property_zval(z_obj, "min", min);
+
+		add_next_index_object(return_value, z_obj TSRMLS_CC);
+	}
+	if (res) free(res);
+}
+/* }}} */
+
+/* {{{ proto array zabbix_hfs_read_trends(char *site, int itemid, int sizex, int graph_from_time, int graph_to_time, int from_time, int to_time) */
+PHP_FUNCTION(zabbix_hfs_read_trends)
+{
+	size_t n = 0;
+	zval *z_obj;
+	char *site = NULL;
+	int site_len = 0;
+	hfs_item_value_t *res = NULL;
+	int i;
+	time_t graph_from = 0, graph_to = 0;
+	time_t from = 0, to = 0;
+	size_t sizex = 0;
+	long long itemid = 0;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sllllll", &site, &site_len, &sizex, &itemid, &graph_from, &graph_to, &from, &to) == FAILURE)
+		RETURN_FALSE;
+
+        if (array_init(return_value) == FAILURE)
+		RETURN_FALSE;
+
+	n = HFSread_item(ZABBIX_GLOBAL(hfs_base_dir), site,
+			    1,		itemid,
 			    sizex,
 			    graph_from, graph_to,
 			    from,	to,
