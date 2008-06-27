@@ -164,18 +164,18 @@ static void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t ty
     switch (type) {
     case IT_UINT64:
     case IT_TRENDS_UINT64:
-        if (new->avg.l < old.max.l)
+        if (new->max.l < old.max.l)
             new->max.l = old.max.l;
-        if (new->avg.l > old.min.l)
+        if (new->max.l > old.min.l)
             new->min.l = old.min.l;
         new->avg.l = (old.avg.l * old.count + new->avg.l) / new->count;
         break;
 
     case IT_DOUBLE:
     case IT_TRENDS_DOUBLE:
-        if (new->avg.d < old.max.d)
+        if (new->max.d < old.max.d)
             new->max.d = old.max.d;
-        if (new->avg.d > old.min.d)
+        if (new->max.d > old.min.d)
             new->min.d = old.min.d;
         new->avg.d = (old.avg.d * old.count + new->avg.d) / new->count;
         break;
