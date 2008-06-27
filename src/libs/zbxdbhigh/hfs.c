@@ -1508,7 +1508,7 @@ HFSread_item (const char *hfs_base_dir, const char* siteid,
     		}
 nextloop:
 		if (fd != -1 && close(fd) == -1)
-			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
+			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: close(): %s", p_data, strerror(errno));
 
 		if (p_data) {
 			free (p_data);
@@ -1598,7 +1598,7 @@ HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
 		}
 
 		if (close(fd) == -1)
-			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
+			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: close(): %s", p_data, strerror(errno));
 		fd = -1;
 
 		if (p_data) {
@@ -1613,7 +1613,7 @@ HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
 	}
 end:
 	if (fd != -1 && close(fd) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
+		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: close(): %s", p_data, strerror(errno));
 
 	xfree(p_data);
 	free_meta(meta);
