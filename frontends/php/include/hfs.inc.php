@@ -1,6 +1,7 @@
 <?php
 
 require_once "include/defines.inc.php";
+require_once "include/db.inc.php";
 
 
 // check that HFS module is loaded
@@ -78,6 +79,37 @@ function zbx_hfs_get_item_values ($db_item)
 		return $val;
 
 	return $res;
+}
+
+
+function zbx_hfs_last ($site, $itemid, $count, $type)
+{
+	// HFS not loaded, use regular way to retrieve items
+	if (!zbx_hfs_available ()) {
+		switch($item_type) {
+		case ITEM_VALUE_TYPE_FLOAT:	$h_table = "history";		break;
+		case ITEM_VALUE_TYPE_UINT64:	$h_table = "history_uint";	break;
+		case ITEM_VALUE_TYPE_TEXT:	$h_table = "history_text";	break;
+		default:			$h_table = "history_str";
+		}	
+
+		$result = DBselect("select h.clock,h.value,i.valuemapid from $h_table h, items i".
+				   " where h.itemid=i.itemid and i.itemid=".$_REQUEST["itemid"].
+				   " order by clock desc", $count);
+		while ($row = DBfetch($result)) {
+			$val->value = $row["value"];
+			$val->clock = $row["clock"];
+			array_push ($arr, $val);
+		
+		}
+
+		return $arr;
+	}
+
+	if ($type == ITEM_VALUE_TYPE_TEXT || $type == ITEM_VALUE_TYPE_STR)
+		return zabbix_hfs_last_str ($site, $itemid, $count);
+	else
+		return zabbix_hfs_last ($site, $itemid, $count);
 }
 
 ?>
