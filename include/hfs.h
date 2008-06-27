@@ -31,6 +31,7 @@ typedef enum {
     IT_DOUBLE,
     IT_TRENDS_UINT64,
     IT_TRENDS_DOUBLE,
+    IT_STRING,
 } item_type_t;
 
 typedef union {
@@ -54,10 +55,18 @@ typedef struct hfs_item_value {
 	hfs_trend_t	value;
 } hfs_item_value_t;
 
+
+typedef struct {
+	time_t clock;
+	char* value;
+} hfs_item_str_value_t;
+
+
 typedef void (*read_count_fn_t) (item_type_t type, item_value_u val, time_t timestamp, void *res);
 
 void		HFSadd_history (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, double value, int clock);
 void		HFSadd_history_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, int clock);
+void		HFSadd_history_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int clock, const char* value);
 void		HFSadd_trend (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, double value, int clock);
 void		HFSadd_trend_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t value, int clock);
 size_t		HFSread_item (const char* hfs_base_dir, const char* siteid,
@@ -68,6 +77,8 @@ size_t		HFSread_item (const char* hfs_base_dir, const char* siteid,
 				hfs_item_value_t **result);
 int		HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, void* init_res, read_count_fn_t fn);
 
+size_t		HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t from, time_t to, hfs_item_str_value_t **result);
+size_t		HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, hfs_item_str_value_t **result);
 
 zbx_uint64_t	HFS_get_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from);
 zbx_uint64_t	HFS_get_count_u64_eq (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from, zbx_uint64_t value);
