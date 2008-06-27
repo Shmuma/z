@@ -76,7 +76,7 @@ static int get_next_data_ts (int ts);
 static int get_prev_data_ts (int ts);
 static void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int ts, void* init_res, fold_fn_t fn);
 static void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, void* init_res, fold_fn_t fn);
-static int is_valid_val (void* val);
+static int is_valid_val (void* val, size_t len);
 
 static int obtain_lock (int fd, int write);
 static int release_lock (int fd, int write);
@@ -186,10 +186,11 @@ static void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t ty
 
 
 
-static void xfree(void *ptr)
+static void *xfree(void *ptr)
 {
 	if (ptr != NULL)
 		free(ptr);
+	return NULL;
 }
 
 static int xopen(char *fn, int flags, mode_t mode)
@@ -613,6 +614,14 @@ static void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64
     }
 }
 
+static int is_valid_val (void* val, size_t len)
+{
+    int i;
+    for (i = 0; i < len; i++)
+	    if (((unsigned char *)val)[i] != 0xff)
+		    return 1;
+    return 0;
+}
 
 /*
   Performs folding of values of historical data into some state. We filter values according to count of values.
@@ -638,7 +647,7 @@ static void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint6
 	while (ofs && count > 0) {
 	    ofs = lseek (fd, ofs - sizeof (double), SEEK_SET);
 	    read (fd, &value, sizeof (value));
-	    if (is_valid_val (&value)) {
+	    if (is_valid_val (&value, sizeof (value))) {
 		fn (&value, init_res);
 		count--;
 	    }
@@ -650,14 +659,6 @@ static void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint6
 	ts = get_prev_data_ts (ts);
     }
 }
-
-
-
-static int is_valid_val (void* val)
-{
-    return *(zbx_uint64_t*)val != (zbx_uint64_t)0xffffffffffffffffLLU;
-}
-
 
 static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int trend)
 {
@@ -808,7 +809,7 @@ zbx_uint64_t HFS_get_count (const char* hfs_base_dir, const char* siteid, zbx_ui
 {
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db))
+	if (is_valid_val (db, sizeof(zbx_uint64_t)))
 	    (*(zbx_uint64_t*)state)++;
     }
 
@@ -826,7 +827,7 @@ zbx_uint64_t HFS_get_count_u64_eq (const char* hfs_base_dir, const char* siteid,
 
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db) && *(zbx_uint64_t*)db == ((state_t*)state)->val)
+	if (is_valid_val (db, sizeof(zbx_uint64_t)) && *(zbx_uint64_t*)db == ((state_t*)state)->val)
 	    ((state_t*)state)->count++;
     }
 
@@ -847,7 +848,7 @@ zbx_uint64_t HFS_get_count_u64_ne (const char* hfs_base_dir, const char* siteid,
 
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db) && *(zbx_uint64_t*)db != ((state_t*)state)->val)
+	if (is_valid_val (db, sizeof(zbx_uint64_t)) && *(zbx_uint64_t*)db != ((state_t*)state)->val)
 	    ((state_t*)state)->count++;
     }
 
@@ -868,7 +869,7 @@ zbx_uint64_t HFS_get_count_u64_gt (const char* hfs_base_dir, const char* siteid,
 
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db) && *(zbx_uint64_t*)db > ((state_t*)state)->val)
+	if (is_valid_val (db, sizeof(zbx_uint64_t)) && *(zbx_uint64_t*)db > ((state_t*)state)->val)
 	    ((state_t*)state)->count++;
     }
 
@@ -889,7 +890,7 @@ zbx_uint64_t HFS_get_count_u64_lt (const char* hfs_base_dir, const char* siteid,
 
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db) && *(zbx_uint64_t*)db < ((state_t*)state)->val)
+	if (is_valid_val (db, sizeof(zbx_uint64_t)) && *(zbx_uint64_t*)db < ((state_t*)state)->val)
 	    ((state_t*)state)->count++;
     }
 
@@ -910,7 +911,7 @@ zbx_uint64_t HFS_get_count_u64_ge (const char* hfs_base_dir, const char* siteid,
 
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db) && *(zbx_uint64_t*)db >= ((state_t*)state)->val)
+	if (is_valid_val (db, sizeof(zbx_uint64_t)) && *(zbx_uint64_t*)db >= ((state_t*)state)->val)
 	    ((state_t*)state)->count++;
     }
 
@@ -931,7 +932,7 @@ zbx_uint64_t HFS_get_count_u64_le (const char* hfs_base_dir, const char* siteid,
 
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db) && *(zbx_uint64_t*)db <= ((state_t*)state)->val)
+	if (is_valid_val (db, sizeof(zbx_uint64_t)) && *(zbx_uint64_t*)db <= ((state_t*)state)->val)
 	    ((state_t*)state)->count++;
     }
 
@@ -953,7 +954,7 @@ zbx_uint64_t HFS_get_count_float_eq (const char* hfs_base_dir, const char* sitei
 
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db) && *(double*)db+0.00001 > ((state_t*)state)->val && *(double*)db-0.00001 < ((state_t*)state)->val)
+	if (is_valid_val (db, sizeof(double)) && *(double*)db+0.00001 > ((state_t*)state)->val && *(double*)db-0.00001 < ((state_t*)state)->val)
 	    ((state_t*)state)->count++;
     }
 
@@ -975,7 +976,7 @@ zbx_uint64_t HFS_get_count_float_ne (const char* hfs_base_dir, const char* sitei
 
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db) && (*(double*)db+0.00001 < ((state_t*)state)->val || *(double*)db-0.00001 > ((state_t*)state)->val))
+	if (is_valid_val (db, sizeof(double)) && (*(double*)db+0.00001 < ((state_t*)state)->val || *(double*)db-0.00001 > ((state_t*)state)->val))
 	    ((state_t*)state)->count++;
     }
 
@@ -997,7 +998,7 @@ zbx_uint64_t HFS_get_count_float_gt (const char* hfs_base_dir, const char* sitei
 
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db) && *(double*)db > ((state_t*)state)->val)
+	if (is_valid_val (db, sizeof(double)) && *(double*)db > ((state_t*)state)->val)
 	    ((state_t*)state)->count++;
     }
 
@@ -1019,7 +1020,7 @@ zbx_uint64_t HFS_get_count_float_lt (const char* hfs_base_dir, const char* sitei
 
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db) && *(double*)db < ((state_t*)state)->val)
+	if (is_valid_val (db, sizeof(double)) && *(double*)db < ((state_t*)state)->val)
 	    ((state_t*)state)->count++;
     }
 
@@ -1041,7 +1042,7 @@ zbx_uint64_t HFS_get_count_float_ge (const char* hfs_base_dir, const char* sitei
 
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db) && *(double*)db >= ((state_t*)state)->val)
+	if (is_valid_val (db, sizeof(double)) && *(double*)db >= ((state_t*)state)->val)
 	    ((state_t*)state)->count++;
     }
 
@@ -1063,7 +1064,7 @@ zbx_uint64_t HFS_get_count_float_le (const char* hfs_base_dir, const char* sitei
 
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db) && *(double*)db <= ((state_t*)state)->val)
+	if (is_valid_val (db, sizeof(double)) && *(double*)db <= ((state_t*)state)->val)
 	    ((state_t*)state)->count++;
     }
 
@@ -1080,7 +1081,7 @@ zbx_uint64_t HFS_get_sum_u64 (const char* hfs_base_dir, const char* siteid, zbx_
 {
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db))
+	if (is_valid_val (db, sizeof(zbx_uint64_t)))
 	    *(zbx_uint64_t*)state += *(zbx_uint64_t*)db;
     }
 
@@ -1099,7 +1100,7 @@ double HFS_get_sum_float (const char* hfs_base_dir, const char* siteid, zbx_uint
 {
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db))
+	if (is_valid_val (db, sizeof(double)))
 	    *(double*)state += *(double*)db;
     }
 
@@ -1122,7 +1123,7 @@ double HFS_get_avg_u64 (const char* hfs_base_dir, const char* siteid, zbx_uint64
 
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db)) {
+	if (is_valid_val (db, sizeof(zbx_uint64_t))) {
 	    ((state_t*)state)->count++;
 	    ((state_t*)state)->sum += (*(zbx_uint64_t*)db);
 	}
@@ -1149,7 +1150,7 @@ double HFS_get_avg_float (const char* hfs_base_dir, const char* siteid, zbx_uint
 
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db)) {
+	if (is_valid_val (db, sizeof(double))) {
 	    ((state_t*)state)->count++;
 	    ((state_t*)state)->sum += (*(double*)db);
 	}
@@ -1171,7 +1172,7 @@ zbx_uint64_t HFS_get_min_u64 (const char* hfs_base_dir, const char* siteid, zbx_
 {
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db))
+	if (is_valid_val (db, sizeof(zbx_uint64_t)))
 	    if (*(zbx_uint64_t*)state > *(zbx_uint64_t*)db)
 		*(zbx_uint64_t*)state = *(zbx_uint64_t*)db;
     }
@@ -1191,7 +1192,7 @@ double HFS_get_min_float (const char* hfs_base_dir, const char* siteid, zbx_uint
 {
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db))
+	if (is_valid_val (db, sizeof(double)))
 	    if (*(double*)state > *(double*)db)
 		*(double*)state = *(double*)db;
     }
@@ -1211,7 +1212,7 @@ zbx_uint64_t HFS_get_max_u64 (const char* hfs_base_dir, const char* siteid, zbx_
 {
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db))
+	if (is_valid_val (db, sizeof(zbx_uint64_t)))
 	    if (*(zbx_uint64_t*)state < *(zbx_uint64_t*)db)
 		*(zbx_uint64_t*)state = *(zbx_uint64_t*)db;
     }
@@ -1231,7 +1232,7 @@ double HFS_get_max_float (const char* hfs_base_dir, const char* siteid, zbx_uint
 {
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db))
+	if (is_valid_val (db, sizeof(double)))
 	    if (*(double*)state < *(double*)db)
 		*(double*)state = *(double*)db;
     }
@@ -1255,7 +1256,7 @@ zbx_uint64_t HFS_get_delta_u64 (const char* hfs_base_dir, const char* siteid, zb
 
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db)) {
+	if (is_valid_val (db, sizeof(zbx_uint64_t))) {
 	    if (((state_t*)state)->min > *(zbx_uint64_t*)db)
 		((state_t*)state)->min = *(zbx_uint64_t*)db;
 	    if (((state_t*)state)->max < *(zbx_uint64_t*)db)
@@ -1283,7 +1284,7 @@ double HFS_get_delta_float (const char* hfs_base_dir, const char* siteid, zbx_ui
 
     void functor (void* db, void* state)
     {
-	if (is_valid_val (db)) {
+	if (is_valid_val (db, sizeof(double))) {
 	    if (((state_t*)state)->min > *(double*)db)
 		((state_t*)state)->min = *(double*)db;
 	    if (((state_t*)state)->max < *(double*)db)
@@ -1304,14 +1305,17 @@ double HFS_get_delta_float (const char* hfs_base_dir, const char* siteid, zbx_ui
 }
 
 static int
-HFS_find_meta(const char *hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t from_ts, hfs_meta_t **res) {
+HFS_find_meta(const char *hfs_base_dir, const char* siteid, int trend,
+	    zbx_uint64_t itemid, time_t from_ts, hfs_meta_t **res)
+{
 	int i, block = 0;
 	time_t ts = from_ts;
 	hfs_meta_t *meta = NULL;
 	hfs_meta_item_t *ip = NULL;
 
 #ifdef DEBUG_legion
-	fprintf(stderr, "It HFS_find_meta(hfs_base_dir=%s, siteid=%s, itemid=%lld, from=%d, res)\n", hfs_base_dir, siteid, itemid, from_ts);
+	fprintf(stderr, "It HFS_find_meta(hfs_base_dir=%s, siteid=%s, itemid=%lld, from=%d, res)\n",
+		hfs_base_dir, siteid, itemid, from_ts);
 	fflush(stderr);
 #endif
 	(*res) = NULL;
@@ -1320,7 +1324,7 @@ HFS_find_meta(const char *hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
 		char *path;
 
 		i = -1;
-		if ((path = get_name (hfs_base_dir, siteid, itemid, ts, NK_ItemMeta)) != NULL) {
+		if ((path = get_name (hfs_base_dir, siteid, itemid, ts, trend ? NK_TrendItemMeta : NK_ItemMeta)) != NULL) {
 			i = access(path, R_OK);
 			free(path);
 		}
@@ -1330,7 +1334,7 @@ HFS_find_meta(const char *hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
 			continue;
 		}
 
-		if ((meta = read_meta(hfs_base_dir, siteid, itemid, ts, 0)) == NULL)
+		if ((meta = read_meta(hfs_base_dir, siteid, itemid, ts, trend)) == NULL)
 			return -1; // Somethig real bad happend :(
 
 		if (meta->blocks > 0)
@@ -1366,14 +1370,19 @@ HFS_find_meta(const char *hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
 }
 
 hfs_trend_t
-HFS_init_trend_value(item_value_u val)
+HFS_init_trend_value(int is_trend, void *val)
 {
 	hfs_trend_t trend;
 
-	trend.count = 1;
-	trend.max = val;
-	trend.min = val;
-	trend.avg = val;
+	if (!is_trend) {
+		trend.count = 1;
+		trend.max = *((item_value_u *) val);
+		trend.min = *((item_value_u *) val);
+		trend.avg = *((item_value_u *) val);
+	}
+	else {
+		trend = *((hfs_trend_t *) val);
+	}
 
 	return trend;
 }
@@ -1381,41 +1390,51 @@ HFS_init_trend_value(item_value_u val)
 //!!!!!!
 size_t
 HFSread_item (const char *hfs_base_dir, const char* siteid,
-	      zbx_uint64_t itemid, hfs_type_t item_type,
+	      int trend,		 zbx_uint64_t itemid,
 	      size_t sizex,
 	      time_t graph_from_ts,	time_t graph_to_ts,
 	      time_t from_ts,		time_t to_ts,
 	      hfs_item_value_t **result)
 {
-	hfs_trend_t old_item;
-	item_value_u val;
+	void 		*val;
+	item_value_u 	 val_history;
+	hfs_trend_t  	 val_trends;
 
 	time_t ts = from_ts;
-	size_t items = 0, result_size = 0;
-	int finish_loop = 0, block;
+	size_t val_len, items = 0, result_size = 0;
+	int finish_loop = 0;
+	long count = 0, cur_group, group = -1;
 	long z, p, x;
-	long values = 0, count = 0, cur_group, group = -1;
 
 	p = (graph_to_ts - graph_from_ts);
 	z = (p - graph_from_ts % p);
 	x = (sizex - 1);
 
 	zabbix_log(LOG_LEVEL_DEBUG,
-		"In HFSread_item(hfs_base_dir=%s, sizex=%d, itemid=%lld, graph_from=%d, graph_to=%d, from=%d, to=%d)\n",
-		hfs_base_dir, x, itemid, graph_from_ts, graph_to_ts, from_ts, to_ts);
+		"In HFSread_item(hfs_base_dir=%s, trend=%d, itemid=%lld, sizex=%d, graph_from=%d, graph_to=%d, from=%d, to=%d)\n",
+		hfs_base_dir, trend, itemid, x, graph_from_ts, graph_to_ts, from_ts, to_ts);
 
 	zabbix_log(LOG_LEVEL_DEBUG,
 		"HFS: HFSread_item: Magic numbers: p=%d, z=%d, x=%d\n",
 		p, z, x);
 
+	if (trend == 0) {
+		val = &val_history;
+		val_len = sizeof(val_history);
+	}
+	else {
+		val = &val_trends;
+		val_len = sizeof(val_trends);
+	}
+
 	while (!finish_loop) {
-		int fd = -1;
+		int block, fd = -1;
 		char *p_data = NULL;
 		hfs_meta_t *meta = NULL;
 		hfs_meta_item_t *ip;
 		off_t ofs;
 
-		if ((block = HFS_find_meta(hfs_base_dir, siteid, itemid, ts, &meta)) == -1)
+		if ((block = HFS_find_meta(hfs_base_dir, siteid, trend, itemid, ts, &meta)) == -1)
 			break;
 
 		ip = meta->meta + block;
@@ -1436,8 +1455,7 @@ HFSread_item (const char *hfs_base_dir, const char* siteid,
 			*/
 			ts = ip->start;
 		}
-
-		if ((p_data = get_name (hfs_base_dir, siteid, itemid, ts, NK_ItemData)) == NULL) {
+		if ((p_data = get_name (hfs_base_dir, siteid, itemid, ts, trend ? NK_TrendItemData : NK_ItemData)) == NULL) {
 			zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get file name");
 			finish_loop = 1;
 			goto nextloop;
@@ -1461,22 +1479,21 @@ HFSread_item (const char *hfs_base_dir, const char* siteid,
 			goto nextloop;
 		}
 
-		while (read (fd, &val.l, sizeof (val.l)) > 0) {
+		while (read (fd, val, val_len) > 0) {
 
 			cur_group = (long) (x * ((ts + z) % p) / p);
 			if (group == -1)
 				group = cur_group;
 
 			ts += ip->delay;
-			values++;
 
-			if (!is_valid_val(&val.l))
+			if (!is_valid_val(val, val_len))
 				continue;
 
 			if (result_size <= items) {
 				result_size += alloc_item_values;
 				*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * result_size));
-				(*result)[items].value = HFS_init_trend_value(val);
+				(*result)[items].value = HFS_init_trend_value(trend, val);
 			}
 
 			if (group != cur_group) {
@@ -1489,12 +1506,12 @@ HFSread_item (const char *hfs_base_dir, const char* siteid,
 				count = 0;
 				items++;
 
-				(*result)[items].value = HFS_init_trend_value(val);
+				(*result)[items].value = HFS_init_trend_value(trend, val);
 			}
-			count++;
 
-			old_item = HFS_init_trend_value(val);
-			recalculate_trend(&((*result)[items].value), old_item, ip->type);
+			recalculate_trend(&((*result)[items].value),
+					  HFS_init_trend_value(trend, val),
+					  ip->type);
 
 			if (ts >= to_ts) {
 				finish_loop = 1;
@@ -1510,16 +1527,14 @@ HFSread_item (const char *hfs_base_dir, const char* siteid,
 
 				ip = meta->meta + block;
 			}
+
+			count++;
     		}
 nextloop:
 		if (fd != -1 && close(fd) == -1)
 			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: close(): %s", p_data, strerror(errno));
 
-		if (p_data) {
-			free (p_data);
-			p_data = NULL;
-		}
-
+		p_data = xfree(p_data);
 		free_meta (meta);
 		meta = NULL;
 
@@ -1530,8 +1545,7 @@ nextloop:
 		*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * items));
 
 	zabbix_log(LOG_LEVEL_DEBUG,
-		"HFS: HFSread_item: Out items=%d values=%d\n",
-		items, values);
+		"HFS: HFSread_item: Out items=%d\n", items);
 
 	return items;
 }
@@ -1590,7 +1604,7 @@ HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
 					goto end;
 				}
 
-				if (is_valid_val(&val.l)) {
+				if (is_valid_val(&val.l, sizeof(zbx_uint64_t))) {
 					fn (ip->type, val, ts, init_res);
 					count--;
 				}

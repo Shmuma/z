@@ -22,11 +22,6 @@
 #include "common.h"
 
 typedef enum {
-	HFS_HISTORY = 0,
-	HFS_TRENDS,
-} hfs_type_t;
-
-typedef enum {
     IT_UINT64 = 0,
     IT_DOUBLE,
     IT_TRENDS_UINT64,
@@ -70,10 +65,10 @@ void		HFSadd_history_str (const char* hfs_base_dir, const char* siteid, zbx_uint
 void		HFSadd_trend (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, double value, int clock);
 void		HFSadd_trend_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t value, int clock);
 size_t		HFSread_item (const char* hfs_base_dir, const char* siteid,
-				zbx_uint64_t itemid, hfs_type_t type,
+				int trend,		zbx_uint64_t itemid,
 				size_t x,
-				time_t graph_from, time_t graph_to,
-				time_t from, time_t to,
+				time_t graph_from,	time_t graph_to,
+				time_t from,		time_t to,
 				hfs_item_value_t **result);
 int		HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, void* init_res, read_count_fn_t fn);
 
