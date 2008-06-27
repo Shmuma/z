@@ -129,7 +129,12 @@ PHP_FUNCTION(zabbix_hfs_read)
         if (array_init(return_value) == FAILURE)
 		RETURN_FALSE;
 
-	n = HFSread_item(ZABBIX_GLOBAL(hfs_base_dir), site, sizex, itemid, graph_from, graph_to, from, to, &res);
+	n = HFSread_item(ZABBIX_GLOBAL(hfs_base_dir), site,
+			    itemid,	HFS_HISTORY,
+			    sizex,
+			    graph_from, graph_to,
+			    from,	to,
+			    &res);
 
 	for (i = 0; i < n; i++) {
 		char *buf = NULL;
@@ -147,20 +152,20 @@ PHP_FUNCTION(zabbix_hfs_read)
 		add_property_long (z_obj, "i",		res[i].group);
 
 		if (res[i].type == IT_DOUBLE) {
-			ZVAL_DOUBLE(avg, res[i].avg.d);
-			ZVAL_DOUBLE(max, res[i].max.d);
-			ZVAL_DOUBLE(min, res[i].min.d);
+			ZVAL_DOUBLE(avg, res[i].value.avg.d);
+			ZVAL_DOUBLE(max, res[i].value.max.d);
+			ZVAL_DOUBLE(min, res[i].value.min.d);
 		}
-		else {
-			asprintf(&buf, "%lld", res[i].avg.l);
+		else if (res[i].type == IT_UINT64) {
+			asprintf(&buf, "%lld", res[i].value.avg.l);
 			ZVAL_STRING(avg, buf, 1);
 			free(buf);
 
-			asprintf(&buf, "%lld", res[i].max.l);
+			asprintf(&buf, "%lld", res[i].value.max.l);
 			ZVAL_STRING(max, buf, 1);
 			free(buf);
 
-			asprintf(&buf, "%lld", res[i].min.l);
+			asprintf(&buf, "%lld", res[i].value.min.l);
 			ZVAL_STRING(min, buf, 1);
 			free(buf);
 		}
