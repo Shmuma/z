@@ -22,6 +22,7 @@
 	require_once "include/config.inc.php";
 	require_once "include/items.inc.php";
 	require_once "include/graphs.inc.php";
+	require_once "include/hfs.inc.php";
 
 	$page["file"]	= "history.php";
 	$page["title"]	= "S_HISTORY";
@@ -440,19 +441,6 @@ include_once "include/page_header.php";
 		}
 		else
 		{
-			switch($item_type)
-			{
-				case ITEM_VALUE_TYPE_FLOAT:	$h_table = "history";		break;
-				case ITEM_VALUE_TYPE_UINT64:	$h_table = "history_uint";	break;
-				case ITEM_VALUE_TYPE_TEXT:	$h_table = "history_text";	break;
-				default:			$h_table = "history_str";
-			}
-
-			$result = DBselect("select h.clock,h.value,i.valuemapid from $h_table h, items i".
-					" where h.itemid=i.itemid and i.itemid=".$_REQUEST["itemid"].
-					$cond_clock." order by clock desc",
-				$limit);
-
 			if(!isset($_REQUEST["plaintext"]))
 			{
 				$table = new CTableInfo();
@@ -468,7 +456,7 @@ include_once "include/page_header.php";
 COpt::profiling_start("history");
 			$item = get_item_by_itemid($_REQUEST["itemid"]);
 
-			$arr = zabbix_hfs_last($item["sitename"],$_REQUEST["itemid"], 500);
+			$arr = zbx_hfs_last ($item["sitename"], $_REQUEST["itemid"], 500, $item_type);
 			if (!is_array($arr))
 				$arr = array();
 
