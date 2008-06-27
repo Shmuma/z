@@ -62,6 +62,7 @@ typedef enum {
 	NK_ItemValues,
 	NK_ItemStatus,
 	NK_ItemStderr,
+	NK_ItemString,
 } name_kind_t;
 
 
@@ -69,6 +70,7 @@ static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_
 static void free_meta (hfs_meta_t* meta);
 static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, name_kind_t kind);
 static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len, item_type_t type);
+static int store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, const char* value, item_type_t type);
 static off_t find_meta_ofs (int time, hfs_meta_t* meta);
 static int get_next_data_ts (int ts);
 static int get_prev_data_ts (int ts);
@@ -273,7 +275,7 @@ static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64
 	    item.ofs = 0;
 
 	/* append block to meta */
-	if ((fd = xopen (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IWGRP | S_IWOTH)) == -1)
+	if ((fd = xopen (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
 		goto err_exit;
 
 	meta->blocks++;
@@ -741,6 +743,9 @@ static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_
 	    snprintf (res, len, "%s/%s/items/%llu/%u.%s", hfs_base_dir, siteid, itemid, (unsigned int)(clock / (time_t)1000000),
 		      kind == NK_ItemMeta ? "meta" : "data");
             break;
+    case NK_ItemString:
+	    snprintf (res, len, "%s/%s/items/%llu/strings.data", hfs_base_dir, siteid, itemid);
+	    break;
     case NK_TrendItemData:
     case NK_TrendItemMeta:
 	    snprintf (res, len, "%s/%s/items/%llu/trends.%s", hfs_base_dir, siteid, itemid, kind == NK_TrendItemMeta ? "meta" : "data");
@@ -749,13 +754,13 @@ static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_
 	    snprintf (res, len, "%s/%s/hosts/%llu.state", hfs_base_dir, siteid, itemid);
 	    break;
     case NK_ItemValues:
-	    snprintf (res, len, "%s/%s/items/%llu/values.dat", hfs_base_dir, siteid, itemid);
+	    snprintf (res, len, "%s/%s/items/%llu/values.data", hfs_base_dir, siteid, itemid);
 	    break;
     case NK_ItemStatus:
-	    snprintf (res, len, "%s/%s/items/%llu/status.dat", hfs_base_dir, siteid, itemid);
+	    snprintf (res, len, "%s/%s/items/%llu/status.data", hfs_base_dir, siteid, itemid);
 	    break;
     case NK_ItemStderr:
-	    snprintf (res, len, "%s/%s/items/%llu/stderr.dat", hfs_base_dir, siteid, itemid);
+	    snprintf (res, len, "%s/%s/items/%llu/stderr.data", hfs_base_dir, siteid, itemid);
 	    break;
     }
 
@@ -2242,4 +2247,226 @@ int HFS_get_item_stderr (const char* hfs_base_dir, const char* siteid, zbx_uint6
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_stderr leave");
 	return 1;
+}
+
+
+/* routine appends string to item's  string table */
+void HFSadd_history_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int clock, const char* value)
+{
+	zabbix_log (LOG_LEVEL_DEBUG, "In HFSadd_history_str()");
+	store_value_str (hfs_base_dir, siteid, itemid, clock, value, IT_STRING);
+}
+
+
+
+int store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, const char* value, item_type_t type)
+{
+	int len = 0, fd;
+	char* p_name = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemString);
+
+	if (value)
+		len = strlen (value);
+
+	make_directories (p_name);
+
+	if ((fd = open (p_name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
+		zabbix_log (LOG_LEVEL_DEBUG, "Canot open file %s", p_name);
+		free (p_name);
+		return 0;
+	}
+
+	if (!obtain_lock (fd, 1)) {
+		if (close (fd) == -1)
+			zabbix_log(LOG_LEVEL_CRIT, "hfs: store_value_str: close(): %s", strerror(errno));
+		return 0;
+	}
+
+	lseek (fd, 0, SEEK_END);
+
+	free (p_name);
+
+	write (fd, &clock, sizeof (clock));
+	write (fd, &len, sizeof (len));
+	if (len)
+		write (fd, value, len+1);
+	/* write len twice for backward reading */
+	write (fd, &len, sizeof (len));
+
+	release_lock (fd, 1);
+
+	close (fd);
+	return 0;
+}
+
+
+/* Read all values inside given time region. */
+size_t HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t from, time_t to, hfs_item_str_value_t **result)
+{
+	int len = 0, fd, eof = 0;
+	time_t clock;
+	char* p_name = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemString);
+	size_t count = 0;
+	hfs_item_str_value_t* tmp;
+
+	*result = NULL;
+
+	if ((fd = open (p_name, O_RDONLY)) == -1) {
+		zabbix_log (LOG_LEVEL_DEBUG, "HFSread_item_str: Canot open file %s", p_name);
+		free (p_name);
+		return 0;
+	}
+
+	if (!obtain_lock (fd, 0)) {
+		if (close (fd) == -1)
+			zabbix_log(LOG_LEVEL_CRIT, "hfs: HFSread_item_str: close(): %s", strerror(errno));
+		return 0;
+	}
+
+	free (p_name);
+
+	/* search for start position */
+	while (1) {
+		if (read (fd, &clock, sizeof (clock)) != sizeof (clock)) {
+			eof = 1;
+			break;
+		}
+
+		/* if we run out of data, exit */
+		if (clock > to) {
+			eof = 1;
+			break;
+		}
+
+		/* skip string value */
+		if (read (fd, &len, sizeof (len)) != sizeof (len)) {
+			eof = 1;
+			break;
+		}
+
+		/* we find it */
+		if (clock >= from)
+			break;
+
+		if (lseek (fd, len + 1 + sizeof (len), SEEK_CUR) == (off_t)-1) {
+			eof = 1;
+			break;
+		}
+	}
+
+	if (!eof) {
+		/* read values */
+		while (1) {
+			count++;
+			tmp = (hfs_item_str_value_t*)realloc (*result, count * sizeof (hfs_item_str_value_t));
+
+			/* we have no memory for this, return as is */
+			if (!tmp) {
+				count--;
+				break;
+			}
+
+			*result = tmp;
+			tmp[count-1].clock = clock;
+			tmp[count-1].value = (char*)malloc (len+1);
+
+			if (!tmp[count-1].value)
+				break;
+
+			if (read (fd, tmp[count-1].value, len+1) != len+1) {
+				free (tmp[count-1].value);
+				count--;
+				break;
+			}
+
+			/* read metadata of next string */
+			if (read (fd, &len, sizeof (len)) != sizeof (len) || 
+			    read (fd, &clock, sizeof (clock)) != sizeof (clock) ||
+			    read (fd, &len, sizeof (len)) != sizeof (len))
+				break;
+
+			if (clock > to)
+				break;
+		}
+	}
+
+	release_lock (fd, 0);
+	close (fd);
+
+	return count;
+}
+
+
+/* Read specified amount of latest entries. */
+size_t HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, hfs_item_str_value_t **result)
+{
+	int len = 0, fd;
+	time_t clock;
+	char* p_name = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemString);
+	size_t res_count = 0;
+	hfs_item_str_value_t* tmp;
+	off_t ofs;
+
+	*result = NULL;
+
+	if ((fd = open (p_name, O_RDONLY)) == -1) {
+		zabbix_log (LOG_LEVEL_DEBUG, "HFSread_item_str: Canot open file %s", p_name);
+		free (p_name);
+		return 0;
+	}
+
+	if (!obtain_lock (fd, 0)) {
+		if (close (fd) == -1)
+			zabbix_log(LOG_LEVEL_CRIT, "hfs: HFSread_item_str: close(): %s", strerror(errno));
+		return 0;
+	}
+
+	free (p_name);
+
+	/* data is empty */
+	ofs = lseek (fd, 0, SEEK_END);
+	if (ofs == (off_t)-1)
+		return 0;
+	ofs = lseek (fd, ofs-sizeof (len), SEEK_SET);
+	if (ofs == (off_t)-1)
+		return 0;
+
+	while (res_count < count) {
+		if (read (fd, &len, sizeof (len)) != sizeof (len))
+			break;
+
+		res_count++;
+		tmp = (hfs_item_str_value_t*)realloc (*result, res_count * sizeof (hfs_item_str_value_t));
+
+		/* we have no memory for this, return as is */
+		if (!tmp) {
+			res_count--;
+			break;
+		}
+
+		*result = tmp;
+
+		if (lseek (fd, ofs - (sizeof (len) + sizeof (clock) + len + 1), SEEK_SET) == (off_t)-1) {
+			res_count--;
+			break;
+		}
+
+		tmp[res_count-1].value = (char*)malloc (len + 1);
+		if (!tmp[res_count-1].value) {
+			res_count--;
+			break;
+		}
+
+		read (fd, &tmp[res_count-1].clock, sizeof (tmp[res_count-1].clock));
+		read (fd, &len, sizeof (len));
+		read (fd, tmp[res_count-1].value, len + 1);
+
+		ofs = lseek (fd, ofs - (sizeof (len)*2 + sizeof (clock) + len + 1), SEEK_SET);
+		if (ofs == (off_t)-1)
+			break;
+	}
+
+	release_lock (fd, 0);
+	close (fd);
+
+	return res_count;
 }

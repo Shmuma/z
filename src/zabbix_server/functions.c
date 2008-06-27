@@ -573,7 +573,10 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 		else if(item->value_type==ITEM_VALUE_TYPE_STR)
 		{
 			if(GET_STR_RESULT(value))
-				DBadd_history_str(item->itemid,value->str,now);
+				if (CONFIG_HFS_PATH)
+					HFSadd_history_str (CONFIG_HFS_PATH, item->siteid, item->itemid, now, value->str);
+				else
+					DBadd_history_str(item->itemid,value->str,now);
 		}
 		else if(item->value_type==ITEM_VALUE_TYPE_LOG)
 		{
@@ -586,7 +589,10 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 		else if(item->value_type==ITEM_VALUE_TYPE_TEXT)
 		{
 			if(GET_TEXT_RESULT(value))
-				DBadd_history_text(item->itemid,value->text,now);
+				if (CONFIG_HFS_PATH)
+					HFSadd_history_str (CONFIG_HFS_PATH, item->siteid, item->itemid, now, value->text);
+				else
+					DBadd_history_text(item->itemid,value->text,now);
 		}
 		else
 		{

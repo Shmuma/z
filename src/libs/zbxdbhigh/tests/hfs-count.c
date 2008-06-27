@@ -23,7 +23,7 @@ int main(void) {
 	int i;
 	size_t n;
 
-	n = HFSread_count("/tmp/hfs", itemid, 10, NULL, hfs_last_functor);
+	n = HFSread_count("/tmp/hfs", "Default", itemid, 10, NULL, hfs_last_functor);
 
 	printf("results = %d\n", n);
 

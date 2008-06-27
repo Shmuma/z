@@ -18,6 +18,8 @@ PHP_MSHUTDOWN_FUNCTION(zabbix);
 PHP_MINFO_FUNCTION(zabbix);
 PHP_FUNCTION(zabbix_hfs_read);
 PHP_FUNCTION(zabbix_hfs_last);
+PHP_FUNCTION(zabbix_hfs_read_str);
+PHP_FUNCTION(zabbix_hfs_last_str);
 PHP_FUNCTION(zabbix_hfs_host_availability);
 PHP_FUNCTION(zabbix_hfs_item_status);
 PHP_FUNCTION(zabbix_hfs_item_stderr);
