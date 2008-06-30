@@ -2,10 +2,10 @@
 
 Name: zabbix-mysql
 Version: 1.4.4
-Release: yandex_1
+Release: yandex_3
 Group: System Environment/Daemons
 License: GPL
-Source: %{realname}-%{version}_yandex2.tar.gz
+Source: %{realname}-%{version}_yandex3.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
 BuildPrereq: mysql, mysql-devel, net-snmp-devel, setproctitle-devel, iksemel-devel, pkgconfig
 Requires: mysql, net-snmp, setproctitle, iksemel
@@ -28,7 +28,7 @@ Group: System Environment/Daemons
 the zabbix network monitor agent.
 
 %prep
-%setup -q -n %{realname}-%{version}_yandex2
+%setup -q -n %{realname}-%{version}_yandex3
 
 %build
 %configure --enable-server --enable-agent --with-mysql --with-jabber --with-net-snmp
@@ -143,11 +143,13 @@ install -m 755 misc/init.d/redhat/zabbix_server %{buildroot}%{_sysconfdir}/init.
 %attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_agent.conf
 %attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_agentd.conf
 %attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_trapper.conf
+%attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/server.conf
 %config(noreplace) %{_sysconfdir}/init.d/zabbix_agentd
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_agent
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_agentd
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_sender
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_get
+%attr(0711,root,root) %{zabbix_bindir}/zabbix-rebase-server
 
 %changelog
 * Thu Jun 6 2008 Max Lapan <lapan_mv@yandex-team.ru>

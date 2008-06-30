@@ -41,6 +41,9 @@ if [ "$1" = "configure" ]; then
     chown zabbix:zabbix /var/log/zabbix-agent -R
     chown zabbix:zabbix /var/run/zabbix-agent -R
     chown zabbix:zabbix /var/spool/zabbix -R
+
+    # run zabbix-rebase-server
+    /usr/sbin/zabbix-rebase-server
 fi
 
 db_stop
