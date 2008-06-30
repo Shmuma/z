@@ -105,6 +105,8 @@ include_once "include/page_header.php";
 		"siteid"=>	array(T_ZBX_INT, O_OPT, P_SYS,	DB_ID,		'(isset({config})&&({config}==5))&&(isset({form})&&({form}=="update"))'),
 		"sitename"=>	array(T_ZBX_STR, O_OPT,	NULL,	NOT_EMPTY,	'(isset({config})&&({config}==5))&&isset({save})'),
 		"sitedescr"=>	array(T_ZBX_STR, O_OPT,	NULL,	NOT_EMPTY,	'(isset({config})&&({config}==5))&&isset({save})'),
+		"siteurl"=>	array(T_ZBX_STR, O_OPT,	NULL,	NOT_EMPTY,	'(isset({config})&&({config}==5))&&isset({save})'),
+		"siteactive"=>	array(T_ZBX_INT, O_OPT,	NULL,	NOT_EMPTY,	'(isset({config})&&({config}==5))&&isset({save})'),
 
 /* actions */
 		"activate"=>	array(T_ZBX_STR, O_OPT, P_SYS|P_ACT, NULL, NULL),	
@@ -562,12 +564,12 @@ include_once "include/page_header.php";
 		if(isset($_REQUEST["siteid"]))
 		{
 			$siteid = $_REQUEST["siteid"];
-			$result = update_site($siteid, $_REQUEST["sitename"], $_REQUEST["sitedescr"]);
+			$result = update_site($siteid, $_REQUEST["sitename"], $_REQUEST["sitedescr"], $_REQUEST["siteurl"], $_REQUEST["siteactive"]);
 			$action 	= AUDIT_ACTION_UPDATE;
 			$msg_ok		= S_SITE_UPDATED;
 			$msg_fail	= S_CANNOT_UPDATE_SITE;
 		} else {
-			$siteid = add_site($_REQUEST["sitename"], $_REQUEST["sitedescr"]);
+			$siteid = add_site($_REQUEST["sitename"], $_REQUEST["sitedescr"], $_REQUEST["siteurl"], $_REQUEST["siteactive"]);
 			$action 	= AUDIT_ACTION_ADD;
 			$msg_ok		= S_SITE_ADDED;
 			$msg_fail	= S_CANNOT_ADD_SITE;
@@ -575,7 +577,7 @@ include_once "include/page_header.php";
 		}
 		show_messages($result, $msg_ok, $msg_fail);
 		if($result){
-			add_audit($action,AUDIT_RESOURCE_SITE,S_SITE." [".$_REQUEST["sitename"]."] [".$siteid."]");
+			add_audit($action,AUDIT_RESOURCE_SITE,S_SITE." [".$_REQUEST["sitename"]."] [".$siteid."] [".$_REQUEST["siteurl"]."]");
 			unset($_REQUEST["form"]);
 		}
 		unset($_REQUEST["save"]);
@@ -1123,9 +1125,11 @@ include_once "include/page_header.php";
 					SPACE,
 					S_NAME),
 				S_MEMBERS,
-				S_DESCRIPTION));
+				S_DESCRIPTION,
+				S_SITEDBURL,
+				S_SITEACTIVE));
 
-			$db_sites = DBselect("select siteid,name,description ".
+			$db_sites = DBselect("select siteid,name,description,db_url,active ".
 					     " from sites order by siteid");
 
 			while ($db_site = DBfetch ($db_sites))
@@ -1143,7 +1147,9 @@ include_once "include/page_header.php";
 							url_param("config"),'action')
 				    ),
 				    $members["members"],
-				    $db_site["description"]));
+				    $db_site["description"],
+				    $db_site["db_url"],
+				    $db_site["active"] ? S_ACTIVE : S_NOT_ACTIVE));
 			}
 
 			$table->SetFooter(new CCol(array(
