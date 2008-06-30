@@ -2460,6 +2460,7 @@
 		$cmbYType = new CComboBox("yaxistype",$yaxistype,"submit()");
 		$cmbYType->AddItem(GRAPH_YAXIS_TYPE_CALCULATED,S_CALCULATED);
 		$cmbYType->AddItem(GRAPH_YAXIS_TYPE_FIXED,S_FIXED);
+		$cmbYType->AddItem(GRAPH_YAXIS_TYPE_LOG10,S_LOG10);
 		$frmGraph->AddRow(S_YAXIS_TYPE,$cmbYType);
 
 		if($yaxistype == GRAPH_YAXIS_TYPE_FIXED)

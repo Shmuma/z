@@ -530,6 +530,7 @@
 	'S_YAXIS_MAX_VALUE'=>			'Y axis MAX value',
 	'S_CALCULATED'=>			'Calculated',
 	'S_FIXED'=>				'Fixed',
+	'S_LOG10'=>				'Logariphmic',
 	'S_CREATE_GRAPH'=>			'Create Graph',
 	'S_SHOW_WORKING_TIME'=>			'Show working time',
 	'S_SHOW_TRIGGERS'=>			'Show triggers',
