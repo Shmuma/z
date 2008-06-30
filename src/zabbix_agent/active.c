@@ -664,7 +664,8 @@ static int	process_active_checks(char *server, unsigned short port)
 
 						if (item)
 						{
-							send_history_values (server, port, CONFIG_HOSTNAME, item);
+							if (send_history_values (server, port, CONFIG_HOSTNAME, item) == SUCCEED)
+								delete_active_buffer_item (item);
 							free_active_buffer_item (item);
 						}
 					}
