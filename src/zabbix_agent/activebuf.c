@@ -502,20 +502,37 @@ active_buffer_item_t* take_active_buffer_item ()
 
                 ofs += e->sizes[j];
             }
-
-        /* clean items after take */
-	buffer.items -= e->count;
-        e->count = e->index = 0;
-	memset (e->sizes, 0, e->max_items * sizeof (unsigned short));
         break;
     }
 
     zabbix_log (LOG_LEVEL_DEBUG, "take_active_buffer_items () exit");
-    flush_buffer ();
 
     return item;
 }
 
+
+/* wipe active buffer item from buffer */
+void delete_active_buffer_item (active_buffer_item_t* item)
+{
+	int i;
+	buffer_check_entry_t* e = buffer.entries;
+
+	if (!item)
+		return;
+
+	for (i = 0; i < buffer.size; i++, e++) {
+		if (!e->count)
+			continue;
+		if (strcmp (e->key, item->key))
+			continue;
+
+		buffer.items -= e->count;
+		e->count = e->index = 0;
+		memset (e->sizes, 0, e->max_items * sizeof (unsigned short));
+	}
+
+	flush_buffer ();
+}
 
 
 void free_active_buffer_item (active_buffer_item_t* item)

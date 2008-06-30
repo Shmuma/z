@@ -39,6 +39,7 @@ void update_active_buffer (ZBX_ACTIVE_METRIC* active);
 void store_in_active_buffer (const char* key, const char* value);
 int  active_buffer_is_empty ();
 active_buffer_item_t* take_active_buffer_item ();
+void delete_active_buffer_item (active_buffer_item_t* item);
 void free_active_buffer_item (active_buffer_item_t* item);
 
 
