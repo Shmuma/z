@@ -1538,6 +1538,9 @@ nextloop:
 		free_meta (meta);
 		meta = NULL;
 
+		if (trend)
+			break;
+
 		ts = get_next_data_ts (ts);
 	}
 
