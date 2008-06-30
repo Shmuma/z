@@ -354,11 +354,20 @@ sub newstate
 			if($output{"type"} eq "triggers" && $new ne "field" && !defined ($oracle_exc{$table_name}))
                         {
                             # insert trigger
-                            print "create or replace trigger zabbix.trai_${table_name} after insert on zabbix.${table_name} for each row\n".
-                                "begin\nReplicate2MySQL.RunSQL\n(\n";
+                            $typed_fields = join ",", @tr_typed_fields;
+                            $typed_fields =~ s/\([^\)]*\)//g;
+                            $tr_ins =~ s/:new\.//g;
+
+                            print "create or replace function zabbix.ins_${table_name} ($typed_fields) return varchar2\n";
+                            print "is\nbegin\nreturn\n";
                             print "'insert into ${table_name} (".(join ",", @tr_fields).") values ('\n";
                             print "${tr_ins}\n";
                             print "||')'\n);\nend;\n/\nshow errors\n";
+
+                            print "create or replace trigger zabbix.trai_${table_name} after insert on zabbix.${table_name} for each row\n".
+                                "begin\nReplicate2MySQL.RunSQL\n(\n";
+                            print "zabbix.ins_${table_name} (:new.".(join ",:new.", @tr_fields).")\n";
+                            print ");\nend;\n/\nshow errors\n";
 
                             # update trigger
                             print "create or replace trigger zabbix.trau_${table_name} after update on zabbix.${table_name} for each row\n".
@@ -432,6 +441,7 @@ sub process_table
                 $tr_upd = $tr_ins = "";
                 $tr_pk_field = $pkey;
                 @tr_fields = ();
+                @tr_typed_fields = ();
                 %fields_kind = ();
             }
         }
@@ -473,6 +483,7 @@ sub process_field
             unless (defined $oracle_exc{$table_name}) 
             {
                 push @tr_fields, $name;
+                push @tr_typed_fields, "$name in $oracle{$type_short}";
                 $out = $output{$type_short};
                 $out = $out eq "copy_conv" ? $copy_conv : $copy_asis;
                 $out =~ s/field/$name/g;
