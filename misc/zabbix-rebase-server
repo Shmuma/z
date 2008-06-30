@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# this utility updates file /etc/zabbix/server.conf which holds name of nearest server
+SRV=$(wget -q -O - http://setup.yandex.net/cgi-bin/get_monitoring_master)
+echo "Server=$SRV" > /etc/zabbix/server.conf
