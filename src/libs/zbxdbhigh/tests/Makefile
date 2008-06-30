@@ -16,6 +16,6 @@ STATIC_LIBS = \
 	-lm
 
 all:
-#	$(CC) -O0 -g -I../../../../include -o hfs-test hfs-test.c $(STATIC_LIBS)
+	$(CC) -O0 -g -I../../../../include -o hfs-test hfs-test.c $(STATIC_LIBS)
 #	$(CC) -O0 -g -I../../../../include -o hfs-count hfs-count.c $(STATIC_LIBS)
 	$(CC) -O0 -g -I../../../../include -o hfs-str hfs-str.c $(STATIC_LIBS)

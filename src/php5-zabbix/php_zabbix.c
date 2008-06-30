@@ -225,12 +225,12 @@ PHP_FUNCTION(zabbix_hfs_read_trends)
 		add_property_long (z_obj, "clock",	res[i].clock);
 		add_property_long (z_obj, "i",		res[i].group);
 
-		if (res[i].type == IT_DOUBLE) {
+		if (res[i].type == IT_TRENDS_DOUBLE) {
 			ZVAL_DOUBLE(avg, res[i].value.avg.d);
 			ZVAL_DOUBLE(max, res[i].value.max.d);
 			ZVAL_DOUBLE(min, res[i].value.min.d);
 		}
-		else if (res[i].type == IT_UINT64) {
+		else if (res[i].type == IT_TRENDS_UINT64) {
 			asprintf(&buf, "%lld", res[i].value.avg.l);
 			ZVAL_STRING(avg, buf, 1);
 			free(buf);
