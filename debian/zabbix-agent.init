@@ -27,7 +27,7 @@ case "$1" in
 	;;
   stop)
 	echo "Stopping $DESC: $NAME"
-	start-stop-daemon --oknodo --stop --exec $DAEMON 
+	start-stop-daemon --retry 30 --oknodo --stop --exec $DAEMON 
 	;;
   restart|force-reload)
 	$0 stop

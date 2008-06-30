@@ -91,6 +91,9 @@ for zabbixfile in %{zabbix_confdir}/zabbix_agentd.conf; do
     sed -i -e "s#Hostname=.*#Hostname=$HOSTNAME#g" $zabbixfile
 done
 
+# perform rebase
+%{zabbix_bindir}/zabbix-rebase-server
+
 
 %preun
 if [ "$1" = 0 ]
@@ -119,7 +122,8 @@ install -d %{buildroot}%{zabbix_confdir}
 install -d %{buildroot}%{_sysconfdir}/init.d
 
 # copy conf files
-install -m 755 misc/conf/zabbix_*.conf %{buildroot}%{zabbix_confdir}
+install -m 755 misc/conf/*.conf %{buildroot}%{zabbix_confdir}
+install -m 711 misc/zabbix-rebase-server %{buildroot}%{zabbix_bindir}/zabbix-rebase-server
 
 # redhat install scripts
 install -m 755 misc/init.d/redhat/zabbix_agentd %{buildroot}%{_sysconfdir}/init.d/
