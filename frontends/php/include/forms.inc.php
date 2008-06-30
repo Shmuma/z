@@ -4247,11 +4247,15 @@ include_once 'include/discovery.inc.php';
 		{
 			$name=$site["name"];
 			$descr=$site["description"];
+			$dburl=$site["db_url"];
+			$active=$site["active"];
 		}
 		else
 		{
 			$name=get_request("sitename","");
 			$descr=get_request("sitedescr","");
+			$dburl=get_request("siteurl","");
+			$active=get_request("siteactive","");
 		}
 		$frmSite = new CFormTable($frm_title,"hosts.php");
 		$frmSite->SetHelp("web.sites.php");
@@ -4263,6 +4267,12 @@ include_once 'include/discovery.inc.php';
 
 		$frmSite->AddRow(S_SITE_NAME,new CTextBox("sitename",$name,30));
 		$frmSite->AddRow(S_SITE_DESCR,new CTextBox("sitedescr",$descr,30));
+		$frmSite->AddRow(S_SITEDBURL,new CTextBox("siteurl",$dburl,30));
+
+		$cmbActive = new CComboBox('siteactive', $active);
+		$cmbActive->AddItem(0, S_NOT_ACTIVE);
+		$cmbActive->AddItem(1, S_ACTIVE);
+		$frmSite->AddRow(S_SITEACTIVE, $cmbActive);
 
 		$frmSite->AddItemToBottomRow(new CButton("save",S_SAVE));
 		if(isset($_REQUEST["siteid"]))

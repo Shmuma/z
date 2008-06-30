@@ -395,6 +395,8 @@ TABLE|sites|siteid|ZBX_SYNC
 FIELD		|siteid		|t_id		|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|name		|t_varchar(64)	|''	|NOT NULL	|ZBX_SYNC
 FIELD		|description	|t_varchar(255)	|''	|NOT NULL	|ZBX_SYNC
+FIELD		|db_url		|t_varchar(255)	|''	|NOT NULL	|ZBX_SYNC
+FIELD		|active		|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
 INDEX		|1		|name
 
 TABLE|hosts_groups|hostgroupid|ZBX_SYNC

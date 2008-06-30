@@ -716,6 +716,8 @@
 	'S_SERVERNAME'=>			'Server Name',
 	'S_KEY'=>				'Key',
 	'S_DESCRIPTION'=>			'Description',
+	'S_SITEDBURL'=>				'Site DB url',
+	'S_SITEACTIVE'=>			'State',
 	'S_UPDATE_INTERVAL'=>			'Update interval',
 	'S_HISTORY'=>				'History',
 	'S_TRENDS'=>				'Trends',

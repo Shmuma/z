@@ -25,14 +25,14 @@ require_once "include/triggers.inc.php";
 require_once "include/items.inc.php";
 
 /* SITES functions */
-	function	add_site($name, $descr)
+	function	add_site($name, $descr, $dburl, $active)
 	{
-		return db_save_site($name, $descr);
+		return db_save_site($name, $descr, $dburl, $active);
 	}
 
-	function	update_site($siteid, $name, $descr)
+	function	update_site($siteid, $name, $descr, $dburl, $active)
 	{
-		return db_save_site($name, $descr, $siteid);
+		return db_save_site($name, $descr, $dburl, $active, $siteid);
 	}
 
 	function	delete_site($siteid)
@@ -61,7 +61,7 @@ require_once "include/items.inc.php";
 	 * Comments:
 	 *
 	 */
-	function	db_save_site($name, $descr, $siteid=null)
+	function	db_save_site($name, $descr, $dburl, $active, $siteid=null)
 	{
 		if(!is_string($name) || !is_string($descr)){
 			error("incorrect parameters for 'db_save_site'");
@@ -82,13 +82,13 @@ require_once "include/items.inc.php";
 		if($siteid==null)
 		{
 			$siteid=get_dbid("sites","siteid");
-			if(!DBexecute("insert into sites (siteid,name,description) values (".$siteid.",".zbx_dbstr($name).",".zbx_dbstr($descr).")"))
+			if(!DBexecute("insert into sites (siteid,name,description, db_url, active) values (".$siteid.",".zbx_dbstr($name).",".zbx_dbstr($descr).",".zbx_dbstr($dburl).",".$active.")"))
 				return false;
 			return $siteid;
 
 		}
 		else
-			return DBexecute("update sites set name=".zbx_dbstr($name).", description=".zbx_dbstr($descr)." where siteid=$siteid");
+			return DBexecute("update sites set name=".zbx_dbstr($name).", description=".zbx_dbstr($descr).", db_url=".zbx_dbstr($dburl).", active=$active where siteid=$siteid");
 	}
 
 
