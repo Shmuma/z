@@ -463,6 +463,8 @@ static	ZBX_TABLE	tables[]={
 		{"siteid",	ZBX_TYPE_ID,	ZBX_SYNC},
 		{"name",	ZBX_TYPE_CHAR,	ZBX_SYNC},
 		{"description",	ZBX_TYPE_CHAR,	ZBX_SYNC},
+		{"db_url",	ZBX_TYPE_CHAR,	ZBX_SYNC},
+		{"active",	ZBX_TYPE_INT,	ZBX_SYNC},
 		{0}
 		}
 	},

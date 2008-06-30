@@ -428,6 +428,8 @@ CREATE TABLE sites (
 	siteid		bigint		DEFAULT '0'	NOT NULL,
 	name		varchar(64)		DEFAULT ''	NOT NULL,
 	description		varchar(255)		DEFAULT ''	NOT NULL,
+	db_url		varchar(255)		DEFAULT ''	NOT NULL,
+	active		integer		DEFAULT '0'	NOT NULL,
 	PRIMARY KEY (siteid)
 ) with OIDS;
 CREATE INDEX sites_1 on sites (name);
