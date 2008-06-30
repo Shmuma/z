@@ -24,6 +24,7 @@
 
 	define("GRAPH_YAXIS_TYPE_CALCULATED",0);
 	define("GRAPH_YAXIS_TYPE_FIXED",1);
+	define("GRAPH_YAXIS_TYPE_LOG10",2);
 
 	define("GRAPH_YAXIS_SIDE_LEFT",0);
 	define("GRAPH_YAXIS_SIDE_RIGHT",1);
@@ -874,7 +875,7 @@
 
 				// Do not allow <0. However we may allow it, no problem.
 				$minY = max(0,$minY);
-	
+
 				return $minY;
 //				return 0;
 			}
