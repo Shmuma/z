@@ -2496,7 +2496,7 @@ size_t HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint
 
 void HFS_update_trigger_value(const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, int new_value, int now)
 {
-	char* name = get_name (hfs_base_dir, siteid, triggerid, 0, NK_TriggerStatus);
+	char* name = get_name (hfs_path, siteid, triggerid, 0, NK_TriggerStatus);
 	int fd, kind;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_trigger_value entered");
@@ -2543,7 +2543,7 @@ void HFS_update_trigger_value(const char* hfs_path, const char* siteid, zbx_uint
 
 int HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, int* value, int* when)
 {
-	char* name = get_name (hfs_path, siteid, itemid, 0, NK_TriggerStatus);
+	char* name = get_name (hfs_path, siteid, triggerid, 0, NK_TriggerStatus);
 	int fd;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_trigger_value entered");
