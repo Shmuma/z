@@ -1,5 +1,29 @@
-#!/bin/sh
+#!/usr/bin/perl -s
 
-# this utility updates file /etc/zabbix/server.conf which holds name of nearest server
-SRV=$(wget -q -O - http://setup.yandex.net/cgi-bin/get_monitoring_master)
-echo "Server=$SRV" > /etc/zabbix/server.conf
+use IO::Socket;
+
+$socket = IO::Socket::INET->new (
+    PeerAddr => "setup.yandex.net",
+    PeerPort => 80,
+    Type => SOCK_STREAM) or die "Cannot connect to setup.yandex.net for rebase: $@\n";
+
+$req = <<EOF;
+GET /cgi-bin/get_monitoring_master HTTP/1.0
+
+EOF
+
+print $socket $req;
+
+while (<$socket>) {
+    chomp;
+    last if /^\s*$/;
+}
+
+$srv = <$socket>;
+print "Got new monitor server name: $srv";
+
+close ($socket);
+
+open (FD, ">/etc/zabbix/server.conf") or die "Cannot open config file for update\n";
+print FD "Server=$srv";
+close (FD);
