@@ -168,7 +168,7 @@ void	update_triggers(zbx_uint64_t itemid)
 		{
 			DBupdate_trigger_value(&trigger, exp_value, time(NULL), NULL);
 			if (CONFIG_HFS_PATH)
-				HFSupdate_trigger_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, trigger.triggerid, exp_value, time(NULL));
+				HFS_update_trigger_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, trigger.triggerid, exp_value, time(NULL));
 		}
 		zbx_free(exp);
 	}

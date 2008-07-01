@@ -2494,15 +2494,15 @@ size_t HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint
 
 
 
-int HFSupdate_trigger_value(const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, int new_value, int now)
+void HFS_update_trigger_value(const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, int new_value, int now)
 {
 	char* name = get_name (hfs_base_dir, siteid, triggerid, 0, NK_TriggerStatus);
 	int fd, kind;
 
-	zabbix_log(LOG_LEVEL_DEBUG, "HFSupdate_trigger_value entered");
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_trigger_value entered");
 
 	if (!name)
-		return 1;
+		return;
 
 	make_directories (name);
 
@@ -2510,31 +2510,75 @@ int HFSupdate_trigger_value(const char* hfs_path, const char* siteid, zbx_uint64
 	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	if (fd < 0) {
-		zabbix_log(LOG_LEVEL_CRIT, "HFSupdate_trigger_value: open(): %s: %s", name, strerror(errno));
+		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_trigger_value: open(): %s: %s", name, strerror(errno));
 		free (name);
-		return 1;
+		return;
 	}
 	free (name);
 
 	/* place write lock on that file or wait for unlock */
 	if (!obtain_lock (fd, 1)) {
 		if (close (fd) == -1)
-			zabbix_log(LOG_LEVEL_CRIT, "HFSupdate_trigger_value: close(): %s", strerror(errno));
-		return 1;
+			zabbix_log(LOG_LEVEL_CRIT, "HFS_update_trigger_value: close(): %s", strerror(errno));
+		return;
 	}
 
 	/* lock obtained, write data */
 	if (write (fd, &new_value, sizeof (new_value)) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFSupdate_trigger_value: write(): %s", strerror(errno));
+		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_trigger_value: write(): %s", strerror(errno));
 	if (write (fd, &now, sizeof (now)) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFSupdate_trigger_value: write(): %s", strerror(errno));
+		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_trigger_value: write(): %s", strerror(errno));
 
 	/* release lock */
 	release_lock (fd, 1);
 
 	if (close (fd) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFSupdate_trigger_value: close(): %s", strerror(errno));
+		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_trigger_value: close(): %s", strerror(errno));
 
-	zabbix_log(LOG_LEVEL_DEBUG, "HFSupdate_trigger_value leave");
-	return 0;
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_trigger_value leave");
+	return;
+}
+
+
+
+int HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, int* value, int* when)
+{
+	char* name = get_name (hfs_path, siteid, itemid, 0, NK_TriggerStatus);
+	int fd;
+
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_trigger_value entered");
+	if (!name)
+		return 0;
+
+	/* open file for reading */
+	fd = open (name, O_RDONLY);
+	if (fd < 0) {
+		if (errno != ENOENT)
+			zabbix_log(LOG_LEVEL_CRIT, "HFS_get_trigger_value: open(): %s: %s", name, strerror(errno));
+		free (name);
+		return 0;
+	}
+	free (name);
+
+	/* obtain read lock */
+	if (!obtain_lock (fd, 0)) {
+		if (close (fd) == -1)
+			zabbix_log(LOG_LEVEL_CRIT, "HFS_get_trigger_value: close(): %s", strerror(errno));
+		return 0;
+	}
+
+	/* reading data */
+	if (read (fd, value, sizeof (*value)) == -1)
+		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_trigger_value: read(): %s", strerror(errno));
+	if (read (fd, when, sizeof (*when)) == -1)
+		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_trigger_value: read(): %s", strerror(errno));
+
+	/* release read lock */
+	release_lock (fd, 0);
+
+	if (close (fd) == -1)
+		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_trigger_value: close(): %s", strerror(errno));
+
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_trigger_value leave");
+	return 1;	
 }
