@@ -24,6 +24,7 @@ static zend_function_entry php_zabbix_functions[] = {
 	PHP_FE(zabbix_hfs_item_status, NULL)
 	PHP_FE(zabbix_hfs_item_stderr, NULL)
 	PHP_FE(zabbix_hfs_item_values, NULL)
+	PHP_FE(zabbix_hfs_trigger_value, NULL)
 	{NULL, NULL, NULL}
 };
 
@@ -607,3 +608,27 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 }
 /* }}} */
 
+
+/* {{{ proto object zabbix_hfs_trigger_value(char *site, int triggerid) */
+PHP_FUNCTION(zabbix_hfs_trigger_value)
+{
+	long long triggerid = 0;
+	char *site = NULL;
+	int site_len = 0, value, time;
+	zval* zerror;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl", &site, &site_len, &triggerid) == FAILURE)
+		RETURN_FALSE;
+
+	if (!HFS_get_trigger_value (ZABBIX_GLOBAL(hfs_base_dir), site, triggerid, &value, &when))
+		RETURN_FALSE;
+
+        if (object_init(return_value) == FAILURE)
+		RETURN_FALSE;
+
+	MAKE_STD_ZVAL (zerror);
+
+	add_property_long (return_value, "value", value);
+	add_property_zval (return_value, "when", when);
+}
+/* }}} */
