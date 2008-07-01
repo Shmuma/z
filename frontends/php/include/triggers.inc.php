@@ -22,6 +22,7 @@
 	require_once "maps.inc.php";
 	require_once "acknow.inc.php";
 	require_once "services.inc.php";
+	require_once "hfs.inc.php";
 
 	/*
 	 * Function: INIT_TRIGGER_EXPRESSION_STRUCTURES
@@ -1788,11 +1789,11 @@
 			$group_where = ' where';
 		}
 
-		$result=DBselect('select distinct t.triggerid,t.description,t.expression,t.value,t.priority,t.lastchange,h.hostid,h.host'.
-			' from hosts h,items i,triggers t, functions f '.$group_where.
+		$result=DBselect('select distinct t.triggerid,t.description,t.expression,t.value,t.priority,t.lastchange,h.hostid,h.host,s.name as siteid'.
+			' from hosts h,items i,triggers t, functions f, sites s '.$group_where.
 			' h.status='.HOST_STATUS_MONITORED.' and h.hostid=i.hostid and i.itemid=f.itemid and f.triggerid=t.triggerid'.
 			' and h.hostid in ('.get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, null, null, get_current_nodeid()).') '.
-			' and t.status='.TRIGGER_STATUS_ENABLED.' and i.status='.ITEM_STATUS_ACTIVE.
+			' and t.status='.TRIGGER_STATUS_ENABLED.' and i.status='.ITEM_STATUS_ACTIVE.' and s.siteid = h.siteid'.
 			' order by t.description');
 		unset($triggers);
 		unset($hosts);
@@ -1800,6 +1801,7 @@
 		$triggers = array();
 		while($row = DBfetch($result))
 		{
+			$row = zbx_hfs_get_trigger_value ($row, $row["siteid"], $row["triggerid"]);			
 			$row['host'] = get_node_name_by_elid($row['hostid']).$row['host'];
 			$row['description'] = expand_trigger_description_constants($row['description'], $row);
 
