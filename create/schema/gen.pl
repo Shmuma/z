@@ -181,8 +181,8 @@ as
   procedure PostRunSQL
   (
     context in raw,
-    reginfo in sys.aq$_reg_info,
-    descr in sys.aq$_descriptor,
+    reginfo in sys.aq\$_reg_info,
+    descr in sys.aq\$_descriptor,
     payload in varchar2,
     payloadl in number
   );  
@@ -195,8 +195,8 @@ as
   procedure PostRunSQL
   (
     context in raw,
-    reginfo in sys.aq$_reg_info,
-    descr in sys.aq$_descriptor,
+    reginfo in sys.aq\$_reg_info,
+    descr in sys.aq\$_descriptor,
     payload in varchar2,
     payloadl in number
   )
@@ -225,7 +225,7 @@ as
     optsEnq  dbms_aq.enqueue_options_t;
     prpMsg dbms_aq.message_properties_t;
     idMsg       RAW(16);
-  --  rcpt_list dbms_aq.aq$_recipient_list_t;
+  --  rcpt_list dbms_aq.aq\$_recipient_list_t;
   begin
     Dbms_AQ.Enqueue
     (
@@ -264,23 +264,23 @@ begin
   dbms_aqadm.add_subscriber
   (
     queue_name => 'system.q_replcmd',
-    subscriber => sys.aq$_agent( 'recipient', null, null )
+    subscriber => sys.aq\$_agent( 'recipient', null, null )
   );
 end;
 /
 
 declare
-  regCallback sys.aq$_reg_info;
-  lstReg sys.aq$_reg_info_list;
+  regCallback sys.aq\$_reg_info;
+  lstReg sys.aq\$_reg_info_list;
 begin
-  regCallback := sys.AQ$_reg_info
+  regCallback := sys.AQ\$_reg_info
   (
     'system.q_replcmd:recipient',
     Dbms_AQ.Namespace_AQ,
     'plsql://system.Replicate2MySQL.PostRunSQL?PR=1',
     HEXTORAW('FF')
   );
-  lstReg := sys.AQ$_reg_info_list(regCallback);
+  lstReg := sys.AQ\$_reg_info_list(regCallback);
   Dbms_AQ.Register(reg_list => lstReg, reg_count => 1);
   commit;
 end;
