@@ -362,7 +362,7 @@ sub newstate
                             print "is\nbegin\nreturn\n";
                             print "'insert into ${table_name} (".(join ",", @tr_fields).") values ('\n";
                             print "${tr_ins}\n";
-                            print "||')'\n);\nend;\n/\nshow errors\n";
+                            print "||')';\nend;\n/\nshow errors\n";
 
                             print "create or replace trigger zabbix.trai_${table_name} after insert on zabbix.${table_name} for each row\n".
                                 "begin\nReplicate2MySQL.RunSQL\n(\n";
