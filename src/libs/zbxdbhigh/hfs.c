@@ -63,6 +63,7 @@ typedef enum {
 	NK_ItemStatus,
 	NK_ItemStderr,
 	NK_ItemString,
+	NK_TriggerStatus,
 } name_kind_t;
 
 
@@ -762,6 +763,9 @@ static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_
 	    break;
     case NK_ItemStderr:
 	    snprintf (res, len, "%s/%s/items/%llu/stderr.data", hfs_base_dir, siteid, itemid);
+	    break;
+    case NK_TriggerStatus:
+	    snprintf (res, len, "%s/%s/triggers/%llu/status.data", hfs_base_dir, siteid, itemid);
 	    break;
     }
 
@@ -2486,4 +2490,51 @@ size_t HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint
 	close (fd);
 
 	return res_count;
+}
+
+
+
+int HFSupdate_trigger_value(const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, int new_value, int now)
+{
+	char* name = get_name (hfs_base_dir, siteid, triggerid, 0, NK_TriggerStatus);
+	int fd, kind;
+
+	zabbix_log(LOG_LEVEL_DEBUG, "HFSupdate_trigger_value entered");
+
+	if (!name)
+		return 1;
+
+	make_directories (name);
+
+	/* open file for writing */
+	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+	if (fd < 0) {
+		zabbix_log(LOG_LEVEL_CRIT, "HFSupdate_trigger_value: open(): %s: %s", name, strerror(errno));
+		free (name);
+		return 1;
+	}
+	free (name);
+
+	/* place write lock on that file or wait for unlock */
+	if (!obtain_lock (fd, 1)) {
+		if (close (fd) == -1)
+			zabbix_log(LOG_LEVEL_CRIT, "HFSupdate_trigger_value: close(): %s", strerror(errno));
+		return 1;
+	}
+
+	/* lock obtained, write data */
+	if (write (fd, &new_value, sizeof (new_value)) == -1)
+		zabbix_log(LOG_LEVEL_CRIT, "HFSupdate_trigger_value: write(): %s", strerror(errno));
+	if (write (fd, &now, sizeof (now)) == -1)
+		zabbix_log(LOG_LEVEL_CRIT, "HFSupdate_trigger_value: write(): %s", strerror(errno));
+
+	/* release lock */
+	release_lock (fd, 1);
+
+	if (close (fd) == -1)
+		zabbix_log(LOG_LEVEL_CRIT, "HFSupdate_trigger_value: close(): %s", strerror(errno));
+
+	zabbix_log(LOG_LEVEL_DEBUG, "HFSupdate_trigger_value leave");
+	return 0;
 }
