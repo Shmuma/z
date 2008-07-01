@@ -154,7 +154,7 @@ install-agent-stamp: build-agent
 	$(INSTALL_PROGRAM) src/zabbix_agent/zabbix_agentd  $(TMP_CLIENT)/usr/sbin
 	$(INSTALL_PROGRAM) src/zabbix_agent/zabbix_agent $(TMP_CLIENT)/usr/bin
 	$(INSTALL_PROGRAM) src/zabbix_sender/zabbix_sender $(TMP_CLIENT)/usr/bin
-	$(INSTALL_PROGRAM) misc/zabbix-rebase-server $(TMP_CLIENT)/usr/sbin
+	$(INSTALL_SCRIPT) misc/zabbix-rebase-server $(TMP_CLIENT)/usr/sbin
 
 	$(INSTALL_DIR) $(TMP_CLIENT)/var/log/zabbix-agent/
 	chmod 750 $(TMP_CLIENT)/var/log/zabbix-agent/
