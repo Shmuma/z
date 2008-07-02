@@ -2596,9 +2596,6 @@ int HFS_add_alert(const char* hfs_path, const char* siteid, int clock, zbx_uint6
 	int len = 0, fd;
 	char* p_name = get_name (hfs_path, siteid, 0, clock, NK_Alert);
 
-	if (value)
-		len = strlen (value);
-
 	make_directories (p_name);
 
 	if ((fd = open (p_name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
