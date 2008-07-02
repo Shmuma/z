@@ -2621,15 +2621,15 @@ int HFS_add_alert(const char* hfs_path, const char* siteid, int clock, zbx_uint6
 	write_str (fd, sendto);
 	write_str (fd, subject);
 	write_str (fd, message);
-	
+
 	len = sizeof (clock) + sizeof (actionid) + sizeof (userid) + sizeof (triggerid) + sizeof (mediatypeid) + 
 		strlen (sendto) + 1 + strlen (subject) + 1 + strlen (subject) + 1;
-	
+
 	/* write len twice for backward reading */
 	write (fd, &len, sizeof (len));
 
 	release_lock (fd, 1);
 
 	close (fd);
-	return 0;	
+	return 0;
 }
