@@ -2590,8 +2590,8 @@ int HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64_
 
 
 
-int HFS_add_alert(const char* hfs_path, const char* siteid, int clock, zbx_uint64_t actionid, zbx_uint64_t userid, 
-		  zbx_uint64_t triggerid,  zbx_uint64_t mediatypeid, char *sendto, char *subject, char *message)
+void HFS_add_alert(const char* hfs_path, const char* siteid, int clock, zbx_uint64_t actionid, zbx_uint64_t userid, 
+		   zbx_uint64_t triggerid,  zbx_uint64_t mediatypeid, char *sendto, char *subject, char *message)
 {
 	int len = 0, fd;
 	char* p_name = get_name (hfs_path, siteid, 0, clock, NK_Alert);
@@ -2601,13 +2601,13 @@ int HFS_add_alert(const char* hfs_path, const char* siteid, int clock, zbx_uint6
 	if ((fd = open (p_name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
 		zabbix_log (LOG_LEVEL_DEBUG, "Canot open file %s", p_name);
 		free (p_name);
-		return 0;
+		return;
 	}
 
 	if (!obtain_lock (fd, 1)) {
 		if (close (fd) == -1)
 			zabbix_log(LOG_LEVEL_CRIT, "hfs: HFS_add_alert: close(): %s", strerror(errno));
-		return 0;
+		return;
 	}
 
 	lseek (fd, 0, SEEK_END);
@@ -2632,5 +2632,5 @@ int HFS_add_alert(const char* hfs_path, const char* siteid, int clock, zbx_uint6
 	release_lock (fd, 1);
 
 	close (fd);
-	return 0;	
+	return;
 }
