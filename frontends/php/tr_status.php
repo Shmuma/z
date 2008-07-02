@@ -23,6 +23,7 @@
 	require_once "include/hosts.inc.php";
 	require_once "include/acknow.inc.php";
 	require_once "include/triggers.inc.php";
+	require_once "include/hfs.inc.php";
 
 	$page["file"] = "tr_status.php";
 	$page["title"] = "S_STATUS_OF_TRIGGERS";
@@ -333,23 +334,27 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 
 	$cond=($_REQUEST['hostid'] > 0)?' AND h.hostid='.$_REQUEST['hostid'].' ':'';
 
-	$cond .=($onlytrue=='true')?' AND ((t.value=1) OR (('.time().' - lastchange)<'.TRIGGER_BLINK_PERIOD.')) ':'';
+	$zabbix_enabled = zbx_hfs_available ();
+
+	if (!$zabbix_enabled) {
+		$cond .=($onlytrue=='true')?' AND ((t.value=1) OR (('.time().' - lastchange)<'.TRIGGER_BLINK_PERIOD.')) ':'';
 	
-	$cond.=($show_unknown == 0)?' AND t.value<>2 ':'';
-		
+		$cond.=($show_unknown == 0)?' AND t.value<>2 ':'';
+	}
+
 	$result = DBselect('SELECT DISTINCT t.triggerid,t.status,t.description, '.
-							' t.expression,t.priority,t.lastchange,t.comments,t.url,t.value,h.host '.
-					' FROM triggers t,hosts h,items i,functions f '.
+							' t.expression,t.priority,t.lastchange,t.comments,t.url,t.value,h.host,s.name as siteid '.
+					' FROM triggers t,hosts h,items i,functions f,sites s '.
 					' WHERE f.itemid=i.itemid AND h.hostid=i.hostid '.
 						' AND t.triggerid=f.triggerid AND t.status='.TRIGGER_STATUS_ENABLED.
 						' AND i.status='.ITEM_STATUS_ACTIVE.' AND '.DBin_node('t.triggerid').
 						' AND h.hostid not in ('.get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT).') '. 
+						' AND h.siteid = s.siteid '.
 						' AND h.status='.HOST_STATUS_MONITORED.' '.$cond.' '.$sort);
 
 	while($row=DBfetch($result))
 	{
-// Check for dependencies
-
+		// Check for dependencies
 		if(trigger_dependent($row["triggerid"]))	continue;
 
 		$elements=array();
@@ -357,6 +362,17 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 		$description = expand_trigger_description($row["triggerid"]);
 
 		if(isset($_REQUEST["btnSelect"]) && '' != $txt_select && ((stristr($description, $txt_select)) == ($_REQUEST["btnSelect"]=="Inverse select"))) continue;
+
+		$row = zbx_hfs_get_trigger_value ($row, $row["siteid"], $row["triggerid"]);
+
+		// when trigger values got from HFS, we must filter them manually
+		if ($zabbix_enabled) {
+			if ($show_unknown == 0 && $row["value"] == 2)
+				continue;
+			if ($onlytrue == 'true')
+				if ($row["value"] != 1 && ((time ()-$row["lastchange"]) > TRIGGER_BLINK_PERIOD))
+					continue;
+		}
 
 		if($row["url"] != "")
 		{

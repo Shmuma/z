@@ -112,4 +112,21 @@ function zbx_hfs_last ($site, $itemid, $count, $type)
 		return zabbix_hfs_last ($site, $itemid, $count);
 }
 
+
+function zbx_hfs_get_trigger_value ($row, $site, $triggerid)
+{
+	if (!zbx_hfs_available ())
+		return $row;
+
+	$obj = zabbix_hfs_trigger_value ($site, $triggerid);
+
+	if (!is_object ($obj))
+		return $row;
+
+	$row["value"] = $obj->value;
+	$row["lastchange"] = $obj->when;
+
+	return $row;
+}
+
 ?>
