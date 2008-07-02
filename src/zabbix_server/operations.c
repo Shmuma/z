@@ -41,6 +41,9 @@
 #include "poller/poller.h"
 #include "poller/checks_agent.h"
 
+extern char* CONFIG_SERVER_SITE;
+extern char* CONFIG_HFS_PATH;
+
 /******************************************************************************
  *                                                                            *
  * Function: send_to_user_medias                                              *
@@ -96,6 +99,9 @@ static	void	send_to_user_medias(DB_EVENT *event,DB_OPERATION *operation, zbx_uin
 		}
 
 		DBadd_alert(operation->actionid, userid, event->objectid, media.mediatypeid,media.sendto,operation->shortdata,operation->longdata);
+		if (CONFIG_HFS_PATH)
+			HFS_add_alert(CONFIG_HFS_PATH, CONFIG_SERVER_SITE, time (NULL), operation->actionid, userid, event->objectid, 
+				      media.mediatypeid, media.sendto, operation->shortdata, operation->longdata);
 	}
 	DBfree_result(result);
 

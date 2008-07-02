@@ -2583,3 +2583,53 @@ int HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64_
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_trigger_value leave");
 	return 1;	
 }
+
+
+
+int HFS_add_alert(const char* hfs_path, const char* siteid, int clock, zbx_uint64_t actionid, zbx_uint64_t userid, 
+		  zbx_uint64_t triggerid,  zbx_uint64_t mediatypeid, char *sendto, char *subject, char *message)
+{
+	int len = 0, fd;
+	char* p_name = get_name (hfs_base_dir, siteid, itemid, clock, NK_Alert);
+
+	if (value)
+		len = strlen (value);
+
+	make_directories (p_name);
+
+	if ((fd = open (p_name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
+		zabbix_log (LOG_LEVEL_DEBUG, "Canot open file %s", p_name);
+		free (p_name);
+		return 0;
+	}
+
+	if (!obtain_lock (fd, 1)) {
+		if (close (fd) == -1)
+			zabbix_log(LOG_LEVEL_CRIT, "hfs: HFS_add_alert: close(): %s", strerror(errno));
+		return 0;
+	}
+
+	lseek (fd, 0, SEEK_END);
+
+	free (p_name);
+
+	write (fd, &clock, sizeof (clock));
+	write (fd, &actionid, sizeof (actionid));
+	write (fd, &userid, sizeof (userid));
+	write (fd, &triggerid, sizeof (triggerid));
+	write (fd, &mediatypeid, sizeof (mediatypeid));
+	write_str (fd, sendto);
+	write_str (fd, subject);
+	write_str (fd, message);
+	
+	len = sizeof (clock) + sizeof (actionid) + sizeof (userid) + sizeof (triggerid) + sizeof (mediatypeid) + 
+		strlen (sendto) + 1 + strlen (subject) + 1 + strlen (subject) + 1;
+	
+	/* write len twice for backward reading */
+	write (fd, &len, sizeof (len));
+
+	release_lock (fd, 1);
+
+	close (fd);
+	return 0;	
+}
