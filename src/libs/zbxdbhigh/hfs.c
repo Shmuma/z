@@ -64,6 +64,7 @@ typedef enum {
 	NK_ItemStderr,
 	NK_ItemString,
 	NK_TriggerStatus,
+	NK_Alert,
 } name_kind_t;
 
 
@@ -2590,7 +2591,7 @@ int HFS_add_alert(const char* hfs_path, const char* siteid, int clock, zbx_uint6
 		  zbx_uint64_t triggerid,  zbx_uint64_t mediatypeid, char *sendto, char *subject, char *message)
 {
 	int len = 0, fd;
-	char* p_name = get_name (hfs_base_dir, siteid, itemid, clock, NK_Alert);
+	char* p_name = get_name (hfs_path, siteid, itemid, clock, NK_Alert);
 
 	if (value)
 		len = strlen (value);
