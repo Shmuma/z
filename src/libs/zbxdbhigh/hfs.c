@@ -1369,22 +1369,18 @@ HFS_find_meta(const char *hfs_base_dir, const char* siteid, int trend,
 	return -1;
 }
 
-hfs_trend_t
-HFS_init_trend_value(int is_trend, void *val)
+void
+HFS_init_trend_value(int is_trend, void *val, hfs_trend_t *res)
 {
-	hfs_trend_t trend;
-
 	if (!is_trend) {
-		trend.count = 1;
-		trend.max = *((item_value_u *) val);
-		trend.min = *((item_value_u *) val);
-		trend.avg = *((item_value_u *) val);
+		res->count = 1;
+		res->max = *((item_value_u *) val);
+		res->min = *((item_value_u *) val);
+		res->avg = *((item_value_u *) val);
 	}
 	else {
-		trend = *((hfs_trend_t *) val);
+		*res = *((hfs_trend_t *) val);
 	}
-
-	return trend;
 }
 
 //!!!!!!
@@ -1399,6 +1395,7 @@ HFSread_item (const char *hfs_base_dir, const char* siteid,
 	void 		*val;
 	item_value_u 	 val_history;
 	hfs_trend_t  	 val_trends;
+	hfs_trend_t  	 val_temp;
 
 	time_t ts = from_ts;
 	size_t val_len, items = 0, result_size = 0;
@@ -1493,7 +1490,7 @@ HFSread_item (const char *hfs_base_dir, const char* siteid,
 			if (result_size <= items) {
 				result_size += alloc_item_values;
 				*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * result_size));
-				(*result)[items].value = HFS_init_trend_value(trend, val);
+				HFS_init_trend_value(trend, val, &((*result)[items].value));
 			}
 
 			if (group != cur_group) {
@@ -1506,12 +1503,16 @@ HFSread_item (const char *hfs_base_dir, const char* siteid,
 				count = 0;
 				items++;
 
-				(*result)[items].value = HFS_init_trend_value(trend, val);
+				HFS_init_trend_value(trend, val, &((*result)[items].value));
 			}
 
-			recalculate_trend(&((*result)[items].value),
-					  HFS_init_trend_value(trend, val),
-					  ip->type);
+			if (count > 0) {
+				HFS_init_trend_value(trend, val, &val_temp);
+				recalculate_trend(&val_temp,
+						  (*result)[items].value,
+						  ip->type);
+				(*result)[items].value = val_temp;
+			}
 
 			if (ts >= to_ts) {
 				finish_loop = 1;
