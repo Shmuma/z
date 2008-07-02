@@ -768,6 +768,9 @@ static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_
     case NK_TriggerStatus:
 	    snprintf (res, len, "%s/%s/triggers/%llu/status.data", hfs_base_dir, siteid, itemid);
 	    break;
+    case NK_Alert:
+	    snprintf (res, len, "%s/%s/misc/alerts.data", hfs_base_dir, siteid);
+	    break;
     }
 
     return res;
@@ -2591,7 +2594,7 @@ int HFS_add_alert(const char* hfs_path, const char* siteid, int clock, zbx_uint6
 		  zbx_uint64_t triggerid,  zbx_uint64_t mediatypeid, char *sendto, char *subject, char *message)
 {
 	int len = 0, fd;
-	char* p_name = get_name (hfs_path, siteid, itemid, clock, NK_Alert);
+	char* p_name = get_name (hfs_path, siteid, 0, clock, NK_Alert);
 
 	if (value)
 		len = strlen (value);
