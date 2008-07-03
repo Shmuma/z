@@ -147,6 +147,7 @@
 #define	NETWORK_ERROR	(-3)
 #define	TIMEOUT_ERROR	(-4)
 #define	AGENT_ERROR	(-5)
+#define Y_HOST_NOT_FOUND  (-666)
 
 /*
 #define ZBX_POLLER

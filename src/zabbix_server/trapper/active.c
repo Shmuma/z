@@ -65,6 +65,16 @@ int	send_list_of_active_checks(zbx_sock_t *sock, const char *host)
 	char	s[MAX_STRING_LEN];
 	DB_RESULT result;
 	DB_ROW	row;
+	int have_checks = 0;
+
+#if !defined(HAVE_IPV6)
+	ZBX_SOCKADDR    name;
+	struct          hostent *hp;
+	char            *sip;
+	int             i[4], j[4];
+	socklen_t       nlen;
+#endif
+	char		sname[MAX_STRING_LEN];
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In send_list_of_active_checks()");
 
@@ -102,9 +112,27 @@ int	send_list_of_active_checks(zbx_sock_t *sock, const char *host)
 			zabbix_log( LOG_LEVEL_WARNING, "Error while sending list of active checks");
 			return  FAIL;
 		}
+		have_checks++;
 	}
 	DBfree_result(result);
-
+	
+	if (!have_checks) {
+#if defined(HAVE_IPV6)
+	    sname = "IPV6_TODO";
+#else
+	    nlen = sizeof(name);
+	    if(ZBX_TCP_ERROR == getpeername(sock->socket, (struct sockaddr*)&name, &nlen)) {
+		zabbix_log(LOG_LEVEL_WARNING, "Unable to get peer name.");
+	    }
+	    strcpy(sname, inet_ntoa(name.sin_addr));
+	    if(sscanf(sname, "%d.%d.%d.%d", &i[0], &i[1], &i[2], &i[3]) != 4)
+	    {
+		zabbix_log(LOG_LEVEL_WARNING, "IP address not valid: [%s]", sname);
+	    }
+#endif /*HAVE_IPV6*/
+	    zabbix_log(LOG_LEVEL_WARNING, "No service definitions for '%s' requested by '%s'.", host, sname);
+	}
+	
 	zbx_snprintf(s,sizeof(s),"%s\n",
 		"ZBX_EOF");
 	zabbix_log( LOG_LEVEL_DEBUG, "Sending [%s]",
