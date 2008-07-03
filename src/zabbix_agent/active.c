@@ -181,6 +181,7 @@ static void	add_check(char *key, int refresh, long lastlogsize)
 static int	parse_list_of_checks(char *str)
 {
 	char	*p, *pstrend, *refresh, *lastlogsize;
+	int	have_checks = 0;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "In parse_list_of_checks() [%s]",
 		str);
@@ -191,10 +192,14 @@ static int	parse_list_of_checks(char *str)
 		if (NULL != (pstrend = strchr(str,'\n')))
 			*pstrend = '\0'; /* prepare line */
 
-		zabbix_log(LOG_LEVEL_DEBUG, "Parsed [%s]", str);
+		zabbix_log(LOG_LEVEL_DEBUG, "Parsed  [%s]", str);
 
-		if (0 == strcmp(str, "ZBX_EOF"))
-			break;
+		if (0 == strcmp(str, "ZBX_EOF")) {
+		    if (have_checks == 0) {
+			return Y_HOST_NOT_FOUND;
+		    }
+		}
+		have_checks = 1;
 
 		refresh = NULL; 
 		lastlogsize = NULL;
@@ -278,8 +283,10 @@ static int	get_active_checks(
 
 			if( SUCCEED == (ret = zbx_tcp_recv_ext(&s, &buf, ZBX_TCP_READ_UNTIL_CLOSE)) )
 			{
-				parse_list_of_checks(buf);
-				update_active_buffer(active_metrics);
+			    if (Y_HOST_NOT_FOUND == parse_list_of_checks(buf)) {
+			        zabbix_log(LOG_LEVEL_WARNING, "No service definitions found for '%s'. Check hostname in zabbix_agentd.conf.\n", CONFIG_HOSTNAME);
+			    }
+			    update_active_buffer(active_metrics);
 			}
 		}
 	}
