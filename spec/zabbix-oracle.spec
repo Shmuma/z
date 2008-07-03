@@ -2,10 +2,10 @@
 
 Name: zabbix-oracle
 Version: 1.4.4
-Release: yandex_2
+Release: yandex_3
 Group: System Environment/Daemons
 License: GPL
-Source: %{realname}-%{version}_yandex2.tar.gz
+Source: %{realname}-%{version}_yandex3.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
 BuildPrereq: libsqlora8-devel, net-snmp-devel, setproctitle-devel, iksemel-devel, pkgconfig, php-devel
 Requires: libsqlora8, net-snmp, setproctitle, iksemel
