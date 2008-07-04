@@ -119,6 +119,7 @@ rm -fr %buildroot
 
 # create directory structure
 install -d %{buildroot}%{zabbix_confdir}
+install -d %{buildroot}%{zabbix_confdir}/conf.d
 install -d %{buildroot}%{_sysconfdir}/init.d
 
 # copy conf files
@@ -140,6 +141,7 @@ install -m 755 misc/init.d/redhat/zabbix_server %{buildroot}%{_sysconfdir}/init.
 %files -n zabbix-agent
 %defattr(-,root,root)
 %dir %attr(0755,root,root) %{zabbix_confdir}
+%dir %attr(0755,root,root) %{zabbix_confdir}/conf.d
 %attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_agent.conf
 %attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_agentd.conf
 %attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_trapper.conf
