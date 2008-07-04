@@ -375,8 +375,12 @@ int get_values(void)
 					item.host_name);
 
 				now = time(NULL);
-				DBupdate_host_availability(item.hostid,HOST_AVAILABLE_TRUE,now,agent.msg);
-				HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid, HOST_AVAILABLE_TRUE, now, agent.msg);
+				if (CONFIG_HFS_PATH) {
+    				    HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid, HOST_AVAILABLE_TRUE, now, agent.msg);
+				}
+				else {
+    				    DBupdate_host_availability(item.hostid,HOST_AVAILABLE_TRUE,now,agent.msg);
+				}
 
 				update_key_status(item.hostid, HOST_STATUS_MONITORED); /* 0 */
 				item.host_available=HOST_AVAILABLE_TRUE;
