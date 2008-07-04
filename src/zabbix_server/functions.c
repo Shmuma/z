@@ -704,9 +704,9 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 							(int)now,
 							item->itemid);
 						}
-						
+
 						SET_DBL_RESULT(value, (double)(value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock));
-						
+
 					}
 					else
 					{
