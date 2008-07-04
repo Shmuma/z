@@ -334,9 +334,7 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 
 	$cond=($_REQUEST['hostid'] > 0)?' AND h.hostid='.$_REQUEST['hostid'].' ':'';
 
-	$zabbix_enabled = zbx_hfs_available ();
-
-	if (!$zabbix_enabled) {
+	if (!zbx_hfs_available()) {
 		$cond .=($onlytrue=='true')?' AND ((t.value=1) OR (('.time().' - lastchange)<'.TRIGGER_BLINK_PERIOD.')) ':'';
 	
 		$cond.=($show_unknown == 0)?' AND t.value<>2 ':'';
@@ -354,7 +352,8 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 
 	while($row=DBfetch($result))
 	{
-		// Check for dependencies
+// Check for dependencies
+
 		if(trigger_dependent($row["triggerid"]))	continue;
 
 		$elements=array();
@@ -363,16 +362,21 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 
 		if(isset($_REQUEST["btnSelect"]) && '' != $txt_select && ((stristr($description, $txt_select)) == ($_REQUEST["btnSelect"]=="Inverse select"))) continue;
 
-		$row = zbx_hfs_get_trigger_value ($row, $row["siteid"], $row["triggerid"]);
+    if (zbx_hfs_available()) {
+      $hfs_trigger = zabbix_hfs_trigger_value ($row["siteid"], $row["triggerid"]);
 
-		// when trigger values got from HFS, we must filter them manually
-		if ($zabbix_enabled) {
-			if ($show_unknown == 0 && $row["value"] == 2)
+      if (is_object($hfs_trigger)) {
+      	$row["value"] = $hfs_trigger->value;
+      	$row["lastchange"] = $hfs_trigger->when;
+		  }
+
+    	// when trigger values got from HFS, we must filter them manually
+  		if ($show_unknown == 0 && $row["value"] == 2)
 				continue;
 			if ($onlytrue == 'true')
 				if ($row["value"] != 1 && ((time ()-$row["lastchange"]) > TRIGGER_BLINK_PERIOD))
 					continue;
-		}
+    }
 
 		if($row["url"] != "")
 		{

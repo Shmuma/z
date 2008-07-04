@@ -186,7 +186,7 @@ include_once "include/page_header.php";
 
 	$any_app_exist = false;
 		
-	$db_applications = DBselect("select distinct h.host,h.hostid,a.*from applications a,hosts h".
+	$db_applications = DBselect("select distinct h.host,h.hostid,a.* from applications a,hosts h ".
 		" where a.hostid=h.hostid".$compare_host.' and h.hostid in ('.$availiable_hosts.')'.
 		" and h.status=".HOST_STATUS_MONITORED." order by a.name,a.applicationid,h.host");
 	while($db_app = DBfetch($db_applications))
@@ -207,10 +207,20 @@ include_once "include/page_header.php";
 			++$item_cnt;
 			if(!in_array($db_app["applicationid"],$_REQUEST["applications"]) && !isset($show_all_apps)) continue;
 
-			$hfs_data = zbx_hfs_get_item_values ($db_item);
-			$db_item["lastclock"] = $hfs_data["lastclock"];
-			$db_item["lastvalue"] = $hfs_data["lastvalue"];
-			$db_item["prevvalue"] = $hfs_data["prevvalue"];
+      if (zbx_hfs_available ()) {
+        $hfs_data = zabbix_hfs_item_values ($db_item["sitename"], $db_item["itemid"], $db_item["value_type"]);
+
+        if (is_object ($hfs_data)) {
+    			$db_item["lastclock"] = $hfs_data["lastclock"];
+    			$db_item["lastvalue"] = $hfs_data["lastvalue"];
+    			$db_item["prevvalue"] = $hfs_data["prevvalue"];
+        }
+
+        $hfs_stderr = zabbix_hfs_item_stderr ($db_item["sitename"], $db_item["itemid"]);
+        if (is_object ($hfs_stderr)) {
+          $db_item["stderr"] = $hfs_stderr->stderr;
+        }
+      }
 
 			if(isset($db_item["lastclock"]))
 				$lastclock=date(S_DATE_FORMAT_YMDHMS,$db_item["lastclock"]);
@@ -244,7 +254,6 @@ include_once "include/page_header.php";
 			{
 				$actions=new CLink(S_HISTORY,"history.php?action=showvalues&period=3600&itemid=".$db_item["itemid"],"action");
 			}
-			$stderr = zbx_hfs_item_stderr ($db_item);
 			array_push($app_rows, new CRow(array(
 				is_show_subnodes() ? SPACE : null,
 				$_REQUEST["hostid"] > 0 ? NULL : SPACE,
@@ -252,7 +261,7 @@ include_once "include/page_header.php";
 				$lastclock,
 				new CCol($lastvalue, $lastvalue=='-' ? 'center' : null),
 				$change,
-				$stderr,
+				$db_item["stderr"],
 				$actions
 				)));
 		}
@@ -319,11 +328,22 @@ include_once "include/page_header.php";
 		
 		while($db_item = DBfetch($db_items))
 		{
-			$hfs_data = zbx_hfs_get_item_values ($db_item);
-			$db_item["lastclock"] = $hfs_data["lastclock"];
-			$db_item["lastvalue"] = $hfs_data["lastvalue"];
-			$db_item["prevvalue"] = $hfs_data["prevvalue"];
 
+      if (zbx_hfs_available ()) {
+        $hfs_data = zabbix_hfs_item_values ($db_item["sitename"], $db_item["itemid"], $db_item["value_type"]);
+
+        if (is_object ($hfs_data)) {
+    			$db_item["lastclock"] = $hfs_data["lastclock"];
+    			$db_item["lastvalue"] = $hfs_data["lastvalue"];
+    			$db_item["prevvalue"] = $hfs_data["prevvalue"];
+        }
+
+        $hfs_stderr = zabbix_hfs_item_stderr ($db_item["sitename"], $db_item["itemid"]);
+        if (is_object ($hfs_stderr)) {
+          $db_item["stderr"] = $hfs_stderr->stderr;
+        }
+      }
+			
 			$description = item_description($db_item["description"],$db_item["key_"]);
 	
 			if( '' != $_REQUEST["select"] && !stristr($description, $_REQUEST["select"]) ) continue;
@@ -365,7 +385,6 @@ include_once "include/page_header.php";
 			{
 				$actions=new CLink(S_HISTORY,"history.php?action=showvalues&period=3600&itemid=".$db_item["itemid"],"action");
 			}
-			$stderr = $db_item["stderr"];
 			array_push($app_rows, new CRow(array(
 				is_show_subnodes() ? SPACE : null,//get_node_name_by_elid($db_item['itemid']) : null,
 				$_REQUEST["hostid"] > 0 ? NULL : SPACE,//$db_item["host"],
@@ -373,7 +392,7 @@ include_once "include/page_header.php";
 				$lastclock,
 				new CCol($lastvalue, $lastvalue == '-' ? 'center' : null),
 				$change,
-				$stderr,
+				$db_item["stderr"],
 				$actions
 				)));
 		}

@@ -782,29 +782,34 @@ include_once "include/page_header.php";
 				$db_item["itemid"].url_param("hostid").url_param("groupid"),
 				'action'));
 
-			$stat = zbx_hfs_item_status ($db_item);
-			$db_status = $stat["status"];
-			$db_error = $stat["error"];
+      if (zbx_hfs_available ()) {
+        $hfs_status = zabbix_hfs_item_status ($db_item["sitename"], $db_item["itemid"]);
+        if (is_object ($hfs_status) && $hfs_status->status == ITEM_STATUS_NOTSUPPORTED) {
+          $db_item["status"] = ITEM_STATUS_NOTSUPPORTED;
+          $db_item["error"] = $hfs_status->error;
+        }
 
-			$status=new CCol(new CLink(item_status2str($db_status),
-					"?group_itemid%5B%5D=".$db_item["itemid"].
-					"&group_task=".($db_status ? "Activate+selected" : "Disable+selected"),
-					item_status2style($db_status)));
+        $hfs_stderr = zabbix_hfs_item_stderr ($db_item["sitename"], $db_item["itemid"]);
+        if (is_object ($hfs_stderr)) {
+          $db_item["stderr"] = $hfs_stderr->stderr;
+        }
+      }
+      if (trim($db_item["error"]) != "" && trim($db_item["stderr"]) != "") {
+        $db_item["error"] = $db_item["error"] . "[" . $db_item["stderr"] . "]";
+      }
 
-			$stderr = "";
-			$db_stderr = zbx_hfs_item_stderr ($db_item);
-			if (trim ($db_stderr) != "")
+      $status=new CCol(new CLink(item_status2str($db_item["status"]),
+        "?group_itemid%5B%5D=".$db_item["itemid"].
+        "&group_task=".($db_item["status"] ? "Activate+selected" : "Disable+selected"),
+        item_status2style($db_item["status"])));
+
+			if($db_item["error"] == "")
 			{
-				$stderr = "[".trim ($db_stderr)."]";
-			}
-	
-			if($db_error == "")
-			{
-				$error=new CCol($stderr,"off");
+				$error=new CCol(SPACE,"off");
 			}
 			else
 			{
-				$error=new CCol($db_error.$stderr,"on");
+				$error=new CCol($db_item["error"],"on");
 			}
 
 			$applications = $show_applications ? implode(', ', get_applications_by_itemid($db_item["itemid"], 'name')) : null;
