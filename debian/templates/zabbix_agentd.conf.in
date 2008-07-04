@@ -8,7 +8,7 @@
 # Note that hostnames must resolve hostname->IP address and
 # IP address->hostname.
 
-Server=@zabbixserver@
+Include=/etc/zabbix/server.conf
 
 # Server port for sending active checks
 
@@ -74,8 +74,12 @@ Timeout=30
 
 # Size of buffer for active checks stored on disk in megabytes.
 # If it set to zero (default) active buffering disabled.
-ActiveChecksBufSize=0
+ActiveChecksBufSize=10
 ActiveChecksBufFile=/var/spool/zabbix/active_buf.dat
+
+# include all files from other packages
+Include=/etc/zabbix/conf.d/
+
 
 ####### USER-DEFINED MONITORED PARAMETERS #######
 # Format: UserParameter=<key>,<shell command>

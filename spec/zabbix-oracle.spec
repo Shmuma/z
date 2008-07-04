@@ -30,7 +30,7 @@ Requires: php
 A php frontent to zabbix.
 
 %prep
-%setup -q -n %{realname}-%{version}_yandex1
+%setup -q -n %{realname}-%{version}_yandex3
 
 %build
 %configure --enable-server --with-oracle --with-jabber --with-net-snmp
