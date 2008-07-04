@@ -1801,7 +1801,16 @@
 		$triggers = array();
 		while($row = DBfetch($result))
 		{
-			$row = zbx_hfs_get_trigger_value ($row, $row["siteid"], $row["triggerid"]);			
+			
+      if (zbx_hfs_available()) {
+        $hfs_trigger = zabbix_hfs_trigger_value ($row["siteid"], $row["triggerid"]);
+
+        if (is_object($hfs_trigger)) {
+        	$row["value"] = $hfs_trigger->value;
+        	$row["lastchange"] = $hfs_trigger->when;
+  		  }
+      }
+
 			$row['host'] = get_node_name_by_elid($row['hostid']).$row['host'];
 			$row['description'] = expand_trigger_description_constants($row['description'], $row);
 
