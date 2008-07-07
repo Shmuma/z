@@ -669,13 +669,12 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 			break;
 		    }
 		}
-		else {
-		    DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,lastvalue='%s',lastclock=%d where itemid=" ZBX_FS_UI64,
+
+		DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,lastvalue='%s',lastclock=%d where itemid=" ZBX_FS_UI64,
 			nextcheck,
 			value_esc,
 			(int)now,
 			item->itemid);
-		}
 	}
 	/* Logic for delta as speed of change */
 	else if(item->delta == ITEM_STORE_SPEED_PER_SECOND)
@@ -690,55 +689,45 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 					   Otherwise function update_functions and update_triggers won't work correctly*/
 					if(now != item->lastclock)
 					{
-						if (CONFIG_HFS_PATH) {
+						if (CONFIG_HFS_PATH)
 						    HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
 									item->lastvalue_dbl, (value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock),
 									value->dbl);
-						}
-						else {
-						    DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_DBL "',"
-							"lastvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
-							nextcheck,
-							value->dbl,
-							(value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock),
-							(int)now,
-							item->itemid);
-						}
-
+						DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_DBL "',"
+							  "lastvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
+							  nextcheck,
+							  value->dbl,
+							  (value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock),
+							  (int)now,
+							  item->itemid);
 						SET_DBL_RESULT(value, (double)(value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock));
 
 					}
 					else
 					{
-						if (CONFIG_HFS_PATH) {
+						if (CONFIG_HFS_PATH)
 						    HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
 									    item->lastvalue_dbl, value->dbl - item->prevorgvalue_dbl, value->dbl);
-						}
-						else {
-						    DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_DBL "',"
-							"lastvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
-							nextcheck,
-							value->dbl,
-							value->dbl - item->prevorgvalue_dbl,
-							(int)now,
-							item->itemid);
-						}
+						DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_DBL "',"
+							  "lastvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
+							  nextcheck,
+							  value->dbl,
+							  value->dbl - item->prevorgvalue_dbl,
+							  (int)now,
+							  item->itemid);
 						SET_DBL_RESULT(value, (double)(value->dbl - item->prevorgvalue_dbl));
 					}
 				}
 				else
 				{
-					if (CONFIG_HFS_PATH) {
+					if (CONFIG_HFS_PATH)
 					    HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
 								    item->lastvalue_dbl, value->dbl, value->dbl);
-					}
-					else {
-					    DBexecute("update items set nextcheck=%d,prevorgvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
-						nextcheck,
-						value->dbl,
-						(int)now,
-						item->itemid);
-					}
+					DBexecute("update items set nextcheck=%d,prevorgvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
+						  nextcheck,
+						  value->dbl,
+						  (int)now,
+						  item->itemid);
 				}
 			}
 		}
@@ -750,56 +739,47 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 				{
 					if(now != item->lastclock)
 					{
-						if (CONFIG_HFS_PATH) {
+						if (CONFIG_HFS_PATH)
 						    HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
 									    item->lastvalue_uint64, 
 									    (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64)/(now-item->lastclock), 
 									    value->ui64);
-						}
-						else {
-						    DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_UI64 "',"
-							"lastvalue='" ZBX_FS_UI64 "',lastclock=%d where itemid=" ZBX_FS_UI64,
-							nextcheck,
-							value->ui64,
-							((zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64))/(now-item->lastclock),
-							(int)now,
-							item->itemid);
-						}
+						DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_UI64 "',"
+							  "lastvalue='" ZBX_FS_UI64 "',lastclock=%d where itemid=" ZBX_FS_UI64,
+							  nextcheck,
+							  value->ui64,
+							  ((zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64))/(now-item->lastclock),
+							  (int)now,
+							  item->itemid);
 						SET_UI64_RESULT(value, (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64)/(now-item->lastclock));
 					}
 					else
 					{
-						if (CONFIG_HFS_PATH) {
+						if (CONFIG_HFS_PATH)
 						    HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
 									    item->lastvalue_uint64, 
 									    (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64), 
 									    value->ui64);
-						}
-						else {
-						    DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_UI64 "',"
-							"lastvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
-							calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex,now),
-							value->ui64,
-							(double)(value->ui64 - item->prevorgvalue_uint64),
-							(int)now,
-							item->itemid);
-						}
+						DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_UI64 "',"
+							  "lastvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
+							  calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex,now),
+							  value->ui64,
+							  (double)(value->ui64 - item->prevorgvalue_uint64),
+							  (int)now,
+							  item->itemid);
 						SET_UI64_RESULT(value, (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64));
 					}
 				}
 				else
 				{
-					if (CONFIG_HFS_PATH) {
+					if (CONFIG_HFS_PATH)
 					    HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
 								    item->lastvalue_uint64, value->ui64, value->ui64);
-					}
-					else {
-					    DBexecute("update items set nextcheck=%d,prevorgvalue='" ZBX_FS_UI64 "',lastclock=%d where itemid=" ZBX_FS_UI64,
-						calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex,now),
-						value->ui64,
-						(int)now,
-						item->itemid);
-					}
+					DBexecute("update items set nextcheck=%d,prevorgvalue='" ZBX_FS_UI64 "',lastclock=%d where itemid=" ZBX_FS_UI64,
+						  calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex,now),
+						  value->ui64,
+						  (int)now,
+						  item->itemid);
 				}
 			}
 		}
@@ -813,34 +793,28 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 			{
 				if((item->prevorgvalue_null == 0) && (item->prevorgvalue_dbl <= value->dbl))
 				{
-				    if (CONFIG_HFS_PATH) {
+				    if (CONFIG_HFS_PATH)
 					HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
 								    item->lastvalue_dbl, value->dbl - item->prevorgvalue_dbl, value->dbl);
-				    }
-				    else {
-					DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_DBL "',"
-						"lastvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
-						calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex,now),
-						value->dbl,
-						(value->dbl - item->prevorgvalue_dbl),
-						(int)now,
-						item->itemid);
-				    }
+				    DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_DBL "',"
+					      "lastvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
+					      calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex,now),
+					      value->dbl,
+					      (value->dbl - item->prevorgvalue_dbl),
+					      (int)now,
+					      item->itemid);
 				    SET_DBL_RESULT(value, (double)(value->dbl - item->prevorgvalue_dbl));
 				}
 				else
 				{
-				    if (CONFIG_HFS_PATH) {
+				    if (CONFIG_HFS_PATH)
 					HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
 								    item->lastvalue_dbl, value->dbl, value->dbl);
-				    }
-				    else {
-					DBexecute("update items set nextcheck=%d,prevorgvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
-						calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex, now),
-						value->dbl,
-						(int)now,
-						item->itemid);
-				    }
+				    DBexecute("update items set nextcheck=%d,prevorgvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
+					      calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex, now),
+					      value->dbl,
+					      (int)now,
+					      item->itemid);
 				}
 			}
 		}
@@ -850,37 +824,31 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 			{
 				if((item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= value->ui64))
 				{
-				    if (CONFIG_HFS_PATH) {
+				    if (CONFIG_HFS_PATH)
 					HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
 								    item->lastvalue_uint64, 
 								    (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64), 
 								    value->ui64);
-				    }
-				    else {
-					DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_UI64 "',"
-					"lastvalue='" ZBX_FS_UI64 "',lastclock=%d where itemid=" ZBX_FS_UI64,
-						calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex,now),
-						value->ui64,
-						(value->ui64 - item->prevorgvalue_uint64),
-						(int)now,
-						item->itemid);
-				    }
+				    DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_UI64 "',"
+					      "lastvalue='" ZBX_FS_UI64 "',lastclock=%d where itemid=" ZBX_FS_UI64,
+					      calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex,now),
+					      value->ui64,
+					      (value->ui64 - item->prevorgvalue_uint64),
+					      (int)now,
+					      item->itemid);
 				    SET_UI64_RESULT(value, (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64));
 				}
 				else
 				{
-					if (CONFIG_HFS_PATH) {
+					if (CONFIG_HFS_PATH)
 					    HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
 								    item->lastvalue_uint64, 
 								    value->ui64, value->ui64);
-					}
-					else {
-					    DBexecute("update items set nextcheck=%d,prevorgvalue='" ZBX_FS_UI64 "',lastclock=%d where itemid=" ZBX_FS_UI64,
-						calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex, now),
-						value->ui64,
-						(int)now,
-						item->itemid);
-					}
+					DBexecute("update items set nextcheck=%d,prevorgvalue='" ZBX_FS_UI64 "',lastclock=%d where itemid=" ZBX_FS_UI64,
+						  calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex, now),
+						  value->ui64,
+						  (int)now,
+						  item->itemid);
 				}
 			}
 		}
@@ -906,14 +874,11 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 			item->key,
 			item->host_name);
 		item->status = ITEM_STATUS_ACTIVE;
-		if (CONFIG_HFS_PATH) {
+		if (CONFIG_HFS_PATH)
 		    HFS_update_item_status (CONFIG_HFS_PATH, item->siteid, item->itemid, ITEM_STATUS_ACTIVE, NULL);
-		}
-		else {
-		    DBexecute("update items set status=%d where itemid=" ZBX_FS_UI64,
-			ITEM_STATUS_ACTIVE,
-			item->itemid);
-		}
+		DBexecute("update items set status=%d where itemid=" ZBX_FS_UI64,
+			  ITEM_STATUS_ACTIVE,
+			  item->itemid);
 	}
 
 	/* Required for nodata() */
