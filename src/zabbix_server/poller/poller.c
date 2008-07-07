@@ -1,4 +1,4 @@
-/* 
+/*
 ** ZABBIX
 ** Copyright (C) 2000-2005 SIA Zabbix
 **
@@ -162,7 +162,7 @@ static int get_minnextcheck(int now)
 	if(!row || DBis_null(row[0])==SUCCEED || DBis_null(row[1])==SUCCEED)
 	{
 		zabbix_log(LOG_LEVEL_DEBUG, "No items to update for minnextcheck.");
-		res = FAIL; 
+		res = FAIL;
 	}
 	else
 	{
@@ -360,7 +360,7 @@ int get_values(void)
 		res = get_value(&item, &agent);
 
 		DBbegin();
-		
+
 		if(res == SUCCEED )
 		{
 
@@ -376,9 +376,8 @@ int get_values(void)
 
 				now = time(NULL);
 				DBupdate_host_availability(item.hostid,HOST_AVAILABLE_TRUE,now,agent.msg);
-				if (CONFIG_HFS_PATH) {
-    				    HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid, HOST_AVAILABLE_TRUE, now, agent.msg);
-				}
+				if (CONFIG_HFS_PATH)
+					HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid, HOST_AVAILABLE_TRUE, now, agent.msg);
 
 				update_key_status(item.hostid, HOST_STATUS_MONITORED); /* 0 */
 				item.host_available=HOST_AVAILABLE_TRUE;
@@ -424,12 +423,12 @@ int get_values(void)
 					zabbix_syslog("Enabling host [%s]",
 						item.host_name);
 					DBupdate_host_availability(item.hostid,HOST_AVAILABLE_TRUE,now,agent.msg);
-					if (CONFIG_HFS_PATH) {
-					    HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid, HOST_AVAILABLE_TRUE, now, agent.msg);
-					}
+					if (CONFIG_HFS_PATH)
+						HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid,
+									      HOST_AVAILABLE_TRUE, now, agent.msg);
 					update_key_status(item.hostid, HOST_STATUS_MONITORED);	/* 0 */
 					item.host_available=HOST_AVAILABLE_TRUE;
-	
+
 					stop=1;
 				}
 			}
@@ -475,9 +474,9 @@ int get_values(void)
 						CONFIG_UNAVAILABLE_DELAY);
 
 					DBupdate_host_availability(item.hostid,HOST_AVAILABLE_FALSE,now,agent.msg);
-					if (CONFIG_HFS_PATH) {
-					    HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid, HOST_AVAILABLE_FALSE, now, agent.msg);
-					}
+					if (CONFIG_HFS_PATH)
+						HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid,
+									      HOST_AVAILABLE_FALSE, now, agent.msg);
 					update_key_status(item.hostid,HOST_AVAILABLE_FALSE); /* 2 */
 					item.host_available=HOST_AVAILABLE_FALSE;
 
@@ -578,7 +577,7 @@ void main_poller_loop(int type, int num)
 			zabbix_log( LOG_LEVEL_DEBUG, "Sleeping for %d seconds",
 					sleeptime );
 
-			zbx_setproctitle("poller [sleeping for %d seconds]", 
+			zbx_setproctitle("poller [sleeping for %d seconds]",
 					sleeptime);
 
 			sleep( sleeptime );
