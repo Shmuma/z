@@ -25,6 +25,7 @@ ZBX_METRIC	parameters_specific[]=
 	{
 
 	{"kernel.maxfiles",	0,		KERNEL_MAXFILES,	0,	0},
+	{"kernel.openfiles",	0,		KERNEL_OPENFILES,	0,	0},
 	{"kernel.maxproc",	0,		KERNEL_MAXPROC, 	0,	0},
 
 	{"vfs.fs.size",		CF_USEUPARAM,	VFS_FS_SIZE,		0,	"/,free"},

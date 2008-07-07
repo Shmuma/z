@@ -121,6 +121,7 @@ insert into help_items values(0,'agent.ping','Check the agent usability. Always 
 insert into help_items values(0,'agent.version','Version of zabbix_agent(d) running on monitored host. String value. Example of returned value: 1.1');
 insert into help_items values(0,'kernel.maxfiles','Maximum number of opened file supported by OS.');
 insert into help_items values(0,'kernel.maxproc','Maximum number of processes supported by OS.');
+insert into help_items values(0,'kernel.openfiles','Number of opened files.');
 insert into help_items values(0,'net.if.collisions[if]','Out-of-window collision. Collisions count.');
 insert into help_items values(0,'net.if.in[if &lt;,mode&gt;]','Network interfice input statistic. Integer value. If mode is missing bytes is used.');
 insert into help_items values(0,'net.if.out[if &lt;,mode&gt;]','Network interfice output statistic. Integer value. If mode is missing bytes is used.');
