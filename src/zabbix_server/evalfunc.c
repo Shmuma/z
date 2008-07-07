@@ -48,7 +48,7 @@ extern char* CONFIG_HFS_PATH;
  ******************************************************************************/
 static int evaluate_LOGSOURCE(char *value, DB_ITEM *item, char *parameter)
 {
-	DB_RESULT	result;
+	DB_RESULT	result = NULL;
 	DB_ROW	row;
 
 	char		sql[MAX_STRING_LEN];
@@ -84,7 +84,8 @@ static int evaluate_LOGSOURCE(char *value, DB_ITEM *item, char *parameter)
 			strcpy(value,"0");
 		}
 	}
-	DBfree_result(result);
+	if (result)
+		DBfree_result(result);
 
 	return res;
 }
@@ -108,7 +109,7 @@ static int evaluate_LOGSOURCE(char *value, DB_ITEM *item, char *parameter)
  ******************************************************************************/
 static int evaluate_LOGSEVERITY(char *value, DB_ITEM *item, char *parameter)
 {
-	DB_RESULT	result;
+	DB_RESULT	result = NULL;
 	DB_ROW		row;
 
 	char		sql[MAX_STRING_LEN];
@@ -136,7 +137,8 @@ static int evaluate_LOGSEVERITY(char *value, DB_ITEM *item, char *parameter)
 	{
 		strcpy(value,row[0]);
 	}
-	DBfree_result(result);
+	if (result)
+		DBfree_result(result);
 
 	return res;
 }
@@ -160,7 +162,7 @@ static int evaluate_LOGSEVERITY(char *value, DB_ITEM *item, char *parameter)
  ******************************************************************************/
 static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 {
-	DB_RESULT	result;
+	DB_RESULT	result = NULL;
 	DB_ROW	row;
 	int		hfs_mode = 0;
 
@@ -391,7 +393,8 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 		{
 			strcpy(value,row[0]);
 		}
-		DBfree_result(result);
+		if (result)
+			DBfree_result(result);
 	}
 
 	zabbix_log( LOG_LEVEL_DEBUG, "End evaluate_COUNT");
@@ -418,7 +421,7 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
  ******************************************************************************/
 static int evaluate_SUM(char *value, DB_ITEM *item, int parameter, int flag)
 {
-	DB_RESULT	result;
+	DB_RESULT	result = NULL;
 	DB_ROW	row;
 
 	char		sql[MAX_STRING_LEN];
@@ -518,7 +521,8 @@ static int evaluate_SUM(char *value, DB_ITEM *item, int parameter, int flag)
 		return	FAIL;
 	}
 
-	DBfree_result(result);
+	if (result)
+		DBfree_result(result);
 
 	return res;
 }
@@ -542,7 +546,7 @@ static int evaluate_SUM(char *value, DB_ITEM *item, int parameter, int flag)
  ******************************************************************************/
 static int evaluate_AVG(char *value,DB_ITEM	*item,int parameter,int flag)
 {
-	DB_RESULT	result;
+	DB_RESULT	result = NULL;
 	DB_ROW		row;
 
 	char		sql[MAX_STRING_LEN];
@@ -633,7 +637,8 @@ static int evaluate_AVG(char *value,DB_ITEM	*item,int parameter,int flag)
 		return	FAIL;
 	}
 
-	DBfree_result(result);
+	if (result)
+		DBfree_result(result);
 
 	return res;
 }
@@ -657,7 +662,7 @@ static int evaluate_AVG(char *value,DB_ITEM	*item,int parameter,int flag)
  ******************************************************************************/
 static int evaluate_MIN(char *value,DB_ITEM	*item,int parameter, int flag)
 {
-	DB_RESULT	result;
+	DB_RESULT	result = NULL;
 	DB_ROW		row;
 
 	char		sql[MAX_STRING_LEN];
@@ -772,7 +777,8 @@ static int evaluate_MIN(char *value,DB_ITEM	*item,int parameter, int flag)
 		return	FAIL;
 	}
 
-	DBfree_result(result);
+	if (result)
+		DBfree_result(result);
 
 	return res;
 }
@@ -796,7 +802,7 @@ static int evaluate_MIN(char *value,DB_ITEM	*item,int parameter, int flag)
  ******************************************************************************/
 static int evaluate_MAX(char *value,DB_ITEM *item,int parameter,int flag)
 {
-	DB_RESULT	result;
+	DB_RESULT	result = NULL;
 	DB_ROW		row;
 
 	char		sql[MAX_STRING_LEN];
@@ -911,7 +917,8 @@ static int evaluate_MAX(char *value,DB_ITEM *item,int parameter,int flag)
 		return	FAIL;
 	}
 
-	DBfree_result(result);
+	if (result)
+		DBfree_result(result);
 
 	zabbix_log( LOG_LEVEL_DEBUG, "End of evaluate_MAX()");
 
@@ -937,7 +944,7 @@ static int evaluate_MAX(char *value,DB_ITEM *item,int parameter,int flag)
  ******************************************************************************/
 static int evaluate_DELTA(char *value,DB_ITEM *item,int parameter, int flag)
 {
-	DB_RESULT	result;
+	DB_RESULT	result = NULL;
 	DB_ROW		row;
 
 	char		sql[MAX_STRING_LEN];
@@ -1067,7 +1074,8 @@ static int evaluate_DELTA(char *value,DB_ITEM *item,int parameter, int flag)
 		return	FAIL;
 	}
 
-	DBfree_result(result);
+	if (result)
+		DBfree_result(result);
 
 	zabbix_log( LOG_LEVEL_DEBUG, "End of evaluate_DELTA()");
 
