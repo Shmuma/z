@@ -21,6 +21,35 @@
 
 #include "sysinfo.h"
 
+int	KERNEL_OPENFILES(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
+{
+	int ret = SYSINFO_RET_FAIL;
+	char line[MAX_STRING_LEN];
+
+	zbx_uint64_t value = 0;
+
+	FILE 	*f;
+
+	assert(result);
+
+        init_result(result);
+
+	if(NULL != ( f = fopen("/proc/sys/fs/file-nr","r") ))
+	{
+		if(fgets(line,MAX_STRING_LEN,f) != NULL)
+		{
+			if(sscanf(line,ZBX_FS_UI64 " ", &value) == 1)
+			{
+				SET_UI64_RESULT(result, value);
+				ret = SYSINFO_RET_OK;
+			}
+		}
+		zbx_fclose(f);
+	}
+
+	return ret;
+}
+
 int	KERNEL_MAXFILES(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
 {
 	int ret = SYSINFO_RET_FAIL;
@@ -36,7 +65,7 @@ int	KERNEL_MAXFILES(const char *cmd, const char *param, unsigned flags, AGENT_RE
 
 	if(NULL != ( f = fopen("/proc/sys/fs/file-max","r") ))
 	{
-		if(fgets(line,MAX_STRING_LEN,f) != NULL);
+		if(fgets(line,MAX_STRING_LEN,f) != NULL)
 		{
 			if(sscanf(line,ZBX_FS_UI64 "\n", &value) == 1)
 			{
