@@ -375,18 +375,15 @@ int get_values(void)
 					item.host_name);
 
 				now = time(NULL);
-				if (CONFIG_HFS_PATH) {
-    				    HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid, HOST_AVAILABLE_TRUE, now, agent.msg);
-				}
-				else {
-    				    DBupdate_host_availability(item.hostid,HOST_AVAILABLE_TRUE,now,agent.msg);
-				}
+				DBupdate_host_availability(item.hostid,HOST_AVAILABLE_TRUE,now,agent.msg);
 
 				update_key_status(item.hostid, HOST_STATUS_MONITORED); /* 0 */
 				item.host_available=HOST_AVAILABLE_TRUE;
 
 				stop=1;
 			}
+			if (CONFIG_HFS_PATH)
+				HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid, HOST_AVAILABLE_TRUE, now, agent.msg);
 			if(item.host_errors_from!=0)
 			{
 				DBexecute("update hosts set errors_from=0 where hostid=" ZBX_FS_UI64,
@@ -426,12 +423,13 @@ int get_values(void)
 					zabbix_syslog("Enabling host [%s]",
 						item.host_name);
 					DBupdate_host_availability(item.hostid,HOST_AVAILABLE_TRUE,now,agent.msg);
-					HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid, HOST_AVAILABLE_TRUE, now, agent.msg);
 					update_key_status(item.hostid, HOST_STATUS_MONITORED);	/* 0 */
 					item.host_available=HOST_AVAILABLE_TRUE;
 	
 					stop=1;
 				}
+				if (CONFIG_HFS_PATH)
+					HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid, HOST_AVAILABLE_TRUE, now, agent.msg);
 			}
 		}
 		else if(res == NETWORK_ERROR)
@@ -475,7 +473,8 @@ int get_values(void)
 						CONFIG_UNAVAILABLE_DELAY);
 
 					DBupdate_host_availability(item.hostid,HOST_AVAILABLE_FALSE,now,agent.msg);
-					HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid, HOST_AVAILABLE_FALSE, now, agent.msg);
+					if (CONFIG_HFS_PATH)
+						HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid, HOST_AVAILABLE_FALSE, now, agent.msg);
 					update_key_status(item.hostid,HOST_AVAILABLE_FALSE); /* 2 */
 					item.host_available=HOST_AVAILABLE_FALSE;
 
