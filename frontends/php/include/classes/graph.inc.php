@@ -1001,11 +1001,13 @@
   				$curr_data->avg = NULL;
   				$curr_data->clock = NULL;
 
-  				if(($this->period / $this->sizeX) > (ZBX_MAX_TREND_DIFF / ZBX_GRAPH_MAX_SKIP_CELL))
+				if(($this->period / $this->sizeX) > (ZBX_MAX_TREND_DIFF / ZBX_GRAPH_MAX_SKIP_CELL)) {
   					$arr = zabbix_hfs_read_trends($this->items[$i]['sitename'],
   								      $this->sizeX, $this->items[$i]['itemid'],
   								      $this->from_time, $this->to_time,
   								      $from_time, $to_time);
+					$this->items[$i]['delay'] = max($this->items[$i]['delay'],3600);
+				}
   				else
   					$arr = zabbix_hfs_read_history($this->items[$i]['sitename'],
   								       $this->sizeX, $this->items[$i]['itemid'],
@@ -1287,6 +1289,8 @@
 			$this->drawGrid();
 
 			$maxX = $this->sizeX;
+			$cell	= ($this->to_time - $this->from_time)/$this->sizeX;
+			$skip_cell = (ZBX_GRAPH_MAX_SKIP_CELL * $cell);
 
 			// For each metric
 			for($item = 0; $item < $this->num; $item++)
@@ -1321,19 +1325,20 @@
 					$calc_fnc = $this->items[$item]["calc_fnc"];
 				}
 
+				$delay	= $this->items[$item]["delay"];
+				$skip_delay = (ZBX_GRAPH_MAX_SKIP_DELAY * $delay);
+
 				// For each X
 				for($i = 1, $j = 0; $i < $maxX; $i++) // new point
 				{
 					if($data->count[$i] == 0) continue;
 
-					$diff	= abs($data->clock[$i] - $data->clock[$j]);
-					$cell	= ($this->to_time - $this->from_time)/$this->sizeX;
-					$delay	= $this->items[$item]["delay"];
+					$diff = abs($data->clock[$i] - $data->clock[$j]);
 
 					if($cell > $delay)
-						$draw = $diff < ZBX_GRAPH_MAX_SKIP_CELL * $cell;
+						$draw = $diff < $skip_cell;
 					else		
-						$draw = $diff < ZBX_GRAPH_MAX_SKIP_DELAY * $delay;
+						$draw = $diff < $skip_delay;
 
 					if($draw == false && $this->items[$item]["calc_type"] == GRAPH_ITEM_AGGREGATED)
 						$draw = $i - $j < 5;
