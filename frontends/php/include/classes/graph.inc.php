@@ -1001,11 +1001,13 @@
   				$curr_data->avg = NULL;
   				$curr_data->clock = NULL;
 
-  				if(($this->period / $this->sizeX) > (ZBX_MAX_TREND_DIFF / ZBX_GRAPH_MAX_SKIP_CELL))
+				if(($this->period / $this->sizeX) > (ZBX_MAX_TREND_DIFF / ZBX_GRAPH_MAX_SKIP_CELL)) {
   					$arr = zabbix_hfs_read_trends($this->items[$i]['sitename'],
   								      $this->sizeX, $this->items[$i]['itemid'],
   								      $this->from_time, $this->to_time,
   								      $from_time, $to_time);
+					$this->items[$i]['delay'] = max($this->items[$i]['delay'],3600);
+				}
   				else
   					$arr = zabbix_hfs_read_history($this->items[$i]['sitename'],
   								       $this->sizeX, $this->items[$i]['itemid'],
