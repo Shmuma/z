@@ -376,7 +376,7 @@ sub newstate
                             print "${tr_upd}";
                             $op = " || ' where ";
                             foreach $k (split (/,\s*/, $tr_pk_field)) {
-                                if ($fields_kind eq "copy_conv") {
+                                if ($fields_kind{$k} eq "copy_conv") {
                                     print "$op ${k}='||:old.${k} ";
                                 }
                                 else {
@@ -393,7 +393,7 @@ sub newstate
 
                             $op = " || ' where ";
                             foreach $k (split (/,\s*/, $tr_pk_field)) {
-                                if ($fields_kind eq "copy_conv") {
+                                if ($fields_kind{$k} eq "copy_conv") {
                                     print "$op ${k}='||:old.${k} ";
                                 }
                                 else {
