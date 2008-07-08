@@ -113,7 +113,7 @@ static	ZBX_TABLE	tables[]={
 );
 
 $copy_conv = "Nvl(To_Char(:new.field),'null')";
-$copy_asis = ":new.field||''''";
+$copy_asis = "Replace(:new.field,'''','''''')||''''";
 
 %oracle_copy=(
 	"t_bigint"	=>	"copy_conv",
