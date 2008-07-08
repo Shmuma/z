@@ -1503,7 +1503,7 @@ HFSread_item (const char *hfs_base_dir, const char* siteid,
 
 			if (group != cur_group) {
 				(*result)[items].type  = ip->type;
-				(*result)[items].group = group;
+				(*result)[items].group = cur_group;
 				(*result)[items].count = count;
 				(*result)[items].clock = ts;
 
