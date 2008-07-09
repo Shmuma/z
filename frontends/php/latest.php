@@ -207,20 +207,19 @@ include_once "include/page_header.php";
 			++$item_cnt;
 			if(!in_array($db_app["applicationid"],$_REQUEST["applications"]) && !isset($show_all_apps)) continue;
 
-      if (zbx_hfs_available ()) {
-        $hfs_data = zabbix_hfs_item_values ($db_item["sitename"], $db_item["itemid"], $db_item["value_type"]);
+			if (zbx_hfs_available ()) {
+				$hfs_data = zabbix_hfs_item_values ($db_item["sitename"], $db_item["itemid"], $db_item["value_type"]);
 
-        if (is_object ($hfs_data)) {
-    			$db_item["lastclock"] = $hfs_data["lastclock"];
-    			$db_item["lastvalue"] = $hfs_data["lastvalue"];
-    			$db_item["prevvalue"] = $hfs_data["prevvalue"];
-        }
+				if (is_array ($hfs_data)) {
+					$db_item["lastclock"] = $hfs_data["lastclock"];
+					$db_item["lastvalue"] = $hfs_data["lastvalue"];
+					$db_item["prevvalue"] = $hfs_data["prevvalue"];
+				}
 
-        $hfs_stderr = zabbix_hfs_item_stderr ($db_item["sitename"], $db_item["itemid"]);
-        if (is_object ($hfs_stderr)) {
-          $db_item["stderr"] = $hfs_stderr->stderr;
-        }
-      }
+				$hfs_stderr = zabbix_hfs_item_stderr ($db_item["sitename"], $db_item["itemid"]);
+				if (is_object ($hfs_stderr))
+					$db_item["stderr"] = $hfs_stderr->stderr;
+			}
 
 			if(isset($db_item["lastclock"]))
 				$lastclock=date(S_DATE_FORMAT_YMDHMS,$db_item["lastclock"]);
@@ -328,21 +327,19 @@ include_once "include/page_header.php";
 		
 		while($db_item = DBfetch($db_items))
 		{
+			if (zbx_hfs_available ()) {
+				$hfs_data = zabbix_hfs_item_values ($db_item["sitename"], $db_item["itemid"], $db_item["value_type"]);
 
-      if (zbx_hfs_available ()) {
-        $hfs_data = zabbix_hfs_item_values ($db_item["sitename"], $db_item["itemid"], $db_item["value_type"]);
+				if (is_array ($hfs_data)) {
+					$db_item["lastclock"] = $hfs_data["lastclock"];
+					$db_item["lastvalue"] = $hfs_data["lastvalue"];
+					$db_item["prevvalue"] = $hfs_data["prevvalue"];
+				}
 
-        if (is_object ($hfs_data)) {
-    			$db_item["lastclock"] = $hfs_data["lastclock"];
-    			$db_item["lastvalue"] = $hfs_data["lastvalue"];
-    			$db_item["prevvalue"] = $hfs_data["prevvalue"];
-        }
-
-        $hfs_stderr = zabbix_hfs_item_stderr ($db_item["sitename"], $db_item["itemid"]);
-        if (is_object ($hfs_stderr)) {
-          $db_item["stderr"] = $hfs_stderr->stderr;
-        }
-      }
+				$hfs_stderr = zabbix_hfs_item_stderr ($db_item["sitename"], $db_item["itemid"]);
+				if (is_object ($hfs_stderr))
+					$db_item["stderr"] = $hfs_stderr->stderr;
+			}
 			
 			$description = item_description($db_item["description"],$db_item["key_"]);
 	
