@@ -1801,15 +1801,13 @@
 		$triggers = array();
 		while($row = DBfetch($result))
 		{
-			
-      if (zbx_hfs_available()) {
-        $hfs_trigger = zabbix_hfs_trigger_value ($row["siteid"], $row["triggerid"]);
-
-        if (is_object($hfs_trigger)) {
-        	$row["value"] = $hfs_trigger->value;
-        	$row["lastchange"] = $hfs_trigger->when;
-  		  }
-      }
+			if (zbx_hfs_available()) {
+				$hfs_trigger = zabbix_hfs_trigger_value ($row["siteid"], $row["triggerid"]);
+				if (is_object($hfs_trigger)) {
+					$row["value"] = $hfs_trigger->value;
+					$row["lastchange"] = $hfs_trigger->when;
+				}
+			}
 
 			$row['host'] = get_node_name_by_elid($row['hostid']).$row['host'];
 			$row['description'] = expand_trigger_description_constants($row['description'], $row);
@@ -1868,12 +1866,10 @@
 							$css_class = get_severity_style($trhosts[$hostname]['priority']);
 							if( ($ack = get_last_event_by_triggerid($trhosts[$hostname]['triggerid'])) )
 								$ack_menu = array(S_ACKNOWLEDGE, 'acknow.php?eventid='.$ack['eventid'], array('tw'=>'_blank'));
-
 							if ( 1 == $ack['acknowledged'] )
 								$ack = new CImg('images/general/tick.png','ack');
 							else
 								$ack = null;
-
 							break;
 						case TRIGGER_VALUE_FALSE:
 							$css_class = 'normal';
