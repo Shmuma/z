@@ -19,6 +19,7 @@
 **/
 ?>
 <?php
+	require_once "hfs.inc.php";
 
 	/*
 	 * Function: item_type2str
@@ -853,12 +854,12 @@
 		}
 
 COpt::profiling_start('prepare data');
-		$result = DBselect('select distinct h.hostid, h.host,i.itemid, i.key_, i.value_type, i.lastvalue, i.units, '.
+		$result = DBselect('select distinct h.hostid, h.host, s.name as siteid, i.itemid, i.key_, i.value_type, i.lastvalue, i.units, '.
 			' i.description, t.priority, i.valuemapid, t.value as tr_value, t.triggerid '.
-			' from hosts h,items i left join  functions f on f.itemid=i.itemid left join triggers t on t.triggerid=f.triggerid '.
+			' from hosts h, sites s, items i left join  functions f on f.itemid=i.itemid left join triggers t on t.triggerid=f.triggerid '.
 			$group_where.
 			' h.hostid in ('.get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, null, null, get_current_nodeid()).') '.
-			' and h.status='.HOST_STATUS_MONITORED.' and h.hostid=i.hostid and i.status='.ITEM_STATUS_ACTIVE.
+			' and h.status='.HOST_STATUS_MONITORED.' and h.siteid = s.siteid and h.hostid=i.hostid and i.status='.ITEM_STATUS_ACTIVE.
 			' order by i.description,i.itemid');
 
 		unset($items);
@@ -867,6 +868,16 @@ COpt::profiling_start('prepare data');
 		$items = array();
 		while($row = DBfetch($result))
 		{
+			if (zbx_hfs_available ()) {
+				$hfs_trigger = zabbix_hfs_trigger_value ($row["siteid"], $row["triggerid"]);
+				if (is_object ($hfs_trigger))
+					$row["tr_value"] = $hfs_trigger->value;
+
+				$hfs_item = zabbix_hfs_item_values ($row["siteid"], $row["itemid"], $row["value_type"]);
+				if (is_array ($hfs_item))
+					$row["lastvalue"] = $hfs_item["lastvalue"];
+			}
+
 			$descr = item_description($row["description"],$row["key_"]);
 			$row['host'] = get_node_name_by_elid($row['hostid']).$row['host'];
 			$hosts[$row['host']] = $row['host'];
