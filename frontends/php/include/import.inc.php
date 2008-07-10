@@ -114,6 +114,7 @@
 							0, /* useip */
 							"", /* dns */
 							"", /* ip */
+							0,  /* siteid -- default */
 							array(),
 							null,
 							array());
@@ -176,7 +177,7 @@
 					if(!isset($data['ip']))		$data['ip'] = "";
 
 					if(update_host($data['hostid'], $data['name'], $data['port'], $data['status'],
-						$data['useip'], $data['dns'], $data['ip'], $data['templates'], null, $data['groups']))
+						       $data['useip'], $data['dns'], $data['ip'], 0, $data['templates'], null, $data['groups']))
 					{
 						info('Host ['.$data['name'].'] updated');
 					}
