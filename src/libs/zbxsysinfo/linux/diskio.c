@@ -62,6 +62,9 @@ struct disk_stat_s {
 					) != 5) continue
 #endif
 
+#define PGPG_STAT "/proc/stat"
+#define PGPG_VMSTAT "/proc/vmstat"
+
 static int get_disk_stat(const char *interface, struct disk_stat_s *result)
 {
 	int ret = SYSINFO_RET_FAIL;
@@ -298,3 +301,76 @@ int	OLD_IO(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *res
 	return ret;
 }
 
+
+int get_pgpg_stat(zbx_uint64_t *pgpg_in, zbx_uint64_t *pgpg_out)
+{
+	int ret = SYSINFO_RET_FAIL;
+	char line[MAX_STRING_LEN];
+	FILE *f;
+
+	if(NULL != (f = fopen(PGPG_STAT,"r") ))
+	{
+		while(fgets(line,MAX_STRING_LEN,f) != NULL)
+		{
+			if(sscanf(line,"page " ZBX_FS_UI64 " " ZBX_FS_UI64, pgpg_in, pgpg_out) == 2) {
+				ret = SYSINFO_RET_OK;
+				break;
+			}	
+		}
+		zbx_fclose(f);
+	}
+
+	if (ret != SYSINFO_RET_OK)
+	{
+		if (NULL != (f = fopen(PGPG_VMSTAT,"r")))
+		{
+			while(fgets(line,MAX_STRING_LEN,f) != NULL)
+			{
+				if(
+					sscanf(line,"pgpgin " ZBX_FS_UI64, pgpg_in) == 1 ||
+					sscanf(line,"pgpgout " ZBX_FS_UI64, pgpg_out) == 1
+				)
+					ret = SYSINFO_RET_OK;
+			}
+			zbx_fclose(f);
+		}
+	}
+
+	return ret;
+}
+
+int	SYSTEM_PGPG_IN(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
+{
+	int	ret = SYSINFO_RET_FAIL;
+	zbx_uint64_t pgpg_in;
+	zbx_uint64_t pgpg_out;
+
+	assert(result);
+
+	init_result(result);
+
+	ret = get_pgpg_stat(&pgpg_in, &pgpg_out);
+
+	if(ret == SYSINFO_RET_OK)
+		SET_UI64_RESULT(result, pgpg_in);
+
+	return ret;
+}
+
+int	SYSTEM_PGPG_OUT(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
+{
+	int ret = SYSINFO_RET_FAIL;
+	zbx_uint64_t pgpg_in;
+	zbx_uint64_t pgpg_out;
+
+	assert(result);
+
+	init_result(result);
+
+	ret = get_pgpg_stat(&pgpg_in, &pgpg_out);
+
+	if(ret == SYSINFO_RET_OK)
+		SET_UI64_RESULT(result, pgpg_out);
+
+	return ret;
+}
