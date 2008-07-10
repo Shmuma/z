@@ -141,6 +141,8 @@ insert into help_items values(0,'system.localtime','System local time. Time in s
 insert into help_items values(0,'system.swap.in[&lt;swap&gt; &lt;,type&gt;]','Swap in. If type is count - swapins is returned. If type is pages - pages swapped in is returned.	If swap is missing all is used.');
 insert into help_items values(0,'system.swap.out[&lt;swap&gt; &lt;,type&gt;]','Swap out. If type is count - swapouts is returned. If type is pages - pages swapped in is returned.  If swap is missing all is used.');
 insert into help_items values(0,'system.swap.size[&lt;swap&gt; &lt;,mode&gt;]','Swap space. Number of bytes. If swap is missing all is used. If mode is missing free is used.');
+insert into help_items values(0,'system.bio.in','Total blocks received from block devices.');
+insert into help_items values(0,'system.bio.out','Total blocks sent to block devices.');
 insert into help_items values(0,'system.uname','Returns detailed host information. String value');
 insert into help_items values(0,'system.uptime','System uptime in seconds.');
 insert into help_items values(0,'system.users.num','Number of users connected. Command who is used on agent side.');

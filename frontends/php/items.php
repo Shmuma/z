@@ -782,26 +782,24 @@ include_once "include/page_header.php";
 				$db_item["itemid"].url_param("hostid").url_param("groupid"),
 				'action'));
 
-      if (zbx_hfs_available ()) {
-        $hfs_status = zabbix_hfs_item_status ($db_item["sitename"], $db_item["itemid"]);
-        if (is_object ($hfs_status) && $hfs_status->status == ITEM_STATUS_NOTSUPPORTED) {
-          $db_item["status"] = ITEM_STATUS_NOTSUPPORTED;
-          $db_item["error"] = $hfs_status->error;
-        }
+			if (zbx_hfs_available ()) {
+				$hfs_status = zabbix_hfs_item_status ($db_item["sitename"], $db_item["itemid"]);
+				if (is_object ($hfs_status) && $hfs_status->status == ITEM_STATUS_NOTSUPPORTED) {
+					$db_item["status"] = ITEM_STATUS_NOTSUPPORTED;
+					$db_item["error"] = $hfs_status->error;
+				}
 
-        $hfs_stderr = zabbix_hfs_item_stderr ($db_item["sitename"], $db_item["itemid"]);
-        if (is_object ($hfs_stderr)) {
-          $db_item["stderr"] = $hfs_stderr->stderr;
-        }
-      }
-      if (trim($db_item["error"]) != "" && trim($db_item["stderr"]) != "") {
-        $db_item["error"] = $db_item["error"] . "[" . $db_item["stderr"] . "]";
-      }
+				$hfs_stderr = zabbix_hfs_item_stderr ($db_item["sitename"], $db_item["itemid"]);
+				if (is_object ($hfs_stderr))
+					$db_item["stderr"] = $hfs_stderr->stderr;
+			}
+			if (trim($db_item["error"]) != "" && trim($db_item["stderr"]) != "")
+				$db_item["error"] = $db_item["error"] . "[" . $db_item["stderr"] . "]";
 
-      $status=new CCol(new CLink(item_status2str($db_item["status"]),
-        "?group_itemid%5B%5D=".$db_item["itemid"].
-        "&group_task=".($db_item["status"] ? "Activate+selected" : "Disable+selected"),
-        item_status2style($db_item["status"])));
+			$status=new CCol(new CLink(item_status2str($db_item["status"]),
+				"?group_itemid%5B%5D=".$db_item["itemid"].
+				"&group_task=".($db_item["status"] ? "Activate+selected" : "Disable+selected"),
+				item_status2style($db_item["status"])));
 
 			if($db_item["error"] == "")
 			{
