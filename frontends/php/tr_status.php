@@ -362,21 +362,21 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 
 		if(isset($_REQUEST["btnSelect"]) && '' != $txt_select && ((stristr($description, $txt_select)) == ($_REQUEST["btnSelect"]=="Inverse select"))) continue;
 
-    if (zbx_hfs_available()) {
-      $hfs_trigger = zabbix_hfs_trigger_value ($row["siteid"], $row["triggerid"]);
+		if (zbx_hfs_available()) {
+			$hfs_trigger = zabbix_hfs_trigger_value ($row["siteid"], $row["triggerid"]);
 
-      if (is_object($hfs_trigger)) {
-      	$row["value"] = $hfs_trigger->value;
-      	$row["lastchange"] = $hfs_trigger->when;
-		  }
+			if (is_object($hfs_trigger)) {
+				$row["value"] = $hfs_trigger->value;
+				$row["lastchange"] = $hfs_trigger->when;
+			}
 
-    	// when trigger values got from HFS, we must filter them manually
-  		if ($show_unknown == 0 && $row["value"] == 2)
+			// when trigger values got from HFS, we must filter them manually
+			if ($show_unknown == 0 && $row["value"] == 2)
 				continue;
 			if ($onlytrue == 'true')
 				if ($row["value"] != 1 && ((time ()-$row["lastchange"]) > TRIGGER_BLINK_PERIOD))
 					continue;
-    }
+		}
 
 		if($row["url"] != "")
 		{

@@ -794,16 +794,16 @@ include_once "include/page_header.php";
 					else
 						$status=S_UNKNOWN;
 
-          if (zbx_hfs_available ()) {
-            $hfs_status = zabbix_hfs_host_availability ($row["sitename"], $row["hostid"]);
+					if (zbx_hfs_available ()) {
+						$hfs_status = zabbix_hfs_host_availability ($row["sitename"], $row["hostid"]);
 
-          	if (is_object ($hfs_status)) {
-              $row["available"] = $hfs_status->available;
-              $row["error"] = $hfs_status->error;
-            }
-          }
+						if (is_object ($hfs_status)) {
+							$row["available"] = $hfs_status->available;
+							$row["error"] = $hfs_status->error;
+						}
+					}
 
-  				if($row["available"] == HOST_AVAILABLE_TRUE)	
+					if($row["available"] == HOST_AVAILABLE_TRUE)	
 						$available=new CCol(S_AVAILABLE,"off");
 					else if($row["available"] == HOST_AVAILABLE_FALSE)
 						$available=new CCol(S_NOT_AVAILABLE,"on");

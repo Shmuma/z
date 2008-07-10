@@ -298,3 +298,85 @@ int	OLD_IO(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *res
 	return ret;
 }
 
+#define BIO_STAT "/proc/stat"
+#define BIO_VMSTAT "/proc/vmstat"
+
+#define BIO_IN  1
+#define BIO_OUT 2
+
+int get_bio_stat(int type, zbx_uint64_t *res)
+{
+	int ret = SYSINFO_RET_FAIL;
+	char line[MAX_STRING_LEN];
+	zbx_uint64_t pages_in;
+	FILE *f;
+
+	if((f = fopen(BIO_STAT,"r")) != NULL)
+	{
+		while(fgets(line,MAX_STRING_LEN,f) != NULL)
+		{
+			if(sscanf(line,"page " ZBX_FS_UI64 " " ZBX_FS_UI64, &pages_in, res) == 2) {
+				if (type == BIO_IN)
+					*res = pages_in;
+
+				ret = SYSINFO_RET_OK;
+				break;
+			}	
+		}
+		zbx_fclose(f);
+
+		if (ret == SYSINFO_RET_OK)
+			return ret;
+	}
+
+	if ((f = fopen(BIO_VMSTAT,"r")) != NULL)
+	{
+		while(fgets(line,MAX_STRING_LEN,f) != NULL)
+		{
+			if (type == BIO_IN &&
+			    sscanf(line,"pgpgin " ZBX_FS_UI64, res) == 1)
+			{
+				ret = SYSINFO_RET_OK;
+				break;
+			}
+
+			if (type == BIO_OUT &&
+			    sscanf(line,"pgpgout " ZBX_FS_UI64, res) == 1)
+			{
+				ret = SYSINFO_RET_OK;
+				break;
+			}
+		}
+		zbx_fclose(f);
+	}
+
+	return ret;
+}
+
+int	SYSTEM_BIO_IN(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
+{
+	int ret = SYSINFO_RET_FAIL;
+	zbx_uint64_t in;
+
+	assert(result);
+	init_result(result);
+
+	if((ret = get_bio_stat(BIO_IN, &in)) == SYSINFO_RET_OK)
+		SET_UI64_RESULT(result, in);
+
+	return ret;
+}
+
+int	SYSTEM_BIO_OUT(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
+{
+	int ret = SYSINFO_RET_FAIL;
+	zbx_uint64_t out;
+
+	assert(result);
+	init_result(result);
+
+	if((ret = get_bio_stat(BIO_OUT, &out)) == SYSINFO_RET_OK)
+		SET_UI64_RESULT(result, out);
+
+	return ret;
+}

@@ -56,6 +56,9 @@ ZBX_METRIC	parameters_specific[]=
 	{"system.swap.in",      CF_USEUPARAM,   SYSTEM_SWAP_IN,         0,      "all"},
 	{"system.swap.out",     CF_USEUPARAM,   SYSTEM_SWAP_OUT,        0,      "all"},	
 
+	{"system.bio.in",      CF_USEUPARAM,    SYSTEM_BIO_IN,          0,      "all"},
+	{"system.bio.out",     CF_USEUPARAM,    SYSTEM_BIO_OUT,         0,      "all"},
+
 	{"system.uptime",	0,		SYSTEM_UPTIME,		0,	0},
 	{"system.boottime",     0,      	SYSTEM_BOOTTIME,        0,      0},
 
