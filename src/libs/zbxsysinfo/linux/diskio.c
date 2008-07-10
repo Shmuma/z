@@ -328,7 +328,7 @@ int get_pgpg_stat(zbx_uint64_t *pgpg_in, zbx_uint64_t *pgpg_out)
 			{
 				if(
 					sscanf(line,"pgpgin " ZBX_FS_UI64, pgpg_in) == 1 ||
-				  sscanf(line,"pgpgout " ZBX_FS_UI64, pgpg_out) == 1
+					sscanf(line,"pgpgout " ZBX_FS_UI64, pgpg_out) == 1
 					)
 					ret = SYSINFO_RET_OK;
 			}
