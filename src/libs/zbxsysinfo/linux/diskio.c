@@ -62,9 +62,6 @@ struct disk_stat_s {
 					) != 5) continue
 #endif
 
-#define PGPG_STAT "/proc/stat"
-#define PGPG_VMSTAT "/proc/vmstat"
-
 static int get_disk_stat(const char *interface, struct disk_stat_s *result)
 {
 	int ret = SYSINFO_RET_FAIL;
@@ -301,76 +298,85 @@ int	OLD_IO(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *res
 	return ret;
 }
 
+#define BIO_STAT "/proc/stat"
+#define BIO_VMSTAT "/proc/vmstat"
 
-int get_pgpg_stat(zbx_uint64_t *pgpg_in, zbx_uint64_t *pgpg_out)
+#define BIO_IN  1
+#define BIO_OUT 2
+
+int get_bio_stat(int type, zbx_uint64_t *res)
 {
 	int ret = SYSINFO_RET_FAIL;
 	char line[MAX_STRING_LEN];
+	zbx_uint64_t pages_in;
 	FILE *f;
 
-	if(NULL != (f = fopen(PGPG_STAT,"r") ))
+	if((f = fopen(BIO_STAT,"r")) != NULL)
 	{
 		while(fgets(line,MAX_STRING_LEN,f) != NULL)
 		{
-			if(sscanf(line,"page " ZBX_FS_UI64 " " ZBX_FS_UI64, pgpg_in, pgpg_out) == 2) {
+			if(sscanf(line,"page " ZBX_FS_UI64 " " ZBX_FS_UI64, &pages_in, res) == 2) {
+				if (type == BIO_IN)
+					*res = pages_in;
+
 				ret = SYSINFO_RET_OK;
 				break;
 			}	
 		}
 		zbx_fclose(f);
+
+		if (ret == SYSINFO_RET_OK)
+			return ret;
 	}
 
-	if (ret != SYSINFO_RET_OK)
+	if ((f = fopen(BIO_VMSTAT,"r")) != NULL)
 	{
-		if (NULL != (f = fopen(PGPG_VMSTAT,"r")))
+		while(fgets(line,MAX_STRING_LEN,f) != NULL)
 		{
-			while(fgets(line,MAX_STRING_LEN,f) != NULL)
+			if (type == BIO_IN &&
+			    sscanf(line,"pgpgin " ZBX_FS_UI64, res) == 1)
 			{
-				if(
-					sscanf(line,"pgpgin " ZBX_FS_UI64, pgpg_in) == 1 ||
-					sscanf(line,"pgpgout " ZBX_FS_UI64, pgpg_out) == 1
-				)
-					ret = SYSINFO_RET_OK;
+				ret = SYSINFO_RET_OK;
+				break;
 			}
-			zbx_fclose(f);
+
+			if (type == BIO_OUT &&
+			    sscanf(line,"pgpgout " ZBX_FS_UI64, res) == 1)
+			{
+				ret = SYSINFO_RET_OK;
+				break;
+			}
 		}
+		zbx_fclose(f);
 	}
 
 	return ret;
 }
 
-int	SYSTEM_PGPG_IN(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
-{
-	int	ret = SYSINFO_RET_FAIL;
-	zbx_uint64_t pgpg_in;
-	zbx_uint64_t pgpg_out;
-
-	assert(result);
-
-	init_result(result);
-
-	ret = get_pgpg_stat(&pgpg_in, &pgpg_out);
-
-	if(ret == SYSINFO_RET_OK)
-		SET_UI64_RESULT(result, pgpg_in);
-
-	return ret;
-}
-
-int	SYSTEM_PGPG_OUT(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
+int	SYSTEM_BIO_IN(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
 {
 	int ret = SYSINFO_RET_FAIL;
-	zbx_uint64_t pgpg_in;
-	zbx_uint64_t pgpg_out;
+	zbx_uint64_t in;
 
 	assert(result);
-
 	init_result(result);
 
-	ret = get_pgpg_stat(&pgpg_in, &pgpg_out);
+	if((ret = get_bio_stat(BIO_IN, &in)) == SYSINFO_RET_OK)
+		SET_UI64_RESULT(result, in);
 
-	if(ret == SYSINFO_RET_OK)
-		SET_UI64_RESULT(result, pgpg_out);
+	return ret;
+}
+
+int	SYSTEM_BIO_OUT(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
+{
+	int ret = SYSINFO_RET_FAIL;
+	zbx_uint64_t out;
+
+	assert(result);
+	init_result(result);
+
+	if((ret = get_bio_stat(BIO_OUT, &out)) == SYSINFO_RET_OK)
+		SET_UI64_RESULT(result, out);
 
 	return ret;
 }
