@@ -218,8 +218,22 @@
 		return get_screen($slide_data['screenid'],2,$effectiveperiod);
 	}
 
+	function graphid_for_hostid($graphid, $hostid)
+	{
+		$result = DBselect("SELECT distinct g.graphid, g.name, h.host ".
+				   "FROM graphs g LEFT JOIN graphs_items gi on g.graphid=gi.graphid ".
+				   "LEFT JOIN items i on gi.itemid=i.itemid ".
+				   "LEFT JOIN hosts h on h.hostid=i.hostid ".
+				   "WHERE g.templateid=$graphid and h.hostid=$hostid");
+		$newid = DBfetch($result);
+		if (isset($newid["graphid"]))
+			return $newid["graphid"];
+
+		return $graphid;
+	}
+
 	// editmode: 0 - view with actions, 1 - edit mode, 2 - view without any actions
-	function get_screen($screenid, $editmode, $effectiveperiod=NULL)
+	function get_screen($screenid, $editmode, $effectiveperiod=NULL, $hostid=NULL)
 	{
 		if(!screen_accessiable($screenid, $editmode ? PERM_READ_WRITE : PERM_READ_ONLY))
 			access_deny();
@@ -325,6 +339,9 @@
 				}
 				elseif( ($screenitemid!=0) && ($resourcetype==SCREEN_RESOURCE_GRAPH) )
 				{
+					if ($hostid != NULL)
+						$resourceid = graphid_for_hostid($resourceid, $hostid);
+
 					if($editmode == 0)
 						$action = "charts.php?graphid=$resourceid".url_param("period").
                                                         url_param("inc").url_param("dec");

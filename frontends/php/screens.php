@@ -49,6 +49,7 @@ include_once "include/page_header.php";
 		"config"=>		array(T_ZBX_INT, O_OPT,	P_SYS,	IN("0,1"),	null), // 0 - screens, 1 - slides
 
 		"elementid"=>		array(T_ZBX_INT, O_OPT,	P_SYS|P_NZERO,	DB_ID,NULL),
+		"hostid"=>              array(T_ZBX_INT, O_OPT,  P_SYS,         DB_ID,NULL),
 		"step"=>		array(T_ZBX_INT, O_OPT,  P_SYS,		BETWEEN(0,65535),NULL),
 		"dec"=>			array(T_ZBX_INT, O_OPT,  P_SYS, 	BETWEEN(0,65535*65535),NULL),
 		"inc"=>			array(T_ZBX_INT, O_OPT,  P_SYS, 	BETWEEN(0,65535*65535),NULL),
@@ -105,6 +106,22 @@ include_once "include/page_header.php";
 	$cmbElements = new CComboBox("elementid",$elementid,"submit()");
 	unset($screen_correct);
 	unset($first_screen);
+
+	$hostid = isset($_REQUEST["hostid"]) ? $_REQUEST["hostid"] : NULL;
+	$denyed_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT);
+	$cmbHosts = new CComboBox("hostid",$hostid,"submit()");
+	$cmbHosts->AddItem(0,S_ALL_SMALL);
+
+	$sql = "select distinct h.hostid,h.host from hosts h,items i, graphs_items gi where h.status=".HOST_STATUS_MONITORED.
+	       " and i.status=".ITEM_STATUS_ACTIVE." and h.hostid=i.hostid".
+	       " and h.hostid not in (".$denyed_hosts.") and i.itemid=gi.itemid".
+	       " order by h.host";
+	$result=DBselect($sql);
+
+	while($row=DBfetch($result))
+		$cmbHosts->AddItem($row["hostid"],$row["host"]);
+
+	$form->AddItem(array(SPACE.S_HOST.SPACE,$cmbHosts));
 
 	if( 0 == $config )
 	{
@@ -191,7 +208,8 @@ include_once "include/page_header.php";
 		$effectiveperiod = navigation_bar_calc();
 		if( 0 == $config )
 		{
-			$element = get_screen($elementid, 0, $effectiveperiod);
+			$hostid = isset($_REQUEST['hostid']) ? $_REQUEST['hostid'] : NULL;
+			$element = get_screen($elementid, 0, $effectiveperiod, $hostid);
 		}
 		else
 		{
