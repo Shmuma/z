@@ -1224,38 +1224,35 @@ require_once "include/items.inc.php";
 	{
 		$add_to = array();
 		$delete_from = array();
-		$row = array();
-
-		$row["hostid"] = $hostid;
 
 		$popup_menu_actions = array(
 			array(S_SHOW, null, null, array('outer'=> array('pum_oheader'), 'inner'=>array('pum_iheader'))),
-			array(S_ITEMS, 'items.php?hostid='.$row['hostid'], array('tw'=>'_blank')),
-			array(S_TRIGGERS, 'triggers.php?hostid='.$row['hostid'], array('tw'=>'_blank')),
-			array(S_GRAPHS, 'graphs.php?hostid='.$row['hostid'], array('tw'=>'_blank')),
+			array(S_ITEMS, 'items.php?hostid='.$hostid, array('tw'=>'_blank')),
+			array(S_TRIGGERS, 'triggers.php?hostid='.$hostid, array('tw'=>'_blank')),
+			array(S_GRAPHS, 'graphs.php?hostid='.$hostid, array('tw'=>'_blank')),
 			);
 
 		$db_groups = DBselect('select g.groupid, g.name from groups g left join hosts_groups hg '.
-			' on g.groupid=hg.groupid and hg.hostid='.$row['hostid'].
+			' on g.groupid=hg.groupid and hg.hostid='.$hostid.
 			' where hostid is NULL order by g.name,g.groupid');
 		
 		while($group_data = DBfetch($db_groups))
 		{
 			$add_to[] = array($group_data['name'], '?'.
 				url_param($group_data['groupid'], false, 'add_to_group').
-				url_param($row['hostid'], false, 'hostid')
+				url_param($hostid, false, 'hostid')
 				);
 		}
 
 		$db_groups = DBselect('select g.groupid, g.name from groups g, hosts_groups hg '.
-			' where g.groupid=hg.groupid and hg.hostid='.$row['hostid'].
+			' where g.groupid=hg.groupid and hg.hostid='.$hostid.
 			' order by g.name,g.groupid');
 		
 		while($group_data = DBfetch($db_groups))
 		{
 			$delete_from[] = array($group_data['name'], '?'.
 				url_param($group_data['groupid'], false, 'delete_from_group').
-				url_param($row['hostid'], false, 'hostid')
+				url_param($hostid, false, 'hostid')
 				);
 		}
 

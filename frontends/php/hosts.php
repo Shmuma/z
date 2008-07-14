@@ -816,7 +816,6 @@ include_once "include/page_header.php";
 				$show = host_js_menu($row["hostid"]);
 
 				$templates_linked = array();
-				sort($templates);
 				foreach(array_keys($templates) as $templateid)
 				{
 					$templates_linked[$templateid] = host_js_menu($templateid, $templates[$templateid])->ToString();
