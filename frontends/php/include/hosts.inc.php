@@ -1219,4 +1219,63 @@ require_once "include/items.inc.php";
 
 		return $result;
 	}
+
+	function	host_js_menu($hostid, $link_text = S_SELECT)
+	{
+		$add_to = array();
+		$delete_from = array();
+
+		$popup_menu_actions = array(
+			array(S_SHOW, null, null, array('outer'=> array('pum_oheader'), 'inner'=>array('pum_iheader'))),
+			array(S_ITEMS, 'items.php?hostid='.$hostid, array('tw'=>'_blank')),
+			array(S_TRIGGERS, 'triggers.php?hostid='.$hostid, array('tw'=>'_blank')),
+			array(S_GRAPHS, 'graphs.php?hostid='.$hostid, array('tw'=>'_blank')),
+			);
+
+		$db_groups = DBselect('select g.groupid, g.name from groups g left join hosts_groups hg '.
+			' on g.groupid=hg.groupid and hg.hostid='.$hostid.
+			' where hostid is NULL order by g.name,g.groupid');
+		
+		while($group_data = DBfetch($db_groups))
+		{
+			$add_to[] = array($group_data['name'], '?'.
+				url_param($group_data['groupid'], false, 'add_to_group').
+				url_param($hostid, false, 'hostid')
+				);
+		}
+
+		$db_groups = DBselect('select g.groupid, g.name from groups g, hosts_groups hg '.
+			' where g.groupid=hg.groupid and hg.hostid='.$hostid.
+			' order by g.name,g.groupid');
+		
+		while($group_data = DBfetch($db_groups))
+		{
+			$delete_from[] = array($group_data['name'], '?'.
+				url_param($group_data['groupid'], false, 'delete_from_group').
+				url_param($hostid, false, 'hostid')
+				);
+		}
+
+		if(count($add_to) > 0 || count($delete_from) > 0)
+		{
+			$popup_menu_actions[] = array(S_GROUPS, null, null,
+			array('outer'=> array('pum_oheader'), 'inner'=>array('pum_iheader')));
+		}
+		if(count($add_to) > 0)
+		{
+			$popup_menu_actions[] = array_merge(array(S_ADD_TO_GROUP, null, null, 
+			array('outer' => 'pum_o_submenu', 'inner'=>array('pum_i_submenu'))), $add_to);
+		}
+		if(count($delete_from) > 0)
+		{
+			$popup_menu_actions[] = array_merge(array(S_DELETE_FROM_GROUP, null, null, 
+			array('outer' => 'pum_o_submenu', 'inner'=>array('pum_i_submenu'))), $delete_from);
+		}
+
+		$mnuActions = new CPUMenu($popup_menu_actions);
+
+		$show = new CLink($link_text, '#', 'action', $mnuActions->GetOnActionJS());
+
+		return $show;
+	}
 ?>

@@ -745,9 +745,6 @@ include_once "include/page_header.php";
 		
 			while($row=DBfetch($result))
 			{
-				$add_to = array();
-				$delete_from = array();
-
 				$templates = get_templates_by_hostid($row["hostid"]);
 				
 				$host=new CCol(array(
@@ -816,54 +813,13 @@ include_once "include/page_header.php";
 					$site = $row["sitename"];
 				}
 
-				$popup_menu_actions = array(
-					array(S_SHOW, null, null, array('outer'=> array('pum_oheader'), 'inner'=>array('pum_iheader'))),
-					array(S_ITEMS, 'items.php?hostid='.$row['hostid'], array('tw'=>'_blank')),
-					array(S_TRIGGERS, 'triggers.php?hostid='.$row['hostid'], array('tw'=>'_blank')),
-					array(S_GRAPHS, 'graphs.php?hostid='.$row['hostid'], array('tw'=>'_blank')),
-					);
+				$show = host_js_menu($row["hostid"]);
 
-				$db_groups = DBselect('select g.groupid, g.name from groups g left join hosts_groups hg '.
-						' on g.groupid=hg.groupid and hg.hostid='.$row['hostid'].
-						' where hostid is NULL order by g.name,g.groupid');
-				while($group_data = DBfetch($db_groups))
+				$templates_linked = array();
+				foreach(array_keys($templates) as $templateid)
 				{
-					$add_to[] = array($group_data['name'], '?'.
-							url_param($group_data['groupid'], false, 'add_to_group').
-							url_param($row['hostid'], false, 'hostid')
-							);
+					$templates_linked[$templateid] = host_js_menu($templateid, $templates[$templateid])->ToString();
 				}
-
-				$db_groups = DBselect('select g.groupid, g.name from groups g, hosts_groups hg '.
-						' where g.groupid=hg.groupid and hg.hostid='.$row['hostid'].
-						' order by g.name,g.groupid');
-				while($group_data = DBfetch($db_groups))
-				{
-					$delete_from[] = array($group_data['name'], '?'.
-							url_param($group_data['groupid'], false, 'delete_from_group').
-							url_param($row['hostid'], false, 'hostid')
-							);
-				}
-
-				if(count($add_to) > 0 || count($delete_from) > 0)
-				{
-					$popup_menu_actions[] = array(S_GROUPS, null, null,
-						array('outer'=> array('pum_oheader'), 'inner'=>array('pum_iheader')));
-				}
-				if(count($add_to) > 0)
-				{
-					$popup_menu_actions[] = array_merge(array(S_ADD_TO_GROUP, null, null, 
-						array('outer' => 'pum_o_submenu', 'inner'=>array('pum_i_submenu'))), $add_to);
-				}
-				if(count($delete_from) > 0)
-				{
-					$popup_menu_actions[] = array_merge(array(S_DELETE_FROM_GROUP, null, null, 
-						array('outer' => 'pum_o_submenu', 'inner'=>array('pum_i_submenu'))), $delete_from);
-				}
-
-				$mnuActions = new CPUMenu($popup_menu_actions);
-
-				$show = new CLink(S_SELECT, '#', 'action', $mnuActions->GetOnActionJS());
 
 				$table->addRow(array(
 					$host,
@@ -871,7 +827,7 @@ include_once "include/page_header.php";
 					$ip,
 					$port,
 					$site,
-					implode(', ',$templates),
+					implode(", ", $templates_linked),
 					$status,
 					$available,
 					$error,
