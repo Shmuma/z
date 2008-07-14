@@ -389,7 +389,9 @@ static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64
                     goto err_exit;
                 if (read (fd, &trend, sizeof (trend)) != sizeof (trend))
                     goto err_exit;
-                recalculate_trend ((hfs_trend_t*)value, trend, type);
+                /* if value is not valid (fff's, in our case), calculate trends from scratch */
+                if (is_valid_val (&trend, sizeof (trend)))
+                    recalculate_trend ((hfs_trend_t*)value, trend, type);
                 if (xlseek (p_data, fd, meta->last_ofs, SEEK_SET) == -1)
                     goto err_exit;
             }
