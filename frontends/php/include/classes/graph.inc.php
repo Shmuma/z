@@ -990,7 +990,7 @@
 					$to_time	= $this->to_time;
 				}
 
-				if (zbx_hfs_available) {
+				if (zbx_hfs_available()) {
 					$curr_data = &$this->data[$this->items[$i]["itemid"]][$type];
 					$curr_data->count = NULL;
 					$curr_data->min = NULL;

@@ -1541,6 +1541,18 @@ HFSread_item (const char *hfs_base_dir, const char* siteid,
 
 			count++;
     		}
+                /*
+		  Data file have N records with delay=5:
+		    N-1: ts = 1215999990
+		    N-0: ts = 1215999995
+		    EOF: ts = 1216000000
+
+		  So we jump over one meta block:
+		    (ts = get_next_data_ts (1216000000)) = 1217000000
+
+		  To prevent it we decrement ts before get_next_data_ts() call.
+		*/
+		ts -= ip->delay;
 nextloop:
 		if (fd != -1 && close(fd) == -1)
 			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: close(): %s", p_data, strerror(errno));
