@@ -793,8 +793,8 @@ include_once "include/page_header.php";
 				if (is_object ($hfs_stderr))
 					$db_item["stderr"] = $hfs_stderr->stderr;
 			}
-			if (trim($db_item["error"]) != "" && trim($db_item["stderr"]) != "")
-				$db_item["error"] = $db_item["error"] . "[" . $db_item["stderr"] . "]";
+			if (trim($db_item["stderr"]) != "")
+				$db_item["error"] = ($db_item["error"] ? $db_item["error"] : "") . "[" . $db_item["stderr"] . "]";
 
 			$status=new CCol(new CLink(item_status2str($db_item["status"]),
 				"?group_itemid%5B%5D=".$db_item["itemid"].
