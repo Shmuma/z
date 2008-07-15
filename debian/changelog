@@ -1,3 +1,11 @@
+zabbix (1:1.4.4-yandex-lenny6) unstable; urgency=low
+
+  * Fixed host status not updated in HFS
+  * Fixed bug when HFS graphs read only part of data
+  * Fixed display of stderr when error message is empty
+
+ -- Max Lapan <lapan@yandex-team.ru>  Tue, 15 Jul 2008 13:08:06 +0400
+
 zabbix (1:1.4.4-yandex-lenny5) unstable; urgency=low
 
   * Fixed bug with trends calculation
