@@ -1,6 +1,6 @@
 #!/bin/sh
 
-case ${1:incorrect} in
+case ${1:-incorrect} in
     sarge|etch|lenny|feisty)
         ;;
     *)
