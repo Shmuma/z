@@ -1,10 +1,10 @@
 #!/bin/sh
 
-case ${1:incorrect} in
-    sarge|etch|lenny|feisty)
+case ${1:-incorrect} in
+    sarge|etch|lenny|feisty|gutsy|hardy)
         ;;
     *)
-        echo "You must specify valid distro as first argument (sarge, etch or lenny)"
+        echo "You must specify valid distro as first argument (sarge, etch, lenny, feisty, gutsy, hardy)"
         exit 1
 esac
 
@@ -14,4 +14,4 @@ DIR=$(dirname $0)
 VER=$(cat $DIR/control | grep -e '^Version:' | head -n 1 | cut -d ' ' -f 2)
 
 [ a$VER = a ] && ( echo Not found version tag in control file. Failed.; exit 1 )
-cat $DIR/changelog | sed "1s/(.*)/(1:$VER)/" > $DIR/changelog.new && mv $DIR/changelog.new $DIR/changelog
+cat $DIR/changelog | sed "1s/(.*) unstable/(1:$VER)/ $1" > $DIR/changelog.new && mv $DIR/changelog.new $DIR/changelog

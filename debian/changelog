@@ -1,4 +1,4 @@
-zabbix (1:1.4.4-yandex-lenny6) unstable; urgency=low
+zabbix (1:1.4.4-yandex-foo6) unstable; urgency=low
 
   * Fixed host status not updated in HFS
   * Fixed bug when HFS graphs read only part of data
@@ -6,32 +6,32 @@ zabbix (1:1.4.4-yandex-lenny6) unstable; urgency=low
 
  -- Max Lapan <lapan@yandex-team.ru>  Tue, 15 Jul 2008 13:08:06 +0400
 
-zabbix (1:1.4.4-yandex-lenny5) unstable; urgency=low
+zabbix (1:1.4.4-yandex-foo5) unstable; urgency=low
 
   * Fixed bug with trends calculation
 
  -- Max Lapan <lapan@yandex-team.ru>  Mon, 14 Jul 2008 15:57:08 +0400
 
-zabbix (1:1.4.4-yandex-lenny4) unstable; urgency=low
+zabbix (1:1.4.4-yandex-foo4) unstable; urgency=low
 
   * Further HFS fixes.
 
  -- Max Lapan <lapan@yandex-team.ru>  Wed, 09 Jul 2008 16:31:43 +0400
 
-zabbix (1:1.4.4-yandex-lenny3) unstable; urgency=low
+zabbix (1:1.4.4-yandex-foo3) unstable; urgency=low
 
   * HFS
 
  -- Max Lapan <lapan@yandex-team.ru>  Thu, 03 Jul 2008 18:45:06 +0400
 
-zabbix (1:1.4.4-yandex-lenny2) unstable; urgency=low
+zabbix (1:1.4.4-yandex-foo2) unstable; urgency=low
 
   * Fixed bug with restart error.
   * Implemented dynamic server reconfiguration.
 
  -- Max Lapan <lapan@yandex-team.ru>  Mon, 30 Jun 2008 18:11:01 +0400
 
-zabbix (1:1.4.4-yandex-lenny1) unstable; urgency=high
+zabbix (1:1.4.4-yandex-foo1) unstable; urgency=high
 
   [ Michael Ablassmeier ]
   * Fixed remote DoS (CVE-2008-1353) Closes: #471678
