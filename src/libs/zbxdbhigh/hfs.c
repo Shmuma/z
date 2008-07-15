@@ -356,7 +356,7 @@ static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64
             eextra = (ip->end - ip->start) / delay - (meta->last_ofs - ip->ofs) / len;
 
             if (eextra > 0) {
-                zabbix_log(LOG_LEVEL_CRIT, "HFS: there is disagree of time-based items count with offset based. Perform alignment. Count=%d", eextra);
+                zabbix_log(LOG_LEVEL_DEBUG, "HFS: there is disagree of time-based items count with offset based. Perform alignment. Count=%d", eextra);
 		for (i = 0; i < eextra; i++)
 		    for (j = 0; j < len; j++) {
 			if (xwrite (p_data, fd, &v, sizeof (v)) == -1)
