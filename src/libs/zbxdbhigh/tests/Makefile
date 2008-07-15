@@ -15,7 +15,10 @@ STATIC_LIBS = \
 	../../zbxsys/libzbxsys.a \
 	-lm
 
-all:
+dumper: dumper.c
+	$(CC) -O0 -g -o dumper dumper.c 
+
+all: dumper
 	$(CC) -O0 -g -I../../../../include -o hfs-test hfs-test.c $(STATIC_LIBS)
 #	$(CC) -O0 -g -I../../../../include -o hfs-count hfs-count.c $(STATIC_LIBS)
 	$(CC) -O0 -g -I../../../../include -o hfs-str hfs-str.c $(STATIC_LIBS)
