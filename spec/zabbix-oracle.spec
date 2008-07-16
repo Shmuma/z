@@ -24,7 +24,7 @@ zabbix is a network monitor.
 %package -n zabbix-phpfrontend
 Summary: Zabbix web frontend (php).
 Group: System Environment/Daemons
-Requires: php
+Requires: php php-common php-oci8 php-gd php-bcmath php-cli
 
 %description -n zabbix-phpfrontend
 A php frontent to zabbix.
