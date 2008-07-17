@@ -9,3 +9,4 @@ sbin/zabbix_agent
 sbin/zabbix_agentd
 sbin/zabbix_get
 sbin/zabbix_sender
+sbin/zabbix-rebase-server
