@@ -29,24 +29,6 @@
 #  define ULLONG_MAX    18446744073709551615ULL
 # endif
 
-inline int is_trend_type (item_type_t type)
-{
-    switch (type) {
-    case IT_DOUBLE:
-    case IT_UINT64:
-        return 0;
-
-    case IT_TRENDS_DOUBLE:
-    case IT_TRENDS_UINT64:
-        return 1;
-
-    default:
-        return 0;
-    }
-}
-
-
-
 /*
   Routine adds double value to HistoryFS storage.
 */
