@@ -67,7 +67,7 @@ typedef enum {
 	NK_Alert,
 } name_kind_t;
 
-
+static hfs_meta_t *read_metafile (const char *metafile);
 static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int trend);
 static void free_meta (hfs_meta_t* meta);
 static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, name_kind_t kind);
@@ -664,61 +664,62 @@ static void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint6
     }
 }
 
+static hfs_meta_t *read_metafile(const char *metafile)
+{
+	hfs_meta_t *res;
+	FILE *f;
+
+	if (!metafile)
+		return NULL;
+
+	if ((res = (hfs_meta_t *) malloc(sizeof(hfs_meta_t))) == NULL)
+		return NULL;
+
+	/* if we have no file, create empty one */
+	if ((f = fopen(metafile, "rb")) == NULL) {
+		zabbix_log(LOG_LEVEL_DEBUG, "%s: file open failed: %s",
+			   metafile, strerror(errno));
+		res->blocks = 0;
+		res->last_delay = 0;
+		res->last_type = IT_DOUBLE;
+		res->last_ofs = 0;
+		res->meta = NULL;
+		return res;
+	}
+
+	if (fread(&res->blocks, sizeof(res->blocks), 1, f) != 1 ||
+	    fread(&res->last_delay, sizeof(res->last_delay), 1, f) != 1 ||
+	    fread(&res->last_type, sizeof(res->last_type), 1, f) != 1 ||
+	    fread(&res->last_ofs, sizeof(res->last_ofs), 1, f) != 1)
+	{
+		fclose(f);
+		free(res);
+		return NULL;
+	}
+
+	res->meta = (hfs_meta_item_t *) malloc(sizeof(hfs_meta_item_t)*res->blocks);
+
+        if (!res->meta) {
+		fclose (f);
+		free (res);
+		return NULL;
+	}
+
+        fread (res->meta, sizeof (hfs_meta_item_t), res->blocks, f);
+	fclose (f);
+	return res;
+}
+
 static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int trend)
 {
     char* path = get_name (hfs_base_dir, siteid, itemid, clock, trend ? NK_TrendItemMeta : NK_ItemMeta);
     hfs_meta_t* res;
-    FILE* f;
 
-    if (!path)
-	return NULL;
-
-    res = (hfs_meta_t*)malloc (sizeof (hfs_meta_t));
-
-    if (!res) {
-	free (path);
-	return NULL;
-    }
-
-    /* if we have no file, create empty one */
-    if ((f = fopen (path, "rb")) == NULL) {
-	zabbix_log(LOG_LEVEL_DEBUG, "%s: file open failed: %s", path, strerror(errno));
-	res->blocks = 0;
-	res->last_delay = 0;
-	res->last_type = IT_DOUBLE;
-	res->last_ofs = 0;
-	res->meta = NULL;
-	free (path);
-	return res;
-    }
-
-    free (path);
-
-    if (fread (&res->blocks, sizeof (res->blocks), 1, f) != 1 ||
-	fread (&res->last_delay, sizeof (res->last_delay), 1, f) != 1 ||
-	fread (&res->last_type, sizeof (res->last_type), 1, f) != 1 ||
-	fread (&res->last_ofs, sizeof (res->last_ofs), 1, f) != 1)
-    {
-	fclose (f);
-	free (res);
-	return NULL;
-    }
-
-    res->meta = (hfs_meta_item_t*)malloc (sizeof (hfs_meta_item_t)*res->blocks);
-
-    if (!res->meta) {
-	fclose (f);
-	free (res);
-	return NULL;
-    }
-
-    fread (res->meta, sizeof (hfs_meta_item_t), res->blocks, f);
-
-    fclose (f);
+    res = read_metafile(path);
+    free(path);
 
     return res;
 }
-
 
 static void free_meta (hfs_meta_t* meta)
 {
