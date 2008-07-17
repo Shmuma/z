@@ -39,6 +39,8 @@ static int
 parse_cfg_object(const char *cfg_file,struct cfg_line *cfg)
 {
 	DIR *dir;
+	size_t cfg_len;
+	char *path;
 	struct stat sb;
 	struct dirent *d;
 	int result = SUCCEED;
@@ -57,10 +59,24 @@ parse_cfg_object(const char *cfg_file,struct cfg_line *cfg)
 	}
 
 	while((d = readdir(dir)) != NULL) {
-		if (d->d_type == DT_REG && parse_cfg_file(d->d_name, cfg) == FAIL) {
+		if (d->d_name[0] == '.') {
+			continue;
+		}
+		cfg_len = strlen(cfg_file) + strlen(d->d_name) + 2;
+		path = (char *) malloc(sizeof(char) * cfg_len);
+
+		if (path == NULL) {
 			result = FAIL;
 			break;
 		}
+		zbx_snprintf(path, cfg_len, "%s/%s", cfg_file, d->d_name);
+
+		if (d->d_type == DT_REG && parse_cfg_file(path, cfg) == FAIL) {
+			result = FAIL;
+			free(path);
+			break;
+		}
+		free(path);
 	}
 
 	if (closedir(dir) == -1) {
@@ -89,11 +105,10 @@ parse_cfg_object(const char *cfg_file,struct cfg_line *cfg)
  * Comments:                                                                  *
  *                                                                            *
  ******************************************************************************/
+int level = 0;
 int	parse_cfg_file(const char *cfg_file,struct cfg_line *cfg)
 {
 	FILE	*file;
-
-	static int level = 0;
 
 #define ZBX_MAX_INCLUDE_LEVEL 10
 
@@ -113,6 +128,7 @@ int	parse_cfg_file(const char *cfg_file,struct cfg_line *cfg)
 	int	result = SUCCEED;
 
 	assert(cfg);
+//	printf("%d %s\n", level, cfg_file);
 
 	if(++level > ZBX_MAX_INCLUDE_LEVEL)
 	{
@@ -201,22 +217,26 @@ int	parse_cfg_file(const char *cfg_file,struct cfg_line *cfg)
 			fclose(file);
 		}
 	}
+	level--;
 
 	/* Check for mandatory parameters */
-	for(i = 0; cfg[i].parameter != 0; i++)
-	{
-		if(PARM_MAND != cfg[i].mandatory)
-			continue;
+	if (level == 0) {
+//		printf("here: %s\n", cfg_file);
+		for(i = 0; cfg[i].parameter != 0; i++)
+		{
+			if(PARM_MAND != cfg[i].mandatory)
+				continue;
 
-		if(TYPE_INT == cfg[i].type)
-		{
-			if(*((int*)cfg[i].variable) == 0)
-				goto lbl_missing_mandatory;
-		}
-		else if(TYPE_STRING == cfg[i].type)
-		{
-			if((*(char **)cfg[i].variable) == NULL)
-				goto lbl_missing_mandatory;
+			if(TYPE_INT == cfg[i].type)
+			{
+				if(*((int*)cfg[i].variable) == 0)
+					goto lbl_missing_mandatory;
+			}
+			else if(TYPE_STRING == cfg[i].type)
+			{
+				if((*(char **)cfg[i].variable) == NULL)
+					goto lbl_missing_mandatory;
+			}
 		}
 	}
 
