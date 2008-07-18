@@ -29,7 +29,7 @@
 #  define ULLONG_MAX    18446744073709551615ULL
 # endif
 
-inline int is_trend_type (item_type_t type)
+int is_trend_type (item_type_t type)
 {
     switch (type) {
     case IT_DOUBLE:
@@ -44,8 +44,6 @@ inline int is_trend_type (item_type_t type)
         return 0;
     }
 }
-
-
 
 /*
   Routine adds double value to HistoryFS storage.
@@ -637,14 +635,19 @@ hfs_meta_t *read_metafile(const char *metafile)
 	}
 
 	res->meta = (hfs_meta_item_t *) malloc(sizeof(hfs_meta_item_t)*res->blocks);
-
         if (!res->meta) {
 		fclose (f);
 		free (res);
 		return NULL;
 	}
 
-        fread (res->meta, sizeof (hfs_meta_item_t), res->blocks, f);
+        if (fread (res->meta, sizeof (hfs_meta_item_t), res->blocks, f) != res->blocks) {
+		fclose(f);
+		free(res->meta);
+		free(res);
+		return NULL;
+	}
+
 	fclose (f);
 	return res;
 }
@@ -652,9 +655,7 @@ hfs_meta_t *read_metafile(const char *metafile)
 hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int trend)
 {
     char* path = get_name (hfs_base_dir, siteid, itemid, clock, trend ? NK_TrendItemMeta : NK_ItemMeta);
-    hfs_meta_t* res;
-
-    res = read_metafile(path);
+    hfs_meta_t* res = read_metafile(path);
     free(path);
 
     return res;
