@@ -33,24 +33,9 @@ typedef enum {
 	NK_Alert,
 } name_kind_t;
 
-inline int is_trend_type (item_type_t type)
-{
-    switch (type) {
-    case IT_DOUBLE:
-    case IT_UINT64:
-        return 0;
-
-    case IT_TRENDS_DOUBLE:
-    case IT_TRENDS_UINT64:
-        return 1;
-
-    default:
-        return 0;
-    }
-}
-
 typedef void (*fold_fn_t) (void* db_val, void* state);
 
+int is_trend_type (item_type_t type);
 int make_directories (const char* path);
 hfs_meta_t* read_metafile (const char* metafile);
 hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int trend);
