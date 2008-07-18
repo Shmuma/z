@@ -907,6 +907,7 @@ AC_OUTPUT([
 	src/libs/zbxcrypto/Makefile
 	src/libs/zbxconf/Makefile
 	src/libs/zbxdbhigh/Makefile
+	src/libs/zbxdbhigh/utils/Makefile
 	src/libs/zbxemail/Makefile
 	src/libs/zbxsysinfo/Makefile
 	src/libs/zbxsms/Makefile
