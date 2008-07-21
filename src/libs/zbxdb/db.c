@@ -394,9 +394,10 @@ int zbx_db_vexecute(const char *fmt, va_list args)
 	{
 		if(mysql_query(conn,sql) != 0)
 		{
+			unsigned int m_errno = mysql_errno(conn);
 			zabbix_log(LOG_LEVEL_ERR, "Query failed: [%s] %s [%d]",
-				sql, mysql_error(conn), mysql_errno(conn) );
-			switch(mysql_errno(conn)) {
+				sql, mysql_error(conn), m_errno);
+			switch(m_errno) {
 				case	CR_SERVER_GONE_ERROR:
 				case	CR_CONNECTION_ERROR:
 				case	CR_SERVER_LOST:
@@ -408,6 +409,7 @@ int zbx_db_vexecute(const char *fmt, va_list args)
 					ret = ZBX_DB_FAIL;
 					break;
 			}
+			zabbix_log (LOG_LEVEL_ERR, "Query routine returning %d", ret);
 		}
 		else
 		{
