@@ -17,6 +17,7 @@ done
 ssh ztop1<<'EOF'
 cd rpm
 rpmbuild -ba */spec/zabbix-oracle.spec > log.txt 2>&1
+rpmbuild -ba */spec/zabbix-conf-zabbix.spec > log-conf-zabbix.txt 2>&1
 EOF
 
 for host in zab1 dfs2; do
