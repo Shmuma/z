@@ -480,20 +480,24 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 				if(item->value_type==ITEM_VALUE_TYPE_UINT64)
 				{
 					if(GET_UI64_RESULT(value))
-						DBadd_history_uint(item->itemid,value->ui64,now);
 						if (CONFIG_HFS_PATH) {
 							HFSadd_history_uint (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay, value->ui64, now);
 							HFSadd_trend_uint (CONFIG_HFS_PATH, item->siteid, item->itemid, value->ui64, now);
 						}
+						else
+							DBadd_history_uint(item->itemid,value->ui64,now);
+
 				}
 				else if(item->value_type==ITEM_VALUE_TYPE_FLOAT)
 				{
 					if(GET_DBL_RESULT(value))
-						DBadd_history(item->itemid,value->dbl,now);
 						if (CONFIG_HFS_PATH) {
 							HFSadd_history (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay, value->dbl, now);
 							HFSadd_trend (CONFIG_HFS_PATH, item->siteid, item->itemid, value->dbl, now);
 						}
+						else
+							DBadd_history(item->itemid,value->dbl,now);
+
 				}
 			}
 			/* Delta as speed of change */
@@ -504,32 +508,33 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 				{
 					if(GET_DBL_RESULT(value) && (item->prevorgvalue_null == 0) && (item->prevorgvalue_dbl <= value->dbl) && (now != item->lastclock))
 					{
-						DBadd_history(item->itemid,
-							      (value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock),
-							      now);
-
 						if (CONFIG_HFS_PATH) {
 							HFSadd_history (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay,
 									(value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock), now);
 							HFSadd_trend (CONFIG_HFS_PATH, item->siteid, item->itemid,
 								      (value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock), now);
 						}
+						else
+							DBadd_history(item->itemid,
+								      (value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock),
+								      now);
 					}
 				}
 				else if( ITEM_VALUE_TYPE_UINT64 == item->value_type )
 				{
 					if(GET_UI64_RESULT(value) && (item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= value->ui64) && (now != item->lastclock))
 					{
-						DBadd_history_uint(
-							item->itemid,
-							(zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64)/(now-item->lastclock),
-							now);
 						if (CONFIG_HFS_PATH) {
 							HFSadd_history_uint (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay,
 								(value->ui64 - item->prevorgvalue_uint64)/(now-item->lastclock), now);
 							HFSadd_trend_uint (CONFIG_HFS_PATH, item->siteid, item->itemid,
 									   (value->ui64 - item->prevorgvalue_uint64)/(now-item->lastclock), now);
 						}
+						else
+							DBadd_history_uint(
+									   item->itemid,
+									   (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64)/(now-item->lastclock),
+									   now);
 					}
 				}
 			}
@@ -541,24 +546,26 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 				{
 					if(GET_DBL_RESULT(value) && (item->prevorgvalue_null == 0) && (item->prevorgvalue_dbl <= value->dbl) )
 					{
-						DBadd_history(item->itemid, (value->dbl - item->prevorgvalue_dbl), now);
 						if (CONFIG_HFS_PATH) {
 							HFSadd_history (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay, value->dbl-item->prevorgvalue_dbl, now);
 							HFSadd_trend (CONFIG_HFS_PATH, item->siteid, item->itemid, value->dbl-item->prevorgvalue_dbl, now);
 						}
+						else
+							DBadd_history(item->itemid, (value->dbl - item->prevorgvalue_dbl), now);
 					}
 				}
 				else if(item->value_type==ITEM_VALUE_TYPE_UINT64)
 				{
 					if(GET_UI64_RESULT(value) && (item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= value->ui64) )
 					{
-						DBadd_history_uint(item->itemid, value->ui64 - item->prevorgvalue_uint64, now);
 						if (CONFIG_HFS_PATH) {
 							HFSadd_history_uint (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay,
 								value->ui64-item->prevorgvalue_uint64, now);
 							HFSadd_trend_uint (CONFIG_HFS_PATH, item->siteid, item->itemid,
 									   value->ui64-item->prevorgvalue_uint64, now);
 						}
+						else
+							DBadd_history_uint(item->itemid, value->ui64 - item->prevorgvalue_uint64, now);
 					}
 				}
 			}
@@ -576,10 +583,10 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 		else if(item->value_type==ITEM_VALUE_TYPE_STR)
 		{
 			if(GET_STR_RESULT(value)) {
-				DBadd_history_str(item->itemid,value->str,now);
-				if (CONFIG_HFS_PATH) {
+				if (CONFIG_HFS_PATH)
 					HFSadd_history_str (CONFIG_HFS_PATH, item->siteid, item->itemid, now, value->str);
-				}
+				else
+					DBadd_history_str(item->itemid,value->str,now);
 			}
 		}
 		else if(item->value_type==ITEM_VALUE_TYPE_LOG)

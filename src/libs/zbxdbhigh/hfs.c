@@ -20,93 +20,14 @@
 #include "common.h"
 #include "log.h"
 #include "hfs.h"
+#include "hfs_internal.h"
 
 #include <unistd.h>
 #include <fcntl.h>
 
-
 # ifndef ULLONG_MAX
 #  define ULLONG_MAX    18446744073709551615ULL
 # endif
-
-
-#define HFS_TRENDS_INTERVAL 3600
-
-static int make_directories (const char* path);
-
-/* internal structures */
-typedef struct hfs_meta_item {
-    time_t start, end;
-    int delay;
-    item_type_t type;
-    off_t ofs;
-} hfs_meta_item_t;
-
-
-typedef struct hfs_meta {
-    int blocks;
-    int last_delay;
-    item_type_t last_type;
-    off_t last_ofs;
-    hfs_meta_item_t* meta;
-} hfs_meta_t;
-
-typedef void (*fold_fn_t) (void* db_val, void* state);
-
-typedef enum {
-	NK_ItemData,
-	NK_ItemMeta,
-	NK_TrendItemData,
-	NK_TrendItemMeta,
-	NK_HostState,
-	NK_ItemValues,
-	NK_ItemStatus,
-	NK_ItemStderr,
-	NK_ItemString,
-	NK_TriggerStatus,
-	NK_Alert,
-} name_kind_t;
-
-
-static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int trend);
-static void free_meta (hfs_meta_t* meta);
-static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, name_kind_t kind);
-static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len, item_type_t type);
-static int store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, const char* value, item_type_t type);
-static off_t find_meta_ofs (int time, hfs_meta_t* meta);
-static int get_next_data_ts (int ts);
-static int get_prev_data_ts (int ts);
-static void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int ts, void* init_res, fold_fn_t fn);
-static void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, void* init_res, fold_fn_t fn);
-static int is_valid_val (void* val, size_t len);
-
-static int obtain_lock (int fd, int write);
-static int release_lock (int fd, int write);
-
-static void write_str (int fd, const char* str);
-static char* read_str (int fd);
-
-static void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t type);
-
-
-
-inline int is_trend_type (item_type_t type)
-{
-    switch (type) {
-    case IT_DOUBLE:
-    case IT_UINT64:
-        return 0;
-
-    case IT_TRENDS_DOUBLE:
-    case IT_TRENDS_UINT64:
-        return 1;
-
-    default:
-        return 0;
-    }
-}
-
-
 
 /*
   Routine adds double value to HistoryFS storage.
@@ -161,7 +82,7 @@ void HFSadd_trend_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64
 
 
 
-static void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t type)
+void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t type)
 {
     new->count += old.count;
 
@@ -188,14 +109,14 @@ static void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t ty
 
 
 
-static void *xfree(void *ptr)
+void *xfree(void *ptr)
 {
 	if (ptr != NULL)
 		free(ptr);
 	return NULL;
 }
 
-static int xopen(char *fn, int flags, mode_t mode)
+int xopen(char *fn, int flags, mode_t mode)
 {
 	int retval;
 	if ((retval = open(fn, flags, mode)) == -1)
@@ -203,7 +124,7 @@ static int xopen(char *fn, int flags, mode_t mode)
 	return retval;
 }
 
-static int xclose(char *fn, int fd)
+int xclose(char *fn, int fd)
 {
 	int rc;
 	if ((rc = close(fd)) == -1)
@@ -211,7 +132,7 @@ static int xclose(char *fn, int fd)
 	return rc;
 }
 
-static ssize_t xwrite(char *fn, int fd, const void *buf, size_t count)
+ssize_t xwrite(char *fn, int fd, const void *buf, size_t count)
 {
 	ssize_t rc;
 	if ((rc = write(fd, buf, count)) == -1) {
@@ -221,7 +142,7 @@ static ssize_t xwrite(char *fn, int fd, const void *buf, size_t count)
 	return rc;
 }
 
-static off_t xlseek(char *fn, int fd, off_t offset, int whence)
+off_t xlseek(char *fn, int fd, off_t offset, int whence)
 {
 	off_t rc;
 	if ((rc = lseek(fd, offset, whence)) == -1) {
@@ -233,7 +154,7 @@ static off_t xlseek(char *fn, int fd, off_t offset, int whence)
 	return rc;
 }
 
-static int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len, item_type_t type)
+int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len, item_type_t type)
 {
     char *p_meta = NULL, *p_data = NULL;
     hfs_meta_item_t item, *ip;
@@ -440,7 +361,7 @@ err_exit:
 
 
 
-static int make_directories (const char* path)
+int make_directories (const char* path)
 {
     /* parse path */
     const char *p = path, *pp;
@@ -575,7 +496,7 @@ char* read_str (int fd)
 /*
   Performs folding of values of historical data into some state. We filter values according to time.
 */
-static void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int ts, void* init_res, fold_fn_t fn)
+void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int ts, void* init_res, fold_fn_t fn)
 {
     char *p_data;
     hfs_meta_t* meta;
@@ -618,7 +539,7 @@ static void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64
     }
 }
 
-static int is_valid_val (void* val, size_t len)
+int is_valid_val (void* val, size_t len)
 {
     int i;
     for (i = 0; i < len; i++)
@@ -630,7 +551,7 @@ static int is_valid_val (void* val, size_t len)
 /*
   Performs folding of values of historical data into some state. We filter values according to count of values.
 */
-static void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, void* init_res, fold_fn_t fn)
+void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, void* init_res, fold_fn_t fn)
 {
     char *p_data;
     int fd, ts = time (NULL)-1;
@@ -664,63 +585,64 @@ static void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint6
     }
 }
 
-static hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int trend)
+hfs_meta_t *read_metafile(const char *metafile)
+{
+	hfs_meta_t *res;
+	FILE *f;
+
+	if (!metafile)
+		return NULL;
+
+	if ((res = (hfs_meta_t *) malloc(sizeof(hfs_meta_t))) == NULL)
+		return NULL;
+
+	/* if we have no file, create empty one */
+	if ((f = fopen(metafile, "rb")) == NULL) {
+		zabbix_log(LOG_LEVEL_DEBUG, "%s: file open failed: %s",
+			   metafile, strerror(errno));
+		res->blocks = 0;
+		res->last_delay = 0;
+		res->last_type = IT_DOUBLE;
+		res->last_ofs = 0;
+		res->meta = NULL;
+		return res;
+	}
+
+	if (fread(&res->blocks, sizeof(res->blocks), 1, f) != 1 ||
+	    fread(&res->last_delay, sizeof(res->last_delay), 1, f) != 1 ||
+	    fread(&res->last_type, sizeof(res->last_type), 1, f) != 1 ||
+	    fread(&res->last_ofs, sizeof(res->last_ofs), 1, f) != 1)
+	{
+		fclose(f);
+		free(res);
+		return NULL;
+	}
+
+	res->meta = (hfs_meta_item_t *) malloc(sizeof(hfs_meta_item_t)*res->blocks);
+
+        if (!res->meta) {
+		fclose (f);
+		free (res);
+		return NULL;
+	}
+
+        fread (res->meta, sizeof (hfs_meta_item_t), res->blocks, f);
+	fclose (f);
+	return res;
+}
+
+hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int trend)
 {
     char* path = get_name (hfs_base_dir, siteid, itemid, clock, trend ? NK_TrendItemMeta : NK_ItemMeta);
     hfs_meta_t* res;
-    FILE* f;
 
-    if (!path)
-	return NULL;
-
-    res = (hfs_meta_t*)malloc (sizeof (hfs_meta_t));
-
-    if (!res) {
-	free (path);
-	return NULL;
-    }
-
-    /* if we have no file, create empty one */
-    if ((f = fopen (path, "rb")) == NULL) {
-	zabbix_log(LOG_LEVEL_DEBUG, "%s: file open failed: %s", path, strerror(errno));
-	res->blocks = 0;
-	res->last_delay = 0;
-	res->last_type = IT_DOUBLE;
-	res->last_ofs = 0;
-	res->meta = NULL;
-	free (path);
-	return res;
-    }
-
-    free (path);
-
-    if (fread (&res->blocks, sizeof (res->blocks), 1, f) != 1 ||
-	fread (&res->last_delay, sizeof (res->last_delay), 1, f) != 1 ||
-	fread (&res->last_type, sizeof (res->last_type), 1, f) != 1 ||
-	fread (&res->last_ofs, sizeof (res->last_ofs), 1, f) != 1)
-    {
-	fclose (f);
-	free (res);
-	return NULL;
-    }
-
-    res->meta = (hfs_meta_item_t*)malloc (sizeof (hfs_meta_item_t)*res->blocks);
-
-    if (!res->meta) {
-	fclose (f);
-	free (res);
-	return NULL;
-    }
-
-    fread (res->meta, sizeof (hfs_meta_item_t), res->blocks, f);
-
-    fclose (f);
+    res = read_metafile(path);
+    free(path);
 
     return res;
 }
 
-
-static void free_meta (hfs_meta_t* meta)
+void free_meta (hfs_meta_t* meta)
 {
     if (!meta)
 	return;
@@ -732,7 +654,7 @@ static void free_meta (hfs_meta_t* meta)
 }
 
 
-static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, name_kind_t kind)
+char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, name_kind_t kind)
 {
     char* res;
     int len = strlen (hfs_base_dir) + strlen (siteid) + 100;
@@ -779,7 +701,7 @@ static char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_
 }
 
 
-static off_t find_meta_ofs (int time, hfs_meta_t* meta)
+off_t find_meta_ofs (int time, hfs_meta_t* meta)
 {
     int i;
     int f = 0;
@@ -803,13 +725,13 @@ static off_t find_meta_ofs (int time, hfs_meta_t* meta)
 }
 
 
-static int get_next_data_ts (int ts)
+int get_next_data_ts (int ts)
 {
     return (ts / 1000000 + 1) * 1000000;
 }
 
 
-static int get_prev_data_ts (int ts)
+int get_prev_data_ts (int ts)
 {
     return (ts / 1000000 - 1) * 1000000;
 }
@@ -1314,9 +1236,8 @@ double HFS_get_delta_float (const char* hfs_base_dir, const char* siteid, zbx_ui
     return state.max - state.min;
 }
 
-static int
-HFS_find_meta(const char *hfs_base_dir, const char* siteid, int trend,
-	    zbx_uint64_t itemid, time_t from_ts, hfs_meta_t **res)
+int HFS_find_meta(const char *hfs_base_dir, const char* siteid, int trend,
+                  zbx_uint64_t itemid, time_t from_ts, hfs_meta_t **res)
 {
 	int i, block = 0;
 	time_t ts = from_ts;
@@ -1379,8 +1300,7 @@ HFS_find_meta(const char *hfs_base_dir, const char* siteid, int trend,
 	return -1;
 }
 
-void
-HFS_init_trend_value(int is_trend, void *val, hfs_trend_t *res)
+void HFS_init_trend_value(int is_trend, void *val, hfs_trend_t *res)
 {
 	if (!is_trend) {
 		res->count = 1;
@@ -1394,13 +1314,12 @@ HFS_init_trend_value(int is_trend, void *val, hfs_trend_t *res)
 }
 
 //!!!!!!
-size_t
-HFSread_item (const char *hfs_base_dir, const char* siteid,
-	      int trend,		 zbx_uint64_t itemid,
-	      size_t sizex,
-	      time_t graph_from_ts,	time_t graph_to_ts,
-	      time_t from_ts,		time_t to_ts,
-	      hfs_item_value_t **result)
+size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
+                     int trend,            zbx_uint64_t itemid,
+                     size_t sizex,
+                     time_t graph_from_ts, time_t graph_to_ts,
+                     time_t from_ts,       time_t to_ts,
+                     hfs_item_value_t **result)
 {
 	void 		*val;
 	item_value_u 	 val_history;
@@ -1576,8 +1495,8 @@ nextloop:
 	return items;
 }
 
-int
-HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, void* init_res, read_count_fn_t fn)
+int HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
+                  int count, void* init_res, read_count_fn_t fn)
 {
 	int i;
 	char *p_data = NULL;

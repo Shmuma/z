@@ -20,3 +20,4 @@ CONF=/etc/zabbix/zabbix_agentd.conf
 PATH=/usr/bin:/usr/local/bin:$PATH
 
 cat $CONF | sed "s/^Hostname=.*$/Hostname=$NAME/" > $CONF.new && mv $CONF.new $CONF
+/sbin/zabbix-rebase-server

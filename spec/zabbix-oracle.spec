@@ -2,10 +2,10 @@
 
 Name: zabbix-oracle
 Version: 1.4.4
-Release: yandex_6
+Release: yandex_8
 Group: System Environment/Daemons
 License: GPL
-Source: %{realname}-%{version}_yandex6.tar.gz
+Source: %{realname}-%{version}_yandex8.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
 BuildPrereq: libsqlora8-devel, net-snmp-devel, setproctitle-devel, iksemel-devel, pkgconfig
 Requires: libsqlora8, net-snmp, setproctitle, iksemel
@@ -24,13 +24,13 @@ zabbix is a network monitor.
 %package -n zabbix-phpfrontend
 Summary: Zabbix web frontend (php).
 Group: System Environment/Daemons
-Requires: php
+Requires: php php-common php-oci8 php-gd php-bcmath php-cli
 
 %description -n zabbix-phpfrontend
 A php frontent to zabbix.
 
 %prep
-%setup -q -n %{realname}-%{version}_yandex6
+%setup -q -n %{realname}-%{version}_yandex8
 
 %build
 %configure --enable-server --with-oracle --with-jabber --with-net-snmp
