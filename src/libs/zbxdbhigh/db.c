@@ -166,8 +166,8 @@ int __zbx_DBexecute(const char *fmt, ...)
 		va_end(args);
 		if( ret == ZBX_DB_DOWN)
 		{
-			zabbix_log(LOG_LEVEL_DEBUG, "Database is down. Retrying in 10 seconds");
-			sleep(10);
+			zabbix_log(LOG_LEVEL_DEBUG, "Database is down. Retrying in 1 second");
+			sleep(1);
 			DBclose();
 			DBconnect(ZBX_DB_CONNECT_NORMAL);
 		}
