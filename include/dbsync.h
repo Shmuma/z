@@ -404,6 +404,7 @@ static	ZBX_TABLE	tables[]={
 		{"yaxistype",	ZBX_TYPE_INT,	ZBX_SYNC},
 		{"yaxismin",	ZBX_TYPE_FLOAT,	ZBX_SYNC},
 		{"yaxismax",	ZBX_TYPE_FLOAT,	ZBX_SYNC},
+		{"description",	ZBX_TYPE_TEXT,	ZBX_SYNC},
 		{"templateid",	ZBX_TYPE_ID,	ZBX_SYNC},
 		{"show_work_period",	ZBX_TYPE_INT,	ZBX_SYNC},
 		{"show_triggers",	ZBX_TYPE_INT,	ZBX_SYNC},

@@ -371,6 +371,7 @@ CREATE TABLE graphs (
 	yaxistype		integer		DEFAULT '0'	NOT NULL,
 	yaxismin		double(16,4)		DEFAULT '0'	NOT NULL,
 	yaxismax		double(16,4)		DEFAULT '0'	NOT NULL,
+	description		text		DEFAULT ''	NOT NULL,
 	templateid		bigint		DEFAULT '0'	NOT NULL,
 	show_work_period		integer		DEFAULT '1'	NOT NULL,
 	show_triggers		integer		DEFAULT '1'	NOT NULL,
