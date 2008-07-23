@@ -413,20 +413,20 @@
 		$el_type =& $db_element["elementtype"];
 
 		$sql = array(
-			SYSMAP_ELEMENT_TYPE_TRIGGER => 'select distinct t.triggerid, t.priority, t.value, t.description, t.expression, h.host '.
-				'from triggers t, items i, functions f, hosts h where t.triggerid='.$db_element['elementid'].
-				' and h.hostid=i.hostid and i.itemid=f.itemid and f.triggerid=t.triggerid '.
+			SYSMAP_ELEMENT_TYPE_TRIGGER => 'select distinct t.triggerid, t.priority, t.value, t.description, t.expression, h.host,  '.
+				' s.name as sitename from triggers t, items i, functions f, hosts h, sites s where t.triggerid='.$db_element['elementid'].
+				' and h.hostid=i.hostid and h.siteid=s.siteid and i.itemid=f.itemid and f.triggerid=t.triggerid '.
 				' and h.status='.HOST_STATUS_MONITORED.' and i.status='.ITEM_STATUS_ACTIVE,
 			SYSMAP_ELEMENT_TYPE_HOST_GROUP => 'select distinct t.triggerid, t.priority, t.value,'.
-				' t.description, t.expression, h.host, g.name as el_name '.
-				' from items i,functions f,triggers t,hosts h,hosts_groups hg,groups g '.
-				' where h.hostid=i.hostid and hg.groupid=g.groupid and g.groupid='.$db_element['elementid'].
+				' t.description, t.expression, h.host, s.name as sitename, g.name as el_name '.
+				' from items i,functions f,triggers t,hosts h,sites s,hosts_groups hg,groups g '.
+				' where h.hostid=i.hostid and s.siteid = h.siteid and hg.groupid=g.groupid and g.groupid='.$db_element['elementid'].
 				' and hg.hostid=h.hostid and i.itemid=f.itemid'.
 				' and f.triggerid=t.triggerid and t.status='.TRIGGER_STATUS_ENABLED.
 				' and h.status='.HOST_STATUS_MONITORED.' and i.status='.ITEM_STATUS_ACTIVE,
 			SYSMAP_ELEMENT_TYPE_HOST => 'select distinct t.triggerid, t.priority, t.value,'.
-				' t.description, t.expression, h.host, h.host as el_name'.
-				' from items i,functions f,triggers t,hosts h where h.hostid=i.hostid'.
+				' t.description, t.expression, h.host, h.host as el_name, s.name as sitename '.
+				' from items i,functions f,triggers t,hosts h, sites s where h.hostid=i.hostid and s.siteid=h.siteid '.
 				' and i.hostid='.$db_element['elementid'].' and i.itemid=f.itemid'.
 				' and f.triggerid=t.triggerid and t.status='.TRIGGER_STATUS_ENABLED.
 				' and h.status='.HOST_STATUS_MONITORED.' and i.status='.ITEM_STATUS_ACTIVE
@@ -447,6 +447,12 @@
 				}
 
 				do {
+					if (zbx_hfs_available()) {
+						$hfs_trigger = zabbix_hfs_trigger_value ($trigger["sitename"], $trigger["triggerid"]);
+						if (is_object($hfs_trigger))
+							$trigger["value"] = $hfs_trigger->value;
+					}
+
 					$type	=& $trigger['value'];
 
 					if(!isset($tr_info[$type]))
