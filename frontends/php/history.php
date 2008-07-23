@@ -481,44 +481,47 @@ COpt::profiling_start("history");
 				}
 			}
 
-			foreach ($arr as $obj)
-				$obj->valuemapid = $item["valuemapid"];
-
-			foreach ($arr as $obj)
+			if (is_array ($arr))
 			{
-				if($DB_TYPE == "ORACLE" && $item_type == ITEM_VALUE_TYPE_TEXT)
+				foreach ($arr as $obj)
+					$obj->valuemapid = $item["valuemapid"];
+
+				foreach ($arr as $obj)
 				{
-					if(isset($obj->value))
-						$obj->value = $obj->value->load();
+					if($DB_TYPE == "ORACLE" && $item_type == ITEM_VALUE_TYPE_TEXT)
+					{
+						if(isset($obj->value))
+							$obj->value = $obj->value->load();
+						else
+							$obj->value = "";
+					}
+
+					if($obj->valuemapid > 0)
+						$value = replace_value_by_map($obj->value, $obj->valuemapid);
 					else
-						$obj->value = "";
-				}
+						$value = $obj->value;
 
-				if($obj->valuemapid > 0)
-					$value = replace_value_by_map($obj->value, $obj->valuemapid);
-				else
-					$value = $obj->value;
-
-				$new_row = array(date("Y.M.d H:i:s",$obj->clock));
-				if(in_array($item_type,array(ITEM_VALUE_TYPE_FLOAT,ITEM_VALUE_TYPE_UINT64)))
-				{
-					array_push($new_row,$value);
+					$new_row = array(date("Y.M.d H:i:s",$obj->clock));
+					if(in_array($item_type,array(ITEM_VALUE_TYPE_FLOAT,ITEM_VALUE_TYPE_UINT64)))
+					{
+						array_push($new_row,$value);
+					}
+					else
+					{
+						array_push($new_row,array("<pre>",htmlspecialchars($value),"</pre>"));
+					}
+					if(!isset($_REQUEST["plaintext"]))
+					{
+						$table->ShowRow($new_row);
+					}
+					else
+					{
+						echo date("Y-m-d H:i:s",$obj->clock);
+						echo "\t".$obj->clock."\t".$obj->value."\n";
+					}
 				}
-				else
-				{
-					array_push($new_row,array("<pre>",htmlspecialchars($value),"</pre>"));
-				}
-				if(!isset($_REQUEST["plaintext"]))
-				{
-					$table->ShowRow($new_row);
-				}
-				else
-				{
-					echo date("Y-m-d H:i:s",$obj->clock);
-					echo "\t".$obj->clock."\t".$obj->value."\n";
-				}
+				unset($arr);
 			}
-			unset($arr);
 
 			if(!isset($_REQUEST["plaintext"]))
 				$table->ShowEnd();	// to solve memory leak we call 'Show' method by steps
