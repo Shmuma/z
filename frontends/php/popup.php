@@ -24,6 +24,7 @@
 	require_once "include/triggers.inc.php";
 	require_once "include/items.inc.php";
 	require_once "include/users.inc.php";
+	require_once "include/hfs.inc.php";
 
 	$srctbl		= get_request("srctbl",  '');	// source table name
 
@@ -309,12 +310,13 @@ include_once "include/page_header.php";
 		$table = new CTableInfo(S_NO_HOSTS_DEFINED);
 		$table->SetHeader(array(S_HOST,S_DNS,S_IP,S_PORT,S_STATUS,S_AVAILABILITY));
 
-		$sql = "select distinct h.* from hosts h";
+		$sql = "select distinct h.*,s.name as sitename from hosts h, sites s";
 		if(isset($groupid))
 			$sql .= ",hosts_groups hg where hg.groupid=".$groupid.
 				" and h.hostid=hg.hostid and ";
 		else
 			$sql .= " where ";
+		$sql .= " h.siteid = s.siteid and ";
 
 		$sql .= DBin_node('h.hostid', $nodeid).
 				" and h.hostid in (".$accessible_hosts.") ".
@@ -358,6 +360,16 @@ include_once "include/page_header.php";
 					$dns = bold($dns);
 
 				$port = $host["port"];
+
+				// update availability from HFS
+				if (zbx_hfs_available ()) {
+					$hfs_status = zabbix_hfs_host_availability ($host["sitename"], $host["hostid"]);
+
+					if (is_object ($hfs_status)) {
+						$host["available"] = $hfs_status->available;
+						$host["error"] = $hfs_status->error;
+					}
+				}
 
 				if($host["available"] == HOST_AVAILABLE_TRUE)	
 					$available=new CSpan(S_AVAILABLE,"off");
