@@ -237,13 +237,13 @@
          * Comments: !!! Don't forget sync code with C !!!
          *
          */
-	function	add_graph($name,$width,$height,$yaxistype,$yaxismin,$yaxismax,$showworkperiod,$showtriggers,$graphtype=GRAPH_TYPE_NORMAL,$templateid=0)
+	function	add_graph($name,$width,$height,$yaxistype,$yaxismin,$yaxismax,$description,$showworkperiod,$showtriggers,$graphtype=GRAPH_TYPE_NORMAL,$templateid=0)
 	{
 		$graphid = get_dbid("graphs","graphid");
 
 		$result=DBexecute("insert into graphs".
-			" (graphid,name,width,height,yaxistype,yaxismin,yaxismax,templateid,show_work_period,show_triggers,graphtype)".
-			" values ($graphid,".zbx_dbstr($name).",$width,$height,$yaxistype,$yaxismin,".
+			" (graphid,name,width,height,yaxistype,yaxismin,yaxismax,description,templateid,show_work_period,show_triggers,graphtype)".
+			" values ($graphid,".zbx_dbstr($name).",$width,$height,$yaxistype,$yaxismin,".zbx_dbstr($description).
 			" $yaxismax,$templateid,$showworkperiod,$showtriggers,$graphtype)");
 
 		return ( $result ? $graphid : $result);
@@ -261,7 +261,7 @@
          * Comments: !!! Don't forget sync code with C !!!
          *
          */
-	function	add_graph_with_items($name,$width,$height,$yaxistype,$yaxismin,$yaxismax,$showworkperiod,$showtriggers,$graphtype=GRAPH_TYPE_NORMAL,$gitems=array(),$templateid=0)
+	function	add_graph_with_items($name,$width,$height,$yaxistype,$yaxismin,$yaxismax,$description,$showworkperiod,$showtriggers,$graphtype=GRAPH_TYPE_NORMAL,$gitems=array(),$templateid=0)
 	{
 		$result = false;
 
@@ -295,7 +295,7 @@
 			return $result;
 		}
 
-		if ( ($graphid = add_graph($name,$width,$height,$yaxistype,$yaxismin,$yaxismax,$showworkperiod,$showtriggers,$graphtype,$templateid)) )
+		if ( ($graphid = add_graph($name,$width,$height,$yaxistype,$yaxismin,$yaxismax,$description,$showworkperiod,$showtriggers,$graphtype,$templateid)) )
 		{
 			$result = true;
 			foreach($gitems as $gitem)
@@ -352,12 +352,12 @@
          * Comments: !!! Don't forget sync code with C !!!
          *
          */
-	function	update_graph($graphid,$name,$width,$height,$yaxistype,$yaxismin,$yaxismax,$showworkperiod,$showtriggers,$graphtype=GRAPH_TYPE_NORMAL,$templateid=0)
+	function	update_graph($graphid,$name,$width,$height,$yaxistype,$yaxismin,$yaxismax,$description,$showworkperiod,$showtriggers,$graphtype=GRAPH_TYPE_NORMAL,$templateid=0)
 	{
 		$g_graph = get_graph_by_graphid($graphid);
 
 		if ( ($result = DBexecute('update graphs set name='.zbx_dbstr($name).',width='.$width.',height='.$height.','.
-			'yaxistype='.$yaxistype.',yaxismin='.$yaxismin.',yaxismax='.$yaxismax.',templateid='.$templateid.','.
+			'yaxistype='.$yaxistype.',yaxismin='.$yaxismin.',yaxismax='.$yaxismax.',description='.zbx_dbstr($description).',templateid='.$templateid.','.
 			'show_work_period='.$showworkperiod.',show_triggers='.$showtriggers.',graphtype='.$graphtype.
 			' where graphid='.$graphid)) )
 		{
@@ -382,7 +382,7 @@
          * Comments: !!! Don't forget sync code with C !!!
          *
          */
-	function	update_graph_with_items($graphid,$name,$width,$height,$yaxistype,$yaxismin,$yaxismax,$showworkperiod,$showtriggers,$graphtype=GRAPH_TYPE_NORMAL,$gitems=array(),$templateid=0)
+	function	update_graph_with_items($graphid,$name,$width,$height,$yaxistype,$yaxismin,$yaxismax,$description,$showworkperiod,$showtriggers,$graphtype=GRAPH_TYPE_NORMAL,$gitems=array(),$templateid=0)
 	{
 		$result = false;
 
@@ -433,7 +433,7 @@
 			}
 		
 			if ( ! ($result = update_graph_with_items($chd_graph['graphid'], $name, $width, $height,
-				$yaxistype, $yaxismin, $yaxismax,
+				$yaxistype, $yaxismin, $yaxismax, $description,
 				$showworkperiod, $showtriggers, $graphtype, $new_gitems, $graphid)) )
 			{
 				return $result;
@@ -459,7 +459,7 @@
 			}
 		}
 
-		if ( ($result = update_graph($graphid,$name,$width,$height,$yaxistype,$yaxismin,$yaxismax,$showworkperiod,
+		if ( ($result = update_graph($graphid,$name,$width,$height,$yaxistype,$yaxismin,$yaxismax,$description,$showworkperiod,
 						$showtriggers,$graphtype,$templateid)) )
 		{
 			$host_list = array();
@@ -725,14 +725,14 @@
 			if ( isset($chd_graphid) )
 			{
 				$result = update_graph_with_items($chd_graphid, $db_graph['name'], $db_graph['width'], $db_graph['height'],
-					$db_graph['yaxistype'], $db_graph['yaxismin'], $db_graph['yaxismax'],
+					$db_graph['yaxistype'], $db_graph['yaxismin'], $db_graph['yaxismax'], $db_graph['description'],
 					$db_graph['show_work_period'], $db_graph['show_triggers'], $db_graph['graphtype'],
 					$new_gitems, ($copy_mode ? 0: $db_graph['graphid']));
 			}
 			else
 			{
 				$result = add_graph_with_items($db_graph['name'], $db_graph['width'], $db_graph['height'],
-					$db_graph['yaxistype'], $db_graph['yaxismin'], $db_graph['yaxismax'],
+					$db_graph['yaxistype'], $db_graph['yaxismin'], $db_graph['yaxismax'], $db_graph['description'],
 					$db_graph['show_work_period'], $db_graph['show_triggers'], $db_graph['graphtype'],
 					$new_gitems, ($copy_mode ? 0: $db_graph['graphid']));
 			}
@@ -870,5 +870,16 @@
 			$form);
 
 		return;
+	}
+
+	function description_html($description)
+	{
+	    $description = ereg_replace("\n","",$description);
+	    $description = ereg_replace("\r","<br/>\n",$description);
+	    $description = ereg_replace(
+	      "[[:alpha:]]+://[^<>[:space:]]+[[:alnum:]/)]",
+	      "<a href=\"\\0\">\\0</a>",
+	      $description);
+	    return $description;
 	}
 ?>

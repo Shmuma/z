@@ -22,11 +22,11 @@
 	require_once "include/config.inc.php";
 	require_once "include/graphs.inc.php";
 	require_once "include/screens.inc.php";
-
-
+	
 	$page["title"] = "S_CUSTOM_SCREENS";
 	$page["file"] = "screens.php";
-
+	$page["body_options"] = 'onmousemove="floater_check(event); return true;"';
+	
 	$_REQUEST["fullscreen"] = get_request("fullscreen", 0);
 
 	if($_REQUEST["fullscreen"])
@@ -42,7 +42,6 @@
 include_once "include/page_header.php";
 
 ?>
-
 <?php
 //		VAR			TYPE	OPTIONAL FLAGS	VALIDATION	EXCEPTION
 	$fields=array(
@@ -201,8 +200,7 @@ include_once "include/page_header.php";
 
 	if( 2 != $_REQUEST["fullscreen"] )
 		show_table_header($text,$form);
-?>
-<?php
+	
 	if(isset($elementid))
 	{
 		$effectiveperiod = navigation_bar_calc();
@@ -210,6 +208,8 @@ include_once "include/page_header.php";
 		{
 			$hostid = isset($_REQUEST['hostid']) ? $_REQUEST['hostid'] : NULL;
 			$element = get_screen($elementid, 0, $effectiveperiod, $hostid);
+			$js = $element['js'];
+			$element = $element['table'];
 		}
 		else
 		{
@@ -218,6 +218,19 @@ include_once "include/page_header.php";
 							else resizeiframe("iframe");
 							');
 		}
+		
+?>
+
+<div class=chart_floating id=floater style="{visibility: hidden}"></div>
+<script type="text/javascript" src="js/screens.js"></script>
+<script type="text/javascript">
+graph_links = new Array();
+graph_descs = new Array();
+<?=$js?>
+</script>
+
+<?php
+		
 		if($element) $element->Show();
 		
 		$_REQUEST['elementid'] = $elementid;

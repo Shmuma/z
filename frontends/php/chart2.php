@@ -101,6 +101,13 @@ include_once "include/page_header.php";
 			$db_data["periods_cnt"]
 			);
 	}
+	
+	if (isset($_GET['help_button'])) {
+	    $g = get_graph_by_graphid($_REQUEST['graphid']);
+	    if ($g['description'])
+		$graph->AddHelpButton("?");
+	}
+	
 	$graph->Draw();
 ?>
 <?php

@@ -1243,6 +1243,11 @@
 				}
 			}
 		}
+		
+		function AddHelpButton($text)
+		{
+			$this->help_button_text = $text;
+		}
 
 		function Draw()
 		{
@@ -1377,6 +1382,17 @@
 			ImageString($this->im, 0,$this->fullSizeX-120,$this->fullSizeY-12,"Generated in $str sec", $this->GetColor("Gray"));
 
 			unset($this->items, $this->data);
+			
+			if ($this->help_button_text)
+			{
+				ImageString(
+				  $this->im, 5,
+				  $this->fullSizeX - $this->shiftXleft - ImageFontWidth($fontnum),
+				  0,
+				  $this->help_button_text,
+				  $this->GetColor("Black No Alpha")
+				  );
+			}
 
 			ImageOut($this->im); 
 		}

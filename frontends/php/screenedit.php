@@ -114,6 +114,7 @@ include_once "include/page_header.php";
 		if($_REQUEST["screenid"] > 0)
 		{
 			$table = get_screen($_REQUEST["screenid"], 1);
+			$table = $table['table'];
 			$table->Show();
 		}
 

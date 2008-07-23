@@ -1,4 +1,4 @@
-<?php
+h<?php
 /* 
 ** ZABBIX
 ** Copyright (C) 2000-2005 SIA Zabbix
@@ -47,6 +47,7 @@ include_once "include/page_header.php";
 		"graphtype"=>	array(T_ZBX_INT, O_OPT,	 NULL,	IN("0,1"),		'isset({save})'),
 		"yaxismin"=>	array(T_ZBX_DBL, O_OPT,	 NULL,	null,	'isset({save})'),
 		"yaxismax"=>	array(T_ZBX_DBL, O_OPT,	 NULL,	null,	'isset({save})'),
+		"description"=>	array(T_ZBX_STR, O_OPT,	 NULL,	null,	'isset({save})'),
 		
 		"items"=>		array(T_ZBX_STR, O_OPT,  NULL,	null,		null),
 		"new_graph_item"=>	array(T_ZBX_STR, O_OPT,  NULL,	null,		null),
@@ -116,7 +117,7 @@ include_once "include/page_header.php";
 			{
 				$result = update_graph_with_items($_REQUEST["graphid"],
 					$_REQUEST["name"],$_REQUEST["width"],$_REQUEST["height"],
-					$_REQUEST["yaxistype"],$_REQUEST["yaxismin"],$_REQUEST["yaxismax"],
+					$_REQUEST["yaxistype"],$_REQUEST["yaxismin"],$_REQUEST["yaxismax"],$_REQUEST["description"],
 					$showworkperiod,$showtriggers,$_REQUEST["graphtype"],$items);
 
 				if($result)
@@ -130,7 +131,7 @@ include_once "include/page_header.php";
 			else
 			{
 				$result = add_graph_with_items($_REQUEST["name"],$_REQUEST["width"],$_REQUEST["height"],
-					$_REQUEST["yaxistype"],$_REQUEST["yaxismin"],$_REQUEST["yaxismax"],
+					$_REQUEST["yaxistype"],$_REQUEST["yaxismin"],$_REQUEST["yaxismax"],$_REQUEST["description"],
 					$showworkperiod,$showtriggers,$_REQUEST["graphtype"],$items);
 
 				if($result)
