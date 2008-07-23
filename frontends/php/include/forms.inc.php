@@ -2388,6 +2388,7 @@
 			$yaxistype	=$row["yaxistype"];
 			$yaxismin	=$row["yaxismin"];
 			$yaxismax	=$row["yaxismax"];
+			$description = $row["description"];
 			$showworkperiod = $row["show_work_period"];
 			$showtriggers	= $row["show_triggers"];
 			$graphtype	= $row["graphtype"];
@@ -2414,6 +2415,7 @@
 			$yaxistype	= get_request("yaxistype"	,GRAPH_YAXIS_TYPE_CALCULATED);
 			$yaxismin	= get_request("yaxismin"	,0.00);
 			$yaxismax	= get_request("yaxismax"	,100.00);
+			$description = get_request("description"	,'');
 			$showworkperiod = get_request("showworkperiod"	,1);
 			$showtriggers	= get_request("showtriggers"	,1);
 			$graphtype	= get_request("graphtype"	,GRAPH_TYPE_NORMAL);
@@ -2427,6 +2429,7 @@
 		$_REQUEST['yaxistype']		= $yaxistype;
 		$_REQUEST['yaxismin']		= $yaxismin;
 		$_REQUEST['yaxismax']		= $yaxismax;
+		$_REQUEST['description']		= $description;
 		$_REQUEST['showworkperiod']	= $showworkperiod;
 		$_REQUEST['showtriggers']	= $showtriggers;
 		$_REQUEST['graphtype']		= $graphtype;
@@ -2473,6 +2476,8 @@
 			$frmGraph->AddVar("yaxismin",$yaxismin);
 			$frmGraph->AddVar("yaxismax",$yaxismax);
 		}
+
+		$frmGraph->AddRow("Description",new CTextArea('description', $description, 100, 10));
 
 		$only_hostid = null;
 		$monitored_hosts = null;

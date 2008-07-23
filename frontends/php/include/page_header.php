@@ -362,7 +362,7 @@ COpt::profiling_start("page");
     <meta name="Author" content="ZABBIX SIA">
     <script type="text/javascript" src="js/common.js"></script>
   </head>
-<body onLoad="zbxCallPostScripts();">
+<body onLoad="zbxCallPostScripts();" <?=(array_key_exists("body_options", $page) ? $page["body_options"] : "")?>>
 <?php
 	}
 

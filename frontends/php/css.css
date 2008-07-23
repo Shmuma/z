@@ -316,9 +316,38 @@ table.log_history_table tr td.message {
 /************* CHART TABLE ***************/
 table.chart
 {
-	width: 100%;
-	background-color: #DDDDDD;
 	text-align: center;
+	background-color: #DDDDDD;
+}
+table.chart td.description
+{
+	text-align: left;
+}
+div.chart_description
+{
+	text-align: left;
+	background-color: white;
+	width: 640px;
+	border-width: 1px;
+	border-style: solid;
+	margin-bottom: 10px;
+	margin-top: 10px;
+	padding: 5px;
+}
+div.chart_floating
+{
+	position: absolute;
+	top: 300px;
+	left: 300px;
+	width: 640px;
+	visibility: hidden;
+	
+	background-color: white;
+	border-style: solid;
+	border-width: 1px;
+	margin-bottom: 10px;
+	margin-top: 10px;
+	padding: 5px;
 }
 
 /************* SCREEN TABLE ***************/
@@ -671,6 +700,7 @@ table.graph
 	width: 100%;
 	text-align: center;
 }
+
 
 /**************** MAP ****************/
 

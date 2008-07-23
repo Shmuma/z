@@ -223,9 +223,26 @@ include_once "include/page_header.php";
 			"if(window.innerWidth) width=window.innerWidth; else width=document.body.clientWidth;\n".
 			"document.write(\"<IMG SRC='chart2.php?graphid=".$_REQUEST["graphid"].url_param("stime").url_param("from").
 			"&period=".$effectiveperiod."&width=\"+(width-108)+\"'>\")\n".
-			"</script>";
-		
-		$table->AddRow($row);
+			"</script><br/>";
+		$cols = array(
+		    New CCol("&nbsp;"),
+		    New CCol($row),
+		    New CCol("&nbsp;")
+		    );
+		$table->AddRow($cols);
+
+		$g = get_graph_by_graphid($_REQUEST["graphid"]);
+		if ($g['description'])
+		{
+		    $cols = array(
+			New CCol(""),
+			New CCol(
+    			    "<div class=chart_description>" . description_html($g['description']) . "</div>",
+			    "description"),
+			New CCol("")
+		    );
+		    $table->AddRow($cols);
+		}
 	}
 	$table->Show();
 

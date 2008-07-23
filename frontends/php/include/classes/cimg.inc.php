@@ -61,7 +61,7 @@
 		function SetMap($value=NULL)
 		{
 			if(is_null($value))
-				$this->DeleteOption("usemup");
+				$this->DeleteOption("usemap");
 
 			if(!is_string($value))
 			{
@@ -86,6 +86,12 @@
 				return $this->AddOption("height",$value);
 			else
 				return $this->error("Incorrect value for SetHeight [$value]");
+		}
+		function SetTitle($value=NULL) {
+			if(is_null(value))
+				return $this->DelOption("title");
+			else
+				return $this->AddOption("title",$value);
 		}
 	}
 ?>

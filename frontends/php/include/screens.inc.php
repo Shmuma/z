@@ -20,6 +20,7 @@
 	
 	require_once "include/events.inc.php";
 	require_once "include/actions.inc.php";
+	require_once "include/graphs.inc.php";
 ?>
 <?php
 	function	screen_accessiable($screenid,$perm)
@@ -232,9 +233,13 @@
 		return $graphid;
 	}
 
+
 	// editmode: 0 - view with actions, 1 - edit mode, 2 - view without any actions
 	function get_screen($screenid, $editmode, $effectiveperiod=NULL, $hostid=NULL)
 	{
+		$graph_links = array();
+		$graph_descs = array();
+		
 		if(!screen_accessiable($screenid, $editmode ? PERM_READ_WRITE : PERM_READ_ONLY))
 			access_deny();
 		
@@ -342,15 +347,29 @@
 					if ($hostid != NULL)
 						$resourceid = graphid_for_hostid($resourceid, $hostid);
 
-					if($editmode == 0)
+					$img = new CImg("chart2.php?graphid=$resourceid&width=$width&height=$height".
+							"&period=$effectiveperiod".url_param("stime").url_param("from")."&help_button=1");
+
+					if($editmode == 0) {
 						$action = "charts.php?graphid=$resourceid".url_param("period").
                                                         url_param("inc").url_param("dec");
 
-					$item = new CLink(
-						new CImg("chart2.php?graphid=$resourceid&width=$width&height=$height".
-							"&period=$effectiveperiod".url_param("stime").url_param("from")),
-						$action
-						);
+					    $img->AddOption("id", "screenitem_" . $screenitemid);
+					    
+#					    $item = new CLink($img,"#");
+					    $item = new CLink($img,$action);
+					    $g = get_graph_by_graphid($resourceid);
+					    $graph_links[$resourceid] = $action;
+					    $graph_descs[$resourceid] = $g['description'];
+
+#					    $item->SetAction("floater_click(event, $resourceid, $screenitemid); return false;");
+					    $item->AddAction("onclick","return ! floater_visible(event);");
+					    $item->AddAction("onmouseup","return floater_click(event, $resourceid, $screenitemid);");
+					}
+					else {
+					    $item = new CLink($img,$action);
+					}
+					
 				}
 				elseif( ($screenitemid!=0) && ($resourcetype==SCREEN_RESOURCE_SIMPLE_GRAPH) )
 				{
@@ -448,6 +467,7 @@
 				if($valign == VALIGN_BOTTOM)	$str_valign = "bttm";
 
 				$new_col = new CCol($item,$str_halign."_".$str_valign);
+#				$new_col = new CCol($img,$str_halign."_".$str_valign,$helpMap);
 
 				if($colspan) $new_col->SetColSpan($colspan);
 				if($rowspan) $new_col->SetRowSpan($rowspan);
@@ -456,7 +476,25 @@
 			}
 			$table->AddRow(new CRow($new_cols));
 		}
-		return $table;
+		
+		$ret_arr = array();
+
+		$js = "";
+		foreach ($graph_links as $gid => $glink) {
+		    $js .= "graph_links[$gid] = \"" . $glink . "\";\n";
+		}
+		foreach ($graph_descs as $gid => $gdesc) {
+		    $gdesc = description_html($gdesc);
+		    $gdesc = str_replace("\"", "\\\"", $gdesc);
+		    $gdesc = str_replace("\n", "", $gdesc);
+		    $gdesc = str_replace("\r", "", $gdesc);
+		    $js .= "graph_descs[$gid] = \"" . $gdesc . "\";\n";
+		}
+		
+		$ret_arr['table'] = $table;
+		$ret_arr['js'] = $js;
+		
+		return $ret_arr;
 	}
 
 	function	slideshow_accessiable($slideshowid, $perm)

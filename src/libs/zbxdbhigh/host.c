@@ -1155,6 +1155,7 @@ static int	DBupdate_graph(
 		int		yaxistype,
 		int		yaxismin,
 		int		yaxismax,
+		char		*description,
 		int		show_work_period,
 		int		show_triggers,
 		int		graphtype,
@@ -1165,6 +1166,7 @@ static int	DBupdate_graph(
 	DB_ROW db_graph_data;
 
 	char	*name_esc = NULL;
+	char	*description_esc = NULL;
 	int	old_graphtype = 0;
 
 	db_graphs = DBselect("select graphtype from graphs where graphid=" ZBX_FS_UI64, graphid);
@@ -1175,15 +1177,17 @@ static int	DBupdate_graph(
 	DBfree_result(db_graphs);
 
 	name_esc = DBdyn_escape_string(name);
+	description_esc = DBdyn_escape_string(description);
 
 	DBexecute("update graphs set name='%s',width=%i,height=%i,"
-		"yaxistype=%i,yaxismin=%i,yaxismax=%i,templateid=" ZBX_FS_UI64 ","
+		"yaxistype=%i,yaxismin=%i,yaxismax=%i,description='%s',templateid=" ZBX_FS_UI64 ","
 		"show_work_period=%i,show_triggers=%i,graphtype=%i"
 		" where graphid=" ZBX_FS_UI64,
-		name,width,height,yaxistype,yaxismin,yaxismax,templateid,show_work_period,show_triggers,graphtype,
+		name_esc,width,height,yaxistype,yaxismin,yaxismax,description_esc,templateid,show_work_period,show_triggers,graphtype,
 		graphid);
 
-	zbx_free(name_esc);
+    zbx_free(name_esc);
+    zbx_free(description_esc);
 
 	if( old_graphtype != graphtype && graphtype == GRAPH_TYPE_STACKED)
 	{
@@ -1216,6 +1220,7 @@ static int	DBupdate_graph_with_items(
 		int		yaxistype,
 		int		yaxismin,
 		int		yaxismax,
+		char		*description,
 		int		show_work_period,
 		int		show_triggers,
 		int		graphtype,
@@ -1327,7 +1332,7 @@ static int	DBupdate_graph_with_items(
 		else
 		{
 			result = DBupdate_graph_with_items(chd_graphid, name, width, height,
-				yaxistype, yaxismin, yaxismax,
+				yaxistype, yaxismin, yaxismax, description,
 				show_work_period, show_triggers, graphtype, new_gitems, graphid);
 
 			zbx_free_gitems(new_gitems);
@@ -1359,7 +1364,7 @@ static int	DBupdate_graph_with_items(
 		}
 	}
 
-	if ( SUCCEED == (result = DBupdate_graph(graphid,name,width,height,yaxistype,yaxismin,yaxismax,show_work_period,
+	if ( SUCCEED == (result = DBupdate_graph(graphid,name,width,height,yaxistype,yaxismin,yaxismax,description,show_work_period,
 					show_triggers,graphtype,templateid)) )
 	{
 		zabbix_log(LOG_LEVEL_DEBUG, "Graph '%s' updated for hosts " ZBX_FS_UI64, name, curr_hostid);
@@ -1391,6 +1396,7 @@ static int	DBadd_graph(
 		int		yaxistype,
 		int		yaxismin,
 		int		yaxismax,
+		const char	*description,
 		int		show_work_period,
 		int		show_triggers,
 		int		graphtype,
@@ -1401,16 +1407,18 @@ static int	DBadd_graph(
 		graphid;
 
 	char	*name_esc = NULL;
+	char	*description_esc = NULL;
 
 	graphid = DBget_maxid("graphs","graphid");
 
 	assert(name);
 
 	name_esc = DBdyn_escape_string(name);
+	description_esc = DBdyn_escape_string(description);
 
 	DBexecute("insert into graphs"
-		" (graphid,name,width,height,yaxistype,yaxismin,yaxismax,show_work_period,show_triggers,graphtype,templateid)"
-		" values (" ZBX_FS_UI64 ",'%s',%i,%i,%i,%i,%i,%i,%i,%i," ZBX_FS_UI64 ")",
+		" (graphid,name,width,height,yaxistype,yaxismin,yaxismax,description,show_work_period,show_triggers,graphtype,templateid)"
+		" values (" ZBX_FS_UI64 ",'%s',%i,%i,%i,%i,%i,'%s',%i,%i,%i," ZBX_FS_UI64 ")",
 				graphid,
 				name_esc,
 				width,
@@ -1418,11 +1426,13 @@ static int	DBadd_graph(
 				yaxistype,
 				yaxismin,
 				yaxismax,
+                description_esc,
 				show_work_period,
 				show_triggers,
 				graphtype,
 				templateid);
 	zbx_free(name_esc);
+    zbx_free(description_esc);
 
 	if( new_graphid )
 		*new_graphid = graphid;
@@ -1458,6 +1468,7 @@ static int	DBadd_graph_with_items(
 		int		yaxistype,
 		int		yaxismin,
 		int		yaxismax,
+		char		*description,
 		int		show_work_period,
 		int		show_triggers,
 		int		graphtype,
@@ -1514,7 +1525,7 @@ static int	DBadd_graph_with_items(
 	}
 
 
-	if ( SUCCEED == (result = DBadd_graph(new_graphid, name,width,height,yaxistype,yaxismin,yaxismax,show_work_period,show_triggers,graphtype,templateid)) )
+	if ( SUCCEED == (result = DBadd_graph(new_graphid, name,width,height,yaxistype,yaxismin,yaxismax,description,show_work_period,show_triggers,graphtype,templateid)) )
 	{
 		for ( i=0; gitems[i].itemid != 0; i++ )
 		{
@@ -2331,7 +2342,7 @@ static int	DBupdate_item(
 		chd_hostid,
 		applications[ZBX_MAX_APPLICATIONS];
 
-	char	*description_esc,
+  char	*description_esc,
 		*key_esc,
 		*snmp_community_esc,
 		*snmp_oid_esc,
@@ -4035,7 +4046,7 @@ static int	DBcopy_graph_to_host(
 	}
 	DBfree_result(db_items);
 
-	db_graphs = DBselect("select name,width,height,yaxistype,yaxismin,yaxismax,show_work_period,"
+	db_graphs = DBselect("select name,width,height,yaxistype,yaxismin,yaxismax,description,show_work_period,"
 			"show_triggers,graphtype from graphs where graphid=" ZBX_FS_UI64, graphid);
 
 	db_graph_data = DBfetch(db_graphs);
@@ -4110,9 +4121,10 @@ static int	DBcopy_graph_to_host(
 				atoi(db_graph_data[3]),	/* yaxistype */
 				atoi(db_graph_data[4]),	/* yaxismin */
 				atoi(db_graph_data[5]),	/* yaxismax */
-				atoi(db_graph_data[6]),	/* show_work_period */
-				atoi(db_graph_data[7]),	/* show_triggers */
-				atoi(db_graph_data[8]),	/* graphtype */
+				db_graph_data[6],	/* description */
+				atoi(db_graph_data[7]),	/* show_work_period */
+				atoi(db_graph_data[8]),	/* show_triggers */
+				atoi(db_graph_data[9]),	/* graphtype */
 				new_gitems,
 				copy_mode ? 0 : graphid);
 		}
@@ -4126,9 +4138,10 @@ static int	DBcopy_graph_to_host(
 				atoi(db_graph_data[3]),	/* yaxistype */
 				atoi(db_graph_data[4]),	/* yaxismin */
 				atoi(db_graph_data[5]),	/* yaxismax */
-				atoi(db_graph_data[6]),	/* show_work_period */
-				atoi(db_graph_data[7]),	/* show_triggers */
-				atoi(db_graph_data[8]),	/* graphtype */
+				db_graph_data[6],	/* description */
+				atoi(db_graph_data[7]),	/* show_work_period */
+				atoi(db_graph_data[8]),	/* show_triggers */
+				atoi(db_graph_data[9]),	/* graphtype */
 				new_gitems,
 				copy_mode ? 0 : graphid);
 		}
