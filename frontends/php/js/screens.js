@@ -27,12 +27,19 @@ function floater_visible(e) {
 function floater_click(e, gid, sid) {
     // ie
     if (window.event) {
-	   e = event;
+	e = event;
 	
     	// middle or right button
-    	if (e.button == 4 || e.button == 2) {
-    	    return false;
-    	}
+	if (navigator.appName == "Microsoft Internet Explorer") {
+        	if (e.button == 4 || e.button == 2) {
+        	    return false;
+        	}
+	}
+	else {
+        	if (e.button == 1 || e.button == 2) {
+        	    return false;
+        	}
+	}
     }
     // ff
     else {
