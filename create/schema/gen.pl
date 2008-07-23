@@ -107,7 +107,7 @@ static	ZBX_TABLE	tables[]={
 	"t_char"	=>	"varchar2",
 	"t_image"	=>	"blob",
 	"t_history_log"	=>	"varchar2(2048)",
-	"t_history_text"=>	"clob",
+	"t_history_text"=>	"varchar2(2000)",
 	"t_blob"	=>	"varchar2(2048)",
 	"t_item_param"	=>	"varchar2(2048)"
 );
