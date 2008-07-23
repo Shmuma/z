@@ -1232,7 +1232,7 @@ Replicate2MySQL.RunSQL
 end;
 /
 show errors
-create or replace function zabbix.ins_graphs (graphid in number,name in varchar2,width in number,height in number,yaxistype in number,yaxismin in number,yaxismax in number,description in clob,templateid in number,show_work_period in number,show_triggers in number,graphtype in number) return varchar2
+create or replace function zabbix.ins_graphs (graphid in number,name in varchar2,width in number,height in number,yaxistype in number,yaxismin in number,yaxismax in number,description in varchar2,templateid in number,show_work_period in number,show_triggers in number,graphtype in number) return varchar2
 is
 begin
 return

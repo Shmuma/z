@@ -264,7 +264,7 @@ CREATE TABLE history_text (
 	id		number(20)		DEFAULT '0'	NOT NULL,
 	itemid		number(20)		DEFAULT '0'	NOT NULL,
 	clock		number(10)		DEFAULT '0'	NOT NULL,
-	value		clob		DEFAULT ''	NOT NULL,
+	value		varchar2(2000)		DEFAULT ''	,
 	PRIMARY KEY (id)
 );
 CREATE INDEX history_text_1 on history_text (itemid,clock);
@@ -371,7 +371,7 @@ CREATE TABLE graphs (
 	yaxistype		number(10)		DEFAULT '0'	NOT NULL,
 	yaxismin		number(20,4)		DEFAULT '0'	NOT NULL,
 	yaxismax		number(20,4)		DEFAULT '0'	NOT NULL,
-	description		clob		DEFAULT ''	NOT NULL,
+	description		varchar2(2000)		DEFAULT ''	,
 	templateid		number(20)		DEFAULT '0'	NOT NULL,
 	show_work_period		number(10)		DEFAULT '1'	NOT NULL,
 	show_triggers		number(10)		DEFAULT '1'	NOT NULL,
