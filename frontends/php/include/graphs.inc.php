@@ -243,7 +243,7 @@
 
 		$result=DBexecute("insert into graphs".
 			" (graphid,name,width,height,yaxistype,yaxismin,yaxismax,description,templateid,show_work_period,show_triggers,graphtype)".
-			" values ($graphid,".zbx_dbstr($name).",$width,$height,$yaxistype,$yaxismin,".zbx_dbstr($description).
+			" values ($graphid,".zbx_dbstr($name).",$width,$height,$yaxistype,$yaxismin,".zbx_dbstr($description).",".
 			" $yaxismax,$templateid,$showworkperiod,$showtriggers,$graphtype)");
 
 		return ( $result ? $graphid : $result);
