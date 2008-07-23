@@ -987,9 +987,6 @@
 				$db_rights = DBselect($sql);
 				while($db_right = DBfetch($db_rights))
 				{
-					if(isset($db_right['node_name']))
-						$db_right['name'] = $db_right['node_name'].':'.$db_right['name'];
-
 					$group_rights[$db_right['name']] = array(
 						'type'		=> $db_right['type'],
 						'permission'	=> $db_right['permission'],
@@ -1147,7 +1144,7 @@
 				case PERM_READ_WRITE:	$list_name='read_write';	break;
 				default:		$list_name='deny';		break;
 			}
-			$lst['group'][$list_name]->AddItem($group['groupid'],$group['node_name'].':'.$group['name']);
+			$lst['group'][$list_name]->AddItem($group['groupid'],$group['name']);
 		}
 		unset($groups);
 		
@@ -1167,7 +1164,7 @@
 				case PERM_READ_WRITE:	$list_name='read_write';	break;
 				default:		$list_name='deny';		break;
 			}
-			$lst['host'][$list_name]->AddItem($host['hostid'],$host['node_name'].':'.$host['host']);
+			$lst['host'][$list_name]->AddItem($host['hostid'],$host['host']);
 		}
 		unset($hosts);
 		
@@ -3577,8 +3574,7 @@ include_once 'include/discovery.inc.php';
 			$cmbGraphs = new CComboBox("resourceid",$resourceid);
 			while($row=DBfetch($result))
 			{
-				$row["node_name"] = isset($row["node_name"]) ? "(".$row["node_name"].") " : '';
-				$name = $row["node_name"].$row["host"].":".$row["name"];
+				$name = $row["host"].":".$row["name"];
 				$cmbGraphs->AddItem($row["graphid"],$name);
 			}
 
@@ -3599,8 +3595,7 @@ include_once 'include/discovery.inc.php';
 			while($row=DBfetch($result))
 			{
 				$description_=item_description($row["description"],$row["key_"]);
-				$row["node_name"] = isset($row["node_name"]) ? "(".$row["node_name"].") " : '';
-				$cmbItems->AddItem($row["itemid"],$row["node_name"].$row["host"].": ".$description_);
+				$cmbItems->AddItem($row["itemid"],$row["host"].": ".$description_);
 
 			}
 			$form->AddRow(S_PARAMETER,$cmbItems);
@@ -3616,8 +3611,7 @@ include_once 'include/discovery.inc.php';
 			while($row=DBfetch($result))
 			{
 				if(!sysmap_accessiable($row["sysmapid"],PERM_READ_ONLY)) continue;
-				$row["node_name"] = isset($row["node_name"]) ? "(".$row["node_name"].") " : '';
-				$cmbMaps->AddItem($row["sysmapid"],$row["node_name"].$row["name"]);
+				$cmbMaps->AddItem($row["sysmapid"],$row["name"]);
 			}
 
 			$form->AddRow(S_MAP,$cmbMaps);
@@ -3635,8 +3629,7 @@ include_once 'include/discovery.inc.php';
 			while($row=DBfetch($result))
 			{
 				$description_=item_description($row["description"],$row["key_"]);
-				$row["node_name"] = isset($row["node_name"]) ? "(".$row["node_name"].") " : '';
-				$cmbHosts->AddItem($row["itemid"],$row["node_name"].$row["host"].": ".$description_);
+				$cmbHosts->AddItem($row["itemid"],$row["host"].": ".$description_);
 
 			}
 
@@ -3668,8 +3661,7 @@ include_once 'include/discovery.inc.php';
 				" order by node_name,g.name");
 			while($row=DBfetch($result))
 			{
-				$row["node_name"] = isset($row["node_name"]) ? "(".$row["node_name"].") " : '';
-				$cmbGroup->AddItem($row["groupid"],$row["node_name"].$row["name"]);
+				$cmbGroup->AddItem($row["groupid"],$row["name"]);
 			}
 			$form->AddRow(S_GROUP,$cmbGroup);
 
@@ -3685,8 +3677,7 @@ include_once 'include/discovery.inc.php';
 				if(!screen_accessiable($row["screenid"], PERM_READ_ONLY)) continue;
 				if(check_screen_recursion($_REQUEST["screenid"],$row["screenid"]))
 					continue;
-				$row["node_name"] = isset($row["node_name"]) ? "(".$row["node_name"].") " : '';
-				$cmbScreens->AddItem($row["screenid"],$row["node_name"].$row["name"]);
+				$cmbScreens->AddItem($row["screenid"],$row["name"]);
 
 			}
 
@@ -4608,8 +4599,7 @@ include_once 'include/discovery.inc.php';
 			while($db_map = DBfetch($db_maps))
 			{
 				if(!sysmap_accessiable($db_map["sysmapid"],PERM_READ_ONLY)) continue;
-				$node_name = isset($db_map['node_name']) ? '('.$db_map['node_name'].') ' : '';
-				$cmbMaps->AddItem($db_map["sysmapid"],$node_name.$db_map["name"]);
+				$cmbMaps->AddItem($db_map["sysmapid"],$db_map["name"]);
 			}
 			$frmEl->AddRow(S_MAP, $cmbMaps);
 		}
