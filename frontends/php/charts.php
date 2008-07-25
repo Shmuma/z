@@ -145,6 +145,7 @@ include_once "include/page_header.php";
 	}
 	$r_form->AddItem(array(S_GROUP.SPACE,$cmbGroup));
 	
+	$cmbHosts->AddItem(0,S_ALL_SMALL);
 	if($_REQUEST["groupid"] > 0)
 	{
 		$sql = " select distinct h.hostid,h.host from hosts h,items i,hosts_groups hg, graphs_items gi ".
@@ -155,7 +156,6 @@ include_once "include/page_header.php";
 	}
 	else
 	{
-		$cmbHosts->AddItem(0,S_ALL_SMALL);
 		$sql = "select distinct h.hostid,h.host from hosts h,items i, graphs_items gi where h.status=".HOST_STATUS_MONITORED.
 			" and i.status=".ITEM_STATUS_ACTIVE." and h.hostid=i.hostid".
 			" and h.hostid not in (".$denyed_hosts.") and i.itemid=gi.itemid".
@@ -172,7 +172,8 @@ include_once "include/page_header.php";
 
 	$r_form->AddItem(array(SPACE.S_HOST.SPACE,$cmbHosts));
 
-	$cmbGraph->AddItem(0,S_SELECT_GRAPH_DOT_DOT_DOT);
+	$cmbGraph->AddItem(0,S_ALL_SMALL);
+	$need_hostname = 0;
 
 	if($_REQUEST["hostid"] > 0)
 	{
@@ -184,30 +185,33 @@ include_once "include/page_header.php";
 	}
 	elseif ($_REQUEST["groupid"] > 0)
 	{
-		$sql = "select distinct g.graphid,g.name from graphs g,graphs_items gi,items i,hosts_groups hg,hosts h".
+		$sql = "select distinct g.graphid,g.name,h.host as hostname from graphs g,graphs_items gi,items i,hosts_groups hg,hosts h".
 			" where i.itemid=gi.itemid and g.graphid=gi.graphid and i.hostid=hg.hostid and hg.groupid=".$_REQUEST["groupid"].
 			" and i.hostid=h.hostid and h.status=".HOST_STATUS_MONITORED.
 			' and '.DBin_node('g.graphid').
 			" and h.hostid not in (".$denyed_hosts.") ".
 			" order by g.name";
+		$need_hostname = 1;
 	}
 	else
 	{
-		$sql = "select distinct g.graphid,g.name from graphs g,graphs_items gi,items i,hosts h".
+		$sql = "select distinct g.graphid,g.name,h.host as hostname from graphs g,graphs_items gi,items i,hosts h".
 			" where i.itemid=gi.itemid and g.graphid=gi.graphid ".
 			" and i.hostid=h.hostid and h.status=".HOST_STATUS_MONITORED.
 			' and '.DBin_node('g.graphid').
 			" and h.hostid not in (".$denyed_hosts.") ".
 			" order by g.name";
+		$need_hostname = 1;
 	}
 
 	$result = DBselect($sql);
 	while($row=DBfetch($result))
 	{
-		$cmbGraph->AddItem(
-				$row['graphid'],
-				get_node_name_by_elid($row['graphid']).$row['name']
-				);
+		if ($need_hostname)
+			$hostname = $row['hostname'].': '.$row['name'];
+		else
+			$hostname = $row['name'];
+		$cmbGraph->AddItem($row['graphid'], $hostname);
 	}
 	
 	$r_form->AddItem(array(SPACE.S_GRAPH.SPACE,$cmbGraph));
@@ -215,41 +219,42 @@ include_once "include/page_header.php";
 	show_table_header($h1, $r_form);
 ?>
 <?php
+
+function show_graph ($table, $graphid, $effectiveperiod)
+{
+	$row = 	"\n<script language=\"JavaScript\">\n".
+		"if(window.innerWidth) width=window.innerWidth; else width=document.body.clientWidth;\n".
+		"document.write(\"<IMG SRC='chart2.php?graphid=$graphid".url_param("stime").url_param("from").
+		"&period=".$effectiveperiod."&width=\"+(width-108)+\"'>\")\n".
+		"</script><br/>";
+	$cols = array (New CCol("&nbsp;"), New CCol($row), New CCol("&nbsp;"));
+	$table->AddRow ($cols);
+
+	$g = get_graph_by_graphid ($graphid);
+	if ($g['description'])
+	{
+		$cols = array (New CCol(""), New CCol("<div class=chart_description>" . description_html($g['description']) . "</div>",
+						      "description"),
+			       New CCol(""));
+		$table->AddRow($cols);
+	}
+}
+
 	$table = new CTableInfo('...','chart');
 
-	if($_REQUEST["graphid"] > 0)
-	{
-		$row = 	"\n<script language=\"JavaScript\">\n".
-			"if(window.innerWidth) width=window.innerWidth; else width=document.body.clientWidth;\n".
-			"document.write(\"<IMG SRC='chart2.php?graphid=".$_REQUEST["graphid"].url_param("stime").url_param("from").
-			"&period=".$effectiveperiod."&width=\"+(width-108)+\"'>\")\n".
-			"</script><br/>";
-		$cols = array(
-		    New CCol("&nbsp;"),
-		    New CCol($row),
-		    New CCol("&nbsp;")
-		    );
-		$table->AddRow($cols);
+	$graphid = $_REQUEST["graphid"];
 
-		$g = get_graph_by_graphid($_REQUEST["graphid"]);
-		if ($g['description'])
+	if ($graphid == 0) {
+		$result = DBselect($sql);
+		while($row=DBfetch($result))
 		{
-		    $cols = array(
-			New CCol(""),
-			New CCol(
-    			    "<div class=chart_description>" . description_html($g['description']) . "</div>",
-			    "description"),
-			New CCol("")
-		    );
-		    $table->AddRow($cols);
+			show_graph ($table, $row['graphid'], $effectiveperiod);
 		}
 	}
+	else
+		show_graph ($table, $graphid, $effectiveperiod);
 	$table->Show();
-
-	if($_REQUEST["graphid"] > 0)
-	{
-		navigation_bar('charts.php',array('groupid','hostid','graphid'));
-	}
+	navigation_bar('charts.php',array('groupid','hostid','graphid'));
 	
 ?>
 <?php
