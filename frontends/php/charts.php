@@ -214,8 +214,8 @@ include_once "include/page_header.php";
 		$cmbGraph->AddItem($row['graphid'], $hostname);
 	}
 	
-	$r_form->AddItem(array(SPACE.S_GRAPH.SPACE,$cmbGraph));
-	
+	$r_form->AddItem(array(SPACE.S_GRAPH.SPACE,$cmbGraph));	
+
 	show_table_header($h1, $r_form);
 ?>
 <?php
@@ -243,19 +243,27 @@ function show_graph ($table, $graphid, $effectiveperiod)
 	$table = new CTableInfo('...','chart');
 
 	$graphid = $_REQUEST["graphid"];
+	$count = 0;
 
 	if ($graphid == 0) {
 		$result = DBselect($sql);
-		while($row=DBfetch($result))
+		while(($row = DBfetch($result)) && ($count < 100))
 		{
 			show_graph ($table, $row['graphid'], $effectiveperiod);
+			$count++;
 		}
 	}
 	else
 		show_graph ($table, $graphid, $effectiveperiod);
-	$table->Show();
-	navigation_bar('charts.php',array('groupid','hostid','graphid'));
-	
+
+	if ($count < 100) {
+		$table->Show();
+		navigation_bar('charts.php',array('groupid','hostid','graphid'));
+	}
+	else  {
+		$table = new CTableInfo(S_TOO_MANY_OBJECTS, 'chart');
+		$table->Show ();
+	}
 ?>
 <?php
 
