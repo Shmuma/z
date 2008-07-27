@@ -251,48 +251,51 @@ require_once('include/classes/ctree.inc.php');
 
 	function	get_current_nodeid( $forse_with_subnodes = null, $perm = null )
 	{
-		global	$ZBX_CURRENT_NODEID, $ZBX_CURRENT_SUBNODES, $ZBX_WITH_SUBNODES;
+// 		global	$ZBX_CURRENT_NODEID, $ZBX_CURRENT_SUBNODES, $ZBX_WITH_SUBNODES;
 
-		if ( !isset($ZBX_CURRENT_NODEID) )	init_nodes();
-		$result = ( is_show_subnodes($forse_with_subnodes) ? $ZBX_CURRENT_SUBNODES : $ZBX_CURRENT_NODEID );
+// 		if ( !isset($ZBX_CURRENT_NODEID) )	init_nodes();
+// 		$result = ( is_show_subnodes($forse_with_subnodes) ? $ZBX_CURRENT_SUBNODES : $ZBX_CURRENT_NODEID );
 		
-		if ( !is_null($perm) )
-		{
-			global $USER_DETAILS;
+// 		if ( !is_null($perm) )
+// 		{
+// 			global $USER_DETAILS;
 
-			$result = get_accessible_nodes_by_user($USER_DETAILS, PERM_READ_ONLY, null, null, $result);
-		}
+// 			$result = get_accessible_nodes_by_user($USER_DETAILS, PERM_READ_ONLY, null, null, $result);
+// 		}
 
-		return $result;
+// 		return $result;
+		return $ZBX_LOCALNODEID;
 	}
 
 	function	get_node_name_by_elid($id_val, $forse_with_subnodes = null)
 	{
-		global $ZBX_NODES;
+// 		global $ZBX_NODES;
 
-		if ( ! is_show_subnodes($forse_with_subnodes) )
-			return null;
+// 		if ( ! is_show_subnodes($forse_with_subnodes) )
+// 			return null;
 
-		$nodeid = id2nodeid($id_val);
+// 		$nodeid = id2nodeid($id_val);
 
-		if ( !isset($ZBX_NODES[$nodeid]) )
-			return null;
+// 		if ( !isset($ZBX_NODES[$nodeid]) )
+// 			return null;
 
-		return '['.$ZBX_NODES[$nodeid]['name'].'] ';
+// 		return '['.$ZBX_NODES[$nodeid]['name'].'] ';
+		return null;
 	}
 
 	function	is_show_subnodes($forse_with_subnodes = null)
 	{
-		global	$ZBX_WITH_SUBNODES;
+// 		global	$ZBX_WITH_SUBNODES;
 
-		if ( is_null($forse_with_subnodes) )
-		{
-			if ( defined('ZBX_DISABLE_SUBNODES') )
-				$forse_with_subnodes = false;
-			else
-				$forse_with_subnodes = $ZBX_WITH_SUBNODES;
-		}
-		return $forse_with_subnodes;
+// 		if ( is_null($forse_with_subnodes) )
+// 		{
+// 			if ( defined('ZBX_DISABLE_SUBNODES') )
+// 				$forse_with_subnodes = false;
+// 			else
+// 				$forse_with_subnodes = $ZBX_WITH_SUBNODES;
+// 		}
+// 		return $forse_with_subnodes;
+		return false;
 	}
 
 	function	access_deny()
