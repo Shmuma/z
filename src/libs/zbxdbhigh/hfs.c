@@ -677,36 +677,39 @@ char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemi
 {
     char* res;
     int len = strlen (hfs_base_dir) + strlen (siteid) + 100;
+    zbx_uint64_t item_ord;
 
     res = (char*)malloc (len);
 
     if (!res)
 	return NULL;
 
+    item_ord = itemid / 1000;
+
     switch (kind) {
     case NK_ItemData:
     case NK_ItemMeta:
-	    snprintf (res, len, "%s/%s/items/%llu/%u.%s", hfs_base_dir, siteid, itemid, (unsigned int)(clock / (time_t)1000000),
+            snprintf (res, len, "%s/%s/items/%llu/%llu/%u.%s", hfs_base_dir, siteid, item_ord, itemid, (unsigned int)(clock / (time_t)1000000),
 		      kind == NK_ItemMeta ? "meta" : "data");
             break;
     case NK_ItemString:
-	    snprintf (res, len, "%s/%s/items/%llu/strings.data", hfs_base_dir, siteid, itemid);
+            snprintf (res, len, "%s/%s/items/%llu/%llu/strings.data", hfs_base_dir, siteid, item_ord, itemid);
 	    break;
     case NK_TrendItemData:
     case NK_TrendItemMeta:
-	    snprintf (res, len, "%s/%s/items/%llu/trends.%s", hfs_base_dir, siteid, itemid, kind == NK_TrendItemMeta ? "meta" : "data");
+            snprintf (res, len, "%s/%s/items/%llu/%llu/trends.%s", hfs_base_dir, siteid, item_ord, itemid, kind == NK_TrendItemMeta ? "meta" : "data");
 	    break;
     case NK_HostState:
 	    snprintf (res, len, "%s/%s/hosts/%llu.state", hfs_base_dir, siteid, itemid);
 	    break;
     case NK_ItemValues:
-	    snprintf (res, len, "%s/%s/items/%llu/values.data", hfs_base_dir, siteid, itemid);
+            snprintf (res, len, "%s/%s/items/%llu/%llu/values.data", hfs_base_dir, siteid, item_ord, itemid);
 	    break;
     case NK_ItemStatus:
-	    snprintf (res, len, "%s/%s/items/%llu/status.data", hfs_base_dir, siteid, itemid);
+            snprintf (res, len, "%s/%s/items/%llu/%llu/status.data", hfs_base_dir, siteid, item_ord, itemid);
 	    break;
     case NK_ItemStderr:
-	    snprintf (res, len, "%s/%s/items/%llu/stderr.data", hfs_base_dir, siteid, itemid);
+            snprintf (res, len, "%s/%s/items/%llu/%llu/stderr.data", hfs_base_dir, siteid, item_ord, itemid);
 	    break;
     case NK_TriggerStatus:
 	    snprintf (res, len, "%s/%s/triggers/%llu/status.data", hfs_base_dir, siteid, itemid);
