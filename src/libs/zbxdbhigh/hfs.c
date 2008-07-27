@@ -71,29 +71,29 @@ void HFSadd_history_uint (const char* hfs_base_dir, const char* siteid, zbx_uint
   */
 void HFSadd_trend (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, double value, int clock)
 {
-    hfs_trend_t trend;
+/*     hfs_trend_t trend; */
 
-    trend.count = 1;
-    trend.min.d = value;
-    trend.max.d = value;
-    trend.avg.d = value;
+/*     trend.count = 1; */
+/*     trend.min.d = value; */
+/*     trend.max.d = value; */
+/*     trend.avg.d = value; */
 
-    zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_trend()");
-    store_value (hfs_base_dir, siteid, itemid, clock - clock % HFS_TRENDS_INTERVAL, HFS_TRENDS_INTERVAL, &trend, sizeof (hfs_trend_t), IT_TRENDS_DOUBLE);   
+/*     zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_trend()"); */
+/*     store_value (hfs_base_dir, siteid, itemid, clock - clock % HFS_TRENDS_INTERVAL, HFS_TRENDS_INTERVAL, &trend, sizeof (hfs_trend_t), IT_TRENDS_DOUBLE);    */
 }
 
 
 void HFSadd_trend_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t value, int clock)
 {
-    hfs_trend_t trend;
+/*     hfs_trend_t trend; */
 
-    trend.count = 1;
-    trend.min.l = value;
-    trend.max.l = value;
-    trend.avg.l = value;
+/*     trend.count = 1; */
+/*     trend.min.l = value; */
+/*     trend.max.l = value; */
+/*     trend.avg.l = value; */
 
-    zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_trend_uint()");
-    store_value (hfs_base_dir, siteid, itemid, clock - clock % HFS_TRENDS_INTERVAL, HFS_TRENDS_INTERVAL, &trend, sizeof (hfs_trend_t), IT_TRENDS_UINT64);
+/*     zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_trend_uint()"); */
+/*     store_value (hfs_base_dir, siteid, itemid, clock - clock % HFS_TRENDS_INTERVAL, HFS_TRENDS_INTERVAL, &trend, sizeof (hfs_trend_t), IT_TRENDS_UINT64); */
 }
 
 
