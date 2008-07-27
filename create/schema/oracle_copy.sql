@@ -1978,52 +1978,6 @@ Replicate2MySQL.RunSQL
 end;
 /
 show errors
-create or replace function zabbix.ins_profiles (profileid in number,userid in number,idx in varchar2,value in varchar2,valuetype in number) return varchar2
-is
-begin
-return
-'insert into profiles (profileid,userid,idx,value,valuetype) values ('
-||Nvl(To_Char(profileid),'null')||','
-||Nvl(To_Char(userid),'null')||','
-||''''||Replace(idx,'''','''''')||''''||','
-||''''||Replace(value,'''','''''')||''''||','
-||Nvl(To_Char(valuetype),'null')
-||')';
-end;
-/
-show errors
-create or replace trigger zabbix.trai_profiles after insert on zabbix.profiles for each row
-begin
-Replicate2MySQL.RunSQL
-(
-zabbix.ins_profiles (:new.profileid,:new.userid,:new.idx,:new.value,:new.valuetype)
-);
-end;
-/
-show errors
-create or replace trigger zabbix.trau_profiles after update on zabbix.profiles for each row
-begin
-Replicate2MySQL.RunSQL
-(
-'update zabbix.profiles set '
-||' profileid='||Nvl(To_Char(:new.profileid),'null')||','
-||' userid='||Nvl(To_Char(:new.userid),'null')||','
-||' idx='''||Replace(:new.idx,'''','''''')||''''||','
-||' value='''||Replace(:new.value,'''','''''')||''''||','
-||' valuetype='||Nvl(To_Char(:new.valuetype),'null') || ' where  profileid='||:old.profileid );
-end;
-/
-show errors
-create or replace trigger zabbix.trad_profiles after delete on zabbix.profiles for each row
-begin
-Replicate2MySQL.RunSQL
-(
-'delete from zabbix.profiles '
- || ' where  profileid='||:old.profileid 
-);
-end;
-/
-show errors
 create or replace function zabbix.ins_rights (rightid in number,groupid in number,type in number,permission in number,id in number) return varchar2
 is
 begin
