@@ -812,16 +812,6 @@
 
 		$newtriggerid=get_dbid("triggers","triggerid");
 
-		$result = DBexecute("insert into triggers".
-			" (triggerid,description,priority,status,comments,url,value,expression,templateid)".
-			" values ($newtriggerid,".zbx_dbstr($trigger["description"]).",".$trigger["priority"].",".
-			$trigger["status"].",".zbx_dbstr($trigger["comments"]).",".
-			zbx_dbstr($trigger["url"]).",2,'{???:???}',".
-			($copy_mode ? 0 : $triggerid).")");
-
-		if(!$result)
-			return $result;
-
 		$host = get_host_by_hostid($hostid);
 		$newexpression = $trigger["expression"];
 
@@ -853,8 +843,16 @@
 				$newexpression);
 		}
 
-		DBexecute("update triggers set expression=".zbx_dbstr($newexpression).
-			" where triggerid=$newtriggerid");
+		$result = DBexecute("insert into triggers".
+			" (triggerid,description,priority,status,comments,url,value,expression,templateid)".
+			" values ($newtriggerid,".zbx_dbstr($trigger["description"]).",".$trigger["priority"].",".
+			$trigger["status"].",".zbx_dbstr($trigger["comments"]).",".
+			zbx_dbstr($trigger["url"]).",2,".zbx_dbstr($newexpression).",".
+			($copy_mode ? 0 : $triggerid).")");
+
+		if(!$result)
+			return $result;
+
 // copy dependences
 		delete_dependencies_by_triggerid($newtriggerid);
 		foreach($deps as $dep_id)
