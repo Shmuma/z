@@ -492,7 +492,7 @@ table.tableinfo
 	border-width: 0px;
 }
 table.tableinfo tr td {
-#	white-space: nowrap;
+/*	white-space: nowrap; */
 	word-spacing:	0px;
 	font-family:verdana, arial, helvetica, sans-serif;
 	font-size:8pt;
@@ -1367,7 +1367,7 @@ ul
 /********** END OF DISCOVERY STATUS *********/
 
 .center{
-#	width: 100%;
+/*	width: 100%; */
 	text-align: center;
 }
 

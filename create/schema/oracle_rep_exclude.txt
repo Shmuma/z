@@ -13,3 +13,4 @@ trends
 sessions
 images
 sites
+profiles

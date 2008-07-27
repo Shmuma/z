@@ -31,6 +31,8 @@
 	'S_DISABLE_SELECTED'=>			'Disable selected',
 	'S_DELETE_SELECTED'=>			'Delete selected',
 	'S_COPY_SELECTED_TO'=>			'Copy selected to ...',
+
+	'S_TOO_MANY_OBJECTS'=>			'You are trying to display too many objects. Please select one of group above.',
 	
 //	dicoveryconf.php
 	'S_HOST_IP'=>				'Host ip',
