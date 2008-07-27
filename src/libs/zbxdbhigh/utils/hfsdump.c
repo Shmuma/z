@@ -67,12 +67,14 @@ void show_value(item_type_t type, item_value_u val)
 	switch (type) {
 		case IT_UINT64:
 		case IT_TRENDS_UINT64:
-			printf("%lld", val.d);
+			printf("%lld", val.l);
 			break;
 
 		case IT_DOUBLE:
 		case IT_TRENDS_DOUBLE:
-			printf("%f", val.l);
+			printf("%f", val.d);
+			break;
+		default:
 			break;
 	}
 }
@@ -126,7 +128,7 @@ int dump_by_meta(const char *metafile)
 
 		if ((ofs = find_meta_ofs (ts, meta)) == -1) {
 			fprintf(stderr, "%s: %d: unable to get offset in file",
-				datafile, ts);
+				datafile, (int)ts);
 			free_meta(meta);
 			return -1;
 		}
@@ -144,7 +146,7 @@ int dump_by_meta(const char *metafile)
 			if (!is_valid_val(val, val_len))
 				continue;
 
-			printf("time=%d\ttype=%d\t", ts, ip->type);
+			printf("time=%d\ttype=%d\t", (int)ts, ip->type);
 
 			if (is_trend_type(ip->type)) {
 				printf("count=%d\tmax=", val_trends.count);
