@@ -252,6 +252,7 @@ require_once('include/classes/ctree.inc.php');
 	function	get_current_nodeid( $forse_with_subnodes = null, $perm = null )
 	{
 // 		global	$ZBX_CURRENT_NODEID, $ZBX_CURRENT_SUBNODES, $ZBX_WITH_SUBNODES;
+		global  $ZBX_LOCALNODEID;
 
 // 		if ( !isset($ZBX_CURRENT_NODEID) )	init_nodes();
 // 		$result = ( is_show_subnodes($forse_with_subnodes) ? $ZBX_CURRENT_SUBNODES : $ZBX_CURRENT_NODEID );
