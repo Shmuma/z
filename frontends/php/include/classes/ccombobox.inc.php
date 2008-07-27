@@ -51,7 +51,7 @@
 		function SetSelected($value='yes')
 		{
 			if((is_string($value) && ($value == 'yes' || $value == "selected" || $value=='on'))
-				|| (is_int($value) && $value<>0))
+				|| (is_int($value)))
 				return $this->options['selected'] = 'selected';
 
 			$this->DelOption('selected');
@@ -93,6 +93,7 @@
 					$selected = 'yes';
 			}
 
+			//						print "<pre>Adding $value, $selected</pre>\n";
 			parent::AddItem(new CComboItem($value,$caption,$selected,$enabled));
 		}
 	}
