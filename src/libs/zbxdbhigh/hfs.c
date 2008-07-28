@@ -435,6 +435,7 @@ int make_directories (const char* path)
  */
 int obtain_lock (int fd, int write)
 {
+	/*
 	struct flock fls;
 
 	fls.l_type = write ? F_WRLCK : F_RDLCK;
@@ -452,13 +453,14 @@ int obtain_lock (int fd, int write)
 		else
 			break;
 	}
-
+	*/
 	return 1;
 }
 
 
 int release_lock (int fd, int write)
 {
+	/*
 	struct flock fls;
 
 	fls.l_type = F_UNLCK;
@@ -476,7 +478,7 @@ int release_lock (int fd, int write)
 		else
 			break;
 	}
-
+	*/
 	return 1;
 }
 
