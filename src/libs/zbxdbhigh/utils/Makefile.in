@@ -36,7 +36,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-sbin_PROGRAMS = hfsdump$(EXEEXT)
+sbin_PROGRAMS = hfsdump$(EXEEXT) hfs_trends_upd$(EXEEXT)
 subdir = src/libs/zbxdbhigh/utils
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -54,6 +54,9 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(sbindir)"
 sbinPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(sbin_PROGRAMS)
+am_hfs_trends_upd_OBJECTS = hfs_trends_upd.$(OBJEXT)
+hfs_trends_upd_OBJECTS = $(am_hfs_trends_upd_OBJECTS)
+hfs_trends_upd_LDADD = $(LDADD)
 am_hfsdump_OBJECTS = hfsdump-hfsdump.$(OBJEXT)
 hfsdump_OBJECTS = $(am_hfsdump_OBJECTS)
 hfsdump_DEPENDENCIES = ../../zbxcomms/libzbxcomms.a \
@@ -67,8 +70,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(hfsdump_SOURCES)
-DIST_SOURCES = $(hfsdump_SOURCES)
+SOURCES = $(hfs_trends_upd_SOURCES) $(hfsdump_SOURCES)
+DIST_SOURCES = $(hfs_trends_upd_SOURCES) $(hfsdump_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -204,7 +207,6 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-hfsdump_SOURCES = hfsdump.c
 hfsdump_CFLAGS = -I..
 hfsdump_LDADD = \
 	../../zbxcomms/libzbxcomms.a \
@@ -213,9 +215,10 @@ hfsdump_LDADD = \
 	../../zbxconf/libzbxconf.a \
 	../../zbxcommon/libzbxcommon.a \
 	../../zbxcrypto/libzbxcrypto.a \
-	../../zbxsys/libzbxsys.a \
-	#
+	../../zbxsys/libzbxsys.a
 
+hfsdump_SOURCES = hfsdump.c
+hfs_trends_upd_SOURCES = hfs_trends_upd.c
 all: all-am
 
 .SUFFIXES:
@@ -272,6 +275,9 @@ uninstall-sbinPROGRAMS:
 
 clean-sbinPROGRAMS:
 	-test -z "$(sbin_PROGRAMS)" || rm -f $(sbin_PROGRAMS)
+hfs_trends_upd$(EXEEXT): $(hfs_trends_upd_OBJECTS) $(hfs_trends_upd_DEPENDENCIES) 
+	@rm -f hfs_trends_upd$(EXEEXT)
+	$(LINK) $(hfs_trends_upd_LDFLAGS) $(hfs_trends_upd_OBJECTS) $(hfs_trends_upd_LDADD) $(LIBS)
 hfsdump$(EXEEXT): $(hfsdump_OBJECTS) $(hfsdump_DEPENDENCIES) 
 	@rm -f hfsdump$(EXEEXT)
 	$(LINK) $(hfsdump_LDFLAGS) $(hfsdump_OBJECTS) $(hfsdump_LDADD) $(LIBS)
@@ -282,6 +288,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfs_trends_upd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfsdump-hfsdump.Po@am__quote@
 
 .c.o:
