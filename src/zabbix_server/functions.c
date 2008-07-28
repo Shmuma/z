@@ -357,11 +357,12 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 	zabbix_log( LOG_LEVEL_DEBUG, "Processing [%s]",
 		value);
 
-	DBupdate_item_stderr (item.itemid, error);
 	if (CONFIG_HFS_PATH) {
 		HFS_update_item_stderr (CONFIG_HFS_PATH, item.siteid, item.itemid, error);
-		HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid, HOST_AVAILABLE_TRUE, time (NULL), NULL);
+/* 		HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid, HOST_AVAILABLE_TRUE, time (NULL), NULL); */
 	}
+	else
+		DBupdate_item_stderr (item.itemid, error);
 
 	if(strcmp(value,"ZBX_NOTSUPPORTED") ==0)
 	{
