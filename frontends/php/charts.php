@@ -73,7 +73,7 @@ include_once "include/page_header.php";
 	$_REQUEST["period"] = get_request("period",get_profile("web.graph[".$_REQUEST["graphid"]."].period", ZBX_PERIOD_DEFAULT));
 	$effectiveperiod = navigation_bar_calc();
 
-	validate_group_with_host(PERM_READ_ONLY,array("allow_all_hosts","monitored_hosts","with_items", "always_select_first_host"));
+	validate_group_with_host(PERM_READ_ONLY,array("allow_all_hosts","monitored_hosts","with_items"));
 
 	if($_REQUEST["graphid"] > 0 && $_REQUEST["hostid"] > 0)
 	{
@@ -129,8 +129,6 @@ include_once "include/page_header.php";
 	$cmbHosts = new CComboBox("hostid",$_REQUEST["hostid"],"submit()");
 	$cmbGraph = new CComboBox("graphid",$_REQUEST["graphid"],"submit()");
 
-	$cmbGroup->AddItem(0,S_ALL_SMALL);
-	
 	$result=DBselect("select distinct g.groupid,g.name from groups g, hosts_groups hg, hosts h, items i, graphs_items gi ".
 		" where g.groupid in (".$availiable_groups.") ".
 		" and hg.groupid=g.groupid and h.status=".HOST_STATUS_MONITORED.
@@ -141,8 +139,8 @@ include_once "include/page_header.php";
 		$cmbGroup->AddItem($row['groupid'], $row["name"]);
 	}
 	$r_form->AddItem(array(S_GROUP.SPACE,$cmbGroup));
-	
-	$cmbHosts->AddItem(0,S_ALL_SMALL);
+
+	$cmbHosts->AddItem(0,S_ALL_SMALL, $_REQUEST["hostid"] == 0 ? "yes" : "no");
 	if($_REQUEST["groupid"] > 0)
 	{
 		$sql = " select distinct h.hostid,h.host from hosts h,items i,hosts_groups hg, graphs_items gi ".
@@ -161,7 +159,7 @@ include_once "include/page_header.php";
 	$result=DBselect($sql);
 	while($row=DBfetch($result))
 	{
-		$cmbHosts->AddItem($row['hostid'], $row['host']);
+		$cmbHosts->AddItem($row['hostid'], $row['host'], $_REQUEST["hostid"] == $row['hostid'] ? "yes" : "no");
 	}
 
 	$r_form->AddItem(array(SPACE.S_HOST.SPACE,$cmbHosts));
@@ -225,7 +223,7 @@ function show_graph ($table, $graphid, $effectiveperiod)
 	$table->AddRow ($cols);
 
 	$g = get_graph_by_graphid ($graphid);
-	if ($g['description'])
+	if (trim ($g['description']) != "")
 	{
 		$cols = array (New CCol(""), New CCol("<div class=chart_description>" . description_html($g['description']) . "</div>",
 						      "description"),

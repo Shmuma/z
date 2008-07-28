@@ -93,7 +93,6 @@
 					$selected = 'yes';
 			}
 
-			//						print "<pre>Adding $value, $selected</pre>\n";
 			parent::AddItem(new CComboItem($value,$caption,$selected,$enabled));
 		}
 	}
