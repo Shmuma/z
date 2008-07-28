@@ -10,4 +10,4 @@ libzbxdbhigh_a_SOURCES = \
 
 libzbxdbhigh_a_CFLAGS = -I@top_srcdir@/src/zabbix_server/
 
-#SUBDIRS = $(DIST_SUBDIRS)
+SUBDIRS = $(DIST_SUBDIRS)
