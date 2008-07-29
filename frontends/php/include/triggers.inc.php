@@ -1797,8 +1797,15 @@
 		unset($hosts);
 		// get rid of warnings about $triggers undefined
 		$triggers = array();
+		$count = 0;
 		while($row = DBfetch($result))
 		{
+			$count++;
+                        // if we trying to display more than 1000 triggers, display blame message
+			if ($count > 1000) {
+				break;
+			}
+
 			if (zbx_hfs_available()) {
 				$hfs_trigger = zabbix_hfs_trigger_value ($row["siteid"], $row["triggerid"]);
 				if (is_object($hfs_trigger)) {
@@ -1838,6 +1845,11 @@
 			return $table;
 		}
 		sort($hosts);
+
+		if ($count > 1000) {
+			$table = new CTableInfo(S_TOO_MANY_OBJECTS);
+			return $table;
+		}
 
 		$header=array(new CCol(S_TRIGGERS,'center'));
 		foreach($hosts as $hostname)
