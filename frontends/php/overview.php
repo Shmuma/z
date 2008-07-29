@@ -63,7 +63,7 @@ include_once "include/page_header.php";
 	$form->SetMethod('get');
 	
 	$cmbGroup = new CComboBox("groupid",$_REQUEST["groupid"],"submit()");
-	$cmbGroup->AddItem(0,S_ALL_SMALL);
+//	$cmbGroup->AddItem(0,S_ALL_SMALL);
 	
 	if($_REQUEST["type"] == SHOW_TRIGGERS)
 	{
