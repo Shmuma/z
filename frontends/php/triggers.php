@@ -312,7 +312,7 @@ include_once "include/page_header.php";
 	$cmbGroup = new CComboBox("groupid",$_REQUEST["groupid"],"submit()");
 	$cmbHosts = new CComboBox("hostid",$_REQUEST["hostid"],"submit()");
 
-	$cmbGroup->AddItem(0,S_ALL_SMALL);
+// 	$cmbGroup->AddItem(0,S_ALL_SMALL);
 	
 	$result=DBselect("select distinct g.groupid,g.name from groups g, hosts_groups hg, hosts h, items i ".
 		" where h.hostid in (".$accessible_hosts.") ".
