@@ -20,7 +20,7 @@ VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
-top_builddir = ../../..
+top_builddir = ../..
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
 INSTALL = @INSTALL@
 install_sh_DATA = $(install_sh) -c -m 644
@@ -36,7 +36,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = src/libs/zbxdbhigh
+sbin_PROGRAMS = hfsdump$(EXEEXT) hfs_trends_upd$(EXEEXT)
+subdir = src/utils
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_lib_mysql.m4 \
@@ -50,14 +51,19 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/config.h
 CONFIG_CLEAN_FILES =
-LIBRARIES = $(noinst_LIBRARIES)
-AR = ar
-ARFLAGS = cru
-libzbxdbhigh_a_AR = $(AR) $(ARFLAGS)
-libzbxdbhigh_a_LIBADD =
-am_libzbxdbhigh_a_OBJECTS = libzbxdbhigh_a-host.$(OBJEXT) \
-	libzbxdbhigh_a-db.$(OBJEXT) libzbxdbhigh_a-hfs.$(OBJEXT)
-libzbxdbhigh_a_OBJECTS = $(am_libzbxdbhigh_a_OBJECTS)
+am__installdirs = "$(DESTDIR)$(sbindir)"
+sbinPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
+PROGRAMS = $(sbin_PROGRAMS)
+am_hfs_trends_upd_OBJECTS = hfs_trends_upd.$(OBJEXT)
+hfs_trends_upd_OBJECTS = $(am_hfs_trends_upd_OBJECTS)
+am__DEPENDENCIES_1 = ../../zbxcomms/libzbxcomms.a \
+	../../zbxdbhigh/libzbxdbhigh.a ../../zbxlog/libzbxlog.a \
+	../../zbxconf/libzbxconf.a ../../zbxcommon/libzbxcommon.a \
+	../../zbxcrypto/libzbxcrypto.a ../../zbxsys/libzbxsys.a
+hfs_trends_upd_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_hfsdump_OBJECTS = hfsdump-hfsdump.$(OBJEXT)
+hfsdump_OBJECTS = $(am_hfsdump_OBJECTS)
+hfsdump_DEPENDENCIES = $(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -65,8 +71,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(libzbxdbhigh_a_SOURCES)
-DIST_SOURCES = $(libzbxdbhigh_a_SOURCES)
+SOURCES = $(hfs_trends_upd_SOURCES) $(hfsdump_SOURCES)
+DIST_SOURCES = $(hfs_trends_upd_SOURCES) $(hfsdump_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -202,13 +208,20 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-noinst_LIBRARIES = libzbxdbhigh.a
-libzbxdbhigh_a_SOURCES = \
-	host.c \
-	db.c \
-	hfs.c
+hfsdump_CFLAGS = -I../libs/zbxdbhigh/
+ZBX_LIBS = \
+	../../zbxcomms/libzbxcomms.a \
+	../../zbxdbhigh/libzbxdbhigh.a \
+	../../zbxlog/libzbxlog.a \
+	../../zbxconf/libzbxconf.a \
+	../../zbxcommon/libzbxcommon.a \
+	../../zbxcrypto/libzbxcrypto.a \
+	../../zbxsys/libzbxsys.a
 
-libzbxdbhigh_a_CFLAGS = -I@top_srcdir@/src/zabbix_server/
+hfsdump_LDADD = $(ZBX_LIBS)
+hfs_trends_upd_LDADD = $(ZBX_LIBS)
+hfsdump_SOURCES = hfsdump.c
+hfs_trends_upd_SOURCES = hfs_trends_upd.c
 all: all-am
 
 .SUFFIXES:
@@ -222,9 +235,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  src/libs/zbxdbhigh/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  src/utils/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  src/libs/zbxdbhigh/Makefile
+	  $(AUTOMAKE) --gnu  src/utils/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -242,13 +255,35 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
+install-sbinPROGRAMS: $(sbin_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	test -z "$(sbindir)" || $(mkdir_p) "$(DESTDIR)$(sbindir)"
+	@list='$(sbin_PROGRAMS)'; for p in $$list; do \
+	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
+	  if test -f $$p \
+	  ; then \
+	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
+	   echo " $(INSTALL_PROGRAM_ENV) $(sbinPROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(sbindir)/$$f'"; \
+	   $(INSTALL_PROGRAM_ENV) $(sbinPROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(sbindir)/$$f" || exit 1; \
+	  else :; fi; \
+	done
 
-clean-noinstLIBRARIES:
-	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
-libzbxdbhigh.a: $(libzbxdbhigh_a_OBJECTS) $(libzbxdbhigh_a_DEPENDENCIES) 
-	-rm -f libzbxdbhigh.a
-	$(libzbxdbhigh_a_AR) libzbxdbhigh.a $(libzbxdbhigh_a_OBJECTS) $(libzbxdbhigh_a_LIBADD)
-	$(RANLIB) libzbxdbhigh.a
+uninstall-sbinPROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(sbin_PROGRAMS)'; for p in $$list; do \
+	  f=`echo "$$p" | sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
+	  echo " rm -f '$(DESTDIR)$(sbindir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(sbindir)/$$f"; \
+	done
+
+clean-sbinPROGRAMS:
+	-test -z "$(sbin_PROGRAMS)" || rm -f $(sbin_PROGRAMS)
+hfs_trends_upd$(EXEEXT): $(hfs_trends_upd_OBJECTS) $(hfs_trends_upd_DEPENDENCIES) 
+	@rm -f hfs_trends_upd$(EXEEXT)
+	$(LINK) $(hfs_trends_upd_LDFLAGS) $(hfs_trends_upd_OBJECTS) $(hfs_trends_upd_LDADD) $(LIBS)
+hfsdump$(EXEEXT): $(hfsdump_OBJECTS) $(hfsdump_DEPENDENCIES) 
+	@rm -f hfsdump$(EXEEXT)
+	$(LINK) $(hfsdump_LDFLAGS) $(hfsdump_OBJECTS) $(hfsdump_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -256,9 +291,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libzbxdbhigh_a-db.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libzbxdbhigh_a-hfs.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libzbxdbhigh_a-host.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfs_trends_upd.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfsdump-hfsdump.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -274,47 +308,19 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
 
-libzbxdbhigh_a-host.o: host.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -MT libzbxdbhigh_a-host.o -MD -MP -MF "$(DEPDIR)/libzbxdbhigh_a-host.Tpo" -c -o libzbxdbhigh_a-host.o `test -f 'host.c' || echo '$(srcdir)/'`host.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libzbxdbhigh_a-host.Tpo" "$(DEPDIR)/libzbxdbhigh_a-host.Po"; else rm -f "$(DEPDIR)/libzbxdbhigh_a-host.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='host.c' object='libzbxdbhigh_a-host.o' libtool=no @AMDEPBACKSLASH@
+hfsdump-hfsdump.o: hfsdump.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(hfsdump_CFLAGS) $(CFLAGS) -MT hfsdump-hfsdump.o -MD -MP -MF "$(DEPDIR)/hfsdump-hfsdump.Tpo" -c -o hfsdump-hfsdump.o `test -f 'hfsdump.c' || echo '$(srcdir)/'`hfsdump.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/hfsdump-hfsdump.Tpo" "$(DEPDIR)/hfsdump-hfsdump.Po"; else rm -f "$(DEPDIR)/hfsdump-hfsdump.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='hfsdump.c' object='hfsdump-hfsdump.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -c -o libzbxdbhigh_a-host.o `test -f 'host.c' || echo '$(srcdir)/'`host.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(hfsdump_CFLAGS) $(CFLAGS) -c -o hfsdump-hfsdump.o `test -f 'hfsdump.c' || echo '$(srcdir)/'`hfsdump.c
 
-libzbxdbhigh_a-host.obj: host.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -MT libzbxdbhigh_a-host.obj -MD -MP -MF "$(DEPDIR)/libzbxdbhigh_a-host.Tpo" -c -o libzbxdbhigh_a-host.obj `if test -f 'host.c'; then $(CYGPATH_W) 'host.c'; else $(CYGPATH_W) '$(srcdir)/host.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libzbxdbhigh_a-host.Tpo" "$(DEPDIR)/libzbxdbhigh_a-host.Po"; else rm -f "$(DEPDIR)/libzbxdbhigh_a-host.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='host.c' object='libzbxdbhigh_a-host.obj' libtool=no @AMDEPBACKSLASH@
+hfsdump-hfsdump.obj: hfsdump.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(hfsdump_CFLAGS) $(CFLAGS) -MT hfsdump-hfsdump.obj -MD -MP -MF "$(DEPDIR)/hfsdump-hfsdump.Tpo" -c -o hfsdump-hfsdump.obj `if test -f 'hfsdump.c'; then $(CYGPATH_W) 'hfsdump.c'; else $(CYGPATH_W) '$(srcdir)/hfsdump.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/hfsdump-hfsdump.Tpo" "$(DEPDIR)/hfsdump-hfsdump.Po"; else rm -f "$(DEPDIR)/hfsdump-hfsdump.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='hfsdump.c' object='hfsdump-hfsdump.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -c -o libzbxdbhigh_a-host.obj `if test -f 'host.c'; then $(CYGPATH_W) 'host.c'; else $(CYGPATH_W) '$(srcdir)/host.c'; fi`
-
-libzbxdbhigh_a-db.o: db.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -MT libzbxdbhigh_a-db.o -MD -MP -MF "$(DEPDIR)/libzbxdbhigh_a-db.Tpo" -c -o libzbxdbhigh_a-db.o `test -f 'db.c' || echo '$(srcdir)/'`db.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libzbxdbhigh_a-db.Tpo" "$(DEPDIR)/libzbxdbhigh_a-db.Po"; else rm -f "$(DEPDIR)/libzbxdbhigh_a-db.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='db.c' object='libzbxdbhigh_a-db.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -c -o libzbxdbhigh_a-db.o `test -f 'db.c' || echo '$(srcdir)/'`db.c
-
-libzbxdbhigh_a-db.obj: db.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -MT libzbxdbhigh_a-db.obj -MD -MP -MF "$(DEPDIR)/libzbxdbhigh_a-db.Tpo" -c -o libzbxdbhigh_a-db.obj `if test -f 'db.c'; then $(CYGPATH_W) 'db.c'; else $(CYGPATH_W) '$(srcdir)/db.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libzbxdbhigh_a-db.Tpo" "$(DEPDIR)/libzbxdbhigh_a-db.Po"; else rm -f "$(DEPDIR)/libzbxdbhigh_a-db.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='db.c' object='libzbxdbhigh_a-db.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -c -o libzbxdbhigh_a-db.obj `if test -f 'db.c'; then $(CYGPATH_W) 'db.c'; else $(CYGPATH_W) '$(srcdir)/db.c'; fi`
-
-libzbxdbhigh_a-hfs.o: hfs.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -MT libzbxdbhigh_a-hfs.o -MD -MP -MF "$(DEPDIR)/libzbxdbhigh_a-hfs.Tpo" -c -o libzbxdbhigh_a-hfs.o `test -f 'hfs.c' || echo '$(srcdir)/'`hfs.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libzbxdbhigh_a-hfs.Tpo" "$(DEPDIR)/libzbxdbhigh_a-hfs.Po"; else rm -f "$(DEPDIR)/libzbxdbhigh_a-hfs.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='hfs.c' object='libzbxdbhigh_a-hfs.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -c -o libzbxdbhigh_a-hfs.o `test -f 'hfs.c' || echo '$(srcdir)/'`hfs.c
-
-libzbxdbhigh_a-hfs.obj: hfs.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -MT libzbxdbhigh_a-hfs.obj -MD -MP -MF "$(DEPDIR)/libzbxdbhigh_a-hfs.Tpo" -c -o libzbxdbhigh_a-hfs.obj `if test -f 'hfs.c'; then $(CYGPATH_W) 'hfs.c'; else $(CYGPATH_W) '$(srcdir)/hfs.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libzbxdbhigh_a-hfs.Tpo" "$(DEPDIR)/libzbxdbhigh_a-hfs.Po"; else rm -f "$(DEPDIR)/libzbxdbhigh_a-hfs.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='hfs.c' object='libzbxdbhigh_a-hfs.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -c -o libzbxdbhigh_a-hfs.obj `if test -f 'hfs.c'; then $(CYGPATH_W) 'hfs.c'; else $(CYGPATH_W) '$(srcdir)/hfs.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(hfsdump_CFLAGS) $(CFLAGS) -c -o hfsdump-hfsdump.obj `if test -f 'hfsdump.c'; then $(CYGPATH_W) 'hfsdump.c'; else $(CYGPATH_W) '$(srcdir)/hfsdump.c'; fi`
 uninstall-info-am:
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
@@ -394,8 +400,11 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(LIBRARIES)
+all-am: Makefile $(PROGRAMS)
 installdirs:
+	for dir in "$(DESTDIR)$(sbindir)"; do \
+	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
+	done
 install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
@@ -422,7 +431,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-noinstLIBRARIES mostlyclean-am
+clean-am: clean-generic clean-sbinPROGRAMS mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -442,7 +451,7 @@ info-am:
 
 install-data-am:
 
-install-exec-am:
+install-exec-am: install-sbinPROGRAMS
 
 install-info: install-info-am
 
@@ -467,18 +476,18 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-info-am
+uninstall-am: uninstall-info-am uninstall-sbinPROGRAMS
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
-	clean-noinstLIBRARIES ctags distclean distclean-compile \
+	clean-sbinPROGRAMS ctags distclean distclean-compile \
 	distclean-generic distclean-tags distdir dvi dvi-am html \
 	html-am info info-am install install-am install-data \
 	install-data-am install-exec install-exec-am install-info \
-	install-info-am install-man install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
+	install-info-am install-man install-sbinPROGRAMS install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic pdf pdf-am ps ps-am tags uninstall \
-	uninstall-am uninstall-info-am
+	uninstall-am uninstall-info-am uninstall-sbinPROGRAMS
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

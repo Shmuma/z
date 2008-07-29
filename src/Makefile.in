@@ -197,14 +197,15 @@ DIST_SUBDIRS = \
 	zabbix_agent \
 	zabbix_get \
 	zabbix_sender \
-	zabbix_server
+	zabbix_server \
+	utils
 
 @AGENT_TRUE@AGENT_SUBDIRS = \
 @AGENT_TRUE@	zabbix_agent \
 @AGENT_TRUE@	zabbix_get \
 @AGENT_TRUE@	zabbix_sender
 
-@SERVER_TRUE@SERVER_SUBDIRS = zabbix_server
+@SERVER_TRUE@SERVER_SUBDIRS = zabbix_server utils
 SUBDIRS = \
 	libs \
 	$(AGENT_SUBDIRS) \
