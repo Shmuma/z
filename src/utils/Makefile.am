@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-hfsdump_CFLAGS = -I../libs/zbxdbhigh/
+AM_CFLAGS = -I../libs/zbxdbhigh/
 
 ZBX_LIBS = \
 	../libs/zbxcomms/libzbxcomms.a \
