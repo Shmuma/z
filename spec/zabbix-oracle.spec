@@ -104,6 +104,8 @@ make install INSTALL_ROOT=%{buildroot}
 %dir %attr(0755,root,root) %{zabbix_confdir}
 %attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_server.conf
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_server
+%attr(0755,root,root) %{zabbix_bindir}/hfsdump
+%attr(0755,root,root) %{zabbix_bindir}/hfs_trends_upd
 %config(noreplace) %{_sysconfdir}/init.d/zabbix_server
 
 %files -n zabbix-phpfrontend
