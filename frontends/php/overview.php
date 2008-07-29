@@ -85,6 +85,8 @@ include_once "include/page_header.php";
 		" order by g.name");
 	while($row=DBfetch($result))
 	{
+		if ($_REQUEST["groupid"] == 0)
+			$_REQUEST["groupid"] = $row["groupid"];
 		$cmbGroup->AddItem(
 				$row["groupid"],
 				get_node_name_by_elid($row["groupid"]).$row["name"]

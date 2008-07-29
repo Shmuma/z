@@ -47,10 +47,7 @@ include_once "include/page_header.php";
 	$cmbDRules->AddItem(0,S_ALL_SMALL);
 	$db_drules = DBselect('select distinct * from drules where '.DBin_node('druleid').' order by name');
 	while($drule_data = DBfetch($db_drules))
-		$cmbDRules->AddItem(
-				$drule_data['druleid'],
-				get_node_name_by_elid($drule_data['druleid']).$drule_data['name']
-				);
+		$cmbDRules->AddItem($drule_data['druleid'], $drule_data['name']);
 	$r_form->AddItem(array(S_DISCOVERY_RULE.SPACE,$cmbDRules));
 
 	show_table_header(S_STATUS_OF_DISCOVERY_BIG, $r_form);
@@ -118,7 +115,7 @@ include_once "include/page_header.php";
 	foreach($discovery_info as $ip => $h_data)
 	{
 		$table_row = array(
-			get_node_name_by_elid($h_data['druleid']),
+			'',
 			new CSpan($ip, $h_data['class']),
 			new CSpan(convert_units(time() - $h_data['time'], 'uptime'), $h_data['class'])
 			);
