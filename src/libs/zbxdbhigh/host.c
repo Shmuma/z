@@ -701,7 +701,7 @@ static int	DBdelete_trigger(
 
 			/* disable actions */
 			db_elements = DBselect("select distinct actionid from conditions "
-				" where conditiontype=%i and value=" ZBX_FS_UI64, CONDITION_TYPE_TRIGGER, triggerid);
+				" where conditiontype=%i and value='" ZBX_FS_UI64 "'", CONDITION_TYPE_TRIGGER, triggerid);
 			while( (element_data = DBfetch(db_elements)) )
 			{
 				ZBX_STR2UINT64(elementid, element_data[0]);
@@ -711,7 +711,7 @@ static int	DBdelete_trigger(
 			DBfree_result(db_elements);
 
 			/* delete action conditions */
-			DBexecute("delete from conditions where conditiontype=%i and value=" ZBX_FS_UI64, CONDITION_TYPE_TRIGGER, triggerid);
+			DBexecute("delete from conditions where conditiontype=%i and value='" ZBX_FS_UI64 "'", CONDITION_TYPE_TRIGGER, triggerid);
 			DBexecute("delete from triggers where triggerid=" ZBX_FS_UI64, triggerid);
 
 			zabbix_log( LOG_LEVEL_DEBUG, "Trigger '%s' deleted", trigger_data[0]);
@@ -4491,7 +4491,7 @@ static int	DBdelete_sysmaps_elements_with_hostid(
 
 	/* disable actions */
 	db_elements = DBselect("select distinct actionid from conditions "
-		" where conditiontype=%i and value=" ZBX_FS_UI64,CONDITION_TYPE_HOST, hostid);
+		" where conditiontype=%i and value='" ZBX_FS_UI64 "'",CONDITION_TYPE_HOST, hostid);
 
 	while( (element_data = DBfetch(db_elements)) )
 	{
@@ -4504,7 +4504,7 @@ static int	DBdelete_sysmaps_elements_with_hostid(
 	DBfree_result(db_elements);
 
 	/* delete action conditions */
-	DBexecute("delete from conditions where conditiontype=%i and value=" ZBX_FS_UI64, CONDITION_TYPE_HOST, hostid);
+	DBexecute("delete from conditions where conditiontype=%i and value='" ZBX_FS_UI64 "'", CONDITION_TYPE_HOST, hostid);
 
 	/* delete host profile */
 	DBexecute("delete from hosts_profiles where hostid=" ZBX_FS_UI64, hostid);
