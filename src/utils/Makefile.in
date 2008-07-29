@@ -61,7 +61,7 @@ am__DEPENDENCIES_1 = ../libs/zbxcomms/libzbxcomms.a \
 	../libs/zbxconf/libzbxconf.a ../libs/zbxcommon/libzbxcommon.a \
 	../libs/zbxcrypto/libzbxcrypto.a ../libs/zbxsys/libzbxsys.a
 hfs_trends_upd_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_hfsdump_OBJECTS = hfsdump-hfsdump.$(OBJEXT)
+am_hfsdump_OBJECTS = hfsdump.$(OBJEXT)
 hfsdump_OBJECTS = $(am_hfsdump_OBJECTS)
 hfsdump_DEPENDENCIES = $(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/include
@@ -208,7 +208,7 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-hfsdump_CFLAGS = -I../libs/zbxdbhigh/
+AM_CFLAGS = -I../libs/zbxdbhigh/
 ZBX_LIBS = \
 	../libs/zbxcomms/libzbxcomms.a \
 	../libs/zbxdbhigh/libzbxdbhigh.a \
@@ -292,7 +292,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfs_trends_upd.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfsdump-hfsdump.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfsdump.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -307,20 +307,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
-
-hfsdump-hfsdump.o: hfsdump.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(hfsdump_CFLAGS) $(CFLAGS) -MT hfsdump-hfsdump.o -MD -MP -MF "$(DEPDIR)/hfsdump-hfsdump.Tpo" -c -o hfsdump-hfsdump.o `test -f 'hfsdump.c' || echo '$(srcdir)/'`hfsdump.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/hfsdump-hfsdump.Tpo" "$(DEPDIR)/hfsdump-hfsdump.Po"; else rm -f "$(DEPDIR)/hfsdump-hfsdump.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='hfsdump.c' object='hfsdump-hfsdump.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(hfsdump_CFLAGS) $(CFLAGS) -c -o hfsdump-hfsdump.o `test -f 'hfsdump.c' || echo '$(srcdir)/'`hfsdump.c
-
-hfsdump-hfsdump.obj: hfsdump.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(hfsdump_CFLAGS) $(CFLAGS) -MT hfsdump-hfsdump.obj -MD -MP -MF "$(DEPDIR)/hfsdump-hfsdump.Tpo" -c -o hfsdump-hfsdump.obj `if test -f 'hfsdump.c'; then $(CYGPATH_W) 'hfsdump.c'; else $(CYGPATH_W) '$(srcdir)/hfsdump.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/hfsdump-hfsdump.Tpo" "$(DEPDIR)/hfsdump-hfsdump.Po"; else rm -f "$(DEPDIR)/hfsdump-hfsdump.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='hfsdump.c' object='hfsdump-hfsdump.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(hfsdump_CFLAGS) $(CFLAGS) -c -o hfsdump-hfsdump.obj `if test -f 'hfsdump.c'; then $(CYGPATH_W) 'hfsdump.c'; else $(CYGPATH_W) '$(srcdir)/hfsdump.c'; fi`
 uninstall-info-am:
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
