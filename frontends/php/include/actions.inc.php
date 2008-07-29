@@ -834,7 +834,7 @@ include_once 'include/discovery.inc.php';
 				$error=new CSpan($row["error"],"on");
 			}
 			$table->AddRow(array(
-				get_node_name_by_elid($row['alertid']),
+				'',
 				new CCol($time, 'top'),
 				new CCol($row["description"], 'top'),
 				new CCol($status, 'top'),

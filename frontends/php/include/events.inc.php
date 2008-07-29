@@ -125,7 +125,7 @@
 				
 			$table->AddRow(array(
 				date("Y.M.d H:i:s",$row["clock"]),
-				get_node_name_by_elid($row['triggerid']),
+				'',
 				$hostid == 0 ? $row['host'] : null,
 				new CLink(
 					expand_trigger_description_by_data($row, ZBX_FLAG_EVENT),
