@@ -104,7 +104,7 @@ include_once "include/page_header.php";
 	$cmbGroup = new CComboBox("groupid",$_REQUEST["groupid"],"submit()");
 	$cmbHosts = new CComboBox("hostid",$_REQUEST["hostid"],"submit()");
 
-	$cmbGroup->AddItem(0,S_ALL_SMALL);
+// 	$cmbGroup->AddItem(0,S_ALL_SMALL);
 	
 	$availiable_groups= get_accessible_groups_by_user($USER_DETAILS,PERM_READ_LIST, null, null, get_current_nodeid());
 	$availiable_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_LIST, null, null, get_current_nodeid());
