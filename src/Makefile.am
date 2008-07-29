@@ -5,7 +5,8 @@ DIST_SUBDIRS = \
 	zabbix_agent \
 	zabbix_get \
 	zabbix_sender \
-	zabbix_server
+	zabbix_server \
+	utils
 
 if AGENT
 AGENT_SUBDIRS = \
@@ -15,7 +16,7 @@ AGENT_SUBDIRS = \
 endif
 
 if SERVER
-SERVER_SUBDIRS = zabbix_server
+SERVER_SUBDIRS = zabbix_server utils
 endif
 
 SUBDIRS = \

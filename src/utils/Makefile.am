@@ -1,8 +1,8 @@
 ## Process this file with automake to produce Makefile.in
 
-hfsdump_CFLAGS = -I..
+hfsdump_CFLAGS = -I../libs/zbxdbhigh/
 
-hfsdump_LDADD = \
+ZBX_LIBS = \
 	../../zbxcomms/libzbxcomms.a \
 	../../zbxdbhigh/libzbxdbhigh.a \
 	../../zbxlog/libzbxlog.a \
@@ -10,6 +10,9 @@ hfsdump_LDADD = \
 	../../zbxcommon/libzbxcommon.a \
 	../../zbxcrypto/libzbxcrypto.a \
 	../../zbxsys/libzbxsys.a
+
+hfsdump_LDADD = $(ZBX_LIBS)
+hfs_trends_upd_LDADD = $(ZBX_LIBS)
 
 sbin_PROGRAMS = hfsdump hfs_trends_upd
 hfsdump_SOURCES = hfsdump.c
