@@ -683,7 +683,7 @@ include_once "include/page_header.php";
 				$status_filter = " and h.status in (".HOST_STATUS_TEMPLATE.") ";
 				
 			$cmbGroups = new CComboBox("groupid",get_request("groupid",0),"submit()");
-			$cmbGroups->AddItem(0,S_ALL_SMALL);
+// 			$cmbGroups->AddItem(0,S_ALL_SMALL);
 			$result=DBselect("select distinct g.groupid,g.name from groups g,hosts_groups hg,hosts h".
 					" where h.hostid in (".$available_hosts.") ".
 					" and g.groupid=hg.groupid and h.hostid=hg.hostid".$status_filter.
@@ -970,7 +970,7 @@ include_once "include/page_header.php";
 			$form->SetMethod('get');
 			
 			$cmbGroup = new CComboBox("groupid",$_REQUEST["groupid"],"submit();");
-			$cmbGroup->AddItem(0,S_ALL_SMALL);
+// 			$cmbGroup->AddItem(0,S_ALL_SMALL);
 
 			$result=DBselect("select distinct g.groupid,g.name from groups g,hosts_groups hg".
 				" where g.groupid=hg.groupid and hg.hostid in (".$available_hosts.") ".
