@@ -3,13 +3,13 @@
 hfsdump_CFLAGS = -I../libs/zbxdbhigh/
 
 ZBX_LIBS = \
-	../../zbxcomms/libzbxcomms.a \
-	../../zbxdbhigh/libzbxdbhigh.a \
-	../../zbxlog/libzbxlog.a \
-	../../zbxconf/libzbxconf.a \
-	../../zbxcommon/libzbxcommon.a \
-	../../zbxcrypto/libzbxcrypto.a \
-	../../zbxsys/libzbxsys.a
+	../libs/zbxcomms/libzbxcomms.a \
+	../libs/zbxdbhigh/libzbxdbhigh.a \
+	../libs/zbxlog/libzbxlog.a \
+	../libs/zbxconf/libzbxconf.a \
+	../libs/zbxcommon/libzbxcommon.a \
+	../libs/zbxcrypto/libzbxcrypto.a \
+	../libs/zbxsys/libzbxsys.a
 
 hfsdump_LDADD = $(ZBX_LIBS)
 hfs_trends_upd_LDADD = $(ZBX_LIBS)
