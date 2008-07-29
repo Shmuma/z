@@ -103,10 +103,7 @@ include_once "include/page_header.php";
 		" order by g.name");
 	while($row=DBfetch($result))
 	{
-		$cmbGroup->AddItem(
-			$row['groupid'],
-			get_node_name_by_elid($row['groupid']).$row['name']
-			);
+		$cmbGroup->AddItem($row['groupid'], $row['name']);
 	}
 	$form->AddItem(S_GROUP.SPACE);
 	$form->AddItem($cmbGroup);
@@ -134,10 +131,7 @@ include_once "include/page_header.php";
 	$result=DBselect($sql);
 	while($row=DBfetch($result))
 	{
-		$cmbHosts->AddItem(
-			$row['hostid'],
-			get_node_name_by_elid($row['hostid']).$row['host']
-			);
+		$cmbHosts->AddItem($row['hostid'], $row['host']);
 	}
 
 	$form->AddItem(SPACE.S_HOST.SPACE);
@@ -270,7 +264,7 @@ include_once "include/page_header.php";
 			$col->SetColSpan(6);
 
 			$table->AddRow(array(
-					get_node_name_by_elid($db_app['applicationid']),
+					'',
 					$_REQUEST["hostid"] > 0 ? NULL : $db_app["host"],
 					$col
 				));

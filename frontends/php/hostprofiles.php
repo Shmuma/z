@@ -57,10 +57,7 @@ include_once "include/page_header.php";
 		" order by g.name");
 	while($row=DBfetch($result))
 	{
-		$cmbGroup->AddItem(
-				$row['groupid'],
-				get_node_name_by_elid($row['groupid']).$row['name']
-				);
+		$cmbGroup->AddItem($row['groupid'], $row['name']);
 	}
 	$r_form->AddItem(array(S_GROUP.SPACE,$cmbGroup));
 	

@@ -690,6 +690,8 @@ include_once "include/page_header.php";
 					" order by g.name");
 			while($row=DBfetch($result))
 			{
+				if ($_REQUEST["groupid"] == 0)
+					$_REQUEST["groupid"] = $row["groupid"];
 				$cmbGroups->AddItem($row["groupid"],$row["name"]);
 				if($row["groupid"] == $_REQUEST["groupid"]) $correct_host = 1;
 			}
@@ -977,6 +979,8 @@ include_once "include/page_header.php";
 				" order by name");
 			while($row=DBfetch($result))
 			{
+				if ($_REQUEST["groupid"] == 0)
+					$_REQUEST["groupid"] = $row["groupid"];
 				$cmbGroup->AddItem($row["groupid"],$row["name"]);
 			}
 			$form->AddItem(S_GROUP.SPACE);
