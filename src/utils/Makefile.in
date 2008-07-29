@@ -56,10 +56,10 @@ sbinPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(sbin_PROGRAMS)
 am_hfs_trends_upd_OBJECTS = hfs_trends_upd.$(OBJEXT)
 hfs_trends_upd_OBJECTS = $(am_hfs_trends_upd_OBJECTS)
-am__DEPENDENCIES_1 = ../../zbxcomms/libzbxcomms.a \
-	../../zbxdbhigh/libzbxdbhigh.a ../../zbxlog/libzbxlog.a \
-	../../zbxconf/libzbxconf.a ../../zbxcommon/libzbxcommon.a \
-	../../zbxcrypto/libzbxcrypto.a ../../zbxsys/libzbxsys.a
+am__DEPENDENCIES_1 = ../libs/zbxcomms/libzbxcomms.a \
+	../libs/zbxdbhigh/libzbxdbhigh.a ../libs/zbxlog/libzbxlog.a \
+	../libs/zbxconf/libzbxconf.a ../libs/zbxcommon/libzbxcommon.a \
+	../libs/zbxcrypto/libzbxcrypto.a ../libs/zbxsys/libzbxsys.a
 hfs_trends_upd_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_hfsdump_OBJECTS = hfsdump-hfsdump.$(OBJEXT)
 hfsdump_OBJECTS = $(am_hfsdump_OBJECTS)
@@ -210,13 +210,13 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 hfsdump_CFLAGS = -I../libs/zbxdbhigh/
 ZBX_LIBS = \
-	../../zbxcomms/libzbxcomms.a \
-	../../zbxdbhigh/libzbxdbhigh.a \
-	../../zbxlog/libzbxlog.a \
-	../../zbxconf/libzbxconf.a \
-	../../zbxcommon/libzbxcommon.a \
-	../../zbxcrypto/libzbxcrypto.a \
-	../../zbxsys/libzbxsys.a
+	../libs/zbxcomms/libzbxcomms.a \
+	../libs/zbxdbhigh/libzbxdbhigh.a \
+	../libs/zbxlog/libzbxlog.a \
+	../libs/zbxconf/libzbxconf.a \
+	../libs/zbxcommon/libzbxcommon.a \
+	../libs/zbxcrypto/libzbxcrypto.a \
+	../libs/zbxsys/libzbxsys.a
 
 hfsdump_LDADD = $(ZBX_LIBS)
 hfs_trends_upd_LDADD = $(ZBX_LIBS)
