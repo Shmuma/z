@@ -31,6 +31,8 @@
 
 #include "md5.h"
 
+#define MIB_SWAPINFO_SIZE 3
+
 
 /* Solaris. */
 #ifndef HAVE_SYSINFO_FREESWAP
@@ -100,18 +102,43 @@ point them all to the same buffer */
 
 static int	SYSTEM_SWAP_FREE(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
 {
+	int mibswap[MIB_SWAPINFO_SIZE];
+	size_t mibswap_size = MIB_SWAPINFO_SIZE;
+	zbx_uint64_t totswap, usedswap, freeswap, n;
+	struct xswdev xsw;
+	size_t size;
+
+	assert(result);
+        init_result(result);
+
+	totswap = 0;
+	usedswap = 0;
+
+	if (sysctlnametomib("vm.swap_info", mibswap, &mibswap_size) != -1) {
+		for (n = 0; ; ++n) {
+			mibswap[mibswap_size] = n;
+			size = sizeof(xsw);
+			if (sysctl(mibswap, mibswap_size + 1, &xsw, &size, NULL, 0) == -1)
+				break;
+			if (xsw.xsw_version != XSWDEV_VERSION)
+				return SYSINFO_RET_FAIL;
+			totswap += xsw.xsw_nblks;
+			usedswap += xsw.xsw_used;
+		}
+		freeswap = totswap - usedswap;
+
+		SET_UI64_RESULT(result, freeswap * getpagesize ());
+		return SYSINFO_RET_OK;
+	}
+	else {
 #ifdef HAVE_KVM_H
 	kvm_t *kd;
 	int page_size, nfree = 0;
 	struct kvm_swap swap[1];
 
-	assert(result);
-
-        init_result(result);
-
 	page_size = getpagesize();
 
-	if ((kd = kvm_open(NULL, NULL, NULL, O_RDONLY, "kvm_open")) == NULL)
+	if ((kd = kvm_open("/dev/null", NULL, NULL, O_RDONLY, "kvm_open")) == NULL)
     	    return SYSINFO_RET_FAIL;
 
 	if (kvm_getswapinfo(kd, swap, 1, 0) == -1) {
@@ -131,10 +158,6 @@ static int	SYSTEM_SWAP_FREE(const char *cmd, const char *param, unsigned flags, 
 #ifdef HAVE_SYSINFO_FREESWAP
 	struct sysinfo info;
 
-	assert(result);
-
-        init_result(result);
-
 	if( 0 == sysinfo(&info))
 	{
 #ifdef HAVE_SYSINFO_MEM_UNIT
@@ -153,34 +176,49 @@ static int	SYSTEM_SWAP_FREE(const char *cmd, const char *param, unsigned flags, 
 #ifdef HAVE_SYS_SWAP_SWAPTABLE
 	double swaptotal,swapfree;
 
-	assert(result);
-
-        init_result(result);
-
 	get_swapinfo(&swaptotal,&swapfree);
 
 	SET_UI64_RESULT(result, swapfree);
 	return SYSINFO_RET_OK;
 #else
-	assert(result);
-
-        init_result(result);
-
 	return	SYSINFO_RET_FAIL;
 #endif
 #endif
+	}
 }
 
 static int	SYSTEM_SWAP_TOTAL(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
 {
+	int mibswap[MIB_SWAPINFO_SIZE];
+	size_t mibswap_size = MIB_SWAPINFO_SIZE;
+	zbx_uint64_t totswap, n;
+	struct xswdev xsw;
+	size_t size;
+
+	assert(result);
+        init_result(result);
+
+	totswap = 0;
+
+	if (sysctlnametomib("vm.swap_info", mibswap, &mibswap_size) != -1) {
+		for (n = 0; ; ++n) {
+			mibswap[mibswap_size] = n;
+			size = sizeof(xsw);
+			if (sysctl(mibswap, mibswap_size + 1, &xsw, &size, NULL, 0) == -1)
+				break;
+			if (xsw.xsw_version != XSWDEV_VERSION)
+				return SYSINFO_RET_FAIL;
+			totswap += xsw.xsw_nblks;
+		}
+
+		SET_UI64_RESULT(result, totswap * getpagesize ());
+		return SYSINFO_RET_OK;
+	}
+	else {
 #ifdef HAVE_KVM_H
 	kvm_t *kd;
 	int page_size, ntotal = 0;
 	struct kvm_swap swap[1];
-
-	assert(result);
-
-        init_result(result);
 
 	page_size = getpagesize();
 
@@ -204,10 +242,6 @@ static int	SYSTEM_SWAP_TOTAL(const char *cmd, const char *param, unsigned flags,
 #ifdef HAVE_SYSINFO_TOTALSWAP
 	struct sysinfo info;
 
-	assert(result);
-
-        init_result(result);
-
 	if( 0 == sysinfo(&info))
 	{
 #ifdef HAVE_SYSINFO_MEM_UNIT
@@ -226,22 +260,15 @@ static int	SYSTEM_SWAP_TOTAL(const char *cmd, const char *param, unsigned flags,
 #ifdef HAVE_SYS_SWAP_SWAPTABLE
 	double swaptotal,swapfree;
 
-	assert(result);
-
-        init_result(result);
-
 	get_swapinfo(&swaptotal,&swapfree);
 	
 	SET_UI64_RESULT(result, swaptotal);
 	return SYSINFO_RET_OK;
 #else
-	assert(result);
-
-        init_result(result);
-
 	return	SYSINFO_RET_FAIL;
 #endif
 #endif
+	}
 }
 
 static int	SYSTEM_SWAP_PFREE(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)

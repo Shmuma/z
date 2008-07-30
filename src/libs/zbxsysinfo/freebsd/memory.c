@@ -21,9 +21,21 @@
 
 #include "sysinfo.h"
 
+
 static int	VM_MEMORY_CACHED(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
 {
-#ifdef HAVE_PROC
+#ifdef HAVE_SYS_SYSCTL_H
+	size_t len = 0;
+	unsigned int val;
+
+	len = sizeof (val);
+	if (sysctlbyname ("vm.stats.vm.v_cache_count", &val, &len, NULL, 0) == -1 || !len)
+		return SYSINFO_RET_FAIL;
+	else {
+		SET_UI64_RESULT (result, val * getpagesize());
+		return SYSINFO_RET_OK;
+	}
+#elif defined(HAVE_PROC)
         FILE    *f = NULL;
         char    *t;
         char    c[MAX_STRING_LEN];
@@ -90,6 +102,17 @@ static int	VM_MEMORY_BUFFERS(const char *cmd, const char *param, unsigned flags,
 	else
 	{
 		return SYSINFO_RET_FAIL;
+	}
+#elif defined(HAVE_SYS_SYSCTL_H)
+	size_t len = 0;
+	unsigned int val;
+
+	len = sizeof (val);
+	if (sysctlbyname ("vfs.bufspace", &val, &len, NULL, 0) == -1 || !len)
+		return SYSINFO_RET_FAIL;
+	else {
+		SET_UI64_RESULT (result, val);
+		return SYSINFO_RET_OK;
 	}
 #else
 	return	SYSINFO_RET_FAIL;
@@ -174,7 +197,9 @@ static int	VM_MEMORY_TOTAL(const char *cmd, const char *param, unsigned flags, A
 		return SYSINFO_RET_FAIL;
 	}
 #elif defined(HAVE_SYS_VMMETER_VMTOTAL)
-	int mib[2], len, total;
+	int mib[2];
+	size_t len;
+	zbx_uint64_t total;
 
 	len = sizeof(total);
 	mib[0]=CTL_HW;
