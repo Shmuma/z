@@ -99,6 +99,14 @@ int	SYSTEM_CPU_UTIL(const char *cmd, const char *param, unsigned flags, AGENT_RE
 	char cpuname[MAX_STRING_LEN];
 	char type[MAX_STRING_LEN];
 	char mode[MAX_STRING_LEN];
+	long cp_time[CPUSTATES];
+	long cp_diff[CPUSTATES];
+	static long cp_old[CPUSTATES];
+	static int cpu_states[CPUSTATES];
+	static struct timeval this_time, last_time;
+	struct timeval time_diff;
+	size_t len = sizeof(cp_time);
+	int i;
 
 	int cpu_num = 0;
 	
@@ -143,101 +151,40 @@ int	SYSTEM_CPU_UTIL(const char *cmd, const char *param, unsigned flags, AGENT_RE
 		zbx_snprintf(mode, sizeof(mode), "avg1");
 	}
 
-	if ( !CPU_COLLECTOR_STARTED(collector) )
-	{
-		/* trying to live without collector */
-		long cp_time[CPUSTATES];
-		long cp_diff[CPUSTATES];
-		static long cp_old[CPUSTATES];
-		static int cpu_states[CPUSTATES];
-		static struct timeval this_time, last_time;
-		struct timeval time_diff;
-		size_t len = sizeof(cp_time);
-		int i;
-
-		gettimeofday(&this_time, NULL);
-		timersub(&this_time, &last_time, &time_diff);
-		if (timertod(&time_diff) < 0.5) {
-			goto output;
-		}
-		last_time = this_time;
-
-		/* puts kern.cp_time array into cp_time */
-		if (sysctlbyname("kern.cp_time", &cp_time, &len, NULL, 0) == -1) {
-			warn("kern.cp_time");
-			return 0.0;
-		}
-		/* Use percentages function lifted from top(1) to figure percentages */
-		percentages(CPUSTATES, cpu_states, cp_time, cp_old, cp_diff);
-
-	output:
-		if( 0 == strcmp(type,"idle")) {
-			SET_DBL_RESULT (result, (double)(cpu_states[CP_IDLE]) / 10.0);
-			return SYSINFO_RET_OK;
-		}
-		else if( 0 == strcmp(type,"nice")) {
-			SET_DBL_RESULT (result, (double)(cpu_states[CP_NICE]) / 10.0);
-			return SYSINFO_RET_OK;
-		}
-		else if( 0 == strcmp(type,"user")) {
-			SET_DBL_RESULT (result, (double)(cpu_states[CP_USER]) / 10.0);
-			return SYSINFO_RET_OK;
-		}
-		else if( 0 == strcmp(type,"system")) {
-			SET_DBL_RESULT (result, (double)(cpu_states[CP_SYS]) / 10.0);
-			return SYSINFO_RET_OK;
-		}
-		else
-			return SYSINFO_RET_FAIL;
+	gettimeofday(&this_time, NULL);
+	timersub(&this_time, &last_time, &time_diff);
+	if (timertod(&time_diff) < 0.5) {
+		goto output;
 	}
+	last_time = this_time;
 
-	if(strcmp(cpuname,"all") == 0)
-	{
-		cpu_num = 0;
+	/* puts kern.cp_time array into cp_time */
+	if (sysctlbyname("kern.cp_time", &cp_time, &len, NULL, 0) == -1) {
+		warn("kern.cp_time");
+		return 0.0;
+	}
+	/* Use percentages function lifted from top(1) to figure percentages */
+	percentages(CPUSTATES, cpu_states, cp_time, cp_old, cp_diff);
+
+ output:
+	if( 0 == strcmp(type,"idle")) {
+		SET_DBL_RESULT (result, (double)(cpu_states[CP_IDLE]) / 10.0);
+		return SYSINFO_RET_OK;
+	}
+	else if( 0 == strcmp(type,"nice")) {
+		SET_DBL_RESULT (result, (double)(cpu_states[CP_NICE]) / 10.0);
+		return SYSINFO_RET_OK;
+	}
+	else if( 0 == strcmp(type,"user")) {
+		SET_DBL_RESULT (result, (double)(cpu_states[CP_USER]) / 10.0);
+		return SYSINFO_RET_OK;
+	}
+	else if( 0 == strcmp(type,"system")) {
+		SET_DBL_RESULT (result, (double)(cpu_states[CP_SYS]) / 10.0);
+		return SYSINFO_RET_OK;
 	}
 	else
-	{
-		cpu_num = atoi(cpuname)+1;
-		if ((cpu_num < 1) || (cpu_num > collector->cpus.count))
-			return SYSINFO_RET_FAIL;
-	}
-
-	if( 0 == strcmp(type,"idle"))
-	{
-		if( 0 == strcmp(mode,"avg1"))		SET_DBL_RESULT(result, collector->cpus.cpu[cpu_num].idle1)
-		else if( 0 == strcmp(mode,"avg5"))	SET_DBL_RESULT(result, collector->cpus.cpu[cpu_num].idle5)
-		else if( 0 == strcmp(mode,"avg15"))	SET_DBL_RESULT(result, collector->cpus.cpu[cpu_num].idle15)
-		else return SYSINFO_RET_FAIL;
-
-	}
-	else if( 0 == strcmp(type,"nice"))
-	{
-		if( 0 == strcmp(mode,"avg1")) 		SET_DBL_RESULT(result, collector->cpus.cpu[cpu_num].nice1)
-		else if( 0 == strcmp(mode,"avg5")) 	SET_DBL_RESULT(result, collector->cpus.cpu[cpu_num].nice5)
-		else if( 0 == strcmp(mode,"avg15"))	SET_DBL_RESULT(result, collector->cpus.cpu[cpu_num].nice15)
-		else return SYSINFO_RET_FAIL;
-
-	}
-	else if( 0 == strcmp(type,"user"))
-	{
-		if( 0 == strcmp(mode,"avg1")) 		SET_DBL_RESULT(result, collector->cpus.cpu[cpu_num].user1)
-		else if( 0 == strcmp(mode,"avg5")) 	SET_DBL_RESULT(result, collector->cpus.cpu[cpu_num].user5)
-		else if( 0 == strcmp(mode,"avg15"))	SET_DBL_RESULT(result, collector->cpus.cpu[cpu_num].user15)
-		else return SYSINFO_RET_FAIL;
-	}
-	else if( 0 == strcmp(type,"system"))
-	{
-		if( 0 == strcmp(mode,"avg1")) 		SET_DBL_RESULT(result, collector->cpus.cpu[cpu_num].system1)
-		else if( 0 == strcmp(mode,"avg5")) 	SET_DBL_RESULT(result, collector->cpus.cpu[cpu_num].system5)
-		else if( 0 == strcmp(mode,"avg15"))	SET_DBL_RESULT(result, collector->cpus.cpu[cpu_num].system15)
-		else return SYSINFO_RET_FAIL;
-	}
-	else
-	{
 		return SYSINFO_RET_FAIL;
-	}
-
-	return SYSINFO_RET_OK;
 }
 
 /* AIX CPU info */
