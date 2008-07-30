@@ -21,9 +21,21 @@
 
 #include "sysinfo.h"
 
+
 static int	VM_MEMORY_CACHED(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
 {
-#ifdef HAVE_PROC
+#ifdef HAVE_SYS_SYSCTL_H
+	size_t len = 0;
+	unsigned int val;
+
+	len = sizeof (val);
+	if (sysctlbyname ("vm.stats.vm.v_cache_count", &val, &len, NULL, 0) == -1 || !len)
+		return SYSINFO_RET_FAIL;
+	else {
+		SET_UI64_RESULT (result, val * getpagesize());
+		return SYSINFO_RET_OK;
+	}
+#elif defined(HAVE_PROC)
         FILE    *f = NULL;
         char    *t;
         char    c[MAX_STRING_LEN];
