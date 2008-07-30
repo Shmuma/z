@@ -48,6 +48,52 @@ int	SYSTEM_CPU_NUM(const char *cmd, const char *param, unsigned flags, AGENT_RES
 #endif
 }
 
+
+static long percentages(int cnt, int *out, register long *new,
+                        register long *old, long *diffs)  {
+
+	register int i;
+	register long change;
+	register long total_change;
+	register long *dp;
+	long half_total;
+
+	/* initialization */
+	total_change = 0;
+	dp = diffs;
+
+	/* calculate changes for each state and the overall change */
+	for (i = 0; i < cnt; i++) {
+		if ((change = *new - *old) < 0) {
+			/* this only happens when the counter wraps */
+			change = (int)
+				((unsigned long)*new-(unsigned long)*old);
+		}
+		total_change += (*dp++ = change);
+		*old++ = *new++;
+	}
+	/* avoid divide by zero potential */
+	if (total_change == 0) { total_change = 1; }
+
+	/* calculate percentages based on overall change, rounding up */
+	half_total = total_change / 2l;
+
+	/* Do not divide by 0. Causes Floating point exception */
+	if(total_change) {
+		for (i = 0; i < cnt; i++) {
+			*out++ = (int)((*diffs++ * 1000 + half_total) / total_change);
+		}
+	}
+
+	/* return the total in case the caller wants to use it */
+	return(total_change);
+}
+
+
+#define timertod(tvp) \
+    ((double)(tvp)->tv_sec + (double)(tvp)->tv_usec/(1000*1000))
+
+
 int	SYSTEM_CPU_UTIL(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
 {
 	char cpuname[MAX_STRING_LEN];
@@ -99,8 +145,50 @@ int	SYSTEM_CPU_UTIL(const char *cmd, const char *param, unsigned flags, AGENT_RE
 
 	if ( !CPU_COLLECTOR_STARTED(collector) )
 	{
-		SET_MSG_RESULT(result, strdup("Collector is not started!"));
-		return SYSINFO_RET_OK;
+		/* trying to live without collector */
+		long cp_time[CPUSTATES];
+		long cp_diff[CPUSTATES];
+		static long cp_old[CPUSTATES];
+		static int cpu_states[CPUSTATES];
+		static struct timeval this_time, last_time;
+		struct timeval time_diff;
+		size_t len = sizeof(cp_time);
+		int i;
+
+		gettimeofday(&this_time, NULL);
+		timersub(&this_time, &last_time, &time_diff);
+		if (timertod(&time_diff) < 0.5) {
+			goto output;
+		}
+		last_time = this_time;
+
+		/* puts kern.cp_time array into cp_time */
+		if (sysctlbyname("kern.cp_time", &cp_time, &len, NULL, 0) == -1) {
+			warn("kern.cp_time");
+			return 0.0;
+		}
+		/* Use percentages function lifted from top(1) to figure percentages */
+		percentages(CPUSTATES, cpu_states, cp_time, cp_old, cp_diff);
+
+	output:
+		if( 0 == strcmp(type,"idle")) {
+			SET_DBL_RESULT (result, (double)(cpu_states[CP_IDLE]) / 10.0);
+			return SYSINFO_RET_OK;
+		}
+		else if( 0 == strcmp(type,"nice")) {
+			SET_DBL_RESULT (result, (double)(cpu_states[CP_NICE]) / 10.0);
+			return SYSINFO_RET_OK;
+		}
+		else if( 0 == strcmp(type,"user")) {
+			SET_DBL_RESULT (result, (double)(cpu_states[CP_USER]) / 10.0);
+			return SYSINFO_RET_OK;
+		}
+		else if( 0 == strcmp(type,"system")) {
+			SET_DBL_RESULT (result, (double)(cpu_states[CP_SYS]) / 10.0);
+			return SYSINFO_RET_OK;
+		}
+		else
+			return SYSINFO_RET_FAIL;
 	}
 
 	if(strcmp(cpuname,"all") == 0)
