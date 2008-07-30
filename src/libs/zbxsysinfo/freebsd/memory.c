@@ -174,7 +174,9 @@ static int	VM_MEMORY_TOTAL(const char *cmd, const char *param, unsigned flags, A
 		return SYSINFO_RET_FAIL;
 	}
 #elif defined(HAVE_SYS_VMMETER_VMTOTAL)
-	int mib[2], len, total;
+	int mib[2];
+	size_t len;
+	zbx_uint64_t total;
 
 	len = sizeof(total);
 	mib[0]=CTL_HW;
