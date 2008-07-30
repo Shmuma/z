@@ -91,6 +91,17 @@ static int	VM_MEMORY_BUFFERS(const char *cmd, const char *param, unsigned flags,
 	{
 		return SYSINFO_RET_FAIL;
 	}
+#elif defined(HAVE_SYS_SYSCTL_H)
+	size_t len = 0;
+	unsigned int val;
+
+	len = sizeof (val);
+	if (sysctlbyname ("vfs.bufspace", &val, &len, NULL, 0) == -1 || !len)
+		return SYSINFO_RET_FAIL;
+	else {
+		SET_UI64_RESULT (result, val);
+		return SYSINFO_RET_OK;
+	}
 #else
 	return	SYSINFO_RET_FAIL;
 #endif
