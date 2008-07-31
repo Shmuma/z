@@ -371,11 +371,11 @@ CREATE TABLE graphs (
 	yaxistype		integer		DEFAULT '0'	NOT NULL,
 	yaxismin		numeric(16,4)		DEFAULT '0'	NOT NULL,
 	yaxismax		numeric(16,4)		DEFAULT '0'	NOT NULL,
-	description		text		DEFAULT ''	NOT NULL,
 	templateid		bigint		DEFAULT '0'	NOT NULL,
 	show_work_period		integer		DEFAULT '1'	NOT NULL,
 	show_triggers		integer		DEFAULT '1'	NOT NULL,
 	graphtype		integer		DEFAULT '0'	NOT NULL,
+	description		text		DEFAULT ''	NOT NULL,
 	PRIMARY KEY (graphid)
 ) with OIDS;
 CREATE INDEX graphs_graphs_1 on graphs (name);
