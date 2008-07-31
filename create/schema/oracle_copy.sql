@@ -1232,11 +1232,11 @@ Replicate2MySQL.RunSQL
 end;
 /
 show errors
-create or replace function zabbix.ins_graphs (graphid in number,name in varchar2,width in number,height in number,yaxistype in number,yaxismin in number,yaxismax in number,description in varchar2,templateid in number,show_work_period in number,show_triggers in number,graphtype in number) return varchar2
+create or replace function zabbix.ins_graphs (graphid in number,name in varchar2,width in number,height in number,yaxistype in number,yaxismin in number,yaxismax in number,templateid in number,show_work_period in number,show_triggers in number,graphtype in number,description in varchar2) return varchar2
 is
 begin
 return
-'insert into graphs (graphid,name,width,height,yaxistype,yaxismin,yaxismax,description,templateid,show_work_period,show_triggers,graphtype) values ('
+'insert into graphs (graphid,name,width,height,yaxistype,yaxismin,yaxismax,templateid,show_work_period,show_triggers,graphtype,description) values ('
 ||Nvl(To_Char(graphid),'null')||','
 ||''''||Replace(name,'''','''''')||''''||','
 ||Nvl(To_Char(width),'null')||','
@@ -1244,11 +1244,11 @@ return
 ||Nvl(To_Char(yaxistype),'null')||','
 ||Nvl(To_Char(yaxismin),'null')||','
 ||Nvl(To_Char(yaxismax),'null')||','
-||''''||Replace(description,'''','''''')||''''||','
 ||Nvl(To_Char(templateid),'null')||','
 ||Nvl(To_Char(show_work_period),'null')||','
 ||Nvl(To_Char(show_triggers),'null')||','
-||Nvl(To_Char(graphtype),'null')
+||Nvl(To_Char(graphtype),'null')||','
+||''''||Replace(description,'''','''''')||''''
 ||')';
 end;
 /
@@ -1257,7 +1257,7 @@ create or replace trigger zabbix.trai_graphs after insert on zabbix.graphs for e
 begin
 Replicate2MySQL.RunSQL
 (
-zabbix.ins_graphs (:new.graphid,:new.name,:new.width,:new.height,:new.yaxistype,:new.yaxismin,:new.yaxismax,:new.description,:new.templateid,:new.show_work_period,:new.show_triggers,:new.graphtype)
+zabbix.ins_graphs (:new.graphid,:new.name,:new.width,:new.height,:new.yaxistype,:new.yaxismin,:new.yaxismax,:new.templateid,:new.show_work_period,:new.show_triggers,:new.graphtype,:new.description)
 );
 end;
 /
@@ -1274,11 +1274,11 @@ Replicate2MySQL.RunSQL
 ||' yaxistype='||Nvl(To_Char(:new.yaxistype),'null')||','
 ||' yaxismin='||Nvl(To_Char(:new.yaxismin),'null')||','
 ||' yaxismax='||Nvl(To_Char(:new.yaxismax),'null')||','
-||' description='''||Replace(:new.description,'''','''''')||''''||','
 ||' templateid='||Nvl(To_Char(:new.templateid),'null')||','
 ||' show_work_period='||Nvl(To_Char(:new.show_work_period),'null')||','
 ||' show_triggers='||Nvl(To_Char(:new.show_triggers),'null')||','
-||' graphtype='||Nvl(To_Char(:new.graphtype),'null') || ' where  graphid='||:old.graphid );
+||' graphtype='||Nvl(To_Char(:new.graphtype),'null')||','
+||' description='''||Replace(:new.description,'''','''''')||'''' || ' where  graphid='||:old.graphid );
 end;
 /
 show errors
