@@ -219,6 +219,8 @@ void	process_trapper_child(zbx_sock_t *sock)
 
 	if(zbx_tcp_recv(sock, &data) != SUCCEED)
 	{
+            zabbix_log (LOG_LEVEL_DEBUG, "zbx_tcp_recv faield. Error: %s (%s), code %d", 
+                        zbx_tcp_strerror (), strerror_from_system(zbx_sock_last_error ()), zbx_sock_last_error ());
 /*		alarm(0);*/
 		return;
 	}
