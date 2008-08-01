@@ -158,9 +158,9 @@ ssize_t xwrite(char *fn, int fd, const void *buf, size_t count)
 	return rc;
 }
 
-off_t xlseek(char *fn, int fd, off_t offset, int whence)
+zbx_uint64_t xlseek(char *fn, int fd, zbx_uint64_t offset, int whence)
 {
-	off_t rc;
+	zbx_uint64_t rc;
 	if ((rc = lseek(fd, offset, whence)) == -1) {
 		zabbix_log(LOG_LEVEL_CRIT,
 			"HFS: %s: lseek(fd, %lld (%d), %d): %s",
@@ -178,8 +178,8 @@ int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
     int fd;
     int i, j, r, extra;
     unsigned char v = 0xff;
-    off_t eextra;
-    off_t size, ofs;
+    zbx_uint64_t eextra;
+    zbx_uint64_t size, ofs;
     int retval = 1;
     int is_trend = is_trend_type (type);
     hfs_trend_t trend;
@@ -518,7 +518,7 @@ void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
 {
     char *p_data;
     hfs_meta_t* meta;
-    off_t ofs;
+    zbx_uint64_t ofs;
     int fd;
     zbx_uint64_t value;
 
@@ -574,7 +574,7 @@ void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t ite
     char *p_data;
     int fd, ts = time (NULL)-1;
     zbx_uint64_t value;
-    off_t ofs;
+    zbx_uint64_t ofs;
 
     zabbix_log(LOG_LEVEL_DEBUG, "HFS_foldl_count (%s, %llu, %u)", hfs_base_dir, itemid, count);
 
@@ -725,7 +725,7 @@ char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemi
 }
 
 
-off_t find_meta_ofs (int time, hfs_meta_t* meta)
+zbx_uint64_t find_meta_ofs (int time, hfs_meta_t* meta)
 {
     int i;
     int f = 0;
@@ -745,7 +745,7 @@ off_t find_meta_ofs (int time, hfs_meta_t* meta)
 	return meta->meta[i].ofs + sizeof (double) * ((time - meta->meta[i].start) / meta->meta[i].delay);
     }
 
-    return (off_t)(-1);
+    return (zbx_uint64_t)(-1);
 }
 
 
@@ -1382,7 +1382,7 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 		char *p_data = NULL;
 		hfs_meta_t *meta = NULL;
 		hfs_meta_item_t *ip;
-		off_t ofs;
+		zbx_uint64_t ofs;
 
 		if ((block = HFS_find_meta(hfs_base_dir, siteid, trend, itemid, ts, &meta)) == -1)
 			break;
@@ -1528,7 +1528,7 @@ int HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t ite
 	hfs_meta_item_t *ip = NULL;
 	hfs_meta_t *meta = NULL;
 	item_value_u val;
-	off_t ofs;
+	zbx_uint64_t ofs;
 
 #ifdef DEBUG_legion
 	fprintf(stderr, "In HFSread_count(hfs_base_dir=%s, itemid=%lld, count=%d, res, func)\n",
@@ -2387,7 +2387,7 @@ size_t HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint
 	char* p_name = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemString);
 	size_t res_count = 0;
 	hfs_item_str_value_t* tmp;
-	off_t ofs;
+	zbx_uint64_t ofs;
 
 	*result = NULL;
 
