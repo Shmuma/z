@@ -175,6 +175,11 @@ int main(int argc, char **argv)
 {
 	int i;
 
+	if (argc == 1) {
+		printf("Usage %s <meta-file>\n", argv[0]);
+		return EXIT_SUCCESS;
+	}
+
 	for (i = 1; i < argc; i++) {
 		if (dump_by_meta(argv[i]) == -1)
 			fprintf(stderr,"%s: Bad meta!\n", argv[i]);
