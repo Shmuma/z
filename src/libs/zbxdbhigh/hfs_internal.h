@@ -43,11 +43,11 @@ void free_meta (hfs_meta_t* meta);
 char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t clock, name_kind_t kind);
 int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t clock, int delay, void* value, int len, item_type_t type);
 int store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t clock, const char* value, item_type_t type);
-zbx_uint64_t find_meta_ofs (int time, hfs_meta_t* meta);
-int get_next_data_ts (int ts);
-int get_prev_data_ts (int ts);
-void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int ts, void* init_res, fold_fn_t fn);
-void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, void* init_res, fold_fn_t fn);
+zbx_uint64_t find_meta_ofs (zbx_uint64_t time, hfs_meta_t* meta);
+zbx_uint64_t get_next_data_ts (zbx_uint64_t ts);
+zbx_uint64_t get_prev_data_ts (zbx_uint64_t ts);
+void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t ts, void* init_res, fold_fn_t fn);
+void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t count, void* init_res, fold_fn_t fn);
 int is_valid_val (void* val, size_t len);
 
 int obtain_lock (int fd, int write);
