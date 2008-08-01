@@ -90,8 +90,8 @@ int dump_by_meta(const char *metafile)
 	char *datafile = NULL;
 	hfs_meta_t *meta = NULL;
 	hfs_meta_item_t *ip = NULL;
-	time_t ts;
-	off_t ofs;
+	zbx_uint64_t ts;
+	zbx_uint64_t ofs;
 
 	if ((meta = read_metafile(metafile)) == NULL)
 		return -1; // Somethig real bad happend :(
