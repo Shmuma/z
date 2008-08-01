@@ -170,7 +170,7 @@ zbx_uint64_t xlseek(char *fn, int fd, zbx_uint64_t offset, int whence)
 	return rc;
 }
 
-int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len, item_type_t type)
+int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t clock, int delay, void* value, int len, item_type_t type)
 {
     char *p_meta = NULL, *p_data = NULL;
     hfs_meta_item_t item, *ip;
@@ -654,7 +654,7 @@ hfs_meta_t *read_metafile(const char *metafile)
 	return res;
 }
 
-hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int trend)
+hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t clock, int trend)
 {
     char* path = get_name (hfs_base_dir, siteid, itemid, clock, trend ? NK_TrendItemMeta : NK_ItemMeta);
     hfs_meta_t* res = read_metafile(path);
@@ -675,7 +675,7 @@ void free_meta (hfs_meta_t* meta)
 }
 
 
-char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, name_kind_t kind)
+char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t clock, name_kind_t kind)
 {
     char* res;
     int len = strlen (hfs_base_dir) + strlen (siteid) + 100;
@@ -691,7 +691,7 @@ char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemi
     switch (kind) {
     case NK_ItemData:
     case NK_ItemMeta:
-            snprintf (res, len, "%s/%s/items/%llu/%llu/%u.%s", hfs_base_dir, siteid, item_ord, itemid, (unsigned int)(clock / (time_t)1000000),
+            snprintf (res, len, "%s/%s/items/%llu/%llu/%u.%s", hfs_base_dir, siteid, item_ord, itemid, (unsigned int)(clock / (zbx_uint64_t)1000000),
 		      kind == NK_ItemMeta ? "meta" : "data");
             break;
     case NK_ItemString:
@@ -1261,10 +1261,10 @@ double HFS_get_delta_float (const char* hfs_base_dir, const char* siteid, zbx_ui
 }
 
 int HFS_find_meta(const char *hfs_base_dir, const char* siteid, int trend,
-                  zbx_uint64_t itemid, time_t from_ts, hfs_meta_t **res)
+                  zbx_uint64_t itemid, zbx_uint64_t from_ts, hfs_meta_t **res)
 {
 	int i, block = 0;
-	time_t ts = from_ts;
+	zbx_uint64_t ts = from_ts;
 	hfs_meta_t *meta = NULL;
 	hfs_meta_item_t *ip = NULL;
 
@@ -1341,8 +1341,8 @@ void HFS_init_trend_value(int is_trend, void *val, hfs_trend_t *res)
 size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
                      int trend,            zbx_uint64_t itemid,
                      size_t sizex,
-                     time_t graph_from_ts, time_t graph_to_ts,
-                     time_t from_ts,       time_t to_ts,
+                     zbx_uint64_t graph_from_ts, zbx_uint64_t graph_to_ts,
+                     zbx_uint64_t from_ts,       zbx_uint64_t to_ts,
                      hfs_item_value_t **result)
 {
 	void 		*val;
@@ -1350,7 +1350,7 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 	hfs_trend_t  	 val_trends;
 	hfs_trend_t  	 val_temp;
 
-	time_t ts = from_ts;
+	zbx_uint64_t ts = from_ts;
 	size_t val_len, items = 0, result_size = 0;
 	int finish_loop = 0;
 	long count = 0, cur_group, group = -1;
@@ -2242,7 +2242,7 @@ void HFSadd_history_str (const char* hfs_base_dir, const char* siteid, zbx_uint6
 
 
 
-int store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, const char* value, item_type_t type)
+int store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t clock, const char* value, item_type_t type)
 {
 	int len = 0, fd;
 	char* p_name = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemString);
@@ -2283,10 +2283,10 @@ int store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t 
 
 
 /* Read all values inside given time region. */
-size_t HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t from, time_t to, hfs_item_str_value_t **result)
+size_t HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t from, zbx_uint64_t to, hfs_item_str_value_t **result)
 {
 	int len = 0, fd, eof = 0;
-	time_t clock;
+	zbx_uint64_t clock;
 	char* p_name = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemString);
 	size_t count = 0;
 	hfs_item_str_value_t* tmp;
@@ -2383,7 +2383,7 @@ size_t HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint6
 size_t HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, hfs_item_str_value_t **result)
 {
 	int len = 0, fd;
-	time_t clock;
+	zbx_uint64_t clock;
 	char* p_name = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemString);
 	size_t res_count = 0;
 	hfs_item_str_value_t* tmp;

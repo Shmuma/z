@@ -5,7 +5,7 @@
 
 /* internal structures */
 typedef struct hfs_meta_item {
-    time_t start, end;
+    zbx_uint64_t start, end;
     int delay;
     item_type_t type;
     zbx_uint64_t ofs;
@@ -38,11 +38,11 @@ typedef void (*fold_fn_t) (void* db_val, void* state);
 int is_trend_type (item_type_t type);
 int make_directories (const char* path);
 hfs_meta_t* read_metafile (const char* metafile);
-hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int trend);
+hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t clock, int trend);
 void free_meta (hfs_meta_t* meta);
-char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, name_kind_t kind);
-int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, int delay, void* value, int len, item_type_t type);
-int store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t clock, const char* value, item_type_t type);
+char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t clock, name_kind_t kind);
+int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t clock, int delay, void* value, int len, item_type_t type);
+int store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t clock, const char* value, item_type_t type);
 zbx_uint64_t find_meta_ofs (int time, hfs_meta_t* meta);
 int get_next_data_ts (int ts);
 int get_prev_data_ts (int ts);

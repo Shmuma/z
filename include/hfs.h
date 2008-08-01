@@ -44,7 +44,7 @@ typedef struct hfs_trend {
 #define alloc_item_values 1000
 typedef struct hfs_item_value {
 	item_type_t	type;
-        time_t		clock;
+        zbx_uint64_t	clock;
 	long		group;
 	long		count;
 	hfs_trend_t	value;
@@ -52,12 +52,12 @@ typedef struct hfs_item_value {
 
 
 typedef struct {
-	time_t clock;
+	zbx_uint64_t clock;
 	char* value;
 } hfs_item_str_value_t;
 
 
-typedef void (*read_count_fn_t) (item_type_t type, item_value_u val, time_t timestamp, void *res);
+typedef void (*read_count_fn_t) (item_type_t type, item_value_u val, zbx_uint64_t timestamp, void *res);
 
 void		HFSadd_history (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, double value, int clock);
 void		HFSadd_history_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, int clock);
@@ -67,12 +67,12 @@ void		HFSadd_trend_uint (const char* hfs_base_dir, const char* siteid, zbx_uint6
 size_t		HFSread_item (const char* hfs_base_dir, const char* siteid,
 				int trend,		zbx_uint64_t itemid,
 				size_t x,
-				time_t graph_from,	time_t graph_to,
-				time_t from,		time_t to,
+				zbx_uint64_t graph_from,	zbx_uint64_t graph_to,
+				zbx_uint64_t from,		zbx_uint64_t to,
 				hfs_item_value_t **result);
 int		HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, void* init_res, read_count_fn_t fn);
 
-size_t		HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, time_t from, time_t to, hfs_item_str_value_t **result);
+size_t		HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t from, zbx_uint64_t to, hfs_item_str_value_t **result);
 size_t		HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, hfs_item_str_value_t **result);
 
 zbx_uint64_t	HFS_get_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int from);
