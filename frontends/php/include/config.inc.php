@@ -164,11 +164,11 @@ require_once('include/classes/ctree.inc.php');
 				"nodeid"=>0));
 	}
 
-	if(isset($show_setup))
-	{
-		unset($show_setup);
-		include_once "setup.php";
-	}
+// 	if(isset($show_setup))
+// 	{
+// 		unset($show_setup);
+// 		include_once "setup.php";
+// 	}
 
 
 	/********** END INITIALIZATION ************/
