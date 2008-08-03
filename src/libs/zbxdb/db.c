@@ -208,11 +208,21 @@ int	zbx_db_connect(char *host, char *user, char *password, char *dbname, char *d
 int __zbx_zbx_db_execute(const char *fmt, ...)
 {
 	va_list args;
-	int ret;
+	int ret = ZBX_DB_DOWN;
 
-	va_start(args, fmt);
-	ret = zbx_db_vexecute(fmt, args);
-	va_end(args);
+	while(ret == ZBX_DB_DOWN)
+	{
+		va_start(args, fmt);
+		ret = zbx_db_vexecute(fmt, args);
+		va_end(args);
+		if( ret == ZBX_DB_DOWN)
+		{
+			zabbix_log(LOG_LEVEL_DEBUG, "Database is down. Retrying in 1 second");
+			sleep(1);
+			DBclose();
+			DBconnect(ZBX_DB_CONNECT_NORMAL);
+		}
+	}
 
 	return ret;
 }

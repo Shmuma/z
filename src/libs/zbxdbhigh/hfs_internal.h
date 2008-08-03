@@ -44,6 +44,7 @@ char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemi
 int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t clock, int delay, void* value, int len, item_type_t type);
 int store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t clock, const char* value, item_type_t type);
 zbx_uint64_t find_meta_ofs (zbx_uint64_t time, hfs_meta_t* meta);
+zbx_uint64_t get_data_index_from_ts (zbx_uint64_t ts);
 zbx_uint64_t get_next_data_ts (zbx_uint64_t ts);
 zbx_uint64_t get_prev_data_ts (zbx_uint64_t ts);
 void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t ts, void* init_res, fold_fn_t fn);
