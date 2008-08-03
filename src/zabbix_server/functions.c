@@ -951,8 +951,10 @@ void	process_new_value(DB_ITEM *item, AGENT_RESULT *value, time_t timestamp)
 	}
 
 	add_history(item, value, now);
-	update_item(item, value, now);
-	update_functions( item );
+	if (timestamp) {
+		update_item(item, value, now);
+		update_functions( item );
+	}
 }
 
 /*
