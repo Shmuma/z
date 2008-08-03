@@ -692,7 +692,7 @@ char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemi
     switch (kind) {
     case NK_ItemData:
     case NK_ItemMeta:
-            snprintf (res, len, "%s/%s/items/%llu/%llu/%u.%s", hfs_base_dir, siteid, item_ord, itemid, (unsigned int)(clock / (zbx_uint64_t)1000000),
+            snprintf (res, len, "%s/%s/items/%llu/%llu/%u.%s", hfs_base_dir, siteid, item_ord, itemid, get_data_index_from_ts (clock),
 		      kind == NK_ItemMeta ? "meta" : "data");
             break;
     case NK_ItemString:
@@ -747,6 +747,12 @@ zbx_uint64_t find_meta_ofs (zbx_uint64_t time, hfs_meta_t* meta)
     }
 
     return (zbx_uint64_t)(-1);
+}
+
+
+zbx_uint64_t get_data_index_from_ts (zbx_uint64_t ts)
+{
+	return ts / (zbx_uint64_t)1000000;
 }
 
 
