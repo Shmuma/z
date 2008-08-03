@@ -280,9 +280,13 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 	DB_RESULT       result;
 	DB_ROW	row;
 	DB_ITEM	item;
+	time_t ts = 0;
 
 	char	server_esc[MAX_STRING_LEN];
 	char	key_esc[MAX_STRING_LEN];
+
+	if (when)
+		ts = atoi (when);
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In process_data([%s],[%s],[%s],[%s],[%s],[%s])",
 		server,
@@ -357,12 +361,15 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 	zabbix_log( LOG_LEVEL_DEBUG, "Processing [%s]",
 		value);
 
-	if (CONFIG_HFS_PATH) {
-		HFS_update_item_stderr (CONFIG_HFS_PATH, item.siteid, item.itemid, error);
-/* 		HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid, HOST_AVAILABLE_TRUE, time (NULL), NULL); */
-	}
-	else
-		DBupdate_item_stderr (item.itemid, error);
+	/* update stderr only for latest data, not for history */
+	if (!ts) {
+		if (CONFIG_HFS_PATH) {
+			HFS_update_item_stderr (CONFIG_HFS_PATH, item.siteid, item.itemid, error);
+/* 			HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid, HOST_AVAILABLE_TRUE, time (NULL), NULL); */
+		}
+		else
+			DBupdate_item_stderr (item.itemid, error);
+        }
 
 	if(strcmp(value,"ZBX_NOTSUPPORTED") ==0)
 	{
@@ -399,11 +406,6 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 
 		if(set_result_type(&agent, item.value_type, value) == SUCCEED)
 		{
-			time_t ts = 0;
-
-			if (when)
-				ts = atoi (when);
-
 			process_new_value(&item,&agent, ts);
 
 			/* if we inserting historical value, don't update triggers */
