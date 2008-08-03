@@ -135,8 +135,14 @@ void *xfree(void *ptr)
 int xopen(char *fn, int flags, mode_t mode)
 {
 	int retval;
-	if ((retval = open(fn, flags, mode)) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: open: %s", fn, strerror(errno));
+	if ((retval = open(fn, flags, mode)) == -1) {
+		if (!make_directories (fn)) {
+			if ((retval = open(fn, flags, mode)) == -1)
+				zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: open: %s", fn, strerror(errno));
+                }
+		else
+			return -1;
+	}
 	return retval;
 }
 
@@ -195,7 +201,6 @@ int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
     p_meta = get_name (hfs_base_dir, siteid, itemid, clock, is_trend ? NK_TrendItemMeta : NK_ItemMeta);
     p_data = get_name (hfs_base_dir, siteid, itemid, clock, is_trend ? NK_TrendItemData : NK_ItemData);
 
-    make_directories (p_meta);
     zabbix_log(LOG_LEVEL_DEBUG, "HFS: meta read: delays: %d %d, blocks %d, ofs %u", meta->last_delay, delay, meta->blocks, meta->last_ofs);
 
     /* should we start a new block? */
@@ -1633,10 +1638,8 @@ void HFS_update_host_availability (const char* hfs_base_dir, const char* siteid,
 
 	zabbix_log(LOG_LEVEL_DEBUG, "got name %s", name);
 
-	make_directories (name);
-
 	/* open file for writing */
-	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_host_availability: open(): %s: %s", name, strerror(errno));
@@ -1729,10 +1732,8 @@ void HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, z
 
 	zabbix_log(LOG_LEVEL_DEBUG, "got name %s", name);
 
-	make_directories (name);
-
 	/* open file for writing */
-	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_item_values_dbl: open(): %s: %s", name, strerror(errno));
@@ -1788,10 +1789,8 @@ void HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, z
 
 	zabbix_log(LOG_LEVEL_DEBUG, "got name %s", name);
 
-	make_directories (name);
-
 	/* open file for writing */
-	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_item_values_int: open(): %s: %s", name, strerror(errno));
@@ -1847,10 +1846,8 @@ void HFS_update_item_values_str (const char* hfs_base_dir, const char* siteid, z
 
 	zabbix_log(LOG_LEVEL_DEBUG, "got name %s", name);
 
-	make_directories (name);
-
 	/* open file for writing */
-	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_item_values_str: open(): %s: %s", name, strerror(errno));
@@ -2072,10 +2069,8 @@ void HFS_update_item_status (const char* hfs_base_dir, const char* siteid, zbx_u
 
 	zabbix_log(LOG_LEVEL_DEBUG, "got name %s", name);
 
-	make_directories (name);
-
 	/* open file for writing */
-	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_item_status: open(): %s: %s", name, strerror(errno));
@@ -2123,10 +2118,8 @@ void HFS_update_item_stderr (const char* hfs_base_dir, const char* siteid, zbx_u
 
 	zabbix_log(LOG_LEVEL_DEBUG, "got name %s", name);
 
-	make_directories (name);
-
 	/* open file for writing */
-	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_item_stderr: open(): %s: %s", name, strerror(errno));
@@ -2258,9 +2251,7 @@ int store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t 
 	if (value)
 		len = strlen (value);
 
-	make_directories (p_name);
-
-	if ((fd = open (p_name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
+	if ((fd = xopen (p_name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
 		zabbix_log (LOG_LEVEL_DEBUG, "Canot open file %s", p_name);
 		free (p_name);
 		return 0;
@@ -2474,10 +2465,8 @@ void HFS_update_trigger_value(const char* hfs_path, const char* siteid, zbx_uint
 	if (!name)
 		return;
 
-	make_directories (name);
-
 	/* open file for writing */
-	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_trigger_value: open(): %s: %s", name, strerror(errno));
@@ -2561,9 +2550,7 @@ void HFS_add_alert(const char* hfs_path, const char* siteid, int clock, zbx_uint
 	int len = 0, fd;
 	char* p_name = get_name (hfs_path, siteid, 0, clock, NK_Alert);
 
-	make_directories (p_name);
-
-	if ((fd = open (p_name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
+	if ((fd = xopen (p_name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
 		zabbix_log (LOG_LEVEL_DEBUG, "Canot open file %s", p_name);
 		free (p_name);
 		return;
