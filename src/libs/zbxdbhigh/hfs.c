@@ -120,7 +120,6 @@ void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t type)
             new->min.d = old.min.d;
         new->avg.d = (old.avg.d * old.count + new->avg.d) / new->count;
         break;
-    default:
     }
 }
 
