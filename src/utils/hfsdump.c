@@ -176,7 +176,7 @@ int main(int argc, char **argv)
 	int i;
 
 	if (argc == 1) {
-		printf("Usage %s <meta-file>\n", argv[0]);
+		printf("Usage %s <meta-file> [<meta-file1>...]\n", argv[0]);
 		return EXIT_SUCCESS;
 	}
 
