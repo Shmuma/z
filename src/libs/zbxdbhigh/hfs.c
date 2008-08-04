@@ -250,6 +250,7 @@ int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
 
 	if (xclose (p_meta, fd) == -1)
 		goto err_exit;
+	fd = -1;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: block metadata updated %d, %d, %d: %u, %u, %d, %llu", meta->blocks, meta->last_delay, meta->last_type,
 		   item.start, item.end, item.delay, item.ofs);
@@ -266,6 +267,7 @@ int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
 
 	if (xclose (p_data, fd) == -1)
 		goto err_exit;
+	fd = -1;
 
 	retval = 0;
     }
@@ -343,6 +345,7 @@ int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
 
 	    if (xclose (p_data, fd) == -1)
 		goto err_exit;
+	    fd = -1;
 
 	    /* update meta */
 	    ip->end = clock;
@@ -364,6 +367,7 @@ int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
 
 	    if (xclose (p_meta, fd) == -1)
 		goto err_exit;
+	    fd = -1;
 	}
 	else
 	    zabbix_log(LOG_LEVEL_DEBUG, "HFS: value appeared earlier than expected. Now %d, but next must be at %d", clock, ip->end + delay);
@@ -372,7 +376,8 @@ int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
     }
 
 err_exit:
-
+    if (fd != -1)
+	    close (fd);
     free_meta (meta);
     xfree (p_meta);
     xfree (p_data);
