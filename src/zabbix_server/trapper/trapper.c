@@ -139,6 +139,7 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 			{
 				/* TODO: improve history performance */
 				ret = SUCCEED;
+				value_string = NULL;
 				
 /* 				void* token = NULL; */
 
@@ -189,7 +190,8 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 			source[0]=0;
 			severity[0]=0;
 		}
-		zabbix_log( LOG_LEVEL_DEBUG, "Value [%s]", value_string);
+		if (value_string)
+			zabbix_log( LOG_LEVEL_DEBUG, "Value [%s]", value_string);
 
 		if (key)
 		{
