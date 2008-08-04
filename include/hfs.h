@@ -141,7 +141,7 @@ void		HFS_update_trigger_value(const char* hfs_path, const char* siteid, zbx_uin
 int		HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, int* value, hfs_time_t* when);
 
 /* alerts history */
-void 		HFS_add_alert(const char* hfs_path, const char* siteid, int clock, zbx_uint64_t actionid, zbx_uint64_t userid, 
+void 		HFS_add_alert(const char* hfs_path, const char* siteid, hfs_time_t clock, zbx_uint64_t actionid, zbx_uint64_t userid, 
 			      zbx_uint64_t triggerid,  zbx_uint64_t mediatypeid, char *sendto, char *subject, char *message);
 
 

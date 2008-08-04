@@ -120,6 +120,7 @@ void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t type)
             new->min.d = old.min.d;
         new->avg.d = (old.avg.d * old.count + new->avg.d) / new->count;
         break;
+    default:
     }
 }
 
@@ -182,10 +183,10 @@ int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
     hfs_meta_item_t item, *ip;
     hfs_meta_t* meta;
     int fd;
-    int i, j, r;
+    int i, j;
     unsigned char v = 0xff;
     hfs_off_t eextra, extra;
-    hfs_off_t size, ofs;
+    hfs_off_t size;
     int retval = 1;
     int is_trend = is_trend_type (type);
     hfs_trend_t trend;
@@ -394,7 +395,6 @@ int make_directories (const char* path)
     char buf[PATH_MAX+1];
     int len = 0;
     struct stat st;
-    int err;
 
     buf[0] = 0;
 
@@ -579,7 +579,7 @@ int is_valid_val (void* val, size_t len)
 /*
   Performs folding of values of historical data into some state. We filter values according to count of values.
 */
-void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t count, void* init_res, fold_fn_t fn)
+void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t count, void* init_res, fold_fn_t fn)
 {
     char *p_data;
     int fd;
@@ -2065,7 +2065,7 @@ int HFS_get_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_u
 void HFS_update_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int status, const char* error)
 {
 	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemStatus);
-	int fd, kind;
+	int fd;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_status entered");
 
@@ -2114,7 +2114,7 @@ void HFS_update_item_status (const char* hfs_base_dir, const char* siteid, zbx_u
 void HFS_update_item_stderr (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, const char* stderr)
 {
 	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemStderr);
-	int fd, kind;
+	int fd;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_stderr entered");
 
@@ -2463,7 +2463,7 @@ size_t HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint
 void HFS_update_trigger_value(const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, int new_value, hfs_time_t now)
 {
 	char* name = get_name (hfs_path, siteid, triggerid, 0, NK_TriggerStatus);
-	int fd, kind;
+	int fd;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_trigger_value entered");
 
