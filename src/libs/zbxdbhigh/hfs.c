@@ -184,7 +184,7 @@ int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
     int fd;
     int i, j, r;
     unsigned char v = 0xff;
-    zbx_int64_t eextra, extra;
+    long long int eextra, extra;
     zbx_uint64_t size, ofs;
     int retval = 1;
     int is_trend = is_trend_type (type);
