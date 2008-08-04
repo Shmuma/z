@@ -1280,7 +1280,7 @@ int HFS_find_meta(const char *hfs_base_dir, const char* siteid, int trend,
                   zbx_uint64_t itemid, zbx_uint64_t from_ts, hfs_meta_t **res)
 {
 	int i, block = 0;
-	hfs_time_t ts = from_ts;
+	int ts = (int)from_ts;
 	hfs_meta_t *meta = NULL;
 	hfs_meta_item_t *ip = NULL;
 
