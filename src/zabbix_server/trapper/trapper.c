@@ -138,7 +138,7 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 			if (strncmp (s, "<reqs>", 6) == 0)
 			{
 				/* TODO: improve history performance */
-				res = SUCCEED;
+				ret = SUCCEED;
 				
 /* 				void* token = NULL; */
 
