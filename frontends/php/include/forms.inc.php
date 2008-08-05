@@ -3543,6 +3543,10 @@ include_once 'include/discovery.inc.php';
 		}
 
 		$form->AddVar("screenid",$_REQUEST["screenid"]);
+                if (isset ($_REQUEST["groupid"]))
+			$form->AddVar("groupid",$_REQUEST["groupid"]);
+                if (isset ($_REQUEST["hostid"]))
+			$form->AddVar("hostid",$_REQUEST["hostid"]);
 
 		$cmbRes = new CCombobox("resourcetype",$resourcetype,"submit()");
 		$cmbRes->AddItem(SCREEN_RESOURCE_GRAPH,		S_GRAPH);
@@ -3564,12 +3568,29 @@ include_once 'include/discovery.inc.php';
 		if($resourcetype == SCREEN_RESOURCE_GRAPH)
 		{
 	// User-defined graph
-			$result = DBselect("select distinct g.graphid,g.name,n.name as node_name, h.host".
+			if (isset ($_REQUEST["hostid"]) && $_REQUEST["hostid"] > 0)
+				$sql = "select distinct g.graphid,g.name,n.name as node_name, h.host".
+				" from graphs g left join graphs_items gi on g.graphid=gi.graphid left join items i on gi.itemid=i.itemid ".
+				" left join hosts h on h.hostid=i.hostid left join nodes n on n.nodeid= ".
+				DBid2nodeid("g.graphid").
+				" where i.hostid not in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
+				" and h.hostid = $_REQUEST[hostid] order by node_name,host,name,graphid";
+			else if (isset ($_REQUEST["groupid"]) && $_REQUEST["groupid"] > 0)
+				$sql = "select distinct g.graphid,g.name,n.name as node_name, h.host".
 				" from graphs g left join graphs_items gi on g.graphid=gi.graphid left join items i on gi.itemid=i.itemid ".
 				" left join hosts h on h.hostid=i.hostid left join nodes n on n.nodeid=".DBid2nodeid("g.graphid").
+                                " left join hosts_groups hg on h.hostid = hg.hostid ".
 				" where i.hostid not in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
-				" order by node_name,host,name,graphid"
-				);
+				" and hg.groupid = $_REQUEST[groupid] order by node_name,host,name,graphid";
+                        else
+				$sql = "select distinct g.graphid,g.name,n.name as node_name, h.host".
+				" from graphs g left join graphs_items gi on g.graphid=gi.graphid left join items i on gi.itemid=i.itemid ".
+				" left join hosts h on h.hostid=i.hostid left join nodes n on n.nodeid= ".
+				DBid2nodeid("g.graphid").
+				" where i.hostid not in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
+				" order by node_name,host,name,graphid";
+
+			$result = DBselect($sql);
 
 			$cmbGraphs = new CComboBox("resourceid",$resourceid);
 			while($row=DBfetch($result))
@@ -3583,13 +3604,29 @@ include_once 'include/discovery.inc.php';
 		elseif($resourcetype == SCREEN_RESOURCE_SIMPLE_GRAPH)
 		{
 	// Simple graph
-			$result=DBselect("select n.name as node_name,h.host,i.description,i.itemid,i.key_ from hosts h,items i ".
+			if (isset ($_REQUEST["hostid"]) && $_REQUEST["hostid"] > 0)
+				$sql = "select n.name as node_name,h.host,i.description,i.itemid,i.key_ from hosts h,items i ".
 				" left join nodes n on n.nodeid=".DBid2nodeid("i.itemid").
 				" where h.hostid=i.hostid ".
 				" and h.status=".HOST_STATUS_MONITORED." and i.status=".ITEM_STATUS_ACTIVE.
 				" and i.hostid not in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
-				" order by node_name,h.host,i.description");
+				" and h.hostid = $_REQUEST[hostid] order by node_name,h.host,i.description";
+			else if (isset ($_REQUEST["groupid"]) && $_REQUEST["groupid"] > 0)
+				$sql = "select n.name as node_name,h.host,i.description,i.itemid,i.key_ from hosts h,hosts_groups hg,items i ".
+				" left join nodes n on n.nodeid=".DBid2nodeid("i.itemid").
+				" where h.hostid=i.hostid ".
+				" and h.status=".HOST_STATUS_MONITORED." and i.status=".ITEM_STATUS_ACTIVE.
+				" and i.hostid not in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
+				" and hg.hostid = h.hostid and hg.groupid = $_REQUEST[groupid] order by node_name,h.host,i.description";
+                        else
+				$sql = "select n.name as node_name,h.host,i.description,i.itemid,i.key_ from hosts h,items i ".
+				" left join nodes n on n.nodeid=".DBid2nodeid("i.itemid").
+				" where h.hostid=i.hostid ".
+				" and h.status=".HOST_STATUS_MONITORED." and i.status=".ITEM_STATUS_ACTIVE.
+				" and i.hostid not in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
+				" order by node_name,h.host,i.description";
 
+			$result=DBselect($sql);
 
 			$cmbItems = new CCombobox("resourceid",$resourceid);
 			while($row=DBfetch($result))
@@ -3619,11 +3656,26 @@ include_once 'include/discovery.inc.php';
 		elseif($resourcetype == SCREEN_RESOURCE_PLAIN_TEXT)
 		{
 	// Plain text
-			$result=DBselect("select n.name as node_name,h.host,i.description,i.itemid,i.key_ from hosts h,items i".
+			if (isset ($_REQUEST["hostid"]) && $_REQUEST["hostid"] > 0)
+				$sql = "select n.name as node_name,h.host,i.description,i.itemid,i.key_ from hosts h,items i".
 				" left join nodes n on n.nodeid=".DBid2nodeid("i.itemid").
 				" where h.hostid=i.hostid and h.status=".HOST_STATUS_MONITORED." and i.status=".ITEM_STATUS_ACTIVE.
 				" and i.hostid not in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
-				" order by node_name,h.host,i.description");
+				" and h.hostid = $_REQUEST[hostid] order by node_name,h.host,i.description";
+			else if (isset ($_REQUEST["groupid"]) && $_REQUEST["groupid"] > 0)
+				$sql = "select n.name as node_name,h.host,i.description,i.itemid,i.key_ from hosts h,hosts_groups hg,items i".
+				" left join nodes n on n.nodeid=".DBid2nodeid("i.itemid").
+				" where h.hostid=i.hostid and h.status=".HOST_STATUS_MONITORED." and i.status=".ITEM_STATUS_ACTIVE.
+				" and i.hostid not in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
+				" and hg.hostid = h.hostid and hg.groupid = $_REQUEST[groupid] order by node_name,h.host,i.description";
+                        else
+				$sql = "select n.name as node_name,h.host,i.description,i.itemid,i.key_ from hosts h,items i".
+				" left join nodes n on n.nodeid=".DBid2nodeid("i.itemid").
+				" where h.hostid=i.hostid and h.status=".HOST_STATUS_MONITORED." and i.status=".ITEM_STATUS_ACTIVE.
+				" and i.hostid not in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
+				" order by node_name,h.host,i.description";
+
+			$result=DBselect($sql);
 
 			$cmbHosts = new CComboBox("resourceid",$resourceid);
 			while($row=DBfetch($result))
