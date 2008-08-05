@@ -66,37 +66,6 @@ void HFSadd_history_uint (const char* hfs_base_dir, const char* siteid, zbx_uint
 }
 
 
-/*
-  Routine updates trends
-  */
-void HFSadd_trend (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, double value, hfs_time_t clock)
-{
-/*     hfs_trend_t trend; */
-
-/*     trend.count = 1; */
-/*     trend.min.d = value; */
-/*     trend.max.d = value; */
-/*     trend.avg.d = value; */
-
-/*     zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_trend()"); */
-/*     store_value (hfs_base_dir, siteid, itemid, clock - clock % HFS_TRENDS_INTERVAL, HFS_TRENDS_INTERVAL, &trend, sizeof (hfs_trend_t), IT_TRENDS_DOUBLE);    */
-}
-
-
-void HFSadd_trend_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, zbx_uint64_t value, hfs_time_t clock)
-{
-/*     hfs_trend_t trend; */
-
-/*     trend.count = 1; */
-/*     trend.min.l = value; */
-/*     trend.max.l = value; */
-/*     trend.avg.l = value; */
-
-/*     zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_trend_uint()"); */
-/*     store_value (hfs_base_dir, siteid, itemid, clock - clock % HFS_TRENDS_INTERVAL, HFS_TRENDS_INTERVAL, &trend, sizeof (hfs_trend_t), IT_TRENDS_UINT64); */
-}
-
-
 
 void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t type)
 {
@@ -132,7 +101,7 @@ void *xfree(void *ptr)
 	return NULL;
 }
 
-int xopen(char *fn, int flags, mode_t mode)
+int xopen(const char *fn, int flags, mode_t mode)
 {
 	int retval;
 	if ((retval = open(fn, flags, mode)) == -1) {
@@ -146,7 +115,7 @@ int xopen(char *fn, int flags, mode_t mode)
 	return retval;
 }
 
-int xclose(char *fn, int fd)
+int xclose(const char *fn, int fd)
 {
 	int rc;
 	if ((rc = close(fd)) == -1)
@@ -154,7 +123,7 @@ int xclose(char *fn, int fd)
 	return rc;
 }
 
-ssize_t xwrite(char *fn, int fd, const void *buf, size_t count)
+ssize_t xwrite(const char *fn, int fd, const void *buf, size_t count)
 {
 	ssize_t rc;
 	if ((rc = write(fd, buf, count)) == -1) {
@@ -164,7 +133,7 @@ ssize_t xwrite(char *fn, int fd, const void *buf, size_t count)
 	return rc;
 }
 
-hfs_off_t xlseek(char *fn, int fd, hfs_off_t offset, int whence)
+hfs_off_t xlseek(const char *fn, int fd, hfs_off_t offset, int whence)
 {
 	hfs_off_t rc;
 	if ((rc = lseek(fd, offset, whence)) == -1) {
@@ -179,6 +148,21 @@ hfs_off_t xlseek(char *fn, int fd, hfs_off_t offset, int whence)
 int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t clock, int delay, void* value, int len, item_type_t type)
 {
     char *p_meta = NULL, *p_data = NULL;
+    int is_trend = is_trend_type (type);
+    int res;
+
+    p_meta = get_name (hfs_base_dir, siteid, itemid, clock, is_trend ? NK_TrendItemMeta : NK_ItemMeta);
+    p_data = get_name (hfs_base_dir, siteid, itemid, clock, is_trend ? NK_TrendItemData : NK_ItemData);
+
+    res = hfs_store_value (p_meta, p_data, clock, delay, value, len, type);
+    free (p_meta);
+    free (p_data);
+
+    return res;
+}
+
+int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, int delay, void* value, int len, item_type_t type)
+{
     hfs_meta_item_t item, *ip;
     hfs_meta_t* meta;
     int fd;
@@ -187,25 +171,20 @@ int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
     hfs_off_t eextra, extra;
     hfs_off_t size;
     int retval = 1;
-    int is_trend = is_trend_type (type);
     hfs_trend_t trend;
 
     zabbix_log(LOG_LEVEL_DEBUG, "HFS: store_value()");
 
-    if ((meta = read_meta (hfs_base_dir, siteid, itemid, clock, is_trend)) == NULL) {
-	zabbix_log(LOG_LEVEL_CRIT, "HFS: store_value(): read_meta(%s, %s, %llu, %d) == NULL",
-		    hfs_base_dir, siteid, itemid, clock);
+    if ((meta = read_metafile (p_meta)) == NULL) {
+	zabbix_log(LOG_LEVEL_CRIT, "HFS: store_value(): read_metafile(%s) == NULL", p_meta);
 	return retval;
     }
-
-    p_meta = get_name (hfs_base_dir, siteid, itemid, clock, is_trend ? NK_TrendItemMeta : NK_ItemMeta);
-    p_data = get_name (hfs_base_dir, siteid, itemid, clock, is_trend ? NK_TrendItemData : NK_ItemData);
 
     zabbix_log(LOG_LEVEL_DEBUG, "HFS: meta read: delays: %d %d, blocks %d, ofs %u", meta->last_delay, delay, meta->blocks, meta->last_ofs);
 
     /* should we start a new block? */
     if (meta->last_delay != delay || type != meta->last_type) {
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS: appending new block for item %llu", itemid);
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS: appending new block for data %s", p_data);
 	item.start = item.end = clock;
 	item.type = type;
 
@@ -272,7 +251,7 @@ int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
 	retval = 0;
     }
     else {
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS: extending existing block for item %llu, last ofs %u", itemid, meta->last_ofs);
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS: extending existing block for data %s, last ofs %u", p_data, meta->last_ofs);
 
 	/* check for gaps in block */
 	ip = meta->meta + (meta->blocks-1);
@@ -293,9 +272,8 @@ int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
 
 	extra = (clock - ip->end) / delay;
 
-	/* if value appeared before it's time, drop it. Overwise fill gaps with empty entries and write actual data.
-	   Other case is trends management. All it's data is */
-	if (extra >= 1 || is_trend) {
+	/* if value appeared before it's time, drop it. Overwise fill gaps with empty entries and write actual data. */
+	if (extra >= 1) {
             /* check for time-based items count differs from offset-based */
             eextra = (ip->end - ip->start) / delay - (meta->last_ofs - ip->ofs) / len;
 
@@ -320,25 +298,6 @@ int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
 		    }
 		meta->last_ofs += extra * len;
 	    }            
-
-            /* if this is trend, we must handle the case when such item is already exists. 
-               In that case we must recalculate new values. */
-            if (is_trend && extra <= 0) {
-		/* if we just update value, remain the same last_ofs */
-		meta->last_ofs -= len;
-
-                zabbix_log(LOG_LEVEL_DEBUG, "HFS: trend item is already exists, perform averaging");
-                /* read old trend value */
-                if (xlseek (p_data, fd, meta->last_ofs, SEEK_SET) == -1)
-                    goto err_exit;
-                if (read (fd, &trend, sizeof (trend)) != sizeof (trend))
-                    goto err_exit;
-                /* if value is not valid (fff's, in our case), calculate trends from scratch */
-                if (is_valid_val (&trend, sizeof (trend)))
-                    recalculate_trend ((hfs_trend_t*)value, trend, type);
-                if (xlseek (p_data, fd, meta->last_ofs, SEEK_SET) == -1)
-                    goto err_exit;
-            }
 
 	    if (xwrite (p_data, fd, value, len) == -1)
 		goto err_exit;
@@ -379,8 +338,6 @@ err_exit:
     if (fd != -1)
 	    close (fd);
     free_meta (meta);
-    xfree (p_meta);
-    xfree (p_data);
 
     return retval;
 }
@@ -1280,7 +1237,7 @@ int HFS_find_meta(const char *hfs_base_dir, const char* siteid, int trend,
                   zbx_uint64_t itemid, zbx_uint64_t from_ts, hfs_meta_t **res)
 {
 	int i, block = 0;
-	hfs_time_t ts = from_ts;
+	int ts = (int)from_ts;
 	hfs_meta_t *meta = NULL;
 	hfs_meta_item_t *ip = NULL;
 

@@ -411,7 +411,10 @@ require_once('include/classes/ctree.inc.php');
 // Special processing for unix timestamps
 		if($units=="unixtime")
 		{
-			$ret=date("Y.m.d H:i:s",$value);
+			if (trim ($value) == "")
+				$ret="";
+			else
+				$ret=date("Y.m.d H:i:s",$value);
 			return $ret;
 		}
 //Special processing of uptime
