@@ -36,8 +36,7 @@ int is_trend_type (item_type_t type)
     case IT_UINT64:
         return 0;
 
-    case IT_TRENDS_DOUBLE:
-    case IT_TRENDS_UINT64:
+    case IT_TRENDS:
         return 1;
 
     default:
@@ -104,7 +103,6 @@ void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t type)
 
     switch (type) {
     case IT_UINT64:
-    case IT_TRENDS_UINT64:
         if (new->max.l < old.max.l)
             new->max.l = old.max.l;
         if (new->max.l > old.min.l)
@@ -113,7 +111,7 @@ void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t type)
         break;
 
     case IT_DOUBLE:
-    case IT_TRENDS_DOUBLE:
+    case IT_TRENDS:
         if (new->max.d < old.max.d)
             new->max.d = old.max.d;
         if (new->max.d > old.min.d)

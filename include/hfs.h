@@ -30,8 +30,7 @@ typedef long long int hfs_time_t;
 typedef enum {
     IT_UINT64 = 0,
     IT_DOUBLE,
-    IT_TRENDS_UINT64,
-    IT_TRENDS_DOUBLE,
+    IT_TRENDS,
     IT_STRING,
 } item_type_t;
 
