@@ -66,12 +66,11 @@ void show_value(item_type_t type, item_value_u val)
 {
 	switch (type) {
 		case IT_UINT64:
-		case IT_TRENDS_UINT64:
 			printf("%lld", val.l);
 			break;
 
 		case IT_DOUBLE:
-		case IT_TRENDS_DOUBLE:
+		case IT_TRENDS:
 			printf("%f", val.d);
 			break;
 		default:
