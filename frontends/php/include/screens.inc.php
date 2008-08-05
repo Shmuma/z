@@ -325,9 +325,9 @@
 
 				if($editmode == 1 && $screenitemid!=0)
 					 $action = "screenedit.php?form=update".url_param("screenid").
-                                        	"&screenitemid=$screenitemid#form";
+						"&groupid=$_REQUEST[groupid]&hostid=$_REQUEST[hostid]&screenitemid=$screenitemid#form";
 				elseif ($editmode == 1 && $screenitemid==0)
-					$action = "screenedit.php?form=update".url_param("screenid")."&x=$c&y=$r#form";
+					$action = "screenedit.php?form=update".url_param("screenid")."&groupid=$_REQUEST[groupid]&hostid=$_REQUEST[hostid]&x=$c&y=$r#form";
 				else
 					$action = NULL;
 
