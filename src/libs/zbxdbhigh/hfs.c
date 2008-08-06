@@ -149,8 +149,8 @@ int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
     int is_trend = is_trend_type (type);
     int res;
 
-    p_meta = get_name (hfs_base_dir, siteid, itemid, clock, is_trend ? NK_TrendItemMeta : NK_ItemMeta);
-    p_data = get_name (hfs_base_dir, siteid, itemid, clock, is_trend ? NK_TrendItemData : NK_ItemData);
+    p_meta = get_name (hfs_base_dir, siteid, itemid, is_trend ? NK_TrendItemMeta : NK_ItemMeta);
+    p_data = get_name (hfs_base_dir, siteid, itemid, is_trend ? NK_TrendItemData : NK_ItemData);
 
     res = hfs_store_value (p_meta, p_data, clock, delay, value, len, type);
     free (p_meta);
@@ -488,37 +488,35 @@ void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
 
     zabbix_log(LOG_LEVEL_DEBUG, "HFS_foldl_time (%s, %llu, %u)", hfs_base_dir, itemid, ts);
 
-    while (1) {
-	meta = read_meta (hfs_base_dir, siteid, itemid, ts, 0);
+    meta = read_meta (hfs_base_dir, siteid, itemid, 0);
+    if (!meta)
+	return;
 
-	if (!meta)
-	    break;
+    if (!meta->blocks) {
+	free_meta (meta);
+	return;
+    }
 
-	if (!meta->blocks) {
-	    free_meta (meta);
-	    break;
-	}
+    /* open data file and count amount of valid items */
+    p_data = get_name (hfs_base_dir, siteid, itemid, NK_ItemData);
 
-	ofs = find_meta_ofs (ts, meta);
-
-	zabbix_log(LOG_LEVEL_DEBUG, "Offset for TS %lld is %lld (%x) (%lld)", ts, ofs, ofs, time(NULL)-ts);
-
-	/* open data file and count amount of valid items */
-	p_data = get_name (hfs_base_dir, siteid, itemid, ts, NK_ItemData);
-	fd = open (p_data, O_RDONLY);
-
-	if (fd != -1) {
-	    lseek (fd, ofs, SEEK_SET);
-	    while (read (fd, &value, sizeof (value)) > 0)
-		fn (&value, init_res);
-	    close (fd);
-	}
-
+    if ((fd = open (p_data, O_RDONLY)) == -1) {
 	free_meta (meta);
 	free (p_data);
-
-	ts = get_next_data_ts (ts);
+	return;
     }
+    free (p_data);
+
+    ofs = find_meta_ofs (ts, meta);
+
+    zabbix_log(LOG_LEVEL_DEBUG, "Offset for TS %lld is %lld (%x) (%lld)", ts, ofs, ofs, time(NULL)-ts);
+
+    lseek (fd, ofs, SEEK_SET);
+    while (read (fd, &value, sizeof (value)) > 0)
+	fn (&value, init_res);
+
+    free_meta (meta);
+    close (fd);
 }
 
 int is_valid_val (void* val, size_t len)
@@ -543,29 +541,25 @@ void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t ite
 
     zabbix_log(LOG_LEVEL_DEBUG, "HFS_foldl_count (%s, %llu, %u)", hfs_base_dir, itemid, count);
 
-    while (count > 0) {
-	p_data = get_name (hfs_base_dir, siteid, itemid, ts, NK_ItemData);
-	fd = open (p_data, O_RDONLY);
+    p_data = get_name (hfs_base_dir, siteid, itemid, NK_ItemData);
+    fd = open (p_data, O_RDONLY);
+    free (p_data);
 
-	if (fd < 0)
-	    return;
+    if (fd < 0)
+        return;
 
-	ofs = lseek (fd, 0, SEEK_END);
+    ofs = lseek (fd, 0, SEEK_END);
 
-	while (ofs && count > 0) {
-	    ofs = lseek (fd, ofs - sizeof (double), SEEK_SET);
-	    read (fd, &value, sizeof (value));
-	    if (is_valid_val (&value, sizeof (value))) {
-		fn (&value, init_res);
-		count--;
-	    }
+    while (ofs && count > 0) {
+        ofs = lseek (fd, ofs - sizeof (double), SEEK_SET);
+        read (fd, &value, sizeof (value));
+        if (is_valid_val (&value, sizeof (value))) {
+	    fn (&value, init_res);
+	    count--;
 	}
-
-	close (fd);
-	free (p_data);
-
-	ts = get_prev_data_ts (ts);
     }
+
+    close (fd);
 }
 
 hfs_meta_t *read_metafile(const char *metafile)
@@ -619,9 +613,9 @@ hfs_meta_t *read_metafile(const char *metafile)
 	return res;
 }
 
-hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t clock, int trend)
+hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int trend)
 {
-    char* path = get_name (hfs_base_dir, siteid, itemid, clock, trend ? NK_TrendItemMeta : NK_ItemMeta);
+    char* path = get_name (hfs_base_dir, siteid, itemid, trend ? NK_TrendItemMeta : NK_ItemMeta);
     hfs_meta_t* res = read_metafile(path);
     free(path);
 
@@ -640,7 +634,7 @@ void free_meta (hfs_meta_t* meta)
 }
 
 
-char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t clock, name_kind_t kind)
+char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, name_kind_t kind)
 {
     char* res;
     int len = strlen (hfs_base_dir) + strlen (siteid) + 100;
@@ -656,7 +650,7 @@ char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemi
     switch (kind) {
     case NK_ItemData:
     case NK_ItemMeta:
-            snprintf (res, len, "%s/%s/items/%llu/%llu/%lld.%s", hfs_base_dir, siteid, item_ord, itemid, get_data_index_from_ts (clock),
+            snprintf (res, len, "%s/%s/items/%llu/%llu/history.%s", hfs_base_dir, siteid, item_ord, itemid,
 		      kind == NK_ItemMeta ? "meta" : "data");
             break;
     case NK_ItemString:
@@ -664,7 +658,8 @@ char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemi
 	    break;
     case NK_TrendItemData:
     case NK_TrendItemMeta:
-            snprintf (res, len, "%s/%s/items/%llu/%llu/trends.%s", hfs_base_dir, siteid, item_ord, itemid, kind == NK_TrendItemMeta ? "meta" : "data");
+            snprintf (res, len, "%s/%s/items/%llu/%llu/trends.%s", hfs_base_dir, siteid, item_ord, itemid,
+		      kind == NK_TrendItemMeta ? "meta" : "data");
 	    break;
     case NK_HostState:
 	    snprintf (res, len, "%s/%s/hosts/%llu.state", hfs_base_dir, siteid, itemid);
@@ -717,18 +712,6 @@ hfs_off_t find_meta_ofs (hfs_time_t time, hfs_meta_t* meta)
 hfs_time_t get_data_index_from_ts (hfs_time_t ts)
 {
 	return ts / (zbx_uint64_t)1000000;
-}
-
-
-hfs_time_t get_next_data_ts (hfs_time_t ts)
-{
-    return (ts / 1000000 + 1) * 1000000;
-}
-
-
-hfs_time_t get_prev_data_ts (hfs_time_t ts)
-{
-    return (ts / 1000000 - 1) * 1000000;
 }
 
 
@@ -1238,6 +1221,7 @@ int HFS_find_meta(const char *hfs_base_dir, const char* siteid, int trend,
 	int ts = (int)from_ts;
 	hfs_meta_t *meta = NULL;
 	hfs_meta_item_t *ip = NULL;
+	char *path;
 
 #ifdef DEBUG_legion
 	fprintf(stderr, "It HFS_find_meta(hfs_base_dir=%s, siteid=%s, itemid=%lld, from=%d, res)\n",
@@ -1246,31 +1230,11 @@ int HFS_find_meta(const char *hfs_base_dir, const char* siteid, int trend,
 #endif
 	(*res) = NULL;
 
-	while (ts > 0) {
-		char *path;
+	path = get_name (hfs_base_dir, siteid, itemid, trend ? NK_TrendItemMeta : NK_ItemMeta);
+	free(path);
 
-		i = -1;
-		if ((path = get_name (hfs_base_dir, siteid, itemid, ts, trend ? NK_TrendItemMeta : NK_ItemMeta)) != NULL) {
-			i = access(path, R_OK);
-			free(path);
-		}
-
-		if (i == -1) {
-			ts = get_next_data_ts(ts);
-			continue;
-		}
-
-		if ((meta = read_meta(hfs_base_dir, siteid, itemid, ts, trend)) == NULL)
-			return -1; // Somethig real bad happend :(
-
-		if (meta->blocks > 0)
-			break;
-
-		free_meta(meta);
-		meta = NULL;
-
-		ts = get_next_data_ts(ts);
-	}
+	if ((meta = read_meta(hfs_base_dir, siteid, itemid, trend)) == NULL)
+		return -1; // Somethig real bad happend :(
 
 	if ((meta == NULL) || (meta->blocks == 0)) {
 		free_meta(meta);
@@ -1278,8 +1242,10 @@ int HFS_find_meta(const char *hfs_base_dir, const char* siteid, int trend,
 	}
 
 	(*res) = meta;
-	if (from_ts <= ts)
-		return block;
+	ip = meta->meta;
+
+	if (from_ts <= ip->start)
+		return 0;
 
 	for (i = 0; i < meta->blocks; i++) {
 		ip = meta->meta + i;
@@ -1327,6 +1293,12 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 	long count = 0, cur_group, group = -1;
 	long z, p, x;
 
+	int block, fd = -1;
+	char *p_data = NULL;
+	hfs_meta_t *meta = NULL;
+	hfs_off_t ofs;
+	hfs_meta_item_t *ip;
+
 	p = (graph_to_ts - graph_from_ts);
 	z = (p - graph_from_ts % p);
 	x = (sizex - 1);
@@ -1348,138 +1320,108 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 		val_len = sizeof(val_trends);
 	}
 
-	while (!finish_loop) {
-		int block, fd = -1;
-		char *p_data = NULL;
-		hfs_meta_t *meta = NULL;
-		hfs_meta_item_t *ip;
-		hfs_off_t ofs;
-
-		if ((block = HFS_find_meta(hfs_base_dir, siteid, trend, itemid, ts, &meta)) == -1)
-			break;
-
-		ip = meta->meta + block;
-
-		if (graph_to_ts < ip->start) {
-			/*      graph_from_ts   graph_to_ts
-			   ----|---------------|----------------> Time
-			                            ^ ip->start
-			*/
-			finish_loop = 1;
-			goto nextloop;
-		}
-
-		if (ip->start > ts) {
-			/*          graph_from_ts   graph_to_ts
-			   --------|---------------|------------> Time
-				^ ip->start
-			*/
-			ts = ip->start;
-		}
-		if ((p_data = get_name (hfs_base_dir, siteid, itemid, ts, trend ? NK_TrendItemData : NK_ItemData)) == NULL) {
-			zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get file name");
-			finish_loop = 1;
-			goto nextloop;
-		}
-
-		if ((ofs = find_meta_ofs (ts, meta)) == -1) {
-			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: %d: unable to get offset in file", p_data, ts);
-			finish_loop = 1;
-			goto nextloop;
-		}
-
-		if ((fd = open (p_data, O_RDONLY)) == -1) {
-			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
-			finish_loop = 1;
-			goto nextloop;
-		}
-
-		if (lseek (fd, ofs, SEEK_SET) == -1) {
-			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to change file offset: %s", p_data, strerror(errno));
-			finish_loop = 1;
-			goto nextloop;
-		}
-
-		while (read (fd, val, val_len) > 0) {
-
-			cur_group = (long) (x * ((ts + z) % p) / p);
-			if (group == -1)
-				group = cur_group;
-
-			ts += ip->delay;
-
-			if (!is_valid_val(val, val_len))
-				continue;
-
-			if (result_size <= items) {
-				result_size += alloc_item_values;
-				*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * result_size));
-				HFS_init_trend_value(trend, val, &((*result)[items].value));
-			}
-
-			if (group != cur_group) {
-				(*result)[items].type  = ip->type;
-				(*result)[items].group = cur_group;
-				(*result)[items].count = count;
-				(*result)[items].clock = ts;
-
-				group = cur_group;
-				count = 0;
-				items++;
-
-				HFS_init_trend_value(trend, val, &((*result)[items].value));
-			}
-
-			if (count > 0) {
-				HFS_init_trend_value(trend, val, &val_temp);
-				recalculate_trend(&val_temp,
-						  (*result)[items].value,
-						  ip->type);
-				(*result)[items].value = val_temp;
-			}
-
-			if (ts >= to_ts) {
-				finish_loop = 1;
-				break;
-			}
-
-			if (ts >= ip->end) {
-				block++;
-
-				if (block >= meta->blocks)
-					/* We have read all blocks and we need another meta. */
-					break;
-
-				ip = meta->meta + block;
-			}
-
-			count++;
-    		}
-                /*
-		  Data file have N records with delay=5:
-		    N-1: ts = 1215999990
-		    N-0: ts = 1215999995
-		    EOF: ts = 1216000000
-
-		  So we jump over one meta block:
-		    (ts = get_next_data_ts (1216000000)) = 1217000000
-
-		  To prevent it we decrement ts before get_next_data_ts() call.
-		*/
-		ts -= ip->delay;
-nextloop:
-		if (fd != -1 && close(fd) == -1)
-			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: close(): %s", p_data, strerror(errno));
-
-		p_data = xfree(p_data);
-		free_meta (meta);
-		meta = NULL;
-
-		if (trend)
-			break;
-
-		ts = get_next_data_ts (ts);
+	if ((block = HFS_find_meta(hfs_base_dir, siteid, trend, itemid, ts, &meta)) == -1) {
+		zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get metafile");
+		return 0;
 	}
+
+	ip = meta->meta + block;
+
+	if (graph_to_ts < ip->start) {
+		/*      graph_from_ts   graph_to_ts
+		   ----|---------------|----------------> Time
+		                            ^ ip->start
+		*/
+		free_meta(meta);
+		return 0;
+	}
+
+	if (ip->start > ts) {
+		/*          graph_from_ts   graph_to_ts
+		   --------|---------------|------------> Time
+			^ ip->start
+		*/
+		ts = ip->start;
+	}
+
+	if ((p_data = get_name (hfs_base_dir, siteid, itemid, trend ? NK_TrendItemData : NK_ItemData)) == NULL) {
+		zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get datafile");
+		return 0;
+	}
+
+	if ((fd = open (p_data, O_RDONLY)) == -1) {
+		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
+		goto out;
+	}
+
+	if ((ofs = find_meta_ofs (ts, meta)) == -1) {
+		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: %d: unable to get offset in file", p_data, ts);
+		goto out;
+	}
+
+	if (lseek (fd, ofs, SEEK_SET) == -1) {
+		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to change file offset: %s", p_data, strerror(errno));
+		goto out;
+	}
+
+	while (read (fd, val, val_len) > 0) {
+
+		cur_group = (long) (x * ((ts + z) % p) / p);
+		if (group == -1)
+			group = cur_group;
+
+		ts += ip->delay;
+
+		if (!is_valid_val(val, val_len))
+			continue;
+
+		if (result_size <= items) {
+			result_size += alloc_item_values;
+			*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * result_size));
+			HFS_init_trend_value(trend, val, &((*result)[items].value));
+		}
+
+		if (group != cur_group) {
+			(*result)[items].type  = ip->type;
+			(*result)[items].group = cur_group;
+			(*result)[items].count = count;
+			(*result)[items].clock = ts;
+
+			group = cur_group;
+			count = 0;
+			items++;
+
+			HFS_init_trend_value(trend, val, &((*result)[items].value));
+		}
+
+		if (count > 0) {
+			HFS_init_trend_value(trend, val, &val_temp);
+			recalculate_trend(&val_temp,
+					  (*result)[items].value,
+					  ip->type);
+			(*result)[items].value = val_temp;
+		}
+
+		if (ts >= to_ts)
+			break;
+
+		if (ts >= ip->end) {
+			block++;
+
+			if (block >= meta->blocks)
+				break;
+
+			ip = meta->meta + block;
+		}
+
+		count++;
+	}
+
+out:
+	free_meta (meta);
+	xfree(p_data);
+	if (fd != -1)
+		close(fd);
 
 	if (result_size > items)
 		*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * items));
@@ -1508,68 +1450,52 @@ int HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t ite
 	fflush(stderr);
 #endif
 
-	while (count > 0 && ts > 0) {
-            if ((meta = read_meta(hfs_base_dir, siteid, itemid, ts, 0)) == NULL)
-			return -1; // Somethig real bad happend :(
+        if ((meta = read_meta(hfs_base_dir, siteid, itemid, 0)) == NULL)
+		return -1; // Somethig real bad happend :(
 
-		if (meta->blocks == 0)
-			break;
+	if (meta->blocks == 0)
+		goto end;
 
-		if ((p_data = get_name(hfs_base_dir, siteid, itemid, ts, NK_ItemData)) == NULL) {
-			zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get file name");
-			break; // error
-		}
+	if ((p_data = get_name(hfs_base_dir, siteid, itemid, NK_ItemData)) == NULL) {
+		zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get file name");
+		goto end; // error
+	}
 
-		if ((fd = open (p_data, O_RDONLY)) == -1) {
-			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
-			break; // error
-		}
+	if ((fd = open (p_data, O_RDONLY)) == -1) {
+		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
+		goto end; // error
+	}
 
-		if ((ofs = lseek(fd, meta->last_ofs, SEEK_SET)) == -1) {
-			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to change file offset = %u: %s", p_data, meta->last_ofs, strerror(errno));
-			break; // error
-		}
+	if ((ofs = lseek(fd, meta->last_ofs, SEEK_SET)) == -1) {
+		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to change file offset = %u: %s", p_data, meta->last_ofs, strerror(errno));
+		goto end; // error
+	}
 
-		for (i = (meta->blocks-1); i >= 0; i--) {
-			ip = meta->meta + i;
-			ts = ip->end;
+	for (i = (meta->blocks-1); i >= 0; i--) {
+		ip = meta->meta + i;
+		ts = ip->end;
 
-			while (count > 0 && ip->start <= ts) {
-				if ((ofs = lseek(fd, (ofs - sizeof(val.l)), SEEK_SET)) == -1) {
-					zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to change file offset: %s", p_data, strerror(errno));
-					goto end;
-				}
-
-				if (read(fd, &val.l, sizeof (val.l)) == -1) {
-					zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to read data: %s", p_data, strerror(errno));
-					goto end;
-				}
-
-				if (is_valid_val(&val.l, sizeof(zbx_uint64_t))) {
-					fn (ip->type, val, ts, init_res);
-					count--;
-				}
-
-				ts = (ts - ip->delay);
+		while (count > 0 && ip->start <= ts) {
+			if ((ofs = lseek(fd, (ofs - sizeof(val.l)), SEEK_SET)) == -1) {
+				zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to change file offset: %s", p_data, strerror(errno));
+				goto end;
 			}
 
-			if (count == 0)
+			if (read(fd, &val.l, sizeof (val.l)) == -1) {
+				zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to read data: %s", p_data, strerror(errno));
 				goto end;
+			}
+
+			if (is_valid_val(&val.l, sizeof(zbx_uint64_t))) {
+				fn (ip->type, val, ts, init_res);
+				count--;
+			}
+
+			ts = (ts - ip->delay);
 		}
 
-		if (close(fd) == -1)
-			zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: close(): %s", p_data, strerror(errno));
-		fd = -1;
-
-		if (p_data) {
-			free(p_data);
-			p_data = NULL;
-		}
-
-		free_meta(meta);
-		meta = NULL;
-
-		ts = get_prev_data_ts (ts);
+		if (count == 0)
+			break;
 	}
 end:
 	if (fd != -1 && close(fd) == -1)
@@ -1587,7 +1513,7 @@ end:
  */
 void HFS_update_host_availability (const char* hfs_base_dir, const char* siteid, zbx_uint64_t hostid, int available, hfs_time_t clock, const char* error)
 {
-	char* name = get_name (hfs_base_dir, siteid, hostid, 0, NK_HostState);
+	char* name = get_name (hfs_base_dir, siteid, hostid, NK_HostState);
 	int fd;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_host_availability entered");
@@ -1637,7 +1563,7 @@ void HFS_update_host_availability (const char* hfs_base_dir, const char* siteid,
 /* Obtain host attributes stored in HFS. If successfull, return 1. If something goes wrong, return 0. */
 int HFS_get_host_availability (const char* hfs_base_dir, const char* siteid, zbx_uint64_t hostid, int* available, hfs_time_t* clock, char** error)
 {
-	char* name = get_name (hfs_base_dir, siteid, hostid, 0, NK_HostState);
+	char* name = get_name (hfs_base_dir, siteid, hostid, NK_HostState);
 	int fd;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_host_availability entered");
@@ -1681,7 +1607,7 @@ int HFS_get_host_availability (const char* hfs_base_dir, const char* siteid, zbx
 void HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
 			     hfs_time_t lastclock, int nextcheck, double prevvalue, double lastvalue, double prevorgvalue)
 {
-	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemValues);
+	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd, kind;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_values_dbl entered");
@@ -1738,7 +1664,7 @@ void HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, z
 void HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
 				 hfs_time_t lastclock, int nextcheck, zbx_uint64_t prevvalue, zbx_uint64_t lastvalue, zbx_uint64_t prevorgvalue)
 {
-	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemValues);
+	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd, kind;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_values_int entered");
@@ -1795,7 +1721,7 @@ void HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, z
 void HFS_update_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
 				 hfs_time_t lastclock, int nextcheck, const char* prevvalue, const char* lastvalue, const char* prevorgvalue)
 {
-	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemValues);
+	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd, kind;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_values_str entered");
@@ -1852,7 +1778,7 @@ void HFS_update_item_values_str (const char* hfs_base_dir, const char* siteid, z
 int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t* lastclock,
 			     int* nextcheck, double* prevvalue, double* lastvalue, double* prevorgvalue)
 {
-	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemValues);
+	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd, kind;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_values_dbl entered");
@@ -1906,7 +1832,7 @@ int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_u
 int HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t* lastclock,
 			     int* nextcheck, zbx_uint64_t* prevvalue, zbx_uint64_t* lastvalue, zbx_uint64_t* prevorgvalue)
 {
-	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemValues);
+	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd, kind;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_values_int entered");
@@ -1963,7 +1889,7 @@ int HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_u
 int HFS_get_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
 			 hfs_time_t* lastclock, int* nextcheck, char** prevvalue, char** lastvalue, char** prevorgvalue)
 {
-	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemValues);
+	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd, kind;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_values_str entered");
@@ -2018,7 +1944,7 @@ int HFS_get_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_u
 
 void HFS_update_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int status, const char* error)
 {
-	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemStatus);
+	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemStatus);
 	int fd;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_status entered");
@@ -2067,7 +1993,7 @@ void HFS_update_item_status (const char* hfs_base_dir, const char* siteid, zbx_u
 
 void HFS_update_item_stderr (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, const char* stderr)
 {
-	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemStderr);
+	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemStderr);
 	int fd;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_stderr entered");
@@ -2113,7 +2039,7 @@ void HFS_update_item_stderr (const char* hfs_base_dir, const char* siteid, zbx_u
 
 int HFS_get_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int* status, char** error)
 {
-	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemStatus);
+	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemStatus);
 	int fd;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_status entered");
@@ -2155,7 +2081,7 @@ int HFS_get_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint6
 
 int HFS_get_item_stderr (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, char** stderr)
 {
-	char* name = get_name (hfs_base_dir, siteid, itemid, 0, NK_ItemStderr);
+	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemStderr);
 	int fd;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_stderr entered");
@@ -2205,7 +2131,7 @@ void HFSadd_history_str (const char* hfs_base_dir, const char* siteid, zbx_uint6
 int store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t clock, const char* value, item_type_t type)
 {
 	int len = 0, fd;
-	char* p_name = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemString);
+	char* p_name = get_name (hfs_base_dir, siteid, itemid, NK_ItemString);
 
 	if (value)
 		len = strlen (value);
@@ -2245,7 +2171,7 @@ size_t HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint6
 {
 	int len = 0, fd, eof = 0;
 	hfs_time_t clock;
-	char* p_name = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemString);
+	char* p_name = get_name (hfs_base_dir, siteid, itemid, NK_ItemString);
 	size_t count = 0;
 	hfs_item_str_value_t* tmp;
 
@@ -2342,7 +2268,7 @@ size_t HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint
 {
 	int len = 0, fd;
 	hfs_time_t clock;
-	char* p_name = get_name (hfs_base_dir, siteid, itemid, clock, NK_ItemString);
+	char* p_name = get_name (hfs_base_dir, siteid, itemid, NK_ItemString);
 	size_t res_count = 0;
 	hfs_item_str_value_t* tmp;
 	hfs_off_t ofs;
@@ -2416,7 +2342,7 @@ size_t HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint
 
 void HFS_update_trigger_value(const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, int new_value, hfs_time_t now)
 {
-	char* name = get_name (hfs_path, siteid, triggerid, 0, NK_TriggerStatus);
+	char* name = get_name (hfs_path, siteid, triggerid, NK_TriggerStatus);
 	int fd;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_trigger_value entered");
@@ -2461,7 +2387,7 @@ void HFS_update_trigger_value(const char* hfs_path, const char* siteid, zbx_uint
 
 int HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, int* value, hfs_time_t* when)
 {
-	char* name = get_name (hfs_path, siteid, triggerid, 0, NK_TriggerStatus);
+	char* name = get_name (hfs_path, siteid, triggerid, NK_TriggerStatus);
 	int fd;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_trigger_value entered");
@@ -2507,7 +2433,7 @@ void HFS_add_alert(const char* hfs_path, const char* siteid, hfs_time_t clock, z
 		   zbx_uint64_t triggerid,  zbx_uint64_t mediatypeid, char *sendto, char *subject, char *message)
 {
 	int len = 0, fd;
-	char* p_name = get_name (hfs_path, siteid, 0, clock, NK_Alert);
+	char* p_name = get_name (hfs_path, siteid, 0, NK_Alert);
 
 	if ((fd = xopen (p_name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
 		zabbix_log (LOG_LEVEL_DEBUG, "Canot open file %s", p_name);
