@@ -68,26 +68,25 @@ void HFSadd_history_uint (const char* hfs_base_dir, const char* siteid, zbx_uint
 
 void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t type)
 {
-    new->count += old.count;
+	double val, min, max;
 
-    switch (type) {
-    case IT_UINT64:
-        if (new->max.l < old.max.l)
-            new->max.l = old.max.l;
-        if (new->max.l > old.min.l)
-            new->min.l = old.min.l;
-        new->avg.l = (old.avg.l * old.count + new->avg.l) / new->count;
-        break;
+	if (type == IT_UINT64) {
+		val = old.avg.l;
+		max = old.max.l;
+		min = old.min.l;
+	}
+	else {
+		val = old.avg.d;
+		max = old.max.d;
+		min = old.min.d;
+	}
 
-    case IT_DOUBLE:
-    case IT_TRENDS:
-        if (new->max.d < old.max.d)
-            new->max.d = old.max.d;
-        if (new->max.d > old.min.d)
-            new->min.d = old.min.d;
-        new->avg.d = (old.avg.d * old.count + new->avg.d) / new->count;
-        break;
-    }
+	if (new->max.d < max)
+		new->max.d = max;
+	if (new->max.d > old.min.d)
+		new->min.d = min;
+	new->count += old.count;
+	new->avg.d = (val * old.count + new->avg.d) / new->count;
 }
 
 
