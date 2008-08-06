@@ -13,7 +13,9 @@ ZBX_LIBS = \
 
 hfsdump_LDADD = $(ZBX_LIBS)
 hfs_trends_upd_LDADD = $(ZBX_LIBS)
+hfsimport_LDADD = $(ZBX_LIBS)
 
-sbin_PROGRAMS = hfsdump hfs_trends_upd
+sbin_PROGRAMS = hfsdump hfsimport hfs_trends_upd
 hfsdump_SOURCES = hfsdump.c
 hfs_trends_upd_SOURCES = hfs_trends_upd.c
+hfsimport_SOURCES = hfsimport.c

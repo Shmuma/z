@@ -51,13 +51,14 @@ int dump_by_meta(const char *metafile)
 	char *datafile = NULL;
 	hfs_meta_t *meta = NULL;
 	hfs_meta_item_t *ip = NULL;
-	zbx_uint64_t ts;
-	zbx_uint64_t ofs;
+	hfs_time_t ts;
+	hfs_off_t ofs;
 
 	if ((meta = read_metafile(metafile)) == NULL)
 		return -1; // Somethig real bad happend :(
 
 	if (meta->blocks == 0) {
+		fprintf(stderr, "%s: No data!\n", metafile);
 		free_meta(meta);
 		return -1;
 	}
@@ -102,12 +103,14 @@ int dump_by_meta(const char *metafile)
 		}
 
 		while (read (fd, val, val_len) > 0) {
-			ts += ip->delay;
 
-			if (!is_valid_val(val, val_len))
+			if (!is_valid_val(val, val_len)) {
+				ts += ip->delay;
 				continue;
+			}
 
-			printf("time=%d\ttype=%d\t", (int)ts, ip->type);
+			printf("time=%d\tdelay=%d\ttype=%d\t",
+				(int)ts, ip->delay, ip->type);
 
 			if (is_trend_type(ip->type)) {
 				printf("count=%d\tmax=", val_trends.count);
@@ -122,8 +125,9 @@ int dump_by_meta(const char *metafile)
 				show_value(ip->type, val_history);
 			}
 			printf("\n");
-			
-			if (ts == ip->end)
+			ts += ip->delay;
+
+			if (ts > ip->end)
 				break;
 		}
 	}

@@ -180,7 +180,7 @@ int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, i
     zabbix_log(LOG_LEVEL_DEBUG, "HFS: meta read: delays: %d %d, blocks %d, ofs %u", meta->last_delay, delay, meta->blocks, meta->last_ofs);
 
     /* should we start a new block? */
-    if (meta->last_delay != delay || type != meta->last_type) {
+    if (meta->blocks == 0 || meta->last_delay != delay || type != meta->last_type) {
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: appending new block for data %s", p_data);
 	item.start = item.end = clock;
 	item.type = type;
