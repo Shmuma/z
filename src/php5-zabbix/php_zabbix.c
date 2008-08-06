@@ -142,10 +142,6 @@ PHP_FUNCTION(zabbix_hfs_read_history)
 
 	for (i = 0; i < n; i++) {
 		char *buf = NULL;
-		zval *max, *min, *avg;
-		MAKE_STD_ZVAL(max);
-		MAKE_STD_ZVAL(min);
-		MAKE_STD_ZVAL(avg);
 
 		MAKE_STD_ZVAL(z_obj);
 		object_init(z_obj);
@@ -155,28 +151,9 @@ PHP_FUNCTION(zabbix_hfs_read_history)
 		add_property_long (z_obj, "clock",	res[i].clock);
 		add_property_long (z_obj, "i",		res[i].group);
 
-		if (res[i].type == IT_DOUBLE) {
-			ZVAL_DOUBLE(avg, res[i].value.avg.d);
-			ZVAL_DOUBLE(max, res[i].value.max.d);
-			ZVAL_DOUBLE(min, res[i].value.min.d);
-		}
-		else if (res[i].type == IT_UINT64) {
-			asprintf(&buf, "%lld", res[i].value.avg.l);
-			ZVAL_STRING(avg, buf, 1);
-			free(buf);
-
-			asprintf(&buf, "%lld", res[i].value.max.l);
-			ZVAL_STRING(max, buf, 1);
-			free(buf);
-
-			asprintf(&buf, "%lld", res[i].value.min.l);
-			ZVAL_STRING(min, buf, 1);
-			free(buf);
-		}
-
-		add_property_zval(z_obj, "avg", avg);
-		add_property_zval(z_obj, "max", max);
-		add_property_zval(z_obj, "min", min);
+		add_property_double(z_obj, "avg", res[i].value.avg.d);
+		add_property_double(z_obj, "max", res[i].value.max.d);
+		add_property_double(z_obj, "min", res[i].value.min.d);
 
 		add_next_index_object(return_value, z_obj TSRMLS_CC);
 	}
@@ -213,10 +190,6 @@ PHP_FUNCTION(zabbix_hfs_read_trends)
 
 	for (i = 0; i < n; i++) {
 		char *buf = NULL;
-		zval *max, *min, *avg;
-		MAKE_STD_ZVAL(max);
-		MAKE_STD_ZVAL(min);
-		MAKE_STD_ZVAL(avg);
 
 		MAKE_STD_ZVAL(z_obj);
 		object_init(z_obj);
@@ -226,28 +199,9 @@ PHP_FUNCTION(zabbix_hfs_read_trends)
 		add_property_long (z_obj, "clock",	res[i].clock);
 		add_property_long (z_obj, "i",		res[i].group);
 
-		if (res[i].type == IT_TRENDS_DOUBLE) {
-			ZVAL_DOUBLE(avg, res[i].value.avg.d);
-			ZVAL_DOUBLE(max, res[i].value.max.d);
-			ZVAL_DOUBLE(min, res[i].value.min.d);
-		}
-		else if (res[i].type == IT_TRENDS_UINT64) {
-			asprintf(&buf, "%lld", res[i].value.avg.l);
-			ZVAL_STRING(avg, buf, 1);
-			free(buf);
-
-			asprintf(&buf, "%lld", res[i].value.max.l);
-			ZVAL_STRING(max, buf, 1);
-			free(buf);
-
-			asprintf(&buf, "%lld", res[i].value.min.l);
-			ZVAL_STRING(min, buf, 1);
-			free(buf);
-		}
-
-		add_property_zval(z_obj, "avg", avg);
-		add_property_zval(z_obj, "max", max);
-		add_property_zval(z_obj, "min", min);
+		add_property_double(z_obj, "avg", res[i].value.avg.d);
+		add_property_double(z_obj, "max", res[i].value.max.d);
+		add_property_double(z_obj, "min", res[i].value.min.d);
 
 		add_next_index_object(return_value, z_obj TSRMLS_CC);
 	}
