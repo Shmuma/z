@@ -39,73 +39,66 @@ void store_trends (const char* item_dir, hfs_trend_item_t* trends, int count);
 
 int main (int argc, char** argv)
 {
-    hfs_meta_t* meta;
-    hfs_meta_t* trends_meta;
-    const char* item_dir;
-    hfs_time_t start_ts, now;
-    char path[1024];
-    hfs_data_item_t* values;
-    int count, tr_count;
-    hfs_trend_item_t* trends;
+	hfs_meta_t* meta;
+	hfs_meta_t* trends_meta;
+	const char* item_dir;
+	hfs_time_t start_ts;
+	char path[1024];
+	hfs_data_item_t* values;
+	int count, tr_count;
+	hfs_trend_item_t* trends;
 
-    /* read given trends file */
-    if (argc != 2) {
-        printf ("Usage: hfs_trends_upd item_dir\n");
-        return 1;
-    }
+	/* read given trends file */
+	if (argc != 2) {
+		printf ("Usage: hfs_trends_upd item_dir\n");
+		return 1;
+	}
 
-    item_dir = argv[1];
-    now = time (NULL);
+	item_dir = argv[1];
 
-    zbx_snprintf (path, sizeof (path), "%s/trends.meta", item_dir);
-    trends_meta = read_metafile (path);
+	zbx_snprintf (path, sizeof (path), "%s/trends.meta", item_dir);
+	trends_meta = read_metafile (path);
 
-    if (trends_meta && trends_meta->blocks) {
-        start_ts = trends_meta->meta[trends_meta->blocks-1].end;
-        free_meta (trends_meta);
-    }
-    else
-        start_ts = 0;
+	if (trends_meta && trends_meta->blocks) {
+		start_ts = trends_meta->meta[trends_meta->blocks-1].end;
+		free_meta (trends_meta);
+	}
+	else
+		start_ts = 0;
 
-    /* round trend by 1 hour */
-    start_ts -= start_ts % 3600;
+	/* round trend by 1 hour */
+	start_ts -= start_ts % 3600;
 
-    zbx_snprintf (path, sizeof (path), "%s/history.meta", item_dir);
-    meta = read_metafile (path);
-
-    /* iterate over all possible data files */
-    while (start_ts < now) {
+	zbx_snprintf (path, sizeof (path), "%s/history.meta", item_dir);
+	meta = read_metafile (path);
 
         if (meta) {
-            if (meta->blocks) {
-                /* have meta, check trends */
-                if (start_ts < meta->meta[meta->blocks-1].end) {
-                    /* fetch data from this meta and calculate trends */
-                    zbx_snprintf (path, sizeof (path), "%s/history.data", item_dir);
-                    values = read_data (meta, start_ts ? start_ts : meta->meta[0].start, path, &count);
-                    printf ("New data found, %d values\n", count);
+		if (meta->blocks) {
+			/* have meta, check trends */
+			if (start_ts < meta->meta[meta->blocks-1].end) {
+				/* fetch data from this meta and calculate trends */
+				zbx_snprintf (path, sizeof (path), "%s/history.data", item_dir);
+				values = read_data (meta, start_ts ? start_ts : meta->meta[0].start, path, &count);
+				printf ("New data found, %d values\n", count);
 
-                    if (values) {
-                        /* calculate trends */
-                        trends = process_trends (values, count, &tr_count);
-                        printf ("Calculated %d trend values\n", tr_count);
+				if (values) {
+					/* calculate trends */
+					trends = process_trends (values, count, &tr_count);
+					printf ("Calculated %d trend values\n", tr_count);
 
-                        /* save trends */
-                        store_trends (item_dir, trends, tr_count);
+					/* save trends */
+					store_trends (item_dir, trends, tr_count);
 
-                        free (trends);
-                        free (values);
-                    }
-                }
-            }
+					free (trends);
+					free (values);
+				}
+			}
+		}
 
-            free_meta (meta);
+		free_meta (meta);
         }
 
-        start_ts = get_next_data_ts (start_ts);
-    }
-
-    return 0;
+	return 0;
 }
 
 
