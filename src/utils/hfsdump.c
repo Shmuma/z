@@ -16,44 +16,6 @@ char title_message[] = "Title";
 char usage_message[] = "Usage";
 char *help_message[] = { "Help", 0 };
 
-int parse_hfs_path(char *path,
-                   char **basedir, char **site, zbx_uint64_t *item)
-{
-	int i = 0;
-	char *s;
-	struct stat sb;
-
-	if (stat(path, &sb) == -1) {
-		perror("stat");
-		return (EXIT_FAILURE);
-        }
-
-	if (!S_ISREG(sb.st_mode)) {
-		fprintf(stderr, "%s: Not regular file\n", path);
-		return (EXIT_FAILURE);
-	}
-
-	/*         i=3     i=2   i=1   i=0  
-	   /tmp/hfs/Default/items/18534/1216.meta
-	   ^------- ^------       ^----
-	    basedir  site          item
-	*/
-	while ((s = strrchr(path, '/')) != NULL) {
-		switch (i) {
-			case 1: *item = atoi(s+1);
-				break;
-			case 3: *site = strdup(s+1);
-				break;
-			case 4: *basedir = strdup(path);
-				break;
-		}
-		*s = '\0';
-		i++;
-	}
-
-	return EXIT_SUCCESS;
-}
-
 char *get_datafile(const char *metafile)
 {
 	char *res = strdup(metafile);
@@ -175,7 +137,7 @@ int main(int argc, char **argv)
 	int i;
 
 	if (argc == 1) {
-		printf("Usage %s <meta-file>\n", argv[0]);
+		printf("Usage %s <meta-file> [<meta-file1>...]\n", argv[0]);
 		return EXIT_SUCCESS;
 	}
 

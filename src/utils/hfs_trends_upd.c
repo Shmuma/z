@@ -42,7 +42,7 @@ int main (int argc, char** argv)
     hfs_meta_t* meta;
     hfs_meta_t* trends_meta;
     const char* item_dir;
-    hfs_time_t start_ts, now, index;
+    hfs_time_t start_ts, now;
     char path[1024];
     hfs_data_item_t* values;
     int count, tr_count;
@@ -70,19 +70,18 @@ int main (int argc, char** argv)
     /* round trend by 1 hour */
     start_ts -= start_ts % 3600;
 
+    zbx_snprintf (path, sizeof (path), "%s/history.meta", item_dir);
+    meta = read_metafile (path);
+
     /* iterate over all possible data files */
     while (start_ts < now) {
-        index = get_data_index_from_ts (start_ts);
-        zbx_snprintf (path, sizeof (path), "%s/%llu.meta", item_dir, index);
-
-        meta = read_metafile (path);
 
         if (meta) {
             if (meta->blocks) {
                 /* have meta, check trends */
                 if (start_ts < meta->meta[meta->blocks-1].end) {
                     /* fetch data from this meta and calculate trends */
-                    zbx_snprintf (path, sizeof (path), "%s/%llu.data", item_dir, index);
+                    zbx_snprintf (path, sizeof (path), "%s/history.data", item_dir);
                     values = read_data (meta, start_ts ? start_ts : meta->meta[0].start, path, &count);
                     printf ("New data found, %d values\n", count);
 
@@ -117,7 +116,7 @@ hfs_data_item_t* read_data (hfs_meta_t* meta, hfs_time_t from, const char* path,
     int size, buf_size;
     int fd;
     hfs_off_t ofs;
-    int block, cur_block;;
+    int block, cur_block;
 
     size = buf_size = 0;
     *count = 0;
