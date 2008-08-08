@@ -1386,6 +1386,11 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 			count = 0;
 			items++;
 
+			if (result_size <= items) {
+				result_size += alloc_item_values;
+				*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * result_size));
+			}
+
 			HFS_init_trend_value(is_trend, ip->type, val, &((*result)[items].value));
 		}
 
