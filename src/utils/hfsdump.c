@@ -77,28 +77,31 @@ int dump_by_meta(const char *metafile)
 	fprintf(stderr, "Datafile: %s\n", datafile);
 
 	if ((fd = open (datafile, O_RDONLY)) == -1) {
-		fprintf(stderr, "%s: file open failed: %s", datafile, strerror(errno));
+		fprintf(stderr, "%s: file open failed: %s\n", datafile, strerror(errno));
 		free_meta(meta);
 		free(datafile);
 		return -1;
 	}
-	free(datafile);
 
 	for (i = 0; i < meta->blocks; i++) {
 		ip = meta->meta + i;
 		ts = ip->start;
 
 		if ((ofs = find_meta_ofs (ts, meta)) == -1) {
-			fprintf(stderr, "%s: %d: unable to get offset in file",
+			fprintf(stderr, "%s: %d: unable to get offset in file\n",
 				datafile, (int)ts);
 			free_meta(meta);
+			free(datafile);
+			close(fd);
 			return -1;
 		}
 
 		if (lseek (fd, ofs, SEEK_SET) == -1) {
-			fprintf(stderr, "%s: unable to change file offset: %s",
+			fprintf(stderr, "%s: unable to change file offset: %s\n",
 				datafile, strerror(errno));
 			free_meta(meta);
+			free(datafile);
+			close(fd);
 			return -1;
 		}
 
@@ -133,6 +136,8 @@ int dump_by_meta(const char *metafile)
 	}
 
 	free_meta(meta);
+	free(datafile);
+	close(fd);
 	return 0;
 }
 
