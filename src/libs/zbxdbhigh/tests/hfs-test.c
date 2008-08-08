@@ -125,12 +125,11 @@ int main(int argc, char **argv) {
 
 	for (i=0; i<n; i++) {
 		if (res[i].type == IT_DOUBLE ||
-		    res[i].type == IT_TRENDS_DOUBLE) {
+		    res[i].type == IT_TRENDS) {
 			printf("res[%d] group=%d count=%d clock=%d max=%f min=%f avg=%f\n",
 				i, res[i].group, res[i].count, res[i].clock, res[i].value.max.d, res[i].value.min.d, res[i].value.avg.d);
 		}
-		else if (res[i].type == IT_UINT64 ||
-		         res[i].type == IT_TRENDS_UINT64) {
+		else if (res[i].type == IT_UINT64) {
 			printf("res[%d] group=%d count=%d clock=%d max=%lld min=%lld avg=%lld\n",
 				i, res[i].group, res[i].count, res[i].clock, res[i].value.max.l, res[i].value.min.l, res[i].value.avg.l);
 		}

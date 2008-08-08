@@ -68,25 +68,14 @@ void HFSadd_history_uint (const char* hfs_base_dir, const char* siteid, zbx_uint
 
 void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t type)
 {
-	double avg, min, max;
+	if (new->max.d < old.max.d)
+		new->max.d = old.max.d;
 
-	if (type == IT_UINT64) {
-		avg = old.avg.l;
-		max = old.max.l;
-		min = old.min.l;
-	}
-	else {
-		avg = old.avg.d;
-		max = old.max.d;
-		min = old.min.d;
-	}
+	if (new->min.d > old.min.d)
+		new->min.d = old.min.d;
 
-	if (new->max.d < max)
-		new->max.d = max;
-	if (new->min.d > min)
-		new->min.d = min;
 	new->count += old.count;
-	new->avg.d = (avg * old.count + new->avg.d) / new->count;
+	new->avg.d = (old.avg.d * old.count + new->avg.d) / new->count;
 }
 
 
@@ -1260,7 +1249,7 @@ int HFS_find_meta(const char *hfs_base_dir, const char* siteid, int trend,
 	return -1;
 }
 
-void HFS_init_trend_value(int is_trend, void *val, hfs_trend_t *res)
+void HFS_init_trend_value(int is_trend, item_type_t type, void *val, hfs_trend_t *res)
 {
 	if (!is_trend) {
 		res->count = 1;
@@ -1271,11 +1260,17 @@ void HFS_init_trend_value(int is_trend, void *val, hfs_trend_t *res)
 	else {
 		*res = *((hfs_trend_t *) val);
 	}
+
+	if (type == IT_UINT64) {
+		res->max.d = res->max.l;
+		res->min.d = res->min.l;
+		res->avg.d = res->avg.l;
+	}
 }
 
 //!!!!!!
 size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
-                     int trend,            zbx_uint64_t itemid,
+                     int is_trend,             zbx_uint64_t itemid,
                      size_t sizex,
                      hfs_time_t graph_from_ts, hfs_time_t graph_to_ts,
                      hfs_time_t from_ts,       hfs_time_t to_ts,
@@ -1304,13 +1299,13 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 
 	zabbix_log(LOG_LEVEL_DEBUG,
 		"In HFSread_item(hfs_base_dir=%s, trend=%d, itemid=%lld, sizex=%d, graph_from=%lld, graph_to=%lld, from=%lld, to=%lld)\n",
-		hfs_base_dir, trend, itemid, x, graph_from_ts, graph_to_ts, from_ts, to_ts);
+		hfs_base_dir, is_trend, itemid, x, graph_from_ts, graph_to_ts, from_ts, to_ts);
 
 	zabbix_log(LOG_LEVEL_DEBUG,
 		"HFS: HFSread_item: Magic numbers: p=%d, z=%d, x=%d\n",
 		p, z, x);
 
-	if (trend == 0) {
+	if (is_trend == 0) {
 		val = &val_history;
 		val_len = sizeof(val_history);
 	}
@@ -1319,7 +1314,7 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 		val_len = sizeof(val_trends);
 	}
 
-	if ((block = HFS_find_meta(hfs_base_dir, siteid, trend, itemid, ts, &meta)) == -1) {
+	if ((block = HFS_find_meta(hfs_base_dir, siteid, is_trend, itemid, ts, &meta)) == -1) {
 		zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get metafile");
 		return 0;
 	}
@@ -1343,7 +1338,7 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 		ts = ip->start;
 	}
 
-	if ((p_data = get_name (hfs_base_dir, siteid, itemid, trend ? NK_TrendItemData : NK_ItemData)) == NULL) {
+	if ((p_data = get_name (hfs_base_dir, siteid, itemid, is_trend ? NK_TrendItemData : NK_ItemData)) == NULL) {
 		zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get datafile");
 		free_meta(meta);
 		return 0;
@@ -1378,7 +1373,7 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 		if (result_size <= items) {
 			result_size += alloc_item_values;
 			*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * result_size));
-			HFS_init_trend_value(trend, val, &((*result)[items].value));
+			HFS_init_trend_value(is_trend, ip->type, val, &((*result)[items].value));
 		}
 
 		if (group != cur_group) {
@@ -1391,11 +1386,11 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 			count = 0;
 			items++;
 
-			HFS_init_trend_value(trend, val, &((*result)[items].value));
+			HFS_init_trend_value(is_trend, ip->type, val, &((*result)[items].value));
 		}
 
 		if (count > 0) {
-			HFS_init_trend_value(trend, val, &val_temp);
+			HFS_init_trend_value(is_trend, ip->type, val, &val_temp);
 			recalculate_trend(&val_temp,
 					  (*result)[items].value,
 					  ip->type);
