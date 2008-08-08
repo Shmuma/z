@@ -189,7 +189,7 @@ int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, i
 	item.delay = delay;
 	if (meta->blocks) {
 	    ip = meta->meta + (meta->blocks-1);
-	    zabbix_log(LOG_LEVEL_DEBUG, "HFS: there is another block on way: %u, %u, %d, %llu", ip->start, ip->end, ip->delay, ip->ofs);
+	    zabbix_log(LOG_LEVEL_DEBUG, "HFS: there is another block on way: %llu, %llu, %d, %llu", ip->start, ip->end, ip->delay, ip->ofs);
 	    item.ofs = meta->last_ofs + len;
 	}
 	else
@@ -228,7 +228,7 @@ int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, i
 		goto err_exit;
 	fd = -1;
 
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS: block metadata updated %d, %d, %d: %u, %u, %d, %llu", meta->blocks, meta->last_delay, meta->last_type,
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS: block metadata updated %d, %d, %d: %lld, %lld, %d, %llu", meta->blocks, meta->last_delay, meta->last_type,
 		   item.start, item.end, item.delay, item.ofs);
 
 	/* append data */
@@ -690,15 +690,15 @@ hfs_off_t find_meta_ofs (hfs_time_t time, hfs_meta_t* meta)
     int f = 0;
 
     for (i = 0; i < meta->blocks; i++) {
-	zabbix_log(LOG_LEVEL_DEBUG, "check block %d[%d,%d], ts %d, ofs %u", i, meta->meta[i].start, meta->meta[i].end, time, meta->meta[i].ofs);
+	zabbix_log(LOG_LEVEL_DEBUG, "check block %d[%lld,%lld], ts %lld, ofs %llu", i, meta->meta[i].start, meta->meta[i].end, time, meta->meta[i].ofs);
 
 	if (!f) {
-	    f = (meta->meta[i].end > time);
+	    f = (meta->meta[i].end >= time);
 	    if (!f)
 		continue;
 	}
 
-	if (meta->meta[i].start > time)
+	if (meta->meta[i].start >= time)
 	    return meta->meta[i].ofs;
 
 	return meta->meta[i].ofs + sizeof (double) * ((time - meta->meta[i].start) / meta->meta[i].delay);
