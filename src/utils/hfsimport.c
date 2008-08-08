@@ -107,9 +107,9 @@ int main(int argc, char **argv)
 				}
 
 				if (type == IT_UINT64)
-					sscanf(start, "value=%lld", &value.l);
+					rc = sscanf(start, "value=%lld", &value.l);
 				else if (type == IT_DOUBLE)
-					sscanf(start, "value=%f", &value.d);
+					rc = sscanf(start, "value=%lf", &value.d);
 
 				rc = hfs_store_value(metafile, datafile, stamp, delay,
 						     &value, sizeof(item_value_u), type);
