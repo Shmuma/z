@@ -690,7 +690,10 @@ hfs_off_t find_meta_ofs (hfs_time_t time, hfs_meta_t* meta)
 	if (meta->meta[i].start >= time)
 	    return meta->meta[i].ofs;
 
-	return meta->meta[i].ofs + sizeof (double) * ((time - meta->meta[i].start) / meta->meta[i].delay);
+	if (is_trend_type (meta->meta[i].type))
+		return meta->meta[i].ofs + sizeof (hfs_trend_t) * ((time - meta->meta[i].start) / meta->meta[i].delay);
+	else
+		return meta->meta[i].ofs + sizeof (double) * ((time - meta->meta[i].start) / meta->meta[i].delay);
     }
 
     return -1;
