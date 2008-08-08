@@ -33,7 +33,7 @@ void show_value(item_type_t type, item_value_u val)
 
 		case IT_DOUBLE:
 		case IT_TRENDS:
-			printf("%f", val.d);
+			printf("%lf", val.d);
 			break;
 		default:
 			break;

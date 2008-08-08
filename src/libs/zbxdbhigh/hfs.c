@@ -68,25 +68,25 @@ void HFSadd_history_uint (const char* hfs_base_dir, const char* siteid, zbx_uint
 
 void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t type)
 {
-	double val, min, max;
+	double avg, min, max;
 
 	if (type == IT_UINT64) {
-		val = old.avg.l;
+		avg = old.avg.l;
 		max = old.max.l;
 		min = old.min.l;
 	}
 	else {
-		val = old.avg.d;
+		avg = old.avg.d;
 		max = old.max.d;
 		min = old.min.d;
 	}
 
 	if (new->max.d < max)
 		new->max.d = max;
-	if (new->max.d > old.min.d)
+	if (new->min.d > min)
 		new->min.d = min;
 	new->count += old.count;
-	new->avg.d = (val * old.count + new->avg.d) / new->count;
+	new->avg.d = (avg * old.count + new->avg.d) / new->count;
 }
 
 
@@ -1303,7 +1303,7 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 	x = (sizex - 1);
 
 	zabbix_log(LOG_LEVEL_DEBUG,
-		"In HFSread_item(hfs_base_dir=%s, trend=%d, itemid=%lld, sizex=%d, graph_from=%d, graph_to=%d, from=%d, to=%d)\n",
+		"In HFSread_item(hfs_base_dir=%s, trend=%d, itemid=%lld, sizex=%d, graph_from=%lld, graph_to=%lld, from=%lld, to=%lld)\n",
 		hfs_base_dir, trend, itemid, x, graph_from_ts, graph_to_ts, from_ts, to_ts);
 
 	zabbix_log(LOG_LEVEL_DEBUG,
@@ -1345,6 +1345,7 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 
 	if ((p_data = get_name (hfs_base_dir, siteid, itemid, trend ? NK_TrendItemData : NK_ItemData)) == NULL) {
 		zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get datafile");
+		free_meta(meta);
 		return 0;
 	}
 
@@ -1354,7 +1355,7 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 	}
 
 	if ((ofs = find_meta_ofs (ts, meta)) == -1) {
-		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: %d: unable to get offset in file", p_data, ts);
+		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: %lld: unable to get offset in file", p_data, ts);
 		goto out;
 	}
 
