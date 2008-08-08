@@ -40,7 +40,7 @@ typedef union {
 } item_value_u;
 
 typedef struct hfs_trend {
-    int count;
+    zbx_uint64_t	count;
     item_value_u	min;
     item_value_u	max;
     item_value_u	avg;
