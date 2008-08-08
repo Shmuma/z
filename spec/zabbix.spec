@@ -2,10 +2,10 @@
 
 Name: zabbix-mysql
 Version: 1.4.4
-Release: yandex_14
+Release: yandex_15
 Group: System Environment/Daemons
 License: GPL
-Source: %{realname}-%{version}_yandex14.tar.gz
+Source: %{realname}-%{version}_yandex15.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
 BuildPrereq: mysql, mysql-devel, net-snmp-devel, setproctitle-devel, iksemel-devel, pkgconfig
 Requires: mysql, net-snmp, setproctitle, iksemel
@@ -28,7 +28,7 @@ Group: System Environment/Daemons
 the zabbix network monitor agent.
 
 %prep
-%setup -q -n %{realname}-%{version}_yandex14
+%setup -q -n %{realname}-%{version}_yandex15
 
 %build
 %configure --enable-server --enable-agent --with-mysql --with-jabber --with-net-snmp
