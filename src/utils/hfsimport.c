@@ -47,21 +47,26 @@ int main(int argc, char **argv)
 
 	outdir = argv[1];
 
-	if (stat(argv[2], &sb) == -1) {
-		perror("stat");
-		return EXIT_FAILURE;
+	if (strcmp("-", argv[2]) != 0) {
+		if (stat(argv[2], &sb) == -1) {
+			perror("stat");
+			return EXIT_FAILURE;
+		}
+
+		if (!S_ISREG(sb.st_mode)) {
+			fprintf(stderr, "%s: first argument should be a regular file.\n", argv[2]);
+			return EXIT_FAILURE;
+		}
+
+		dumpfile = argv[2];
+
+		if ((fp = fopen(dumpfile, "r")) == NULL) {
+			perror("fopen");
+			return EXIT_FAILURE;
+		}
 	}
-
-	if (!S_ISREG(sb.st_mode)) {
-		fprintf(stderr, "%s: first argument should be a regular file.\n", argv[2]);
-		return EXIT_FAILURE;
-	}
-
-	dumpfile = argv[2];
-
-	if ((fp = fopen(dumpfile, "r")) == NULL) {
-		perror("fopen");
-		return EXIT_FAILURE;
+	else {
+		fp = stdin;
 	}
 
 	snprintf(metafile, MAXPATHLEN, "%s/history.meta", outdir);
