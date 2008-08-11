@@ -458,10 +458,16 @@ COpt::profiling_start("history");
 
 			$arr = array();
 			if (zbx_hfs_available ()) {
-				if ($item_type == ITEM_VALUE_TYPE_TEXT || $item_type == ITEM_VALUE_TYPE_STR)
-					$arr = zabbix_hfs_last_str ($item["sitename"], $_REQUEST["itemid"], 500);
+				if ($_REQUEST["action"] == "showlatest")
+					if ($item_type == ITEM_VALUE_TYPE_TEXT || $item_type == ITEM_VALUE_TYPE_STR)
+						$arr = zabbix_hfs_last_str ($item["sitename"], $_REQUEST["itemid"], 500);
+					else
+						$arr = zabbix_hfs_last ($item["sitename"], $_REQUEST["itemid"], 500);
 				else
-					$arr = zabbix_hfs_last ($item["sitename"], $_REQUEST["itemid"], 500);
+					if ($item_type == ITEM_VALUE_TYPE_TEXT || $item_type == ITEM_VALUE_TYPE_STR)
+						$arr = zabbix_hfs_read_str ($item["sitename"], $_REQUEST["itemid"], $time, $till);
+					else
+						$arr = zabbix_hfs_read ($item["sitename"], $_REQUEST["itemid"], $time, $till);
 			}
 			else {
 				switch($item_type) {

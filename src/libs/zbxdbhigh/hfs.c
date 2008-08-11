@@ -464,6 +464,70 @@ char* read_str (int fd)
 
 
 /*
+   Performs folding on values from specified time interval
+ */
+int HFSread_interval(const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t from, hfs_time_t to, void* init_res, read_count_fn_t fn);
+{
+    char *p_data;
+    hfs_meta_t* meta;
+    hfs_off_t ofs;
+    int fd, block;
+    item_value_u value;
+    hfs_time_t ts;
+    int count = 0;
+
+    zabbix_log(LOG_LEVEL_DEBUG, "HFSread_interval (%s, %llu, %lld, %lld)", hfs_base_dir, itemid, from, to);
+
+    meta = read_meta (hfs_base_dir, siteid, itemid, 0);
+    if (!meta)
+	return count;
+
+    if (!meta->blocks) {
+	free_meta (meta);
+	return count;
+    }
+
+    /* open data file and count amount of valid items */
+    p_data = get_name (hfs_base_dir, siteid, itemid, NK_ItemData);
+
+    if ((fd = open (p_data, O_RDONLY)) == -1) {
+	free_meta (meta);
+	free (p_data);
+	return count;
+    }
+    free (p_data);
+
+    ofs = find_meta_ofs (from, meta, &block);
+
+    if (ofs != -1) {
+	    /* find correct timestamp */
+	    ts = meta->meta[block].start + ((ofs - meta->meta[block].ofs) / sizeof (double)) * meta->meta[block].delay;
+	    lseek (fd, ofs, SEEK_SET);
+
+	    while (read (fd, &value, sizeof (value)) > 0) {
+		    fn (meta->meta[block].type, value, ts, init_res);
+		    count++;
+		    ts += meta->meta[block].delay;
+
+		    if (ts >= to)
+			    break;
+
+		    if (ts >= meta->meta[block].end) {
+			    block++;
+			    if (block >= meta->blocks)
+				    break;
+		    }
+	    }
+    }
+
+    free_meta (meta);
+    close (fd);
+    return count;
+}
+
+
+
+/*
   Performs folding of values of historical data into some state. We filter values according to time.
 */
 void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t ts, void* init_res, fold_fn_t fn)
@@ -474,7 +538,7 @@ void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
     int fd;
     zbx_uint64_t value;
 
-    zabbix_log(LOG_LEVEL_DEBUG, "HFS_foldl_time (%s, %llu, %u)", hfs_base_dir, itemid, ts);
+    zabbix_log(LOG_LEVEL_DEBUG, "HFS_foldl_time (%s, %llu, %lld)", hfs_base_dir, itemid, ts);
 
     meta = read_meta (hfs_base_dir, siteid, itemid, 0);
     if (!meta)
@@ -495,13 +559,13 @@ void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
     }
     free (p_data);
 
-    ofs = find_meta_ofs (ts, meta);
+    ofs = find_meta_ofs (ts, meta, NULL);
 
-    zabbix_log(LOG_LEVEL_DEBUG, "Offset for TS %lld is %lld (%x) (%lld)", ts, ofs, ofs, time(NULL)-ts);
-
-    lseek (fd, ofs, SEEK_SET);
-    while (read (fd, &value, sizeof (value)) > 0)
-	fn (&value, init_res);
+    if (ofs != -1) {
+	    lseek (fd, ofs, SEEK_SET);
+	    while (read (fd, &value, sizeof (value)) > 0)
+		    fn (&value, init_res);
+    }
 
     free_meta (meta);
     close (fd);
@@ -527,7 +591,7 @@ void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t ite
     zbx_uint64_t value;
     hfs_off_t ofs;
 
-    zabbix_log(LOG_LEVEL_DEBUG, "HFS_foldl_count (%s, %llu, %u)", hfs_base_dir, itemid, count);
+    zabbix_log(LOG_LEVEL_DEBUG, "HFS_foldl_count (%s, %llu, %lld)", hfs_base_dir, itemid, count);
 
     p_data = get_name (hfs_base_dir, siteid, itemid, NK_ItemData);
     fd = open (p_data, O_RDONLY);
@@ -673,30 +737,34 @@ char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemi
 }
 
 
-hfs_off_t find_meta_ofs (hfs_time_t time, hfs_meta_t* meta)
+hfs_off_t find_meta_ofs (hfs_time_t time, hfs_meta_t* meta, int* block)
 {
-    int i;
-    int f = 0;
+	int i;
+	int f = 0;
 
-    for (i = 0; i < meta->blocks; i++) {
-	zabbix_log(LOG_LEVEL_DEBUG, "check block %d[%lld,%lld], ts %lld, ofs %llu", i, meta->meta[i].start, meta->meta[i].end, time, meta->meta[i].ofs);
+	for (i = 0; i < meta->blocks; i++) {
+		if (block)
+			*block = i;
 
-	if (!f) {
-	    f = (meta->meta[i].end >= time);
-	    if (!f)
-		continue;
+		zabbix_log(LOG_LEVEL_DEBUG, "check block %d[%lld,%lld], ts %lld, ofs %llu", i,
+			   meta->meta[i].start, meta->meta[i].end, time, meta->meta[i].ofs);
+
+		if (!f) {
+			f = (meta->meta[i].end >= time);
+			if (!f)
+				continue;
+		}
+
+		if (meta->meta[i].start >= time)
+			return meta->meta[i].ofs;
+
+		if (is_trend_type (meta->meta[i].type))
+			return meta->meta[i].ofs + sizeof (hfs_trend_t) * ((time - meta->meta[i].start) / meta->meta[i].delay);
+		else
+			return meta->meta[i].ofs + sizeof (double) * ((time - meta->meta[i].start) / meta->meta[i].delay);
 	}
 
-	if (meta->meta[i].start >= time)
-	    return meta->meta[i].ofs;
-
-	if (is_trend_type (meta->meta[i].type))
-		return meta->meta[i].ofs + sizeof (hfs_trend_t) * ((time - meta->meta[i].start) / meta->meta[i].delay);
-	else
-		return meta->meta[i].ofs + sizeof (double) * ((time - meta->meta[i].start) / meta->meta[i].delay);
-    }
-
-    return -1;
+	return -1;
 }
 
 
@@ -1352,7 +1420,7 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 		goto out;
 	}
 
-	if ((ofs = find_meta_ofs (ts, meta)) == -1) {
+	if ((ofs = find_meta_ofs (ts, meta, NULL)) == -1) {
 		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: %lld: unable to get offset in file", p_data, ts);
 		goto out;
 	}
