@@ -448,6 +448,7 @@
 					if(!isset($data['graphtype']))		$data['graphtype']		= 0;
 					if(!isset($data['yaxismin']))		$data['yaxismin']		= 0;
 					if(!isset($data['yaxismax']))		$data['yaxismax']		= 0;
+					if(!isset($data['description']))	$data['description']		= 0;
 					if(!isset($data['items']))		$data['items']			= array();
 
 					if(!isset($this->data[XML_TAG_HOST]['hostid']) || !$this->data[XML_TAG_HOST]['hostid'])
@@ -489,6 +490,7 @@
 								$data['yaxistype'],
 								$data['yaxismin'],
 								$data['yaxismax'],
+								$data['description'],
 								$data['show_work_period'],
 								$data['show_triggers'],
 								$data['graphtype'],
@@ -517,6 +519,7 @@
 							$data['yaxistype'],
 							$data['yaxismin'],
 							$data['yaxismax'],
+							$data['description'],
 							$data['show_work_period'],
 							$data['show_triggers'],
 							$data['graphtype']);
