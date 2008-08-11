@@ -380,7 +380,7 @@ PHP_FUNCTION(zabbix_hfs_last)
 	if ((res.items = malloc(sizeof(struct item) * count)) == NULL)
 		RETURN_FALSE;
 
-	if (HFSread_count(ZABBIX_GLOBAL(hfs_base_dir), site, itemid, count, &res, hfs_last_functor) <= 0)
+	if (HFSread_count(ZABBIX_GLOBAL(hfs_base_dir), site, itemid, count, &res, hfs_last_functor) < 0)
 		RETURN_FALSE;
 
 	for (i = 0; i < res.count; i++) {
