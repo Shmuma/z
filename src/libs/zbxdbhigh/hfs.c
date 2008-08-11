@@ -466,7 +466,7 @@ char* read_str (int fd)
 /*
    Performs folding on values from specified time interval
  */
-int HFSread_interval(const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t from, hfs_time_t to, void* init_res, read_count_fn_t fn);
+int HFSread_interval(const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t from, hfs_time_t to, void* init_res, read_count_fn_t fn)
 {
     char *p_data;
     hfs_meta_t* meta;
@@ -1676,7 +1676,7 @@ int HFS_get_host_availability (const char* hfs_base_dir, const char* siteid, zbx
 
 
 void HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
-			     hfs_time_t lastclock, int nextcheck, double prevvalue, double lastvalue, double prevorgvalue)
+			     hfs_time_t lastclock, hfs_time_t nextcheck, double prevvalue, double lastvalue, double prevorgvalue)
 {
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd, kind;
@@ -1733,7 +1733,7 @@ void HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, z
 
 
 void HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
-				 hfs_time_t lastclock, int nextcheck, zbx_uint64_t prevvalue, zbx_uint64_t lastvalue, zbx_uint64_t prevorgvalue)
+				 hfs_time_t lastclock, hfs_time_t nextcheck, zbx_uint64_t prevvalue, zbx_uint64_t lastvalue, zbx_uint64_t prevorgvalue)
 {
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd, kind;
@@ -1790,7 +1790,7 @@ void HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, z
 
 
 void HFS_update_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
-				 hfs_time_t lastclock, int nextcheck, const char* prevvalue, const char* lastvalue, const char* prevorgvalue)
+				 hfs_time_t lastclock, hfs_time_t nextcheck, const char* prevvalue, const char* lastvalue, const char* prevorgvalue)
 {
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd, kind;
@@ -1847,7 +1847,7 @@ void HFS_update_item_values_str (const char* hfs_base_dir, const char* siteid, z
 
 
 int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t* lastclock,
-			     int* nextcheck, double* prevvalue, double* lastvalue, double* prevorgvalue)
+			     hfs_time_t* nextcheck, double* prevvalue, double* lastvalue, double* prevorgvalue)
 {
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd, kind;
@@ -1901,7 +1901,7 @@ int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_u
 
 
 int HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t* lastclock,
-			     int* nextcheck, zbx_uint64_t* prevvalue, zbx_uint64_t* lastvalue, zbx_uint64_t* prevorgvalue)
+			     hfs_time_t* nextcheck, zbx_uint64_t* prevvalue, zbx_uint64_t* lastvalue, zbx_uint64_t* prevorgvalue)
 {
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd, kind;
@@ -1958,7 +1958,7 @@ int HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_u
 
 
 int HFS_get_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
-			 hfs_time_t* lastclock, int* nextcheck, char** prevvalue, char** lastvalue, char** prevorgvalue)
+			 hfs_time_t* lastclock, hfs_time_t* nextcheck, char** prevvalue, char** lastvalue, char** prevorgvalue)
 {
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd, kind;
