@@ -82,7 +82,8 @@
 				'show_triggers'		=> '',
 				'graphtype'		=> '',
 				'yaxismin'		=> '',
-				'yaxismax'		=> '')
+				'yaxismax'		=> '',
+				'description'		=> '')
 			),
 		XML_TAG_GRAPH_ELEMENT => array(
 			'attribures'	=> array(
