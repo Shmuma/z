@@ -109,25 +109,13 @@ hfs_data_item_t* read_data (hfs_meta_t* meta, hfs_time_t from, const char* path,
     int size, buf_size;
     int fd;
     hfs_off_t ofs;
-    int block, cur_block;
+    int cur_block;
 
     size = buf_size = 0;
     *count = 0;
-    ofs = find_meta_ofs (from, meta);
+    ofs = find_meta_ofs (from, meta, &cur_block);
 
-    /* find meta block */
-    block = 0;
-    cur_block = -1;
-    while (block < meta->blocks) {
-        if (meta->meta[block].end >= from) {
-            cur_block = block;
-            break;
-        }
-
-        block++;
-    }
-
-    if (cur_block < 0)
+    if (ofs < 0)
         return NULL;
 
     fd = open (path, O_RDONLY);

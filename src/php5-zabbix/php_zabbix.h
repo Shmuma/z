@@ -17,6 +17,7 @@ PHP_MINIT_FUNCTION(zabbix);
 PHP_MSHUTDOWN_FUNCTION(zabbix);
 PHP_MINFO_FUNCTION(zabbix);
 PHP_FUNCTION(zabbix_hfs_read_history);
+PHP_FUNCTION(zabbix_hfs_read);
 PHP_FUNCTION(zabbix_hfs_read_trends);
 PHP_FUNCTION(zabbix_hfs_last);
 PHP_FUNCTION(zabbix_hfs_read_str);
