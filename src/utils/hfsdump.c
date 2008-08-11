@@ -87,7 +87,7 @@ int dump_by_meta(const char *metafile)
 		ip = meta->meta + i;
 		ts = ip->start;
 
-		if ((ofs = find_meta_ofs (ts, meta)) == -1) {
+		if ((ofs = find_meta_ofs (ts, meta, NULL)) == -1) {
 			fprintf(stderr, "%s: %d: unable to get offset in file\n",
 				datafile, (int)ts);
 			free_meta(meta);

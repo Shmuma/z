@@ -16,6 +16,7 @@ ZEND_DECLARE_MODULE_GLOBALS(zabbix)
 
 static zend_function_entry php_zabbix_functions[] = {
 	PHP_FE(zabbix_hfs_read_history, NULL)
+	PHP_FE(zabbix_hfs_read, NULL)
 	PHP_FE(zabbix_hfs_read_trends, NULL)
 	PHP_FE(zabbix_hfs_last, NULL)
 	PHP_FE(zabbix_hfs_read_str, NULL)
@@ -46,6 +47,19 @@ zend_module_entry zabbix_module_entry = {
 #ifdef COMPILE_DL_ZABBIX
 ZEND_GET_MODULE(zabbix)
 #endif
+
+
+
+struct item {
+	item_type_t	type;
+	time_t		clock;
+	item_value_u	value;
+};
+
+struct items_array {
+	size_t count;
+	struct item *items;
+};
 
 
 
@@ -210,6 +224,76 @@ PHP_FUNCTION(zabbix_hfs_read_trends)
 /* }}} */
 
 
+
+/* read_count_fn_t */
+void
+hfs_interval_functor (item_type_t type, item_value_u val, hfs_time_t timestamp, void *ptr)
+{
+	struct items_array *res = ptr;
+
+	res->items = (struct item*)realloc (res->items, sizeof (struct item) * (res->count+1));
+
+	struct item *elem = (res->items + res->count);
+
+	elem->type  = type;
+	elem->clock = timestamp;
+	elem->value = val;
+	res->count++;
+}
+
+
+/* obtains all values of specified interval */
+/* {{{ proto array zabbix_hfs_read(char *site, int itemid, int from_time, int to_time) */
+PHP_FUNCTION(zabbix_hfs_read)
+{
+	size_t n = 0;
+	zval *z_obj;
+	char *site = NULL;
+	int site_len = 0;
+	struct items_array res;
+	int i;
+	time_t from = 0, to = 0;
+	long long itemid = 0;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "slll", &site, &site_len, &itemid, &from, &to) == FAILURE)
+		RETURN_FALSE;
+
+        if (array_init(return_value) == FAILURE)
+		RETURN_FALSE;
+
+	res.count = 0;
+	res.items = NULL;
+	if (HFSread_interval(ZABBIX_GLOBAL(hfs_base_dir), site, itemid, from, to, &res, hfs_interval_functor) <= 0)
+		RETURN_FALSE;
+
+	for (i = 0; i < res.count; i++) {
+		char *buf = NULL;
+		struct item *elem = (res.items + i);
+		zval *z_obj, *value;
+		MAKE_STD_ZVAL(value);
+		MAKE_STD_ZVAL(z_obj);
+		object_init(z_obj);
+
+		if (elem->type == IT_DOUBLE) {
+			ZVAL_DOUBLE(value, elem->value.d);
+		}
+		else {
+			asprintf(&buf, "%lld", elem->value.l);
+			ZVAL_STRING(value, buf, 1);
+			free(buf);
+		}
+
+		add_property_long(z_obj, "clock", elem->clock);
+		add_property_zval(z_obj, "value", value);
+		add_next_index_object(return_value, z_obj TSRMLS_CC);
+	}
+
+	if (res.items)
+		free(res.items);
+}
+/* }}} */
+
+
 /* {{{ proto array zabbix_hfs_read_str(char *site, int itemid, int from_time, int to_time) */
 PHP_FUNCTION(zabbix_hfs_read_str)
 {
@@ -262,19 +346,9 @@ PHP_FUNCTION(zabbix_hfs_read_str)
 
 
 
-struct item {
-	item_type_t	type;
-	time_t		clock;
-	item_value_u	value;
-};
-
-struct items_array {
-	size_t count;
-	struct item *items;
-};
-
-read_count_fn_t
-hfs_last_functor (item_type_t type, item_value_u val, time_t timestamp, void *ptr)
+/* read_count_fn_t */
+void
+hfs_last_functor (item_type_t type, item_value_u val, hfs_time_t timestamp, void *ptr)
 {
 	struct items_array *res = ptr;
 	struct item *elem = (res->items + res->count);
@@ -306,7 +380,7 @@ PHP_FUNCTION(zabbix_hfs_last)
 	if ((res.items = malloc(sizeof(struct item) * count)) == NULL)
 		RETURN_FALSE;
 
-	if (HFSread_count(ZABBIX_GLOBAL(hfs_base_dir), site, itemid, count, &res, hfs_last_functor) != 0)
+	if (HFSread_count(ZABBIX_GLOBAL(hfs_base_dir), site, itemid, count, &res, hfs_last_functor) < 0)
 		RETURN_FALSE;
 
 	for (i = 0; i < res.count; i++) {
@@ -394,7 +468,8 @@ PHP_FUNCTION(zabbix_hfs_host_availability)
 {
 	long long hostid = 0;
 	char *site = NULL;
-	int site_len = 0, available, clock;
+	int site_len = 0, available;
+	hfs_time_t clock;
 	char* error = NULL;
 	zval* zerror;
 
@@ -505,7 +580,7 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 	long long itemid = 0;
 	char *site = NULL;
 	int site_len = 0, type;
-	int lastclock, nextcheck;
+	hfs_time_t lastclock, nextcheck;
 	char* buf = NULL;
 
 	double d_prev, d_last, d_prevorg;
