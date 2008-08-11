@@ -505,8 +505,10 @@ int HFSread_interval(const char* hfs_base_dir, const char* siteid, zbx_uint64_t 
 	    lseek (fd, ofs, SEEK_SET);
 
 	    while (read (fd, &value, sizeof (value)) > 0) {
-		    fn (meta->meta[block].type, value, ts, init_res);
-		    count++;
+		    if (is_valid_val (&value, sizeof (value))) {
+			    fn (meta->meta[block].type, value, ts, init_res);
+			    count++;
+		    }
 		    ts += meta->meta[block].delay;
 
 		    if (ts >= to)
@@ -564,7 +566,8 @@ void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
     if (ofs != -1) {
 	    lseek (fd, ofs, SEEK_SET);
 	    while (read (fd, &value, sizeof (value)) > 0)
-		    fn (&value, init_res);
+		    if (is_valid_val (&value, sizeof (value)))
+			    fn (&value, init_res);
     }
 
     free_meta (meta);
