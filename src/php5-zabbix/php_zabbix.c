@@ -10,7 +10,7 @@
 #include "hfs.h"
 
 #define LOG_LEVEL_DEBUG 4
-#define __zbx_zbx_snprintf snprinf
+#define __zbx_zbx_snprintf snprintf
 
 ZEND_DECLARE_MODULE_GLOBALS(zabbix)
 
@@ -471,26 +471,27 @@ PHP_FUNCTION(zabbix_hfs_hosts_availability)
 	hfs_time_t clock;
 	char* error = NULL;
 	hfs_host_status_t* statuses;
+	char buf[100];
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &site, &site_len) == FAILURE)
 		RETURN_FALSE;
 
-	count = HFS_get_hosts_availability (ZABBIX_GLOBAL(hfs_base_dir), site, &statuses);
+	count = HFS_get_hosts_statuses (ZABBIX_GLOBAL(hfs_base_dir), site, &statuses);
 
         if (array_init(return_value) == FAILURE)
 		RETURN_FALSE;
 
 	for (i = 0; i < count; i++) {
-		zval *z_obj, *index;
+		zval *z_obj;
 
 		MAKE_STD_ZVAL(z_obj);
-		MAKE_STD_ZVAL(index);
 		object_init(z_obj);
 
-		ZVAL_LONG (index, statuses[i].hostid);
+		zbx_snprintf (buf, sizeof (buf), "%lld", statuses[i].hostid);
+
 		add_property_long (z_obj, "last", statuses[i].clock);
 		add_property_long (z_obj, "available", statuses[i].available);
-		zend_hash_add (Z_ARRVAL_P (return_value), &index, sizeof (zval*), NULL);
+		zend_hash_add (Z_ARRVAL_P (return_value), buf, strlen (buf)+1, &z_obj, sizeof (zval*), NULL);
 	}
 
 	if (count)

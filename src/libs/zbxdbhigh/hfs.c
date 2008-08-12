@@ -1687,9 +1687,10 @@ int HFS_get_host_availability (const char* hfs_base_dir, const char* siteid, zbx
 
 int HFS_get_hosts_statuses (const char* hfs_base_dir, const char* siteid, hfs_host_status_t** statuses)
 {
-	char* name = get_name (hfs_base_dir, siteid, hostid, NK_HostState);
+	char* name = get_name (hfs_base_dir, siteid, 0, NK_HostState);
 	int fd, count = 0, buf_size = 0;
 	hfs_host_status_t status;
+	zbx_uint64_t hostid;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_hosts_statuses entered");
 
@@ -1706,8 +1707,11 @@ int HFS_get_hosts_statuses (const char* hfs_base_dir, const char* siteid, hfs_ho
 	free (name);
 
 	*statuses = NULL;
+	hostid = 0;
 	/* read all data */
-	while (read (fd, &status, sizeof (status)) == sizeof (status)) {
+	while (read (fd, &status.available, sizeof (status.available)) == sizeof (status.available) &&
+	       read (fd, &status.clock, sizeof (status.clock)) == sizeof (status.clock)) {
+		status.hostid = hostid++;
 		if (!status.clock)
 			continue;
 		if (count == buf_size)
