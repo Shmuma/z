@@ -643,7 +643,8 @@ PHP_FUNCTION(zabbix_hfs_trigger_value)
 {
 	long long triggerid = 0;
 	char *site = NULL;
-	int site_len = 0, value, when;
+	int site_len = 0, value;
+	hfs_time_t when;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl", &site, &site_len, &triggerid) == FAILURE)
 		RETURN_FALSE;
