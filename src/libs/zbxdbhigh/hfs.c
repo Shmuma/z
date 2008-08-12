@@ -1668,7 +1668,7 @@ int HFS_get_host_availability (const char* hfs_base_dir, const char* siteid, zbx
 
 	
 	/* reading data */
-	lseek (fd, (sizeof (available) + sizeof (clock))*hostid, SEEK_SET);
+	lseek (fd, (sizeof (*available) + sizeof (*clock))*hostid, SEEK_SET);
 	if (read (fd, available, sizeof (*available)) == -1 ||
 	    read (fd, clock, sizeof (*clock)) == -1)
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_host_availability: read(): %s", strerror(errno));
