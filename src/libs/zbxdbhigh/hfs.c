@@ -1685,6 +1685,45 @@ int HFS_get_host_availability (const char* hfs_base_dir, const char* siteid, zbx
 }
 
 
+int HFS_get_hosts_statuses (const char* hfs_base_dir, const char* siteid, hfs_host_status_t** statuses)
+{
+	char* name = get_name (hfs_base_dir, siteid, hostid, NK_HostState);
+	int fd, count = 0, buf_size = 0;
+	hfs_host_status_t status;
+
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_hosts_statuses entered");
+
+	if (!name)
+		return 0;
+
+	/* open file for reading */
+	fd = open (name, O_RDONLY);
+	if (fd < 0) {
+		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_hosts_statuses: open(): %s: %s", name, strerror(errno));
+		free (name);
+		return 0;
+	}
+	free (name);
+
+	*statuses = NULL;
+	/* read all data */
+	while (read (fd, &status, sizeof (status)) == sizeof (status)) {
+		if (!status.clock)
+			continue;
+		if (count == buf_size)
+			*statuses = (hfs_host_status_t*)realloc (*statuses, (buf_size += 256) * sizeof (hfs_host_status_t));
+		(*statuses)[count++] = status;
+	}
+
+	if (close (fd) == -1)
+		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_hosts_statuses: close(): %s", strerror(errno));
+
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_hosts_statuses leave");
+	return count;
+}
+
+
+
 void HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
 			     hfs_time_t lastclock, hfs_time_t nextcheck, double prevvalue, double lastvalue, double prevorgvalue)
 {
