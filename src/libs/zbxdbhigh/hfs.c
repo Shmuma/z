@@ -717,7 +717,10 @@ char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemi
 		      kind == NK_TrendItemMeta ? "meta" : "data");
 	    break;
     case NK_HostState:
-	    snprintf (res, len, "%s/%s/hosts/%llu.state", hfs_base_dir, siteid, itemid);
+	    snprintf (res, len, "%s/%s/hosts/hosts.state", hfs_base_dir, siteid);
+	    break;
+    case NK_HostError:
+	    snprintf (res, len, "%s/%s/hosts/%llu/%llu.state", hfs_base_dir, siteid, item_ord, itemid);
 	    break;
     case NK_ItemValues:
             snprintf (res, len, "%s/%s/items/%llu/%llu/values.data", hfs_base_dir, siteid, item_ord, itemid);
@@ -1607,25 +1610,26 @@ void HFS_update_host_availability (const char* hfs_base_dir, const char* siteid,
 	}
 	xfree (name);
 
-	/* place write lock on that file or wait for unlock */
-	if (!obtain_lock (fd, 1)) {
-		close (fd);
-		return;
-	}
+/* 	/\* place write lock on that file or wait for unlock *\/ */
+/* 	if (!obtain_lock (fd, 1)) { */
+/* 		close (fd); */
+/* 		return; */
+/* 	} */
 
-	/* lock obtained, write data */
+	/* lock obtained, write data at needed position */
+	lseek (fd, (sizeof (available) + sizeof (clock))*hostid, SEEK_SET);
 	if (write (fd, &available, sizeof (available)) == -1 ||
 	    write (fd, &clock, sizeof (clock)) == -1)
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_host_availability: write(): %s",  strerror(errno));
 
-	write_str (fd, error);
+/* 	write_str (fd, error); */
 
-	/* truncate file */
-	if (ftruncate (fd, lseek (fd, 0, SEEK_CUR)) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_host_availability: ftruncate(): %s", strerror(errno));
+/* 	/\* truncate file *\/ */
+/* 	if (ftruncate (fd, lseek (fd, 0, SEEK_CUR)) == -1) */
+/* 		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_host_availability: ftruncate(): %s", strerror(errno)); */
 
-	/* release lock */
-	release_lock (fd, 1);
+/* 	/\* release lock *\/ */
+/* 	release_lock (fd, 1); */
 
 	if (close (fd) == -1)
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_host_availability: close(): %s", strerror(errno));
@@ -1655,21 +1659,24 @@ int HFS_get_host_availability (const char* hfs_base_dir, const char* siteid, zbx
 	}
 	free (name);
 
-	/* obtain read lock */
-	if (!obtain_lock (fd, 0)) {
-		if (close (fd) == -1)
-			zabbix_log(LOG_LEVEL_CRIT, "HFS_get_host_availability: close(): %s", strerror(errno));
-		return 0;
-	}
+/* 	/\* obtain read lock *\/ */
+/* 	if (!obtain_lock (fd, 0)) { */
+/* 		if (close (fd) == -1) */
+/* 			zabbix_log(LOG_LEVEL_CRIT, "HFS_get_host_availability: close(): %s", strerror(errno)); */
+/* 		return 0; */
+/* 	} */
 
+	
 	/* reading data */
+	lseek (fd, (sizeof (available) + sizeof (clock))*hostid, SEEK_SET);
 	if (read (fd, available, sizeof (*available)) == -1 ||
 	    read (fd, clock, sizeof (*clock)) == -1)
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_host_availability: read(): %s", strerror(errno));
-	*error = read_str (fd);
+	*error = NULL;
+/* 	*error = read_str (fd); */
 
 	/* release read lock */
-	release_lock (fd, 0);
+/* 	release_lock (fd, 0); */
 	if (close (fd) == -1)
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_host_availability: close(): %s", strerror(errno));
 

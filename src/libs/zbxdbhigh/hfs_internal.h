@@ -31,6 +31,7 @@ typedef enum {
 	NK_ItemString,
 	NK_TriggerStatus,
 	NK_Alert,
+	NK_HostError,
 } name_kind_t;
 
 typedef void (*fold_fn_t) (void* db_val, void* state);
