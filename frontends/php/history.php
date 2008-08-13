@@ -494,12 +494,14 @@ COpt::profiling_start("history");
 
 				foreach ($arr as $obj)
 				{
-					if($DB_TYPE == "ORACLE" && $item_type == ITEM_VALUE_TYPE_TEXT)
-					{
-						if(isset($obj->value))
-							$obj->value = $obj->value->load();
-						else
-							$obj->value = "";
+					if (!zbx_hfs_available ()) {
+						if($DB_TYPE == "ORACLE" && $item_type == ITEM_VALUE_TYPE_TEXT)
+						{
+							if(isset($obj->value))
+								$obj->value = $obj->value->load();
+							else
+								$obj->value = "";
+						}
 					}
 
 					if($obj->valuemapid > 0)
