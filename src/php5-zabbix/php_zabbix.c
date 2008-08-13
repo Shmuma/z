@@ -607,10 +607,14 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 			add_assoc_string (return_value, "prevvalue", s_prev, 1);
 			free (s_prev);
 		}
+                else
+			add_assoc_string (return_value, "prevvalue", "", 1);
 		if (s_last) {
 			add_assoc_string (return_value, "lastvalue", s_last, 1);
 			free (s_last);
 		}
+                else
+			add_assoc_string (return_value, "lastvalue", "", 1);
 		if (s_prevorg)
 			free (s_prevorg);
 		break;

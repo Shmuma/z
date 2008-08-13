@@ -453,7 +453,7 @@ char* read_str (int fd)
 	if (read (fd, &len, sizeof (len)) < sizeof (len))
 		return NULL;
 
-	if (fd) {
+	if (len) {
 		res = (char*)calloc (len+1, 1);
 		if (res)
 			read (fd, res, len+1);
