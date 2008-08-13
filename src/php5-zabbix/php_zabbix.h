@@ -22,7 +22,7 @@ PHP_FUNCTION(zabbix_hfs_read_trends);
 PHP_FUNCTION(zabbix_hfs_last);
 PHP_FUNCTION(zabbix_hfs_read_str);
 PHP_FUNCTION(zabbix_hfs_last_str);
-PHP_FUNCTION(zabbix_hfs_host_availability);
+PHP_FUNCTION(zabbix_hfs_hosts_availability);
 PHP_FUNCTION(zabbix_hfs_item_status);
 PHP_FUNCTION(zabbix_hfs_item_stderr);
 PHP_FUNCTION(zabbix_hfs_item_values);

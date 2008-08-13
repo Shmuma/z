@@ -110,10 +110,19 @@ zbx_uint64_t	HFS_get_delta_u64 (const char* hfs_base_dir, const char* siteid, zb
 double		HFS_get_delta_float (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t period, int seconds);
 
 /* HFS per-object statuses which updated on monitoring pair and should be visible on ztops */
+typedef struct {
+	zbx_uint64_t hostid;
+	int available;
+	hfs_time_t clock;
+} hfs_host_status_t;
+
+
 void		HFS_update_host_availability (const char* hfs_base_dir, const char* siteid, zbx_uint64_t hostid, 
 					      int available, hfs_time_t clock, const char* error);
 int		HFS_get_host_availability (const char* hfs_base_dir, const char* siteid, zbx_uint64_t hostid, 
 					   int* available, hfs_time_t* clock, char** error);
+int		HFS_get_hosts_statuses (const char* hfs_base_dir, const char* siteid, hfs_host_status_t** statuses);
+
 
 void		HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t lastclock,
 					hfs_time_t nextcheck, double prevvalue, double lastvalue, double prevorgvalue);

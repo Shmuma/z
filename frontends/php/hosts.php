@@ -744,7 +744,13 @@ include_once "include/page_header.php";
 				" and h.siteid = s.siteid order by h.host";
 
 			$result=DBselect($sql);
-		
+
+			// obtain hash of all hosts with their statuses
+			if (zbx_hfs_available ())
+				$hfs_statuses = zabbix_hfs_hosts_availability ($row["sitename"]);
+			else
+				$hfs_statuses = 0;
+
 			while($row=DBfetch($result))
 			{
 				$templates = get_templates_by_hostid($row["hostid"]);
@@ -793,14 +799,11 @@ include_once "include/page_header.php";
 					else
 						$status=S_UNKNOWN;
 
-					if (zbx_hfs_available ()) {
-						$hfs_status = zabbix_hfs_host_availability ($row["sitename"], $row["hostid"]);
-
-						if (is_object ($hfs_status)) {
-							$row["available"] = $hfs_status->available;
-							$row["error"] = $hfs_status->error;
-						}
-					}
+					if (is_array ($hfs_statuses))
+						if (array_key_exists ($row["hostid"], $hfs_statuses))
+							$row["available"] = $hfs_statuses[$row["hostid"]]->available;
+						else
+							$row["available"] = HOST_AVAILABLE_UNKNOWN;
 
 					if($row["available"] == HOST_AVAILABLE_TRUE)	
 						$available=new CCol(S_AVAILABLE,"off");
