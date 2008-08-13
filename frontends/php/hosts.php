@@ -746,8 +746,11 @@ include_once "include/page_header.php";
 			$result=DBselect($sql);
 
 			// obtain hash of all hosts with their statuses
-			if (zbx_hfs_available ())
-				$hfs_statuses = zabbix_hfs_hosts_availability ($row["sitename"]);
+			if (zbx_hfs_available ()) {
+				$hfs_statuses = array ();
+				foreach (zbx_hfs_sites () as $site)
+					$hfs_statuses += zabbix_hfs_hosts_availability ($site);
+			}
 			else
 				$hfs_statuses = 0;
 
@@ -799,11 +802,12 @@ include_once "include/page_header.php";
 					else
 						$status=S_UNKNOWN;
 
-					if (is_array ($hfs_statuses))
+					if (is_array ($hfs_statuses)) {
 						if (array_key_exists ($row["hostid"], $hfs_statuses))
 							$row["available"] = $hfs_statuses[$row["hostid"]]->available;
 						else
 							$row["available"] = HOST_AVAILABLE_UNKNOWN;
+					}
 
 					if($row["available"] == HOST_AVAILABLE_TRUE)	
 						$available=new CCol(S_AVAILABLE,"off");
