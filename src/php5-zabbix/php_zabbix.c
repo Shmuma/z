@@ -491,7 +491,7 @@ PHP_FUNCTION(zabbix_hfs_hosts_availability)
 
 		add_property_long (z_obj, "last", statuses[i].clock);
 		add_property_long (z_obj, "available", statuses[i].available);
-		zend_hash_add (Z_ARRVAL_P (return_value), buf, strlen (buf), &z_obj, sizeof (zval*), NULL);
+		add_assoc_zval (return_value, buf, z_obj);
 	}
 
 	if (count)
