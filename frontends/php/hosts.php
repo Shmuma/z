@@ -748,7 +748,7 @@ include_once "include/page_header.php";
 			// obtain hash of all hosts with their statuses
 			if (zbx_hfs_available ()) {
 				$hfs_statuses = array ();
-				foreach (zbx_hfs_sites () as $site)
+				foreach (zbx_hfs_sites ($_REQUEST["groupid"], 0) as $site)
 					$hfs_statuses += zabbix_hfs_hosts_availability ($site);
 			}
 			else
