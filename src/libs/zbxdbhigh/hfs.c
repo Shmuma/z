@@ -1692,6 +1692,14 @@ int HFS_get_hosts_statuses (const char* hfs_base_dir, const char* siteid, hfs_ho
 	hfs_host_status_t status;
 	zbx_uint64_t hostid;
 
+	typedef struct {
+		int available;
+		hfs_time_t clock;
+	} __attribute__ ((packed)) status_t ;
+
+	status_t *buf = NULL;
+	int buf_s, buf_c, i;
+
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_hosts_statuses entered");
 
 	if (!name)
@@ -1706,23 +1714,31 @@ int HFS_get_hosts_statuses (const char* hfs_base_dir, const char* siteid, hfs_ho
 	}
 	free (name);
 
-	*statuses = NULL;
+	buf_s = 1024;
+	buf = (status_t*)malloc (buf_s * sizeof (status_t));
+
 	hostid = 0;
-	/* read all data */
-	while (read (fd, &status.available, sizeof (status.available)) == sizeof (status.available) &&
-	       read (fd, &status.clock, sizeof (status.clock)) == sizeof (status.clock)) {
-		status.hostid = hostid++;
-		if (!status.clock)
-			continue;
-		if (count == buf_size)
-			*statuses = (hfs_host_status_t*)realloc (*statuses, (buf_size += 256) * sizeof (hfs_host_status_t));
-		(*statuses)[count++] = status;
+	*statuses = NULL;
+
+	while ((buf_c = read (fd, buf, buf_s * sizeof (status_t))) > 0) {
+		buf_c /= sizeof (status_t);
+		for (i = 0; i < buf_c; i++)  {
+			status.clock = buf[i].clock;
+			status.hostid = hostid++;
+			if (!status.clock)
+				continue;
+			status.available = buf[i].available;
+			if (count == buf_size)
+				*statuses = (hfs_host_status_t*)realloc (*statuses, (buf_size += 256) * sizeof (hfs_host_status_t));
+			(*statuses)[count++] = status;
+		}
 	}
 
 	if (close (fd) == -1)
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_hosts_statuses: close(): %s", strerror(errno));
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_hosts_statuses leave");
+	free (buf);
 	return count;
 }
 

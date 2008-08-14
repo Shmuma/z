@@ -600,6 +600,7 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 		add_assoc_double (return_value, "lastvalue", d_last);
 		break;
 
+	case ITEM_VALUE_TYPE_TEXT:
 	case ITEM_VALUE_TYPE_STR:
 		if (!HFS_get_item_values_str (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, &lastclock, &nextcheck, &s_prev, &s_last, &s_prevorg))
 			RETURN_FALSE;
