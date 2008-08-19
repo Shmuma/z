@@ -25,6 +25,11 @@ runlevel=$(set -- $(runlevel); eval "echo \$$#" )
 
 start()
 {
+	# clean ipcs (semaphores)
+	ipcs -s | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 1 | xargs -n 1 ipcrm -S
+	# shared memory segments
+	ipcs -m | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 1 | xargs -n 1 ipcrm -M
+
 	echo -n $"Starting $prog: "
 	$ZABBIX_AGENTD && success || failure
 	RETVAL=$?
