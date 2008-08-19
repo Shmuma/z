@@ -15,7 +15,7 @@
 RETVAL=0
 prog="zabbix_agentd"
 
-PID_FILE=/var/run/zabbix/zabbix_agentd.pid
+PID_FILE=/var/run/zabbix-agent/zabbix_agentd.pid
 BASEDIR=/usr/sbin
 ZABBIX_AGENTD=$BASEDIR/zabbix_agentd
 
@@ -25,6 +25,11 @@ runlevel=$(set -- $(runlevel); eval "echo \$$#" )
 
 start()
 {
+	# clean ipcs (semaphores)
+	ipcs -s | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 1 | while read key; do ipcrm -S $key; done
+	# shared memory segments
+	ipcs -m | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 1 | while read key; do ipcrm -M $key; done
+
 	echo -n $"Starting $prog: "
 	$ZABBIX_AGENTD && success || failure
 	RETVAL=$?

@@ -2,7 +2,7 @@ Source: zabbix
 Section: net
 Priority: optional
 Maintainer: Max Lapan <lapan@yandex-team.ru>
-Build-Depends: debhelper (>= 4), libsnmp9-dev | libsnmp-dev, dpatch, automake1.9, po-debconf, libldap2-dev, libcurl4-gnutls-dev, libsetproctitle0-dev, pkg-config, libmysqlclient15-dev, libiksemel-dev
+Build-Depends: debhelper (>= 4), libsnmp9-dev | libsnmp-dev, dpatch, automake1.9, po-debconf, libldap2-dev, libcurl4-gnutls-dev | libcurl3-gnutls-dev, libsetproctitle0-dev, pkg-config, libmysqlclient15-dev, libiksemel-dev
 Standards-Version: 3.7.3
 Version: 1.4.4-yandex-feisty18
  
