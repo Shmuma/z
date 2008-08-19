@@ -44,6 +44,7 @@ if [ "$1" = "configure" ]; then
     chown $UNAME:$GNAME /var/log/zabbix-agent -R
     chown $UNAME:$GNAME /var/run/zabbix-agent -R
     chown $UNAME:$GNAME /var/spool/zabbix -R
+    chown $UNAME:$GNAME /etc/zabbix/conf.d -R
 
     # run zabbix-rebase-server
     /usr/sbin/zabbix-rebase-server
