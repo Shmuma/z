@@ -23,9 +23,9 @@ export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
 case "$1" in
   start)
 	# clean ipcs (semaphores)
-	ipcs -s | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 1 | xargs -n 1 ipcrm -S
+	ipcs -s | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 1 | while read key; do ipcrm -S $key; done
 	# shared memory segments
-	ipcs -m | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 1 | xargs -n 1 ipcrm -M
+	ipcs -m | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 1 | while read key; do ipcrm -M $key; done
 
    	rm -f $PID
 	echo "Starting $DESC: $NAME" >&2

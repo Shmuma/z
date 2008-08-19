@@ -26,9 +26,9 @@ runlevel=$(set -- $(runlevel); eval "echo \$$#" )
 start()
 {
 	# clean ipcs (semaphores)
-	ipcs -s | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 1 | xargs -n 1 ipcrm -S
+	ipcs -s | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 1 | while read key; do ipcrm -S $key; done
 	# shared memory segments
-	ipcs -m | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 1 | xargs -n 1 ipcrm -M
+	ipcs -m | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 1 | while read key; do ipcrm -M $key; done
 
 	echo -n $"Starting $prog: "
 	$ZABBIX_AGENTD && success || failure
