@@ -80,8 +80,8 @@ fi
 
 %post -n zabbix-agent
 /sbin/chkconfig --add zabbix_agentd
-[ -d %zabbix_agent_run ] || ( mkdir %zabbix_agent_run && chown monitor:monitor %zabbix_run )
-[ -d %zabbix_agent_log ] || ( mkdir %zabbix_agent_log && chown monitor:monitor %zabbix_log )
+[ -d %zabbix_agent_run ] || ( mkdir %zabbix_agent_run && chown monitor:monitor %zabbix_agent_run )
+[ -d %zabbix_agent_log ] || ( mkdir %zabbix_agent_log && chown monitor:monitor %zabbix_agent_log )
 [ -d %zabbix_spool ] || ( mkdir %zabbix_spool && chown monitor:monitor %zabbix_spool )
 
 if [ -z "`grep zabbix_agent etc/services`" ]; then
