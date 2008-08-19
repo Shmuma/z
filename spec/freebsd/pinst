@@ -11,6 +11,7 @@ GROUP=${USER}
 
 # change owner for installed empty directories
 chown -R monitor:monitor /var/run/zabbix /var/log/zabbix
+[ -d /etc/zabbix/conf.d ] || mkdir /etc/zabbix/conf.d
 chown -R monitor:monitor /etc/zabbix/conf.d/
 
 # replace hostname in config file to FQDN
