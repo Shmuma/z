@@ -992,7 +992,7 @@ int main(int argc, char **argv)
 	return 0;
 #endif /* ZABBIX_TEST */
 	
-	return daemon_start(CONFIG_ALLOW_ROOT);
+	return daemon_start(CONFIG_ALLOW_ROOT, "zabbix");
 }
 
 int MAIN_ZABBIX_ENTRY(void)

@@ -85,12 +85,11 @@ static void	parent_signal_handler(int sig)
  *                                                                            *
  ******************************************************************************/
 
-int	daemon_start(int allow_root)
+int	daemon_start(int allow_root, const char* user)
 {
 	pid_t   		pid;
 	struct passwd		*pwd;
 	struct sigaction	phan;
-	char			user[7] = "zabbix";
 
 	/* running as root ?*/
 	if((0 == allow_root) && (0 == getuid() || 0 == getgid()))
