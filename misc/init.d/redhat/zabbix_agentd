@@ -15,7 +15,7 @@
 RETVAL=0
 prog="zabbix_agentd"
 
-PID_FILE=/var/run/zabbix/zabbix_agentd.pid
+PID_FILE=/var/run/zabbix-agent/zabbix_agentd.pid
 BASEDIR=/usr/sbin
 ZABBIX_AGENTD=$BASEDIR/zabbix_agentd
 

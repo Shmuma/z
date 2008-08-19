@@ -18,7 +18,7 @@ prog="zabbix_server"
 # Some functions to make the below more readable
 BASEDIR=/usr/sbin
 ZABBIX_SERVER=$BASEDIR/zabbix_server
-PID_FILE=/var/run/zabbix/zabbix_server.pid
+PID_FILE=/var/run/zabbix-server/zabbix_server.pid
 
 runlevel=$(set -- $(runlevel); eval "echo \$$#" )
 
