@@ -54,11 +54,11 @@ if [ -z "`grep zabbix etc/passwd`" ]; then
 fi
 
 %pre -n zabbix-agent
-if [ -z "`grep zabbix etc/group`" ]; then
-    /usr/sbin/groupadd zabbix >/dev/null 2>&1
+if [ -z "`grep monitor etc/group`" ]; then
+    /usr/sbin/groupadd monitor >/dev/null 2>&1
 fi
-if [ -z "`grep zabbix etc/passwd`" ]; then
-    /usr/sbin/useradd -g zabbix zabbix >/dev/null 2>&1
+if [ -z "`grep monitor etc/passwd`" ]; then
+    /usr/sbin/useradd -g monitor monitor >/dev/null 2>&1
 fi
 
 %post
@@ -68,9 +68,9 @@ fi
 
 %post -n zabbix-agent
 /sbin/chkconfig --add zabbix_agentd
-[ -d %zabbix_run ] || ( mkdir %zabbix_run && chown zabbix:zabbix %zabbix_run )
-[ -d %zabbix_log ] || ( mkdir %zabbix_log && chown zabbix:zabbix %zabbix_log )
-[ -d %zabbix_spool ] || ( mkdir %zabbix_spool && chown zabbix:zabbix %zabbix_spool )
+[ -d %zabbix_run ] || ( mkdir %zabbix_run && chown monitor:monitor %zabbix_run )
+[ -d %zabbix_log ] || ( mkdir %zabbix_log && chown monitor:monitor %zabbix_log )
+[ -d %zabbix_spool ] || ( mkdir %zabbix_spool && chown monitor:monitor %zabbix_spool )
 
 if [ -z "`grep zabbix_agent etc/services`" ]; then
   cat >>etc/services <<EOF

@@ -18,6 +18,8 @@ set -e
 
 export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
 
+[ -d /var/run/zabbix-agent ] || mkdir /var/run/zabbix-agent && chown monitor:monitor /var/run/zabbix-agent
+
 case "$1" in
   start)
    	rm -f $PID
