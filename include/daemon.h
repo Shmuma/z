@@ -35,7 +35,7 @@ extern char	*APP_PID_FILE;
 
 void    child_signal_handler(int sig);
 
-int	daemon_start(int allow_root);
+int	daemon_start(int allow_root, const char* user);
 void	daemon_stop(void);
 
 void	init_main_process(void);
@@ -46,6 +46,6 @@ void	init_main_process(void);
 /* tall all threads what application must be closed  - NOT needed for linux forks */
 #define ZBX_DO_EXIT()
 
-#define START_MAIN_ZABBIX_ENTRY(a)	daemon_start(a)
+#define START_MAIN_ZABBIX_ENTRY(a, user)	daemon_start(a, user)
 
 #endif /* ZABBIX_DAEMON_H */

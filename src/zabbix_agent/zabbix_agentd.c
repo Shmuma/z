@@ -384,7 +384,7 @@ int	main(int argc, char **argv)
 			break;
 	}
 
-	START_MAIN_ZABBIX_ENTRY(CONFIG_ALLOW_ROOT);
+	START_MAIN_ZABBIX_ENTRY(CONFIG_ALLOW_ROOT, "monitor");
 
 	exit(SUCCEED);
 }

@@ -4,6 +4,6 @@
     compress
     missingok
     notifempty
-    create 0640 zabbix zabbix
+    create 0640 monitor monitor
     sharedscripts
 }
