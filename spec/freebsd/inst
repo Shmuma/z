@@ -8,15 +8,13 @@
 
 PATH=/bin:/usr/sbin
 
-USER=zabbix
+USER=monitor
 GROUP=${USER}
-UID=122
-GID=${UID}
 
 if pw group show "${GROUP}" 2>/dev/null; then
         echo "You already have a group \"${GROUP}\", so I will use it."
 else
-        if pw groupadd ${GROUP} -g ${GID}; then
+        if pw groupadd ${GROUP}; then
                 echo "Added group \"${GROUP}\"."
         else
                 echo "Adding group \"${GROUP}\" failed..."
@@ -26,16 +24,9 @@ fi
 
 if pw user show "${USER}" 2>/dev/null; then
         echo "You already have a user \"${USER}\", so I will use it."
-        if pw usermod ${USER} -d /nonexistent
-        then
-                echo "Changed home directory of \"${USER}\" to /nonexistent"
-        else
-                echo "Changing home directory of \"${USER}\" to /nonexistent failed..."
-                exit 1
-        fi
 else
-        if pw useradd ${USER} -u ${UID} -g ${GROUP} -h - \
-                -d /nonexistent -s /sbin/nologin -c "Zabbix Sandbox"
+        if pw useradd ${USER} -g ${GROUP} -h - \
+                -c "Monitoring user created by zabbix"
         then
                 echo "Added user \"${USER}\"."
         else

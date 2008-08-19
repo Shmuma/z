@@ -6,13 +6,12 @@
 
 PATH=/bin:/usr/sbin
 
-USER=zabbix
+USER=monitor
 GROUP=${USER}
-UID=122
-GID=${UID}
 
 # change owner for installed empty directories
-chown zabbix:zabbix /var/run/zabbix /var/log/zabbix
+chown -R monitor:monitor /var/run/zabbix /var/log/zabbix
+chown -R monitor:monitor /etc/zabbix/conf.d/
 
 # replace hostname in config file to FQDN
 NAME=$(hostname -f)
