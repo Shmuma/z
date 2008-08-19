@@ -13,8 +13,10 @@ Summary: A network monitor.
 
 %define zabbix_bindir 	        %{_sbindir}
 %define zabbix_confdir 		%{_sysconfdir}/%{realname}
-%define zabbix_run 		%{_localstatedir}/run/zabbix
-%define zabbix_log 		%{_localstatedir}/log/zabbix
+%define zabbix_agent_run	%{_localstatedir}/run/zabbix-agent/
+%define zabbix_agent_log 	%{_localstatedir}/log/zabbix-agent/
+%define zabbix_srv_run 		%{_localstatedir}/run/zabbix-server/
+%define zabbix_srv_log 		%{_localstatedir}/log/zabbix-server/
 %define zabbix_spool 		%{_localstatedir}/spool/zabbix
 
 %description
@@ -35,12 +37,19 @@ the zabbix network monitor agent.
 make
 
 # adjust in several files /home/zabbix
-for zabbixfile in misc/conf/* misc/init.d/redhat/{zabbix_agentd,zabbix_server}; do
+for zabbixfile in misc/conf/{zabbix_agent.conf,zabbix_agentd.conf} misc/init.d/redhat/zabbix_agentd; do
     sed -i -e "s#BASEDIR=.*#BASEDIR=%{zabbix_bindir}#g" \
-        -e "s#PidFile=/var/tmp#PidFile=%{zabbix_run}#g" \
-        -e "s#LogFile=/tmp#LogFile=%{zabbix_log}#g" \
+        -e "s#PidFile=/var/tmp#PidFile=%{zabbix_agent_run}#g" \
+        -e "s#LogFile=/tmp#LogFile=%{zabbix_agent_log}#g" \
         -e "s#ActiveChecksBufFile=/var/tmp#ActiveChecksBufFile=%{zabbix_spool}#g" \
         -e "s#AlertScriptsPath=/home/zabbix#AlertScriptsPath=%{zabbix_confdir}#g" \
+        -e "s#/home/zabbix/lock#%{_localstatedir}/lock#g" $zabbixfile
+done
+
+for zabbixfile in misc/conf/zabbix_server.conf misc/init.d/redhat/zabbix_server; do
+    sed -i -e "s#BASEDIR=.*#BASEDIR=%{zabbix_bindir}#g" \
+        -e "s#PidFile=/var/tmp#PidFile=%{zabbix_srv_run}#g" \
+        -e "s#LogFile=/tmp#LogFile=%{zabbix_srv_log}#g" \
         -e "s#/home/zabbix/lock#%{_localstatedir}/lock#g" $zabbixfile
 done
 
@@ -61,15 +70,18 @@ if [ -z "`grep monitor etc/passwd`" ]; then
     /usr/sbin/useradd -g monitor monitor >/dev/null 2>&1
 fi
 
+# change ownership of cache
+[ -d %{zabbix_spool} ] && chown -R monitor:monitor %{zabbix_spool}
+
 %post
 /sbin/chkconfig --add zabbix_server
-[ -d %zabbix_run ] || ( mkdir %zabbix_run && chown zabbix:zabbix %zabbix_run )
-[ -d %zabbix_log ] || ( mkdir %zabbix_log && chown zabbix:zabbix %zabbix_log )
+[ -d %zabbix_srv_run ] || ( mkdir %zabbix_srv_run && chown zabbix:zabbix %zabbix_srv_run )
+[ -d %zabbix_srv_log ] || ( mkdir %zabbix_srv_log && chown zabbix:zabbix %zabbix_srv_log )
 
 %post -n zabbix-agent
 /sbin/chkconfig --add zabbix_agentd
-[ -d %zabbix_run ] || ( mkdir %zabbix_run && chown monitor:monitor %zabbix_run )
-[ -d %zabbix_log ] || ( mkdir %zabbix_log && chown monitor:monitor %zabbix_log )
+[ -d %zabbix_agent_run ] || ( mkdir %zabbix_agent_run && chown monitor:monitor %zabbix_run )
+[ -d %zabbix_agent_log ] || ( mkdir %zabbix_agent_log && chown monitor:monitor %zabbix_log )
 [ -d %zabbix_spool ] || ( mkdir %zabbix_spool && chown monitor:monitor %zabbix_spool )
 
 if [ -z "`grep zabbix_agent etc/services`" ]; then

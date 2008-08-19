@@ -13,8 +13,8 @@ Summary: A network monitor.
 
 %define zabbix_bindir 	        %{_sbindir}
 %define zabbix_confdir 		%{_sysconfdir}/%{realname}
-%define zabbix_run 		%{_localstatedir}/run/zabbix
-%define zabbix_log 		%{_localstatedir}/log/zabbix
+%define zabbix_srv_run 		%{_localstatedir}/run/zabbix-server/
+%define zabbix_srv_log 		%{_localstatedir}/log/zabbix-server/
 %define zabbix_spool 		%{_localstatedir}/spool/zabbix
 %define zabbix_www		/var/www/html/zabbix
 %define zabbix_php_module       /usr/lib64/php/modules
@@ -40,13 +40,10 @@ make
 # adjust in several files /home/zabbix
 HOSTNAME=$(hostname -f)
 
-for zabbixfile in misc/conf/* misc/init.d/redhat/{zabbix_agentd,zabbix_server}; do
+for zabbixfile in misc/conf/zabbix_server.conf misc/init.d/redhat/zabbix_server; do
     sed -i -e "s#BASEDIR=.*#BASEDIR=%{zabbix_bindir}#g" \
-        -e "s#PidFile=/var/tmp#PidFile=%{zabbix_run}#g" \
-        -e "s#LogFile=/tmp#LogFile=%{zabbix_log}#g" \
-        -e "s#ActiveChecksBufFile=/var/tmp#ActiveChecksBufFile=%{zabbix_spool}#g" \
-        -e "s#AlertScriptsPath=/home/zabbix#AlertScriptsPath=%{zabbix_confdir}#g" \
-        -e "s#Hostname=.*#Hostname=$HOSTNAME#g" \
+        -e "s#PidFile=/var/tmp#PidFile=%{zabbix_srv_run}#g" \
+        -e "s#LogFile=/tmp#LogFile=%{zabbix_srv_log}#g" \
         -e "s#/home/zabbix/lock#%{_localstatedir}/lock#g" $zabbixfile
 done
 
@@ -61,8 +58,8 @@ fi
 
 %post
 /sbin/chkconfig --add zabbix_server
-[ -d %zabbix_run ] || ( mkdir %zabbix_run && chown zabbix:zabbix %zabbix_run )
-[ -d %zabbix_log ] || ( mkdir %zabbix_log && chown zabbix:zabbix %zabbix_log )
+[ -d %zabbix_srv_run ] || ( mkdir %zabbix_srv_run && chown zabbix:zabbix %zabbix_srv_run )
+[ -d %zabbix_srv_log ] || ( mkdir %zabbix_srv_log && chown zabbix:zabbix %zabbix_srv_log )
 
 %preun
 if [ "$1" = 0 ]
