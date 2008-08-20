@@ -73,6 +73,13 @@ fi
 # change ownership of cache
 [ -d %{zabbix_spool} ] && chown -R monitor:monitor %{zabbix_spool}
 
+# move old config files
+[ -f %{zabbix_confdir}/zabbix_agent.conf ] && mv -f %{zabbix_confdir}/zabbix_agent.conf %{zabbix_confdir}/zabbix_agent.conf.old
+[ -f %{zabbix_confdir}/zabbix_agentd.conf ] && mv -f %{zabbix_confdir}/zabbix_agentd.conf %{zabbix_confdir}/zabbix_agentd.conf.old
+[ -f %{zabbix_confdir}/zabbix_trapper.conf ] && mv -f %{zabbix_confdir}/zabbix_trapper.conf %{zabbix_confdir}/zabbix_trapper.conf.old
+[ -f %{zabbix_confdir}/server.conf ] && mv -f %{zabbix_confdir}/server.conf %{zabbix_confdir}/server.conf.old
+
+
 %post
 /sbin/chkconfig --add zabbix_server
 [ -d %zabbix_srv_run ] || ( mkdir %zabbix_srv_run && chown zabbix:zabbix %zabbix_srv_run )
@@ -107,11 +114,10 @@ done
 # perform rebase
 %{zabbix_bindir}/zabbix-rebase-server
 
-# temporary hack during migration to monitor user (REMOVE THIS)
-# clean ipcs (semaphores)
-ipcs -s | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 1 | while read key; do ipcrm -S $key; done
+# clean ipcs to ensure new instance can start correctly (semaphores)
+ipcs -s | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 2 | while read key; do ipcrm -s $key; done
 # shared memory segments
-ipcs -m | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 1 | while read key; do ipcrm -M $key; done
+ipcs -m | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 2 | while read key; do ipcrm -m $key; done
 
 # start agent after installation
 /sbin/service zabbix_agentd start >/dev/null 2>&1 || :
@@ -125,8 +131,14 @@ then
 fi
 
 %preun -n zabbix-agent
-# stop agent before upgrade
+# stop agent
 /sbin/service zabbix_agentd stop >/dev/null 2>&1 || :
+
+# move old config files
+mv -f %{zabbix_confdir}/zabbix_agent.conf %{zabbix_confdir}/zabbix_agent.conf.old
+mv -f %{zabbix_confdir}/zabbix_agentd.conf %{zabbix_confdir}/zabbix_agentd.conf.old
+mv -f %{zabbix_confdir}/zabbix_trapper.conf %{zabbix_confdir}/zabbix_trapper.conf.old
+mv -f %{zabbix_confdir}/server.conf %{zabbix_confdir}/server.conf.old
 
 if [ "$1" = 0 ]
 then
