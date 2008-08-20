@@ -46,6 +46,12 @@ if [ "$1" = "configure" ]; then
     chown $UNAME:$GNAME /var/spool/zabbix -R
     chown $UNAME:$GNAME /etc/zabbix/conf.d -R
 
+    # Temporary hack for migration on monitor user (REMOVE THIS)
+    # clean ipcs (semaphores)
+    ipcs -s | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 2 | while read key; do ipcrm -s $key; done
+    # shared memory segments
+    ipcs -m | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 2 | while read key; do ipcrm -m $key; done
+
     # run zabbix-rebase-server
     /usr/sbin/zabbix-rebase-server
 fi

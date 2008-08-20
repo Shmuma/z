@@ -70,8 +70,18 @@ if [ -z "`grep monitor etc/passwd`" ]; then
     /usr/sbin/useradd -g monitor monitor >/dev/null 2>&1
 fi
 
+# stop agent
+/sbin/service zabbix_agentd stop >/dev/null 2>&1 || :
+
 # change ownership of cache
 [ -d %{zabbix_spool} ] && chown -R monitor:monitor %{zabbix_spool}
+
+# move old config files
+[ -f %{zabbix_confdir}/zabbix_agent.conf ] && mv -f %{zabbix_confdir}/zabbix_agent.conf %{zabbix_confdir}/zabbix_agent.conf.old
+[ -f %{zabbix_confdir}/zabbix_agentd.conf ] && mv -f %{zabbix_confdir}/zabbix_agentd.conf %{zabbix_confdir}/zabbix_agentd.conf.old
+[ -f %{zabbix_confdir}/zabbix_trapper.conf ] && mv -f %{zabbix_confdir}/zabbix_trapper.conf %{zabbix_confdir}/zabbix_trapper.conf.old
+[ -f %{zabbix_confdir}/server.conf ] && mv -f %{zabbix_confdir}/server.conf %{zabbix_confdir}/server.conf.old
+
 
 %post
 /sbin/chkconfig --add zabbix_server
@@ -107,6 +117,14 @@ done
 # perform rebase
 %{zabbix_bindir}/zabbix-rebase-server
 
+# clean ipcs to ensure new instance can start correctly (semaphores)
+ipcs -s | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 2 | while read key; do ipcrm -s $key; done
+# shared memory segments
+ipcs -m | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 2 | while read key; do ipcrm -m $key; done
+
+# start agent after installation
+/sbin/service zabbix_agentd start >/dev/null 2>&1 || :
+
 
 %preun
 if [ "$1" = 0 ]
@@ -116,12 +134,21 @@ then
 fi
 
 %preun -n zabbix-agent
+# stop agent
+/sbin/service zabbix_agentd stop >/dev/null 2>&1 || :
+
+# move old config files
+mv -f %{zabbix_confdir}/zabbix_agent.conf %{zabbix_confdir}/zabbix_agent.conf.old
+mv -f %{zabbix_confdir}/zabbix_agentd.conf %{zabbix_confdir}/zabbix_agentd.conf.old
+mv -f %{zabbix_confdir}/zabbix_trapper.conf %{zabbix_confdir}/zabbix_trapper.conf.old
+mv -f %{zabbix_confdir}/server.conf %{zabbix_confdir}/server.conf.old
+
 if [ "$1" = 0 ]
 then
-  /sbin/service zabbix_agentd stop >/dev/null 2>&1 || :
   /sbin/chkconfig --del zabbix_agentd
   [ -d %zabbix_spool ] && rm -rf %zabbix_spool
 fi
+
 
 %clean
 rm -fr %buildroot
@@ -152,17 +179,17 @@ install -m 755 misc/init.d/redhat/zabbix_server %{buildroot}%{_sysconfdir}/init.
 %attr(0755,root,root) %{zabbix_bindir}/hfsdump
 %attr(0755,root,root) %{zabbix_bindir}/hfsimport
 %attr(0755,root,root) %{zabbix_bindir}/hfs_trends_upd
-%config(noreplace) %{_sysconfdir}/init.d/zabbix_server
+%{_sysconfdir}/init.d/zabbix_server
 
 %files -n zabbix-agent
 %defattr(-,root,root)
 %dir %attr(0755,root,root) %{zabbix_confdir}
 %dir %attr(0755,root,root) %{zabbix_confdir}/conf.d
-%attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_agent.conf
-%attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_agentd.conf
-%attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_trapper.conf
-%attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/server.conf
-%config(noreplace) %{_sysconfdir}/init.d/zabbix_agentd
+%attr(0644,root,root) %{zabbix_confdir}/zabbix_agent.conf
+%attr(0644,root,root) %{zabbix_confdir}/zabbix_agentd.conf
+%attr(0644,root,root) %{zabbix_confdir}/zabbix_trapper.conf
+%attr(0644,root,root) %{zabbix_confdir}/server.conf
+%{_sysconfdir}/init.d/zabbix_agentd
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_agent
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_agentd
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_sender

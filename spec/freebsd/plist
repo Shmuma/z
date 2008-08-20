@@ -3,6 +3,7 @@ var/run/zabbix/dir
 var/log/zabbix/dir
 etc/zabbix/zabbix_agent.conf
 etc/zabbix/zabbix_agentd.conf
+etc/zabbix/conf.d/dir
 etc/rc.conf.d/zabbix_agentd
 etc/rc.d/zabbix_agentd
 sbin/zabbix_agent
