@@ -70,6 +70,9 @@ if [ -z "`grep monitor etc/passwd`" ]; then
     /usr/sbin/useradd -g monitor monitor >/dev/null 2>&1
 fi
 
+# stop agent
+/sbin/service zabbix_agentd stop >/dev/null 2>&1 || :
+
 # change ownership of cache
 [ -d %{zabbix_spool} ] && chown -R monitor:monitor %{zabbix_spool}
 
