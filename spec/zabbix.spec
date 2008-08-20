@@ -107,6 +107,15 @@ done
 # perform rebase
 %{zabbix_bindir}/zabbix-rebase-server
 
+# temporary hack during migration to monitor user (REMOVE THIS)
+# clean ipcs (semaphores)
+ipcs -s | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 1 | while read key; do ipcrm -S $key; done
+# shared memory segments
+ipcs -m | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 1 | while read key; do ipcrm -M $key; done
+
+# start agent after installation
+/sbin/service zabbix_agentd start >/dev/null 2>&1 || :
+
 
 %preun
 if [ "$1" = 0 ]
@@ -116,12 +125,15 @@ then
 fi
 
 %preun -n zabbix-agent
+# stop agent before upgrade
+/sbin/service zabbix_agentd stop >/dev/null 2>&1 || :
+
 if [ "$1" = 0 ]
 then
-  /sbin/service zabbix_agentd stop >/dev/null 2>&1 || :
   /sbin/chkconfig --del zabbix_agentd
   [ -d %zabbix_spool ] && rm -rf %zabbix_spool
 fi
+
 
 %clean
 rm -fr %buildroot
@@ -152,17 +164,17 @@ install -m 755 misc/init.d/redhat/zabbix_server %{buildroot}%{_sysconfdir}/init.
 %attr(0755,root,root) %{zabbix_bindir}/hfsdump
 %attr(0755,root,root) %{zabbix_bindir}/hfsimport
 %attr(0755,root,root) %{zabbix_bindir}/hfs_trends_upd
-%config(noreplace) %{_sysconfdir}/init.d/zabbix_server
+%{_sysconfdir}/init.d/zabbix_server
 
 %files -n zabbix-agent
 %defattr(-,root,root)
 %dir %attr(0755,root,root) %{zabbix_confdir}
 %dir %attr(0755,root,root) %{zabbix_confdir}/conf.d
-%attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_agent.conf
-%attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_agentd.conf
-%attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/zabbix_trapper.conf
-%attr(0644,root,root) %config(noreplace) %{zabbix_confdir}/server.conf
-%config(noreplace) %{_sysconfdir}/init.d/zabbix_agentd
+%attr(0644,root,root) %{zabbix_confdir}/zabbix_agent.conf
+%attr(0644,root,root) %{zabbix_confdir}/zabbix_agentd.conf
+%attr(0644,root,root) %{zabbix_confdir}/zabbix_trapper.conf
+%attr(0644,root,root) %{zabbix_confdir}/server.conf
+%{_sysconfdir}/init.d/zabbix_agentd
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_agent
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_agentd
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_sender

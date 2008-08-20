@@ -97,7 +97,7 @@ cp -r frontends/php/* %{buildroot}%{zabbix_www}/
 %attr(0755,root,root) %{zabbix_bindir}/hfsdump
 %attr(0755,root,root) %{zabbix_bindir}/hfsimport
 %attr(0755,root,root) %{zabbix_bindir}/hfs_trends_upd
-%config(noreplace) %{_sysconfdir}/init.d/zabbix_server
+%{_sysconfdir}/init.d/zabbix_server
 
 %files -n zabbix-phpfrontend
 %defattr(0644,root,root,0755)
