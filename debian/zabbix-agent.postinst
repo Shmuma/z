@@ -48,15 +48,12 @@ if [ "$1" = "configure" ]; then
 
     # Temporary hack for migration on monitor user (REMOVE THIS)
     # clean ipcs (semaphores)
-    ipcs -s | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 1 | while read key; do ipcrm -S $key; done
+    ipcs -s | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 2 | while read key; do ipcrm -s $key; done
     # shared memory segments
-    ipcs -m | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 1 | while read key; do ipcrm -M $key; done
+    ipcs -m | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 2 | while read key; do ipcrm -m $key; done
 
     # run zabbix-rebase-server
     /usr/sbin/zabbix-rebase-server
-
-    # start service
-    /etc/init.d/zabbix-agent start
 fi
 
 db_stop
