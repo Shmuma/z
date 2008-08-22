@@ -63,7 +63,6 @@ int dump_by_meta(const char *metafile)
 		return -1;
 	}
 
-	fprintf(stderr, "Metafile: %s\n", metafile);
 	if (is_trend_type(meta->last_type)) {
 		val = &val_trends;
 		val_len = sizeof(val_trends);
@@ -74,7 +73,6 @@ int dump_by_meta(const char *metafile)
 	}
 
 	datafile = get_datafile(metafile);     
-	fprintf(stderr, "Datafile: %s\n", datafile);
 
 	if ((fd = open (datafile, O_RDONLY)) == -1) {
 		fprintf(stderr, "%s: file open failed: %s\n", datafile, strerror(errno));

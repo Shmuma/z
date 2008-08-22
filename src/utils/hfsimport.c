@@ -78,8 +78,6 @@ int main(int argc, char **argv)
 	if (access(datafile, R_OK) == 0)
 		unlink(datafile);
 
-	printf("Metafile: %s\nDatafile: %s\n", metafile, datafile);
-
 	while ((read = getline(&line, &len, fp)) != -1) {
 		char *ch, *start;
 		hfs_time_t stamp = -1;
