@@ -430,7 +430,7 @@ require_once "include/items.inc.php";
 		delete_template_graphs($hostid, $templateid, $unlink_mode);
 		delete_template_triggers($hostid, $templateid, $unlink_mode);
 		delete_template_items($hostid, $templateid, $unlink_mode);
-		delete_template_applications($hostid, $templateid, $unlink_mode);
+		delete_template_applications($hostid, $templateid, true);
 	}	
 
 	/*
@@ -1210,12 +1210,13 @@ require_once "include/items.inc.php";
 
 		$result &= $db_cnt['cnt'] > 1 ? false : true;
 
-		$db_cnt = DBfetch(DBselect('select name,count(*) as cnt from applications '.
-			' where hostid in ('.implode(',',$templateid_list).') '.
-			' group by name order by cnt desc'
-			));
+// archaic check. We can have applications with the same name come from several templates
+// 		$db_cnt = DBfetch(DBselect('select name,count(*) as cnt from applications '.
+// 			' where hostid in ('.implode(',',$templateid_list).') '.
+// 			' group by name order by cnt desc'
+// 			));
 
-		$result &= $db_cnt['cnt'] > 1 ? false : true;
+// 		$result &= $db_cnt['cnt'] > 1 ? false : true;
 
 		return $result;
 	}
