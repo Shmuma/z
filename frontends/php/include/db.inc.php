@@ -556,23 +556,21 @@ if(isset($DB_TYPE) && $DB_TYPE == "ORACLE") {
 
 	function	get_dbid($table,$field)
 	{
-		$nodeid = get_current_nodeid(false);
-
 		$found = false;
 		do
 		{
 			global $ZBX_LOCALNODEID;
 
-			$min=bcadd(bcmul($nodeid,"100000000000000"),bcmul($ZBX_LOCALNODEID,"100000000000"));
-			$max=bcadd(bcadd(bcmul($nodeid,"100000000000000"),bcmul($ZBX_LOCALNODEID,"100000000000")),"99999999999");
-			$row = DBfetch(DBselect("select nextid from ids where nodeid=$nodeid and table_name='$table' and field_name='$field'"));
+			$min="0"
+			$max="99999999999";
+			$row = DBfetch(DBselect("select nextid from ids where table_name='$table' and field_name='$field'"));
 			if(!$row)
 			{
 				$row=DBfetch(DBselect("select max($field) as id from $table where $field>=$min and $field<=$max"));
 				if(!$row || is_null($row["id"]))
 				{
-					DBexecute("insert into ids (nodeid,table_name,field_name,nextid) ".
-						" values ($nodeid,'$table','$field',$min)");
+					DBexecute("insert into ids (table_name,field_name,nextid) ".
+						" values ('$table','$field',$min)");
 				}
 				else
 				{
@@ -583,7 +581,7 @@ if(isset($DB_TYPE) && $DB_TYPE == "ORACLE") {
 					}
 					*/
 
-					DBexecute("insert into ids (nodeid,table_name,field_name,nextid) values ($nodeid,'$table','$field',".$row["id"].")");
+					DBexecute("insert into ids (table_name,field_name,nextid) values ('$table','$field',".$row["id"].")");
 				}
 				continue;
 			}
@@ -591,13 +589,13 @@ if(isset($DB_TYPE) && $DB_TYPE == "ORACLE") {
 			{
 				$ret1 = $row["nextid"];
 				if(($ret1 < $min) || ($ret1 >= $max)) {
-					DBexecute("delete from ids where nodeid=$nodeid and table_name='$table' and field_name='$field'");
+					DBexecute("delete from ids where table_name='$table' and field_name='$field'");
 					continue;
 				}
 	
-				DBexecute("update ids set nextid=nextid+1 where nodeid=$nodeid and table_name='$table' and field_name='$field'");
+				DBexecute("update ids set nextid=nextid+1 where table_name='$table' and field_name='$field'");
 	
-				$row = DBfetch(DBselect("select nextid from ids where nodeid=$nodeid and table_name='$table' and field_name='$field'"));
+				$row = DBfetch(DBselect("select nextid from ids where table_name='$table' and field_name='$field'"));
 				if(!$row || is_null($row["nextid"]))
 				{
 					/* Should never be here */
