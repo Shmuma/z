@@ -1,3 +1,4 @@
+@name zabbix_agent_yandex
 @cwd /
 var/run/zabbix/dir
 var/log/zabbix/dir
