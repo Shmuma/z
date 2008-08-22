@@ -425,8 +425,11 @@ COpt::savesqlrequest($query);
 						$column_type  = ocicolumntype($cursor, $field);
 						$field_is_null = ocicolumnisnull($cursor, $field);
 
-						if ($field_is_null && in_array($column_type,$text_datatypes))
-							$result[strtolower($k)] = '';
+						if (in_array($column_type,$text_datatypes))
+							if ($field_is_null)
+								$result[strtolower($k)] = '';
+							else
+								$result[strtolower($k)] = stripslashes ($row[$k]);
 						else
 							$result[strtolower($k)] = $row[$k];
 					}
