@@ -559,9 +559,7 @@ if(isset($DB_TYPE) && $DB_TYPE == "ORACLE") {
 		$found = false;
 		do
 		{
-			global $ZBX_LOCALNODEID;
-
-			$min="0"
+			$min="0";
 			$max="99999999999";
 			$row = DBfetch(DBselect("select nextid from ids where table_name='$table' and field_name='$field'"));
 			if(!$row)
