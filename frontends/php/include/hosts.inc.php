@@ -430,7 +430,7 @@ require_once "include/items.inc.php";
 		delete_template_graphs($hostid, $templateid, $unlink_mode);
 		delete_template_triggers($hostid, $templateid, $unlink_mode);
 		delete_template_items($hostid, $templateid, $unlink_mode);
-		delete_template_applications($hostid, $templateid, true);
+		delete_template_applications($hostid, $templateid, $unlink_mode);
 	}	
 
 	/*
@@ -1031,7 +1031,7 @@ require_once "include/items.inc.php";
 
 		$result = DBexecute("delete from items_applications where applicationid=$applicationid");
 
-		$result = DBexecute("delete from applications where applicationid=$applicationid");
+// 		$result = DBexecute("delete from applications where applicationid=$applicationid");
 		if($result)
 		{
 			info("Application '".$host["host"].":".$app["name"]."' deleted");
