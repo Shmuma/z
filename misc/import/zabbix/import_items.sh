@@ -22,10 +22,15 @@ while read itemid key type delay; do
             if [ -f $in ]; then
                 echo Dumping $in to $out
                 cp -f $out/history.meta $out/hist.meta
-                co -f $out/history.data $out/hist.data
-                (hfsdump $out/history.meta; cat $in) | sort -n -t = > $out/dump.txt
+                cp -f $out/history.data $out/hist.data
+                (hfsdump $out/history.meta; cat $in) | sort -n -t = | uniq > $out/dump.txt
+		rm -f $out/history.*
                 hfsimport $out $out/dump.txt
+		chown zabbix:zabbix $out/hist*
                 rm -f $out/dump.txt
+		rm -f trends.*
+		hfs_trends_upd .
+		chown zabbix:zabbix trends.*
             else
                 echo Key $key skipped, no data for it
             fi
