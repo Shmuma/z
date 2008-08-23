@@ -28,9 +28,9 @@ while read itemid key type delay; do
                 hfsimport $out $out/dump.txt
 		chown zabbix:zabbix $out/hist*
                 rm -f $out/dump.txt
-		rm -f trends.*
-		hfs_trends_upd .
-		chown zabbix:zabbix trends.*
+		rm -f $out/trends.*
+		hfs_trends_upd $out
+		chown zabbix:zabbix $out/trends.*
             else
                 echo Key $key skipped, no data for it
             fi
