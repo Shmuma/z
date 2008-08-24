@@ -63,6 +63,8 @@ if [ -z "`grep zabbix etc/passwd`" ]; then
 fi
 
 %pre -n zabbix-agent
+set -x
+
 if [ -z "`grep monitor etc/group`" ]; then
     /usr/sbin/groupadd monitor >/dev/null 2>&1
 fi
