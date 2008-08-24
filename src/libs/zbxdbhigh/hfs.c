@@ -44,6 +44,56 @@ int is_trend_type (item_type_t type)
     }
 }
 
+
+/*
+   fcntl wrappers
+ */
+int obtain_lock (int fd, int write)
+{
+	struct flock fls;
+
+	fls.l_type = write ? F_WRLCK : F_RDLCK;
+	fls.l_whence = SEEK_SET;
+	fls.l_start = 0;
+	fls.l_len = 0;
+
+	while (1) {
+		if (fcntl (fd, write ? F_SETLKW : F_SETLK, &fls) < 0) {
+			if (errno == EINTR)
+				continue;
+			zabbix_log(LOG_LEVEL_ERR, "HFS_obtain_lock: fcntl(): %s", strerror(errno));
+			return 0;
+		}
+		else
+			break;
+	}
+	return 1;
+}
+
+
+int release_lock (int fd, int write)
+{
+	struct flock fls;
+
+	fls.l_type = F_UNLCK;
+	fls.l_whence = SEEK_SET;
+	fls.l_start = 0;
+	fls.l_len = 0;
+
+	while (1) {
+		if (fcntl (fd, write ? F_SETLKW : F_SETLK, &fls) < 0) {
+			if (errno == EINTR)
+				continue;
+			zabbix_log(LOG_LEVEL_ERR, "HFS_release_lock: fcntl(): %s", strerror(errno));
+			return 0;
+		}
+		else
+			break;
+	}
+	return 1;
+}
+
+
 /*
   Routine adds double value to HistoryFS storage.
 */
@@ -188,6 +238,9 @@ int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, i
 	if ((fd = xopen (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
 		goto err_exit;
 
+	if (!obtain_lock (fd, 1))
+		goto err_exit;
+
 	meta->blocks++;
 	meta->last_delay = delay;
 	meta->last_type = type;
@@ -213,6 +266,7 @@ int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, i
 	if (xwrite (p_meta, fd, &item, sizeof (item)) == -1)
 		goto err_exit;
 
+        release_lock (fd, 1);
 	if (xclose (p_meta, fd) == -1)
 		goto err_exit;
 	fd = -1;
@@ -224,12 +278,16 @@ int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, i
 	if ((fd = xopen (p_data, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
 		goto err_exit;
 
+	if (!obtain_lock (fd, 1))
+		goto err_exit;
+
 	if (xlseek (p_data, fd, item.ofs, SEEK_SET) == -1)
 		goto err_exit;
 
 	if (xwrite (p_data, fd, value, len) == -1)
 		goto err_exit;
 
+        release_lock (fd, 1);
 	if (xclose (p_data, fd) == -1)
 		goto err_exit;
 	fd = -1;
@@ -243,6 +301,9 @@ int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, i
 	ip = meta->meta + (meta->blocks-1);
 
 	if ((fd = xopen (p_data, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
+		goto err_exit;
+
+	if (!obtain_lock (fd, 1))
 		goto err_exit;
 
 	if (((size = xlseek (p_data, fd, 0, SEEK_END)) == -1) ||
@@ -288,6 +349,7 @@ int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, i
 	    if (xwrite (p_data, fd, value, len) == -1)
 		goto err_exit;
 
+            release_lock (fd, 1);
 	    if (xclose (p_data, fd) == -1)
 		goto err_exit;
 	    fd = -1;
@@ -297,6 +359,9 @@ int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, i
 
 	    if ((fd = xopen (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
 		goto err_exit;
+
+            if (!obtain_lock (fd, 1))
+                goto err_exit;
 
 	    if (xlseek (p_meta, fd, sizeof (meta->blocks) * 3, SEEK_SET) == -1)
 		goto err_exit;
@@ -310,6 +375,7 @@ int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, i
 	    if (xwrite (p_meta, fd, ip, sizeof (hfs_meta_item_t)) == -1)
 		goto err_exit;
 
+            release_lock (fd, 1);
 	    if (xclose (p_meta, fd) == -1)
 		goto err_exit;
 	    fd = -1;
@@ -321,8 +387,10 @@ int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, i
     }
 
 err_exit:
-    if (fd != -1)
-	    close (fd);
+    if (fd != -1) {
+        release_lock (fd, 1);
+        close (fd);
+    }
     free_meta (meta);
 
     return retval;
@@ -379,59 +447,6 @@ int make_directories (const char* path)
     }
 
     return 0;
-}
-
-
-/*
-   fcntl wrappers
- */
-int obtain_lock (int fd, int write)
-{
-	/*
-	struct flock fls;
-
-	fls.l_type = write ? F_WRLCK : F_RDLCK;
-	fls.l_whence = SEEK_SET;
-	fls.l_start = 0;
-	fls.l_len = 0;
-
-	while (1) {
-		if (fcntl (fd, write ? F_SETLKW : F_SETLK, &fls) < 0) {
-			if (errno == EINTR)
-				continue;
-			zabbix_log(LOG_LEVEL_ERR, "HFS_obtain_lock: fcntl(): %s", strerror(errno));
-			return 0;
-		}
-		else
-			break;
-	}
-	*/
-	return 1;
-}
-
-
-int release_lock (int fd, int write)
-{
-	/*
-	struct flock fls;
-
-	fls.l_type = F_UNLCK;
-	fls.l_whence = SEEK_SET;
-	fls.l_start = 0;
-	fls.l_len = 0;
-
-	while (1) {
-		if (fcntl (fd, write ? F_SETLKW : F_SETLK, &fls) < 0) {
-			if (errno == EINTR)
-				continue;
-			zabbix_log(LOG_LEVEL_ERR, "HFS_release_lock: fcntl(): %s", strerror(errno));
-			return 0;
-		}
-		else
-			break;
-	}
-	*/
-	return 1;
 }
 
 
@@ -497,6 +512,12 @@ int HFSread_interval(const char* hfs_base_dir, const char* siteid, zbx_uint64_t 
     }
     free (p_data);
 
+    if (!obtain_lock (fd, 0)) {
+        close (fd);
+        free_meta (meta);
+        return count;
+    }
+
     ofs = find_meta_ofs (from, meta, &block);
 
     if (ofs != -1) {
@@ -523,6 +544,7 @@ int HFSread_interval(const char* hfs_base_dir, const char* siteid, zbx_uint64_t 
     }
 
     free_meta (meta);
+    release_lock (fd, 0);
     close (fd);
     return count;
 }
@@ -561,6 +583,12 @@ void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
     }
     free (p_data);
 
+    if (!obtain_lock (fd, 0)) {
+        close (fd);
+        free_meta (meta);
+        return;
+    }
+
     ofs = find_meta_ofs (ts, meta, NULL);
 
     if (ofs != -1) {
@@ -571,6 +599,7 @@ void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
     }
 
     free_meta (meta);
+    release_lock (fd, 0);
     close (fd);
 }
 
@@ -603,6 +632,11 @@ void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t ite
     if (fd < 0)
         return;
 
+    if (!obtain_lock (fd, 0)) {
+        close (fd);
+        return;
+    }
+
     ofs = lseek (fd, 0, SEEK_END);
 
     while (ofs && count > 0) {
@@ -614,6 +648,7 @@ void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t ite
 	}
     }
 
+    release_lock (fd, 0);
     close (fd);
 }
 
@@ -1426,6 +1461,11 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 		goto out;
 	}
 
+	if (!obtain_lock (fd, 0)) {
+		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: cannot obtain lock", p_data);
+		goto out;
+	}
+
 	if ((ofs = find_meta_ofs (ts, meta, NULL)) == -1) {
 		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: %lld: unable to get offset in file", p_data, ts);
 		goto out;
@@ -1497,8 +1537,10 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 out:
 	free_meta (meta);
 	xfree(p_data);
-	if (fd != -1)
+	if (fd != -1) {
+		release_lock (fd, 0);
 		close(fd);
+	}
 
 	if (result_size > items)
 		*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * items));
@@ -1543,6 +1585,11 @@ int HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t ite
 		goto end; // error
 	}
 
+	if (!obtain_lock (fd, 0)) {
+		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: cannot obtain lock", p_data);
+		goto end;
+	}
+
 	if ((ofs = lseek(fd, meta->last_ofs, SEEK_SET)) == -1) {
 		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to change file offset = %u: %s", p_data, meta->last_ofs, strerror(errno));
 		goto end; // error
@@ -1575,8 +1622,10 @@ int HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t ite
 			break;
 	}
 end:
-	if (fd != -1 && close(fd) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: close(): %s", p_data, strerror(errno));
+	if (fd != -1) {
+		release_lock (fd, 0);
+		close(fd);
+	}
 
 	xfree(p_data);
 	free_meta(meta);
