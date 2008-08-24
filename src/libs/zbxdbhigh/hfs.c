@@ -151,20 +151,13 @@ int xopen(const char *fn, int flags, mode_t mode)
 	return retval;
 }
 
-int xclose(const char *fn, int fd)
-{
-	int rc;
-	if ((rc = close(fd)) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: close: %s", fn, strerror(errno));
-	return rc;
-}
 
 ssize_t xwrite(const char *fn, int fd, const void *buf, size_t count)
 {
 	ssize_t rc;
 	if ((rc = write(fd, buf, count)) == -1) {
 		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: write: %s", fn, strerror(errno));
-		xclose(fn, fd);
+		close(fd);
 	}
 	return rc;
 }
@@ -176,7 +169,7 @@ hfs_off_t xlseek(const char *fn, int fd, hfs_off_t offset, int whence)
 		zabbix_log(LOG_LEVEL_CRIT,
 			"HFS: %s: lseek(fd, %lld (%d), %d): %s",
 			fn, offset, whence, strerror(errno));
-		xclose(fn, fd);
+		close(fd);
 	}
 	return rc;
 }
@@ -190,14 +183,15 @@ int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
     p_meta = get_name (hfs_base_dir, siteid, itemid, is_trend ? NK_TrendItemMeta : NK_ItemMeta);
     p_data = get_name (hfs_base_dir, siteid, itemid, is_trend ? NK_TrendItemData : NK_ItemData);
 
-    res = hfs_store_value (p_meta, p_data, clock, delay, value, len, type);
+    res = hfs_store_values (p_meta, p_data, clock, delay, value, len, 1, type);
     free (p_meta);
     free (p_data);
 
     return res;
 }
 
-int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, int delay, void* value, int len, item_type_t type)
+
+int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, int delay, void* values, int len, int count, item_type_t type)
 {
     hfs_meta_item_t item, *ip;
     hfs_meta_t* meta;
@@ -205,14 +199,14 @@ int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, i
     int i, j;
     unsigned char v = 0xff;
     hfs_off_t eextra, extra;
-    hfs_off_t size;
+    hfs_off_t size, ofs;
     int retval = 1;
     hfs_trend_t trend;
 
-    zabbix_log(LOG_LEVEL_DEBUG, "HFS: store_value()");
+    zabbix_log(LOG_LEVEL_DEBUG, "HFS: store_values()");
 
     if ((meta = read_metafile (p_meta)) == NULL) {
-	zabbix_log(LOG_LEVEL_CRIT, "HFS: store_value(): read_metafile(%s) == NULL", p_meta);
+	zabbix_log(LOG_LEVEL_CRIT, "HFS: store_values(): read_metafile(%s) == NULL", p_meta);
 	return retval;
     }
 
@@ -221,7 +215,8 @@ int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, i
     /* should we start a new block? */
     if (meta->blocks == 0 || meta->last_delay != delay || type != meta->last_type) {
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: appending new block for data %s", p_data);
-	item.start = item.end = clock;
+	item.start = clock;
+        item.end = clock + (count-1)*delay;
 	item.type = type;
 
 	/* analyze current value */
@@ -229,10 +224,11 @@ int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, i
 	if (meta->blocks) {
 	    ip = meta->meta + (meta->blocks-1);
 	    zabbix_log(LOG_LEVEL_DEBUG, "HFS: there is another block on way: %llu, %llu, %d, %llu", ip->start, ip->end, ip->delay, ip->ofs);
+            ofs = meta->last_ofs + len;
 	    item.ofs = meta->last_ofs + len;
 	}
 	else
-	    item.ofs = 0;
+	    item.ofs = ofs = 0;
 
 	/* append block to meta */
 	if ((fd = xopen (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
@@ -247,7 +243,9 @@ int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, i
 
 	/* when new data file is created, last_ofs is zero */
 	if (meta->last_ofs)
-	    meta->last_ofs += len;
+	    meta->last_ofs += len * count;
+        else
+	    meta->last_ofs += len * (count-1);
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: blocks <- %u", meta->blocks);
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: delay <- %u", meta->last_delay);
@@ -267,8 +265,7 @@ int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, i
 		goto err_exit;
 
         release_lock (fd, 1);
-	if (xclose (p_meta, fd) == -1)
-		goto err_exit;
+	close (fd);
 	fd = -1;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: block metadata updated %d, %d, %d: %lld, %lld, %d, %llu", meta->blocks, meta->last_delay, meta->last_type,
@@ -281,15 +278,14 @@ int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, i
 	if (!obtain_lock (fd, 1))
 		goto err_exit;
 
-	if (xlseek (p_data, fd, item.ofs, SEEK_SET) == -1)
+	if (xlseek (p_data, fd, ofs, SEEK_SET) == -1)
 		goto err_exit;
 
-	if (xwrite (p_data, fd, value, len) == -1)
+	if (xwrite (p_data, fd, values, len * count) == -1)
 		goto err_exit;
 
         release_lock (fd, 1);
-	if (xclose (p_data, fd) == -1)
-		goto err_exit;
+	close (fd);
 	fd = -1;
 
 	retval = 0;
@@ -300,88 +296,73 @@ int hfs_store_value (const char* p_meta, const char* p_data, hfs_time_t clock, i
 	/* check for gaps in block */
 	ip = meta->meta + (meta->blocks-1);
 
+        if (clock < ip->start) {
+            zabbix_log (LOG_LEVEL_ERR, "HFS: cannot write outside last block boundaries");
+            goto err_exit;
+        }
+
 	if ((fd = xopen (p_data, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
 		goto err_exit;
 
 	if (!obtain_lock (fd, 1))
 		goto err_exit;
 
-	if (((size = xlseek (p_data, fd, 0, SEEK_END)) == -1) ||
-	    (xlseek (p_data, fd, 0, SEEK_SET) == -1))
-		goto err_exit;
+        /* if we are trying to write after the block's end, fill rest with FF's */
+        extra = (clock - ip->end) / delay;
 
-	/* fill missing values with FFs */
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS: check for gaps. Now %d, last %d, delay %d, delta %d", clock, ip->end, delay, clock - ip->end);
+        /* calculate offset of the end */
+        ofs = ip->ofs + (ip->end - ip->start + delay) * len / delay;
+        lseek (fd, ofs, SEEK_SET);
 
-	meta->last_ofs += len;
-	if (xlseek (p_data, fd, meta->last_ofs, SEEK_SET) == -1)
-		goto err_exit;
-
-	extra = (clock - ip->end) / delay;
-
-	/* if value appeared before it's time, drop it. Overwise fill gaps with empty entries and write actual data. */
-	if (extra >= 1) {
-            /* check for time-based items count differs from offset-based */
-            eextra = (ip->end - ip->start) / delay - (meta->last_ofs - ip->ofs) / len;
-
-            if (eextra > 0) {
-                zabbix_log(LOG_LEVEL_DEBUG, "HFS: there is disagree of time-based items count with offset based. Perform alignment. Count=%d", eextra);
-		for (i = 0; i < eextra; i++)
-		    for (j = 0; j < len; j++) {
-			if (xwrite (p_data, fd, &v, sizeof (v)) == -1)
-				goto err_exit;
-		    }
-                meta->last_ofs += eextra * len;
+        if (extra > 0) {
+            char* buf;
+            extra--;
+            buf = (char*)malloc (extra*len);
+            memset (buf, 0xFF, extra*len);
+            write (fd, buf, extra*len);
+            free (buf);
+            ofs += extra*len;
+        }
+        else 
+            if (extra < 0) {
+                ofs = ip->ofs + ((clock - ip->start) / delay) * len;
+                lseek (fd, ofs, SEEK_SET);
             }
 
-	    if (extra > 1) {
-		extra--;
-		zabbix_log(LOG_LEVEL_DEBUG, "HFS: there are gaps of size %d items", extra);
+        /* we're ready to write */
+        write (fd, values, len*count);
+        if (meta->last_ofs < ofs + len*(count-1))
+            meta->last_ofs = ofs + len*(count-1);
 
-		for (i = 0; i < extra; i++)
-		    for (j = 0; j < len; j++) {
-			if (xwrite (p_data, fd, &v, sizeof (v)) == -1)
-				goto err_exit;
-		    }
-		meta->last_ofs += extra * len;
-	    }            
+        release_lock (fd, 1);
+        close (fd);
+        fd = -1;
 
-	    if (xwrite (p_data, fd, value, len) == -1)
-		goto err_exit;
+        /* update meta */
+        if (ip->end < clock + delay*(count-1))
+            ip->end = clock + delay*(count-1);
 
-            release_lock (fd, 1);
-	    if (xclose (p_data, fd) == -1)
-		goto err_exit;
-	    fd = -1;
+        if ((fd = xopen (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
+            goto err_exit;
 
-	    /* update meta */
-	    ip->end = clock;
+        if (!obtain_lock (fd, 1))
+            goto err_exit;
 
-	    if ((fd = xopen (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
-		goto err_exit;
+        if (xlseek (p_meta, fd, sizeof (meta->blocks) * 3, SEEK_SET) == -1)
+            goto err_exit;
 
-            if (!obtain_lock (fd, 1))
-                goto err_exit;
+        if (xwrite (p_meta, fd, &meta->last_ofs, sizeof (meta->last_ofs)) == -1)
+            goto err_exit;
 
-	    if (xlseek (p_meta, fd, sizeof (meta->blocks) * 3, SEEK_SET) == -1)
-		goto err_exit;
+        if (xlseek (p_meta, fd, sizeof (hfs_meta_item_t) * (meta->blocks-1), SEEK_CUR) == -1)
+            goto err_exit;
 
-	    if (xwrite (p_meta, fd, &meta->last_ofs, sizeof (meta->last_ofs)) == -1)
-		goto err_exit;
+        if (xwrite (p_meta, fd, ip, sizeof (hfs_meta_item_t)) == -1)
+            goto err_exit;
 
-	    if (xlseek (p_meta, fd, sizeof (hfs_meta_item_t) * (meta->blocks-1), SEEK_CUR) == -1)
-		goto err_exit;
-
-	    if (xwrite (p_meta, fd, ip, sizeof (hfs_meta_item_t)) == -1)
-		goto err_exit;
-
-            release_lock (fd, 1);
-	    if (xclose (p_meta, fd) == -1)
-		goto err_exit;
-	    fd = -1;
-	}
-	else
-	    zabbix_log(LOG_LEVEL_DEBUG, "HFS: value appeared earlier than expected. Now %d, but next must be at %d", clock, ip->end + delay);
+        release_lock (fd, 1);
+        close (fd);
+        fd = -1;
 
 	retval = 0;
     }

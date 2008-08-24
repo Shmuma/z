@@ -141,23 +141,23 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 				ret = SUCCEED;
 				value_string = NULL;
 				
-/* 				void* token = NULL; */
+				void* token = NULL;
 
-/* 				DBbegin(); */
-/* 				while (comms_parse_multi_response (s,host_dec,key_dec,value_dec,lastlogsize,timestamp,source,severity, */
-/* 							sizeof(host_dec)-1, &token) == SUCCEED)  */
-/* 				{ */
-/* 					server = host_dec; */
-/* 					value_string = value_dec; */
-/* 					key = key_dec; */
-/* 					/\* insert history value. It doesn't support  *\/ */
-/* 					ret = process_data(sock,server,key,value_string, NULL, NULL, NULL, NULL, NULL, timestamp); */
-/* 					if (ret != SUCCEED) */
-/* 						break; */
-/* 				} */
-/* 				DBcommit(); */
+				DBbegin();
+				while (comms_parse_multi_response (s,host_dec,key_dec,value_dec,lastlogsize,timestamp,source,severity,
+							sizeof(host_dec)-1, &token) == SUCCEED)
+				{
+					server = host_dec;
+					value_string = value_dec;
+					key = key_dec;
+					/* insert history value. It doesn't support  */
+					ret = process_data(sock,server,key,value_string, NULL, NULL, NULL, NULL, NULL, timestamp);
+					if (ret != SUCCEED)
+						break;
+				}
+				DBcommit();
 
-/* 				key = NULL; */
+				key = NULL;
 			}
 		}
 		else

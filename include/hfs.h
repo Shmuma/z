@@ -57,6 +57,14 @@ typedef struct hfs_item_value {
 
 
 typedef struct {
+    hfs_time_t ts;
+    item_type_t type;
+    int delay;
+    item_value_u val;
+} hfs_data_item_t;
+
+
+typedef struct {
 	hfs_time_t clock;
 	char* value;
 } hfs_item_str_value_t;
