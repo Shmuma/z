@@ -150,10 +150,11 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 
 				if (CONFIG_HFS_PATH) {
 					/* perform ultra-fast history addition */
+/* 					sleep (20); */
 					while (comms_parse_multi_response (s,host_dec,key_dec,value_dec,lastlogsize,timestamp,source,severity,
 									   sizeof(host_dec)-1, &token) == SUCCEED)
 					{
-						append_history (host_dec, key_dec, value_string, timestamp, &history_token);
+						append_history (host_dec, key_dec, value_dec, timestamp, &history_token);
 					}
 					flush_history (&history_token);
 				}

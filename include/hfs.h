@@ -74,6 +74,10 @@ typedef void (*read_count_fn_t) (item_type_t type, item_value_u val, hfs_time_t 
 
 void		HFSadd_history (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, double value, hfs_time_t clock);
 void		HFSadd_history_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, hfs_time_t clock);
+
+void		HFSadd_history_vals (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, double* values, int count, hfs_time_t clock);
+void		HFSadd_history_vals_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t* values, int count, hfs_time_t clock);
+
 void		HFSadd_history_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t clock, const char* value);
 size_t		HFSread_item (const char* hfs_base_dir, const char* siteid,
 				int trend,		zbx_uint64_t itemid,

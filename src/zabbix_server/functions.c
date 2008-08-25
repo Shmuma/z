@@ -432,6 +432,50 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 	return SUCCEED;
 }
 
+
+
+static int process_item_delta (DB_ITEM *item, item_value_u* new_val, int now, item_value_u* res_val)
+{
+	/* Should we store delta or original value? */
+	if(item->delta == ITEM_STORE_AS_IS) {
+		if(item->value_type==ITEM_VALUE_TYPE_UINT64)
+			res_val->l = new_val->l;
+		else if(item->value_type==ITEM_VALUE_TYPE_FLOAT)
+			res_val->d = new_val->d;
+		return 1;
+	}
+	/* Delta as speed of change */
+	else if(item->delta == ITEM_STORE_SPEED_PER_SECOND) {
+		/* Save delta */
+		if( ITEM_VALUE_TYPE_FLOAT == item->value_type ) {
+			if(item->prevorgvalue_null == 0 && (item->prevorgvalue_dbl <= new_val->d) && (now != item->lastclock))
+				res_val->d = (new_val->d - item->prevorgvalue_dbl)/(now-item->lastclock);
+		}
+		else if( ITEM_VALUE_TYPE_UINT64 == item->value_type ) {
+			if((item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= new_val->l) && (now != item->lastclock))
+				res_val->l = (new_val->l - item->prevorgvalue_uint64)/(now-item->lastclock);
+		}
+		return 1;
+	}
+	/* Real delta: simple difference between values */
+	else if(item->delta == ITEM_STORE_SIMPLE_CHANGE) {
+		/* Save delta */
+		if( ITEM_VALUE_TYPE_FLOAT == item->value_type ) {
+			if((item->prevorgvalue_null == 0) && (item->prevorgvalue_dbl <= new_val->d) )
+				res_val->d = new_val->d - item->prevorgvalue_dbl;
+		}
+		else if(item->value_type==ITEM_VALUE_TYPE_UINT64) {
+			if((item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= new_val->l) )
+				res_val->l = new_val->l - item->prevorgvalue_uint64;
+		}
+		return 1;
+	}
+	else
+		return 0;
+}
+
+
+
 /******************************************************************************
  *                                                                            *
  * Function: add_history                                                      *
@@ -477,88 +521,22 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 	{
 		if( (item->value_type==ITEM_VALUE_TYPE_FLOAT) || (item->value_type==ITEM_VALUE_TYPE_UINT64))
 		{
-			/* Should we store delta or original value? */
-			if(item->delta == ITEM_STORE_AS_IS)
-			{
-				if(item->value_type==ITEM_VALUE_TYPE_UINT64)
-				{
-					if(GET_UI64_RESULT(value))
-						if (CONFIG_HFS_PATH)
-							HFSadd_history_uint (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay, value->ui64, now);
-						else
-							DBadd_history_uint(item->itemid,value->ui64,now);
+			item_value_u new_val, res_val;
+			int ok = 1;
 
-				}
-				else if(item->value_type==ITEM_VALUE_TYPE_FLOAT)
-				{
-					if(GET_DBL_RESULT(value))
-						if (CONFIG_HFS_PATH)
-							HFSadd_history (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay, value->dbl, now);
-						else
-							DBadd_history(item->itemid,value->dbl,now);
-
-				}
+			if(item->value_type==ITEM_VALUE_TYPE_UINT64) {
+				if (GET_UI64_RESULT (value))
+					new_val.l = value->ui64;
+				else
+					ok = 0;
 			}
-			/* Delta as speed of change */
-			else if(item->delta == ITEM_STORE_SPEED_PER_SECOND)
-			{
-				/* Save delta */
-				if( ITEM_VALUE_TYPE_FLOAT == item->value_type )
-				{
-					if(GET_DBL_RESULT(value) && (item->prevorgvalue_null == 0) && (item->prevorgvalue_dbl <= value->dbl) && (now != item->lastclock))
-					{
-						if (CONFIG_HFS_PATH)
-							HFSadd_history (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay,
-									(value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock), now);
-						else
-							DBadd_history(item->itemid,
-								      (value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock),
-								      now);
-					}
-				}
-				else if( ITEM_VALUE_TYPE_UINT64 == item->value_type )
-				{
-					if(GET_UI64_RESULT(value) && (item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= value->ui64) && (now != item->lastclock))
-					{
-						if (CONFIG_HFS_PATH)
-							HFSadd_history_uint (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay,
-								(value->ui64 - item->prevorgvalue_uint64)/(now-item->lastclock), now);
-						else
-							DBadd_history_uint(
-									   item->itemid,
-									   (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64)/(now-item->lastclock),
-									   now);
-					}
-				}
+			else {
+				if (GET_DBL_RESULT (value))
+					new_val.d = value->dbl;
+				else
+					ok = 0;
 			}
-			/* Real delta: simple difference between values */
-			else if(item->delta == ITEM_STORE_SIMPLE_CHANGE)
-			{
-				/* Save delta */
-				if( ITEM_VALUE_TYPE_FLOAT == item->value_type )
-				{
-					if(GET_DBL_RESULT(value) && (item->prevorgvalue_null == 0) && (item->prevorgvalue_dbl <= value->dbl) )
-					{
-						if (CONFIG_HFS_PATH)
-							HFSadd_history (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay, value->dbl-item->prevorgvalue_dbl, now);
-						else
-							DBadd_history(item->itemid, (value->dbl - item->prevorgvalue_dbl), now);
-					}
-				}
-				else if(item->value_type==ITEM_VALUE_TYPE_UINT64)
-				{
-					if(GET_UI64_RESULT(value) && (item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= value->ui64) )
-					{
-						if (CONFIG_HFS_PATH)
-							HFSadd_history_uint (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay,
-								value->ui64-item->prevorgvalue_uint64, now);
-						else
-							DBadd_history_uint(item->itemid, value->ui64 - item->prevorgvalue_uint64, now);
-					}
-				}
-			}
-			else
-			{
+			if (!ok || !process_item_delta (item, &new_val, now, &res_val)) {
 				zabbix_log(LOG_LEVEL_ERR, "Value not stored for itemid [%d]. Unknown delta [%d]",
 					item->itemid,
 					item->delta);
@@ -567,6 +545,19 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 					item->delta);
 				ret = FAIL;
 			}
+			else {
+				if (CONFIG_HFS_PATH)
+					if(item->value_type==ITEM_VALUE_TYPE_UINT64)
+						HFSadd_history_uint (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay, res_val.l, now);
+					else
+						HFSadd_history (CONFIG_HFS_PATH, item->siteid, item->itemid, item->delay, res_val.d, now);
+				else
+					if(item->value_type==ITEM_VALUE_TYPE_UINT64)
+						DBadd_history_uint(item->itemid, res_val.l, now);
+					else
+						DBadd_history(item->itemid, res_val.d, now);
+			}
+
 		}
 		else if(item->value_type==ITEM_VALUE_TYPE_STR)
 		{
@@ -975,6 +966,25 @@ const char* getSiteCondition ()
 }
 
 
+/* history addition token */
+typedef struct {
+	/* server and key for which we store data */
+	char* server;
+	char* key;
+
+	/* state */
+	hfs_time_t start_ts;
+	hfs_time_t prev_ts;
+	item_type_t type;
+	DB_ITEM item;
+
+	/* buffer */
+	item_value_u* buf;
+	int buf_size;
+	int buf_count;
+} history_state_t;
+
+
 /* performs append of history value to internally-allocated
    buffer. Calls to this routine must be sorted by timestamp. This
    routine calls flush_history when key or server changed. You must
@@ -982,11 +992,141 @@ const char* getSiteCondition ()
    */
 void	append_history (char* server, char* key, char* value, char* clock, void** token)
 {
+	history_state_t* state = (history_state_t*)*token;
+	hfs_time_t ts;
+	item_value_u val, val_res;
 
+	/* check that server and key are still the same */
+	if (state) {
+		if (strcmp (server, state->server) || strcmp (key, state->key)) {
+			flush_history (token);
+			state = NULL;
+		}
+	}
+
+	if (!state) {
+		DB_RESULT	result;
+		DB_ROW	row;
+		char	server_esc[MAX_STRING_LEN];
+		char	key_esc[MAX_STRING_LEN];
+
+		/* obtain item's attributes */
+		DBescape_string(server, server_esc, MAX_STRING_LEN);
+		DBescape_string(key, key_esc, MAX_STRING_LEN);
+
+		result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.host='%s' and i.key_='%s' and i.status in (%d,%d) and i.type in (%d,%d) and" ZBX_COND_NODEID " and " ZBX_COND_SITE,
+				  ZBX_SQL_ITEM_SELECT,
+				  HOST_STATUS_MONITORED,
+				  server_esc,
+				  key_esc,
+				  ITEM_STATUS_ACTIVE, ITEM_STATUS_NOTSUPPORTED,
+				  ITEM_TYPE_TRAPPER,
+				  ITEM_TYPE_ZABBIX_ACTIVE,
+				  LOCAL_NODE("h.hostid"),
+				  getSiteCondition ());
+
+		row=DBfetch(result);
+		if(!row) {
+			DBfree_result(result);
+			return;
+		}
+
+		/* first run of append_history, initialize structure */
+		state = (history_state_t*)malloc (sizeof (history_state_t));
+
+		DBget_item_from_db(&state->item, row);
+
+		state->server = strdup (server);
+		state->key = strdup (key);
+
+		sscanf (clock, "%lld", &state->start_ts);
+		state->prev_ts = state->start_ts;
+
+		if (state->item.value_type == ITEM_VALUE_TYPE_FLOAT)
+			state->type = IT_DOUBLE;
+		else
+			state->type = IT_UINT64;
+		DBfree_result(result);
+
+		state->buf = NULL;
+		state->buf_size = 0;
+		state->buf_count = 0;
+
+		*token = state;
+	}
+
+	sscanf (clock, "%lld", &ts);
+
+	/* zero time occured sometimes, ignore it */
+	if (!ts)
+		return;
+
+	if (!state->start_ts)
+		state->start_ts = state->prev_ts = ts;
+
+	/* append value to buffer */
+	if (state->buf_size == state->buf_count) {
+		state->buf_size += 256;
+		state->buf = (item_value_u*)realloc (state->buf, sizeof (item_value_u) * state->buf_size);
+	}
+
+	/* compare timestamp values and perform padding if needed */
+	if ((ts - state->prev_ts) / state->item.delay > 1) {
+		int count = (ts - state->prev_ts) / state->item.delay - 1;
+
+		while (count--) {
+			state->buf[state->buf_count++].d = 0xFFFFFFFFFFFFFFFFULL;
+			if (state->buf_size == state->buf_count) {
+				state->buf_size += 256;
+				state->buf = (item_value_u*)realloc (state->buf, sizeof (item_value_u) * state->buf_size);
+			}
+		}
+		state->item.prevorgvalue_null = 1;
+	}
+
+	if (state->type == IT_DOUBLE) {
+		sscanf (value, "%lf", &val.d);
+		process_item_delta (&state->item, &val, ts, &val_res);
+		state->buf[state->buf_count++].d = val_res.d;
+		state->item.prevorgvalue_dbl = val.d;
+	}
+	else {
+		sscanf (value, "%llu", &val.l);
+		process_item_delta (&state->item, &val, ts, &val_res);
+		state->buf[state->buf_count++].l = val_res.l;
+		state->item.prevorgvalue_uint64 = val.l;
+	}
+
+	state->item.prevorgvalue_null = 0;
+	state->item.lastclock = ts;
+	state->prev_ts = ts;
 }
 
 
 void	flush_history (void** token)
 {
+	history_state_t* state = (history_state_t*)*token;
 
+	if (!state)
+		return;
+
+	/* add portion of data */
+	if (state->buf_count) {
+		if (state->type == IT_DOUBLE)
+			HFSadd_history_vals (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, state->item.itemid, 
+					     state->item.delay, state->buf, state->buf_count, state->start_ts);
+		else
+			HFSadd_history_vals_uint (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, state->item.itemid, 
+					     state->item.delay, state->buf, state->buf_count, state->start_ts);
+	}
+
+	/* free */
+	if (state->buf)
+		free (state->buf);
+	if (state->key)
+		free (state->key);
+	if (state->server)
+		free (state->server);
+	free (state);
+	*token = NULL;
 }

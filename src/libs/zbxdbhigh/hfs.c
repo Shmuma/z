@@ -100,7 +100,7 @@ int release_lock (int fd, int write)
 void HFSadd_history (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, double value, hfs_time_t clock)
 {
     zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_history()");
-    store_value (hfs_base_dir, siteid, itemid, clock, delay, &value, sizeof (double), IT_DOUBLE);
+    store_values (hfs_base_dir, siteid, itemid, clock, delay, &value, sizeof (double), 1, IT_DOUBLE);
 }
 
 
@@ -111,7 +111,31 @@ void HFSadd_history (const char* hfs_base_dir, const char* siteid, zbx_uint64_t 
 void HFSadd_history_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t value, hfs_time_t clock)
 {
     zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_history_uint()");   
-    store_value (hfs_base_dir, siteid, itemid, clock, delay, &value, sizeof (zbx_uint64_t), IT_UINT64);
+    store_values (hfs_base_dir, siteid, itemid, clock, delay, &value, sizeof (zbx_uint64_t), 1, IT_UINT64);
+}
+
+
+
+/*
+  Routine adds array of double values to HistoryFS storage.
+*/
+void HFSadd_history_vals (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay,
+			  double* values, int count, hfs_time_t clock)
+{
+    zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_history()");
+    store_values (hfs_base_dir, siteid, itemid, clock, delay, values, sizeof (double), count, IT_DOUBLE);
+}
+
+
+
+/*
+  Routine adds array of uint64 value to HistoryFS storage.
+*/
+void HFSadd_history_vals_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay,
+			       zbx_uint64_t* values, int count, hfs_time_t clock)
+{
+    zabbix_log(LOG_LEVEL_DEBUG, "In HFSadd_history_uint()");
+    store_values (hfs_base_dir, siteid, itemid, clock, delay, values, sizeof (zbx_uint64_t), count, IT_UINT64);
 }
 
 
@@ -174,7 +198,7 @@ hfs_off_t xlseek(const char *fn, int fd, hfs_off_t offset, int whence)
 	return rc;
 }
 
-int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t clock, int delay, void* value, int len, item_type_t type)
+int store_values (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t clock, int delay, void* value, int len, int count, item_type_t type)
 {
     char *p_meta = NULL, *p_data = NULL;
     int is_trend = is_trend_type (type);
@@ -183,7 +207,7 @@ int store_value (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
     p_meta = get_name (hfs_base_dir, siteid, itemid, is_trend ? NK_TrendItemMeta : NK_ItemMeta);
     p_data = get_name (hfs_base_dir, siteid, itemid, is_trend ? NK_TrendItemData : NK_ItemData);
 
-    res = hfs_store_values (p_meta, p_data, clock, delay, value, len, 1, type);
+    res = hfs_store_values (p_meta, p_data, clock, delay, value, len, count, type);
     free (p_meta);
     free (p_data);
 
@@ -211,6 +235,7 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
     }
 
     zabbix_log(LOG_LEVEL_DEBUG, "HFS: meta read: delays: %d %d, blocks %d, ofs %u", meta->last_delay, delay, meta->blocks, meta->last_ofs);
+    clock -= clock % delay;
 
     /* should we start a new block? */
     if (meta->blocks == 0 || meta->last_delay != delay || type != meta->last_type) {
@@ -314,7 +339,7 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
         ofs = ip->ofs + (ip->end - ip->start + delay) * len / delay;
         lseek (fd, ofs, SEEK_SET);
 
-        if (extra > 0) {
+        if (extra > 1) {
             char* buf;
             extra--;
             buf = (char*)malloc (extra*len);
