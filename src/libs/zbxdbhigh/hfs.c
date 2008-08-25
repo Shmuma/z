@@ -332,6 +332,9 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	if (!obtain_lock (fd, 1))
 		goto err_exit;
 
+	ip->start -= ip->start % delay;
+	ip->end -= ip->end % delay;
+
         /* if we are trying to write after the block's end, fill rest with FF's */
         extra = (clock - ip->end) / delay;
 
