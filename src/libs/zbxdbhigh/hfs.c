@@ -340,6 +340,7 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 
         /* calculate offset of the end */
         ofs = ip->ofs + (ip->end - ip->start + delay) * len / delay;
+	ofs -= ofs % len;
         lseek (fd, ofs, SEEK_SET);
 
         if (extra > 1) {
@@ -354,6 +355,7 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
         else 
             if (extra < 0) {
                 ofs = ip->ofs + ((clock - ip->start) / delay) * len;
+		ofs -= ofs % len;
                 lseek (fd, ofs, SEEK_SET);
             }
 
