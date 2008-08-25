@@ -20,13 +20,6 @@ char *help_message[] = { "Help", 0 };
 
 typedef struct {
     hfs_time_t ts;
-    item_type_t type;
-    item_value_u val;
-} hfs_data_item_t;
-
-
-typedef struct {
-    hfs_time_t ts;
     hfs_trend_t value;
 } hfs_trend_item_t;
 
@@ -231,9 +224,10 @@ void store_trends (const char* item_dir, hfs_trend_item_t* trends, int count)
     zbx_snprintf (p_meta, sizeof (p_meta), "%s/trends.meta", item_dir);
     zbx_snprintf (p_data, sizeof (p_data), "%s/trends.data", item_dir);
 
+    /* TODO: make this in one store_values call */
     for (i = 0; i < count; i++) {
         /* skip empty trends values */
         if (trends[i].value.count)
-            hfs_store_value (p_meta, p_data, trends[i].ts, 3600, &trends[i].value, sizeof (hfs_trend_t), IT_TRENDS);
+            hfs_store_values (p_meta, p_data, trends[i].ts, 3600, &trends[i].value, sizeof (hfs_trend_t), 1, IT_TRENDS);
     }
 }

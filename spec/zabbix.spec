@@ -62,7 +62,10 @@ if [ -z "`grep zabbix etc/passwd`" ]; then
     /usr/sbin/useradd -g zabbix zabbix >/dev/null 2>&1
 fi
 
+exit 0
+
 %pre -n zabbix-agent
+
 if [ -z "`grep monitor etc/group`" ]; then
     /usr/sbin/groupadd monitor >/dev/null 2>&1
 fi
@@ -81,6 +84,8 @@ fi
 [ -f %{zabbix_confdir}/zabbix_agentd.conf ] && mv -f %{zabbix_confdir}/zabbix_agentd.conf %{zabbix_confdir}/zabbix_agentd.conf.old
 [ -f %{zabbix_confdir}/zabbix_trapper.conf ] && mv -f %{zabbix_confdir}/zabbix_trapper.conf %{zabbix_confdir}/zabbix_trapper.conf.old
 [ -f %{zabbix_confdir}/server.conf ] && mv -f %{zabbix_confdir}/server.conf %{zabbix_confdir}/server.conf.old
+
+exit 0
 
 
 %post
@@ -124,6 +129,7 @@ ipcs -m | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 2 | while read key; do i
 
 # start agent after installation
 /sbin/service zabbix_agentd start >/dev/null 2>&1 || :
+exit 0
 
 
 %preun
@@ -132,6 +138,8 @@ then
   /sbin/service zabbix_server stop >/dev/null 2>&1 || :
   /sbin/chkconfig --del zabbix_server
 fi
+
+exit 0
 
 %preun -n zabbix-agent
 # stop agent
@@ -148,6 +156,8 @@ then
   /sbin/chkconfig --del zabbix_agentd
   [ -d %zabbix_spool ] && rm -rf %zabbix_spool
 fi
+
+exit 0
 
 
 %clean

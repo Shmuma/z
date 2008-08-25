@@ -17,6 +17,20 @@ char title_message[] = "Title";
 char usage_message[] = "Usage";
 char *help_message[] = { "Help", 0 };
 
+
+/* append value to bufer (resize it if needed) */
+void append_value (item_value_u** buf, int* buf_size, int* count, item_value_u* val)
+{
+    if (*buf_size == *count) {
+        *buf_size += 256;
+        *buf = (item_value_u*)realloc (*buf, (*buf_size) * sizeof (item_value_u));
+    }
+
+    (*buf)[*count] = *val;
+    *count += 1;
+}
+
+
 int main(int argc, char **argv)
 {
 	FILE * fp;
@@ -29,6 +43,12 @@ int main(int argc, char **argv)
 	const char datafile[MAXPATHLEN];
 	const char metafile[MAXPATHLEN];
 	int rc = EXIT_SUCCESS;
+        item_value_u* values = NULL;
+        int values_buf = 0;
+        int values_count = 0;
+
+        int o_type, o_delay;
+        hfs_time_t o_stamp, b_stamp;
 
 	if (argc != 3) {
 		printf("Usage %s <outdir> <hfs-dump-file>\n", argv[0]);
@@ -109,11 +129,41 @@ int main(int argc, char **argv)
 				else if (type == IT_DOUBLE)
 					rc = sscanf(start, "value=%lf", &value.d);
 
-				rc = hfs_store_value(metafile, datafile, stamp, delay,
-						     &value, sizeof(item_value_u), type);
+                                /* check that we must start a new block */
+                                if (values_count) {
+                                    if (delay != o_delay || o_type != type || o_stamp > stamp) {
+                                        /* dump old data */
+                                        rc = hfs_store_values(metafile, datafile, b_stamp, o_delay,
+                                                              values, sizeof(item_value_u), values_count, o_type);
+                                        values_count = 0;
+                                        o_type = type;
+                                        o_delay = delay;
+                                        b_stamp = stamp;
+                                    }
 
-				if (rc != 0)
-					fprintf(stderr, "hfs_store_value() == %d\n", rc);
+                                    /* check that data value appeared before it's time */
+                                    if (stamp - o_stamp < delay)
+                                        continue; /* drop data item */
+                                    if (stamp - o_stamp > delay) {
+                                        /* append needed amount of invalid data values */
+                                        item_value_u v;
+                                        int i;
+                                        hfs_time_t extra = (stamp - o_stamp) / delay;
+                                        v.l = 0xFFFFFFFFFFFFFFFFULL;
+
+                                        for (i = 0; i < extra-1; i++)
+                                            append_value (&values, &values_buf, &values_count, &v);
+                                    }
+                                }
+                                else {
+                                    o_type = type;
+                                    o_delay = delay;
+                                    b_stamp = stamp;
+                                }
+
+                                o_stamp = stamp;
+
+                                append_value (&values, &values_buf, &values_count, &value);
 
 //				printf("TIME: %lld\n", stamp);
 //				printf("TYPE: %d\n", type);
@@ -124,6 +174,13 @@ int main(int argc, char **argv)
 			start = (ch != NULL) ? (ch + 1) : NULL;
 		}
 	}
+
+        /* dump data (if any) */
+        if (values_count)
+            hfs_store_values(metafile, datafile, b_stamp, o_delay,
+                             values, sizeof(item_value_u), values_count, o_type);
+        if (values)
+            free (values);
 out:
 	if (line)
 		free(line);

@@ -37,5 +37,8 @@ int	process_data(zbx_sock_t *sock,char *server,char *key, char *value, char* err
 		char *source, char *severity, char* when);
 void	process_new_value(DB_ITEM *item, AGENT_RESULT *value, time_t timestamp);
 
+void	append_history (char* server, char* key, char* value, char* clock, void** token);
+void	flush_history (void** token);
+
 
 #endif
