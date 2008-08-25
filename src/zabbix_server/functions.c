@@ -973,3 +973,20 @@ const char* getSiteCondition ()
 	else
 		return "1=1";
 }
+
+
+/* performs append of history value to internally-allocated
+   buffer. Calls to this routine must be sorted by timestamp. This
+   routine calls flush_history when key or server changed. You must
+   also call flush_history when all items are read and added.
+   */
+void	append_history (char* server, char* key, char* value, char* clock, void** token)
+{
+
+}
+
+
+void	flush_history (void** token)
+{
+
+}

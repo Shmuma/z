@@ -25,6 +25,7 @@
 #include "db.h"
 #include "log.h"
 #include "zlog.h"
+#include "hfs.h"
 
 #include "../functions.h"
 #include "../expression.h"
@@ -36,6 +37,9 @@
 #include "active.h"
 
 #include "daemon.h"
+
+extern char* CONFIG_SERVER_SITE;
+extern char* CONFIG_HFS_PATH;
 
 static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 {
@@ -142,20 +146,32 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 				value_string = NULL;
 				
 				void* token = NULL;
+				void* history_token = NULL;
 
-				DBbegin();
-				while (comms_parse_multi_response (s,host_dec,key_dec,value_dec,lastlogsize,timestamp,source,severity,
-							sizeof(host_dec)-1, &token) == SUCCEED)
-				{
-					server = host_dec;
-					value_string = value_dec;
-					key = key_dec;
-					/* insert history value. It doesn't support  */
-					ret = process_data(sock,server,key,value_string, NULL, NULL, NULL, NULL, NULL, timestamp);
-					if (ret != SUCCEED)
-						break;
+				if (CONFIG_HFS_PATH) {
+					/* perform ultra-fast history addition */
+					while (comms_parse_multi_response (s,host_dec,key_dec,value_dec,lastlogsize,timestamp,source,severity,
+									   sizeof(host_dec)-1, &token) == SUCCEED)
+					{
+						append_history (host_dec, key_dec, value_string, timestamp, &history_token);
+					}
+					flush_history (&history_token);
 				}
-				DBcommit();
+				else {
+					DBbegin();
+					while (comms_parse_multi_response (s,host_dec,key_dec,value_dec,lastlogsize,timestamp,source,severity,
+									   sizeof(host_dec)-1, &token) == SUCCEED)
+					{
+						server = host_dec;
+						value_string = value_dec;
+						key = key_dec;
+						/* insert history value. It doesn't support  */
+						ret = process_data(sock,server,key,value_string, NULL, NULL, NULL, NULL, NULL, timestamp);
+						if (ret != SUCCEED)
+							break;
+					}
+					DBcommit();
+				}
 
 				key = NULL;
 			}
