@@ -21,7 +21,7 @@ ZABBIX_AGENTD=$BASEDIR/zabbix_agentd
 
 runlevel=$(set -- $(runlevel); eval "echo \$$#" )
 
-[ -d /var/run/zabbix-agent ] || mkdir /var/run/zabbix-agent && chown monitor:monitor /var/run/zabbix
+[ -d /var/run/zabbix-agent ] || mkdir /var/run/zabbix-agent && chown monitor:monitor /var/run/zabbix-agent
 
 start()
 {

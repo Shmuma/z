@@ -80,10 +80,10 @@ fi
 [ -d %{zabbix_spool} ] && chown -R monitor:monitor %{zabbix_spool}
 
 # move old config files
-[ -f %{zabbix_confdir}/zabbix_agent.conf ] && mv -f %{zabbix_confdir}/zabbix_agent.conf %{zabbix_confdir}/zabbix_agent.conf.old
-[ -f %{zabbix_confdir}/zabbix_agentd.conf ] && mv -f %{zabbix_confdir}/zabbix_agentd.conf %{zabbix_confdir}/zabbix_agentd.conf.old
-[ -f %{zabbix_confdir}/zabbix_trapper.conf ] && mv -f %{zabbix_confdir}/zabbix_trapper.conf %{zabbix_confdir}/zabbix_trapper.conf.old
-[ -f %{zabbix_confdir}/server.conf ] && mv -f %{zabbix_confdir}/server.conf %{zabbix_confdir}/server.conf.old
+#[ -f %{zabbix_confdir}/zabbix_agent.conf ] && mv -f %{zabbix_confdir}/zabbix_agent.conf %{zabbix_confdir}/zabbix_agent.conf.old
+#[ -f %{zabbix_confdir}/zabbix_agentd.conf ] && mv -f %{zabbix_confdir}/zabbix_agentd.conf %{zabbix_confdir}/zabbix_agentd.conf.old
+#[ -f %{zabbix_confdir}/zabbix_trapper.conf ] && mv -f %{zabbix_confdir}/zabbix_trapper.conf %{zabbix_confdir}/zabbix_trapper.conf.old
+#[ -f %{zabbix_confdir}/server.conf ] && mv -f %{zabbix_confdir}/server.conf %{zabbix_confdir}/server.conf.old
 
 exit 0
 
@@ -146,10 +146,10 @@ exit 0
 /sbin/service zabbix_agentd stop >/dev/null 2>&1 || :
 
 # move old config files
-mv -f %{zabbix_confdir}/zabbix_agent.conf %{zabbix_confdir}/zabbix_agent.conf.old
-mv -f %{zabbix_confdir}/zabbix_agentd.conf %{zabbix_confdir}/zabbix_agentd.conf.old
-mv -f %{zabbix_confdir}/zabbix_trapper.conf %{zabbix_confdir}/zabbix_trapper.conf.old
-mv -f %{zabbix_confdir}/server.conf %{zabbix_confdir}/server.conf.old
+#mv -f %{zabbix_confdir}/zabbix_agent.conf %{zabbix_confdir}/zabbix_agent.conf.old
+#mv -f %{zabbix_confdir}/zabbix_agentd.conf %{zabbix_confdir}/zabbix_agentd.conf.old
+#mv -f %{zabbix_confdir}/zabbix_trapper.conf %{zabbix_confdir}/zabbix_trapper.conf.old
+#mv -f %{zabbix_confdir}/server.conf %{zabbix_confdir}/server.conf.old
 
 if [ "$1" = 0 ]
 then
