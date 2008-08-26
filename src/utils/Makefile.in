@@ -37,7 +37,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 sbin_PROGRAMS = hfsdump$(EXEEXT) hfsimport$(EXEEXT) \
-	hfs_trends_upd$(EXEEXT)
+	hfs_trends_upd$(EXEEXT) hfsfilter$(EXEEXT)
 subdir = src/utils
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -65,6 +65,9 @@ hfs_trends_upd_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_hfsdump_OBJECTS = hfsdump.$(OBJEXT)
 hfsdump_OBJECTS = $(am_hfsdump_OBJECTS)
 hfsdump_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_hfsfilter_OBJECTS = hfsfilter.$(OBJEXT)
+hfsfilter_OBJECTS = $(am_hfsfilter_OBJECTS)
+hfsfilter_LDADD = $(LDADD)
 am_hfsimport_OBJECTS = hfsimport.$(OBJEXT)
 hfsimport_OBJECTS = $(am_hfsimport_OBJECTS)
 hfsimport_DEPENDENCIES = $(am__DEPENDENCIES_1)
@@ -76,9 +79,9 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(hfs_trends_upd_SOURCES) $(hfsdump_SOURCES) \
-	$(hfsimport_SOURCES)
+	$(hfsfilter_SOURCES) $(hfsimport_SOURCES)
 DIST_SOURCES = $(hfs_trends_upd_SOURCES) $(hfsdump_SOURCES) \
-	$(hfsimport_SOURCES)
+	$(hfsfilter_SOURCES) $(hfsimport_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -230,6 +233,7 @@ hfsimport_LDADD = $(ZBX_LIBS)
 hfsdump_SOURCES = hfsdump.c
 hfs_trends_upd_SOURCES = hfs_trends_upd.c
 hfsimport_SOURCES = hfsimport.c
+hfsfilter_SOURCES = hfsfilter.c
 all: all-am
 
 .SUFFIXES:
@@ -292,6 +296,9 @@ hfs_trends_upd$(EXEEXT): $(hfs_trends_upd_OBJECTS) $(hfs_trends_upd_DEPENDENCIES
 hfsdump$(EXEEXT): $(hfsdump_OBJECTS) $(hfsdump_DEPENDENCIES) 
 	@rm -f hfsdump$(EXEEXT)
 	$(LINK) $(hfsdump_LDFLAGS) $(hfsdump_OBJECTS) $(hfsdump_LDADD) $(LIBS)
+hfsfilter$(EXEEXT): $(hfsfilter_OBJECTS) $(hfsfilter_DEPENDENCIES) 
+	@rm -f hfsfilter$(EXEEXT)
+	$(LINK) $(hfsfilter_LDFLAGS) $(hfsfilter_OBJECTS) $(hfsfilter_LDADD) $(LIBS)
 hfsimport$(EXEEXT): $(hfsimport_OBJECTS) $(hfsimport_DEPENDENCIES) 
 	@rm -f hfsimport$(EXEEXT)
 	$(LINK) $(hfsimport_LDFLAGS) $(hfsimport_OBJECTS) $(hfsimport_LDADD) $(LIBS)
@@ -304,6 +311,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfs_trends_upd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfsdump.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfsfilter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfsimport.Po@am__quote@
 
 .c.o:
