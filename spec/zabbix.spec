@@ -188,6 +188,7 @@ install -m 755 misc/init.d/redhat/zabbix_server %{buildroot}%{_sysconfdir}/init.
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_server
 %attr(0755,root,root) %{zabbix_bindir}/hfsdump
 %attr(0755,root,root) %{zabbix_bindir}/hfsimport
+%attr(0755,root,root) %{zabbix_bindir}/hfsfilter
 %attr(0755,root,root) %{zabbix_bindir}/hfs_trends_upd
 %{_sysconfdir}/init.d/zabbix_server
 

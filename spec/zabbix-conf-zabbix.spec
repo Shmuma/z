@@ -26,7 +26,9 @@ Zabbix extended checks for monitoring servers (pair and top).
 %pre
 # perform required sudo customizations
 umask 0337
-if [ ! cat /etc/sudoers | grep monitor | grep -q mmpmon ]; then
+if cat /etc/sudoers | grep monitor | grep -q mmpmon; then
+	echo 'Monitor already have sudo for gpfs monitoring'
+else
 	cat /etc/sudoers | sed  's/^Defaults  *requiretty/#Defaults requiretty/' > /tmp/sudoers.$$
 	echo 'monitor ALL=(ALL)        NOPASSWD: /usr/lpp/mmfs/bin/mmpmon' >> /tmp/sudoers.$$
 	mv /tmp/sudoers.$$ /etc/sudoers
