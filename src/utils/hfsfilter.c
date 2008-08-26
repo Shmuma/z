@@ -28,7 +28,7 @@ int main (int argc, char** argv)
 	int fd;
 	item_value_u val, max;
 	hfs_time_t ts;
-	int clear, count;
+	int clear, count, cl_count;
 	unsigned long long inval = 0xFFFFFFFFFFFFFFFFULL;
 
 	if (argc != 2) {
@@ -41,7 +41,7 @@ int main (int argc, char** argv)
 	meta = read_metafile (path);
 
 	if (!meta || !meta->blocks)
-		return 0;
+		return 1;
 
 	data = strdup (path);
 
@@ -50,6 +50,7 @@ int main (int argc, char** argv)
 	data[i-3] = 'a';
 
 	fd = open (data, O_RDWR);
+	cl_count = 0;
 
 	for (i = 0; i < meta->blocks; i++) {
 		ofs = meta->meta[i].ofs;
@@ -68,33 +69,38 @@ int main (int argc, char** argv)
 			if (is_valid_val (&val, sizeof (val))) {
 				clear = 0;
 				if (meta->meta[i].type == IT_DOUBLE) {
-					if (val.d < 0 || val.l > max.d * 100000.0)
-						clear = 1;
+					if (count > 100)
+						if (val.d < 0 || val.d > (max.d * 100000.0))
+							clear = 1;
 					if (!clear)
 						if (max.d < val.d)
 							max.d = val.d;
 				}
 				else {
-					if (val.l > max.l * 100000)
-						clear = 1;
+					if (count > 100)
+						if (val.l > (max.l * 100000))
+							clear = 1;
 					if (!clear)
 						if (max.l < val.l)
 							max.l = val.l;
 				}
 
 				if (clear) {
-					lseek (fd, -sizeof (val), SEEK_CUR);
+					lseek (fd, ofs, SEEK_SET);
 					write (fd, &inval, sizeof (inval));
+					cl_count++;
 				}
 
 				count++;
 			}
 
 			ts += meta->meta[i].delay;
+			ofs += sizeof (val);
 		}
 	}
 
 	close (data);
+	printf ("%d items cleared\n", cl_count);
 
-	return 0;
+	return cl_count ? 0 : 1;
 }
