@@ -220,7 +220,7 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
     hfs_meta_item_t item, *ip;
     hfs_meta_t* meta;
     int fd;
-    int i, j;
+    int i, j, res;
     unsigned char v = 0xff;
     hfs_off_t extra;
     hfs_off_t size, ofs;
@@ -274,7 +274,7 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: type <- %u", meta->last_type);
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: last_ofs <- %u", meta->last_ofs);
 
-	if (xwrite (p_meta, fd, meta, sizeof (mfs_meta_t) - sizeof (meta->meta)) == -1)
+	if (xwrite (p_meta, fd, meta, sizeof (hfs_meta_t) - sizeof (meta->meta)) == -1)
 		goto err_exit;
 
 	if (xlseek (p_meta, fd, sizeof (hfs_meta_item_t)*(meta->blocks-1), SEEK_CUR) == -1)
@@ -332,14 +332,14 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 		lseek (fd, meta->last_ofs + len, SEEK_SET);
 		buf = (char*)malloc (extra);
 		memset (buf, 0xFF, extra);
-		write (fd, buf, extra);
+		res = write (fd, buf, extra);
 		free (buf);
 	}
 	else
 		lseek (fd, ofs, SEEK_SET);
 
         /* we're ready to write */
-        write (fd, values, len*count);
+        res = write (fd, values, len*count);
         if (meta->last_ofs < ofs + len*(count-1))
 		meta->last_ofs = ofs + len*(count-1);
 
@@ -436,10 +436,11 @@ int make_directories (const char* path)
 void write_str (int fd, const char* str)
 {
 	int len = str ? strlen (str) : 0;
+	int res;
 
-	write (fd, &len, sizeof (len));
+	res = write (fd, &len, sizeof (len));
 	if (len)
-		write (fd, str, len+1);
+		res = write (fd, str, len+1);
 }
 
 
