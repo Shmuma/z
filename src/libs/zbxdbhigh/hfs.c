@@ -274,10 +274,7 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: type <- %u", meta->last_type);
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: last_ofs <- %u", meta->last_ofs);
 
-	if ((xwrite (p_meta, fd, &meta->blocks, sizeof (meta->blocks)) == -1) ||
-	    (xwrite (p_meta, fd, &meta->last_delay, sizeof (meta->last_delay)) == -1) ||
-	    (xwrite (p_meta, fd, &meta->last_type, sizeof (meta->last_type)) == -1) ||
-	    (xwrite (p_meta, fd, &meta->last_ofs, sizeof (meta->last_ofs)) == -1))
+	if (xwrite (p_meta, fd, meta, sizeof (mfs_meta_t) - sizeof (meta->meta)) == -1)
 		goto err_exit;
 
 	if (xlseek (p_meta, fd, sizeof (hfs_meta_item_t)*(meta->blocks-1), SEEK_CUR) == -1)
@@ -661,10 +658,7 @@ hfs_meta_t *read_metafile(const char *metafile)
 		return res;
 	}
 
-	if (fread(&res->blocks, sizeof(res->blocks), 1, f) != 1 ||
-	    fread(&res->last_delay, sizeof(res->last_delay), 1, f) != 1 ||
-	    fread(&res->last_type, sizeof(res->last_type), 1, f) != 1 ||
-	    fread(&res->last_ofs, sizeof(res->last_ofs), 1, f) != 1)
+	if (fread (res, sizeof (hfs_meta_t) - sizeof (res->meta), 1, f) != 1)
 	{
 		fclose(f);
 		free(res);

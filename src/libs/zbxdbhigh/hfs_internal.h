@@ -11,7 +11,7 @@ typedef struct hfs_meta_item {
     hfs_off_t ofs;
 } hfs_meta_item_t;
 
-typedef struct hfs_meta {
+typedef struct __attribute__ ((packed)) hfs_meta {
     int blocks;
     int last_delay;
     item_type_t last_type;
