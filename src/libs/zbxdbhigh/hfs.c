@@ -259,9 +259,6 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	if ((fd = xopen (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
 		goto err_exit;
 
-	if (!obtain_lock (fd, 1))
-		goto err_exit;
-
 	meta->blocks++;
 	meta->last_delay = delay;
 	meta->last_type = type;
@@ -289,7 +286,6 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	if (xwrite (p_meta, fd, &item, sizeof (item)) == -1)
 		goto err_exit;
 
-        release_lock (fd, 1);
 	close (fd);
 	fd = -1;
 
@@ -300,16 +296,12 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	if ((fd = xopen (p_data, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
 		goto err_exit;
 
-	if (!obtain_lock (fd, 1))
-		goto err_exit;
-
 	if (xlseek (p_data, fd, ofs, SEEK_SET) == -1)
 		goto err_exit;
 
 	if (xwrite (p_data, fd, values, len * count) == -1)
 		goto err_exit;
 
-        release_lock (fd, 1);
 	close (fd);
 	fd = -1;
 
@@ -327,9 +319,6 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
         }
 
 	if ((fd = xopen (p_data, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
-		goto err_exit;
-
-	if (!obtain_lock (fd, 1))
 		goto err_exit;
 
 	ip->start -= ip->start % delay;
@@ -364,7 +353,6 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
         if (meta->last_ofs < ofs + len*(count-1))
             meta->last_ofs = ofs + len*(count-1);
 
-        release_lock (fd, 1);
         close (fd);
         fd = -1;
 
@@ -373,9 +361,6 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
             ip->end = clock + delay*(count-1);
 
         if ((fd = xopen (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
-            goto err_exit;
-
-        if (!obtain_lock (fd, 1))
             goto err_exit;
 
         if (xlseek (p_meta, fd, sizeof (meta->blocks) * 3, SEEK_SET) == -1)
@@ -390,7 +375,6 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
         if (xwrite (p_meta, fd, ip, sizeof (hfs_meta_item_t)) == -1)
             goto err_exit;
 
-        release_lock (fd, 1);
         close (fd);
         fd = -1;
 
@@ -398,10 +382,8 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
     }
 
 err_exit:
-    if (fd != -1) {
-        release_lock (fd, 1);
+    if (fd != -1)
         close (fd);
-    }
     free_meta (meta);
 
     return retval;
