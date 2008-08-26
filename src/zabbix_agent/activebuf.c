@@ -315,7 +315,7 @@ static int apply_new_entries ()
         s = 0;
 
         for (i = 0; i < count; i++) {
-            buffer.header_size += strlen (buffer.entries[i].key) + 1 + sizeof (size_t)*2;
+            buffer.header_size += strlen (buffer.entries[i].key) + 1 + sizeof (size_t)*2 + sizeof (int)*2;
             buffer.entries[i].beg_offset = ofs;
 
             if (buffer.new_entries[i].refresh)
@@ -462,6 +462,7 @@ active_buffer_item_t* take_active_buffer_item ()
     if (active_buffer_is_empty ())
         return NULL;
 
+    flush_buffer ();
     zabbix_log (LOG_LEVEL_DEBUG, "take_active_buffer_item ()");
     zabbix_log (LOG_LEVEL_DEBUG, "Buffer size %d, items %d", buffer.size, buffer.items);
     e = buffer.entries;
