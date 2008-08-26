@@ -222,7 +222,7 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
     int fd;
     int i, j;
     unsigned char v = 0xff;
-    hfs_off_t eextra, extra;
+    hfs_off_t extra;
     hfs_off_t size, ofs;
     int retval = 1;
     hfs_trend_t trend;
@@ -321,37 +321,30 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	if ((fd = xopen (p_data, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
 		goto err_exit;
 
+	/* round start and end clock according to delay */
 	ip->start -= ip->start % delay;
 	ip->end -= ip->end % delay;
 
-        /* if we are trying to write after the block's end, fill rest with FF's */
-        extra = (clock - ip->end) / delay;
+	ofs = ip->ofs + ((clock - ip->start) / delay) * len;
 
-        /* calculate offset of the end */
-        ofs = ip->ofs + (ip->end - ip->start + delay) * len / delay;
-	ofs -= ofs % len;
-        lseek (fd, ofs, SEEK_SET);
+	extra = ofs - meta->last_ofs - len;
+	extra -= extra % len;
 
-        if (extra > 1) {
-            char* buf;
-            extra--;
-            buf = (char*)malloc (extra*len);
-            memset (buf, 0xFF, extra*len);
-            write (fd, buf, extra*len);
-            free (buf);
-            ofs += extra*len;
-        }
-        else 
-            if (extra < 0) {
-                ofs = ip->ofs + ((clock - ip->start) / delay) * len;
-		ofs -= ofs % len;
-                lseek (fd, ofs, SEEK_SET);
-            }
+	if (extra > 0) {
+		char* buf;
+		lseek (fd, meta->last_ofs + len, SEEK_SET);
+		buf = (char*)malloc (extra);
+		memset (buf, 0xFF, extra);
+		write (fd, buf, extra);
+		free (buf);
+	}
+	else
+		lseek (fd, ofs, SEEK_SET);
 
         /* we're ready to write */
         write (fd, values, len*count);
         if (meta->last_ofs < ofs + len*(count-1))
-            meta->last_ofs = ofs + len*(count-1);
+		meta->last_ofs = ofs + len*(count-1);
 
         close (fd);
         fd = -1;

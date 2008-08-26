@@ -442,6 +442,8 @@ static int process_item_delta (DB_ITEM *item, item_value_u* new_val, int now, it
 			res_val->l = new_val->l;
 		else if(item->value_type==ITEM_VALUE_TYPE_FLOAT)
 			res_val->d = new_val->d;
+		else
+			return 0;
 		return 1;
 	}
 	/* Delta as speed of change */
@@ -450,10 +452,14 @@ static int process_item_delta (DB_ITEM *item, item_value_u* new_val, int now, it
 		if( ITEM_VALUE_TYPE_FLOAT == item->value_type ) {
 			if(item->prevorgvalue_null == 0 && (item->prevorgvalue_dbl <= new_val->d) && (now != item->lastclock))
 				res_val->d = (new_val->d - item->prevorgvalue_dbl)/(now-item->lastclock);
+			else
+				return 0;
 		}
 		else if( ITEM_VALUE_TYPE_UINT64 == item->value_type ) {
 			if((item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= new_val->l) && (now != item->lastclock))
 				res_val->l = (new_val->l - item->prevorgvalue_uint64)/(now-item->lastclock);
+			else
+				return 0;
 		}
 		return 1;
 	}
@@ -463,11 +469,17 @@ static int process_item_delta (DB_ITEM *item, item_value_u* new_val, int now, it
 		if( ITEM_VALUE_TYPE_FLOAT == item->value_type ) {
 			if((item->prevorgvalue_null == 0) && (item->prevorgvalue_dbl <= new_val->d) )
 				res_val->d = new_val->d - item->prevorgvalue_dbl;
+			else
+				return 0;
 		}
 		else if(item->value_type==ITEM_VALUE_TYPE_UINT64) {
 			if((item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= new_val->l) )
 				res_val->l = new_val->l - item->prevorgvalue_uint64;
+			else 
+				return 0;
 		}
+		else
+			return 0;
 		return 1;
 	}
 	else
@@ -977,6 +989,7 @@ typedef struct {
 	hfs_time_t prev_ts;
 	item_type_t type;
 	DB_ITEM item;
+	DB_RESULT result;
 
 	/* buffer */
 	item_value_u* buf;
@@ -1005,7 +1018,6 @@ void	append_history (char* server, char* key, char* value, char* clock, void** t
 	}
 
 	if (!state) {
-		DB_RESULT	result;
 		DB_ROW	row;
 		char	server_esc[MAX_STRING_LEN];
 		char	key_esc[MAX_STRING_LEN];
@@ -1014,7 +1026,10 @@ void	append_history (char* server, char* key, char* value, char* clock, void** t
 		DBescape_string(server, server_esc, MAX_STRING_LEN);
 		DBescape_string(key, key_esc, MAX_STRING_LEN);
 
-		result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.host='%s' and i.key_='%s' and i.status in (%d,%d) and i.type in (%d,%d) and" ZBX_COND_NODEID " and " ZBX_COND_SITE,
+		/* first run of append_history, initialize structure */
+		state = (history_state_t*)malloc (sizeof (history_state_t));
+
+		state->result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.host='%s' and i.key_='%s' and i.status in (%d,%d) and i.type in (%d,%d) and" ZBX_COND_NODEID " and " ZBX_COND_SITE,
 				  ZBX_SQL_ITEM_SELECT,
 				  HOST_STATUS_MONITORED,
 				  server_esc,
@@ -1025,14 +1040,12 @@ void	append_history (char* server, char* key, char* value, char* clock, void** t
 				  LOCAL_NODE("h.hostid"),
 				  getSiteCondition ());
 
-		row=DBfetch(result);
+		row=DBfetch(state->result);
 		if(!row) {
-			DBfree_result(result);
+			DBfree_result(state->result);
 			return;
 		}
 
-		/* first run of append_history, initialize structure */
-		state = (history_state_t*)malloc (sizeof (history_state_t));
 
 		DBget_item_from_db(&state->item, row);
 
@@ -1046,7 +1059,6 @@ void	append_history (char* server, char* key, char* value, char* clock, void** t
 			state->type = IT_DOUBLE;
 		else
 			state->type = IT_UINT64;
-		DBfree_result(result);
 
 		state->buf = NULL;
 		state->buf_size = 0;
@@ -1075,7 +1087,7 @@ void	append_history (char* server, char* key, char* value, char* clock, void** t
 		int count = (ts - state->prev_ts) / state->item.delay - 1;
 
 		while (count--) {
-			state->buf[state->buf_count++].d = 0xFFFFFFFFFFFFFFFFULL;
+			state->buf[state->buf_count++].l = 0xFFFFFFFFFFFFFFFFULL;
 			if (state->buf_size == state->buf_count) {
 				state->buf_size += 256;
 				state->buf = (item_value_u*)realloc (state->buf, sizeof (item_value_u) * state->buf_size);
@@ -1086,18 +1098,29 @@ void	append_history (char* server, char* key, char* value, char* clock, void** t
 
 	if (state->type == IT_DOUBLE) {
 		sscanf (value, "%lf", &val.d);
-		process_item_delta (&state->item, &val, ts, &val_res);
-		state->buf[state->buf_count++].d = val_res.d;
-		state->item.prevorgvalue_dbl = val.d;
+		if (process_item_delta (&state->item, &val, ts, &val_res)) {
+			state->buf[state->buf_count++].d = val_res.d;
+			state->item.prevorgvalue_dbl = val.d;
+			state->item.prevorgvalue_null = 0;
+		}
+		else {
+			state->buf[state->buf_count++].l = 0xFFFFFFFFFFFFFFFFULL;
+			state->item.prevorgvalue_null = 1;
+		}
 	}
 	else {
 		sscanf (value, "%llu", &val.l);
-		process_item_delta (&state->item, &val, ts, &val_res);
-		state->buf[state->buf_count++].l = val_res.l;
-		state->item.prevorgvalue_uint64 = val.l;
+		if (process_item_delta (&state->item, &val, ts, &val_res)) {
+			state->buf[state->buf_count++].l = val_res.l;
+			state->item.prevorgvalue_uint64 = val.l;
+			state->item.prevorgvalue_null = 0;
+		}
+		else {
+			state->buf[state->buf_count++].l = 0xFFFFFFFFFFFFFFFFULL;
+			state->item.prevorgvalue_null = 1;
+		}
 	}
 
-	state->item.prevorgvalue_null = 0;
 	state->item.lastclock = ts;
 	state->prev_ts = ts;
 }
@@ -1127,6 +1150,7 @@ void	flush_history (void** token)
 		free (state->key);
 	if (state->server)
 		free (state->server);
+	DBfree_result(state->result);
 	free (state);
 	*token = NULL;
 }
