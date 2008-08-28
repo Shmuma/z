@@ -429,6 +429,8 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 
 	free_result(&agent);
 
+	DBfree_item(&item);
+
 	return SUCCEED;
 }
 
@@ -1151,6 +1153,7 @@ void	flush_history (void** token)
 	if (state->server)
 		free (state->server);
 	DBfree_result(state->result);
+	DBfree_item(&state->item);
 	free (state);
 	*token = NULL;
 }

@@ -87,6 +87,7 @@ static int process_value(zbx_uint64_t itemid, AGENT_RESULT *value)
 	DBcommit();
  
 	DBfree_result(result);
+	DBfree_item(&item);
 
 	zabbix_log( LOG_LEVEL_DEBUG, "End process_value()");
 

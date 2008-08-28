@@ -38,6 +38,8 @@
 #include "threads.h"
 #include "dbsync.h"
 
+extern char* CONFIG_HFS_PATH;
+
 void	DBclose(void)
 {
 	zbx_db_close();
@@ -1597,6 +1599,16 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 {
 	char	*s;
 
+	/* Zabbix developers is morons. Some DB_ITEM pointers is not
+	   initialized after DBget_item_from_db(). */
+	item->eventlog_source = NULL;
+	item->shortname = NULL;
+	item->eventlog_severity = 0;
+	item->lastlogsize = 0;
+	item->timestamp = 0;
+	item->trends = 0;
+	item->lastcheck = 0;
+
 	ZBX_STR2UINT64(item->itemid, row[0]);
 /*	item->itemid=atoi(row[0]); */
 	zbx_snprintf(item->key, ITEM_KEY_LEN, "%s", row[1]);
@@ -1614,6 +1626,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	item->value_type=atoi(row[17]);
 
 	s=row[13];
+	item->lastvalue_str=NULL;
 	if(DBis_null(s)==SUCCEED)
 	{
 		item->lastvalue_null=1;
@@ -1621,6 +1634,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	else
 	{
 		item->lastvalue_null=0;
+		item->lastvalue_str=s;
 		switch(item->value_type) {
 			case ITEM_VALUE_TYPE_FLOAT:
 				item->lastvalue_dbl=atof(s);
@@ -1628,12 +1642,10 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 			case ITEM_VALUE_TYPE_UINT64:
 				ZBX_STR2UINT64(item->lastvalue_uint64,s);
 				break;
-			default:
-				item->lastvalue_str=s;
-				break;
 		}	
 	}
 	s=row[14];
+	item->prevvalue_str=NULL;
 	if(DBis_null(s)==SUCCEED)
 	{
 		item->prevvalue_null=1;
@@ -1641,15 +1653,13 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	else
 	{
 		item->prevvalue_null=0;
+		item->prevvalue_str=s;
 		switch(item->value_type) {
 			case ITEM_VALUE_TYPE_FLOAT:
 				item->prevvalue_dbl=atof(s);
 				break;
 			case ITEM_VALUE_TYPE_UINT64:
 				ZBX_STR2UINT64(item->prevvalue_uint64,s);
-				break;
-			default:
-				item->prevvalue_str=s;
 				break;
 		}	
 	}
@@ -1661,6 +1671,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	item->delta=atoi(row[20]);
 
 	s=row[21];
+	item->prevorgvalue_str=NULL;
 	if(DBis_null(s)==SUCCEED)
 	{
 		item->prevorgvalue_null=1;
@@ -1668,15 +1679,13 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	else
 	{
 		item->prevorgvalue_null=0;
+		item->prevorgvalue_str=s;
 		switch(item->value_type) {
 			case ITEM_VALUE_TYPE_FLOAT:
 				item->prevorgvalue_dbl=atof(s);
 				break;
 			case ITEM_VALUE_TYPE_UINT64:
 				ZBX_STR2UINT64(item->prevorgvalue_uint64,s);
-				break;
-			default:
-				item->prevorgvalue_str=s;
 				break;
 		}	
 	}
@@ -1707,6 +1716,85 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	item->delay_flex=row[35];
 	item->host_dns=row[36];
 	item->siteid=row[37];
+
+	switch(item->value_type) {
+		case ITEM_VALUE_TYPE_FLOAT:
+			HFS_get_item_values_dbl(CONFIG_HFS_PATH, item->siteid, item->itemid,
+						&item->lastclock, &item->nextcheck,
+						&item->prevvalue_dbl,
+						&item->lastvalue_dbl,
+						&item->prevorgvalue_dbl);
+
+			item->prevvalue_null    = (item->prevvalue_dbl == 0.0)    ? 1 : 0;
+			item->lastvalue_null    = (item->lastvalue_dbl == 0.0)    ? 1 : 0;
+			item->prevorgvalue_null = (item->prevorgvalue_dbl == 0.0) ? 1 : 0;
+			break;
+		case ITEM_VALUE_TYPE_UINT64:
+			HFS_get_item_values_int(CONFIG_HFS_PATH, item->siteid, item->itemid,
+						&item->lastclock, &item->nextcheck,
+						&item->prevvalue_uint64,
+						&item->lastvalue_uint64,
+						&item->prevorgvalue_uint64);
+
+			item->prevvalue_null    = (item->prevvalue_uint64 == 0)    ? 1 : 0;
+			item->lastvalue_null    = (item->lastvalue_uint64 == 0)    ? 1 : 0;
+			item->prevorgvalue_null = (item->prevorgvalue_uint64 == 0) ? 1 : 0;
+			break;
+		default:
+			HFS_get_item_values_str(CONFIG_HFS_PATH, item->siteid, item->itemid
+						&item->lastclock, &item->nextcheck,
+						&item->prevvalue_str,
+						&item->lastvalue_str,
+						&item->prevorgvalue_str);
+
+			item->prevvalue_null    = (item->prevvalue_str == NULL)    ? 1 : 0;
+			item->lastvalue_null    = (item->lastvalue_str == NULL)    ? 1 : 0;
+			item->prevorgvalue_null = (item->prevorgvalue_str == NULL) ? 1 : 0;
+			break;
+	}
+}
+
+int	DBget_item_by_itemid(int itemid, DB_ITEM *item)
+{
+	DB_RESULT	result;
+	DB_ROW		row;
+
+	result = DBselect("select %s where h.hostid=i.hostid and i.itemid=" ZBX_FS_UI64,
+		ZBX_SQL_ITEM_SELECT,
+		itemid);
+
+	row = DBfetch(result);
+
+	if(!row) {
+		DBfree_result(result);
+		return 0;
+	}
+
+	DBget_item_from_db(item, row);
+	DBfree_result(result);
+
+	return 1;
+}
+
+void DBfree_item(DB_ITEM *item)
+{
+	if (!item)
+		return;
+
+	switch(item->value_type) {
+		case ITEM_VALUE_TYPE_FLOAT:
+		case ITEM_VALUE_TYPE_UINT64:
+			return;
+	}
+
+	if (item->prevvalue_null == 0)
+		free(item->prevvalue_str);
+
+	if (item->lastvalue_null == 0)
+		free(item->lastvalue_str);
+
+	if (item->prevorgvalue_null == 0)
+		free(item->prevorgvalue_str);
 }
 
 /*

@@ -222,6 +222,8 @@ static void update_key_status(zbx_uint64_t hostid,int host_status)
 
 			update_triggers(item.itemid);
 		}
+
+		DBfree_item(&item);
 	}
 	else
 	{
@@ -352,6 +354,7 @@ int get_values(void)
 			{
 				zabbix_log( LOG_LEVEL_DEBUG, "Host " ZBX_FS_UI64 " is unreachable. Skipping [%s]",
 					item.hostid,item.key);
+				DBfree_item(&item);
 				continue;
 			}
 		}
@@ -518,6 +521,7 @@ int get_values(void)
 		}
 		free_result(&agent);
 		DBcommit();
+		DBfree_item(&item);
 	}
 
 	zbx_free(unreachable_hosts);
