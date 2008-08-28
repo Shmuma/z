@@ -267,7 +267,8 @@ int get_values(void)
 
 	now = time(NULL);
 
-	zbx_snprintf(tmp,sizeof(tmp)-1,ZBX_FS_UI64,0);
+	//zbx_snprintf(tmp,sizeof(tmp)-1,ZBX_FS_UI64,0);
+	bzero(tmp, MAX_STRING_LEN);
 	unreachable_hosts=zbx_strdcat(unreachable_hosts,tmp);
 
 	/* Poller for unreachable hosts */
