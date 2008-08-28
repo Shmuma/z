@@ -168,7 +168,7 @@ void	update_triggers(zbx_uint64_t itemid)
 		{
 			DBupdate_trigger_value(&trigger, exp_value, time(NULL), NULL);
 			if (CONFIG_HFS_PATH && trigger.value != exp_value)
-				HFS_update_trigger_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, trigger.triggerid, exp_value, time(NULL));
+				HFS_update_trigger_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, trigger.triggerid, exp_value, (hfs_time_t) time(NULL));
 		}
 		zbx_free(exp);
 	}
@@ -652,15 +652,15 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 		if (CONFIG_HFS_PATH) {
 		    switch (item->value_type) {
 		    case ITEM_VALUE_TYPE_STR:
-			HFS_update_item_values_str (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+			HFS_update_item_values_str (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)now, (hfs_time_t)nextcheck,
 						    item->lastvalue_null ? NULL : item->lastvalue_str, value->str, NULL);
 			break;
 		    case ITEM_VALUE_TYPE_FLOAT:
-			HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+			HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)now, (hfs_time_t)nextcheck,
 						    item->lastvalue_null ? 0.0 : item->lastvalue_dbl, value->dbl, 0.0);
 			break;
 		    case ITEM_VALUE_TYPE_UINT64:
-			HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+			HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)now, (hfs_time_t)nextcheck,
 						    item->lastvalue_null ? 0 : item->lastvalue_uint64, value->ui64, 0);
 			break;
 		    }
