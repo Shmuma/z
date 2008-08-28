@@ -451,6 +451,22 @@ typedef enum
 #define	ZBX_POLLER_TYPE_NORMAL		0
 #define	ZBX_POLLER_TYPE_UNREACHABLE	1
 
+typedef enum
+{
+	ZBX_PROCESS_ALERTER = 0,
+	ZBX_PROCESS_DISCOVERER,
+	ZBX_PROCESS_HOUSEKEEPER,
+	ZBX_PROCESS_NODEWATCHER,
+	ZBX_PROCESS_PINGER,
+	ZBX_PROCESS_POLLER,
+	ZBX_PROCESS_HTTPPOLLER,
+	ZBX_PROCESS_TIMER,
+	ZBX_PROCESS_TRAPPERD,
+	ZBX_PROCESS_UNREACHABLE_POLLER
+} zbx_process_type_t;
+
+extern zbx_process_type_t process_type;
+
 #define	POLLER_TIMEOUT	5
 /* Do not perform more than this number of checks during unavailability period */
 /*#define SLEEP_ON_UNREACHABLE		60*/

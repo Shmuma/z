@@ -53,6 +53,8 @@
 #include <time.h>
 #endif
 
+zbx_process_type_t process_type = -1;
+
 char *progname = NULL;
 char title_message[] = "ZABBIX Server (daemon)";
 char usage_message[] = "[-hV] [-c <file>] [-n <nodeid>]";
@@ -1135,10 +1137,12 @@ int MAIN_ZABBIX_ENTRY(void)
 		zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Poller. SNMP:OFF]",
 			server_num);
 #endif
+		process_type = ZBX_PROCESS_POLLER;
 		main_poller_loop(ZBX_POLLER_TYPE_NORMAL, server_num);
 	}
 	else if(server_num <= CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS)
 	{
+		process_type = ZBX_PROCESS_TRAPPERD;
 /* Run trapper processes then do housekeeping */
 		child_trapper_main(server_num, &listen_sock);
 
@@ -1149,12 +1153,14 @@ int MAIN_ZABBIX_ENTRY(void)
 	{
 		zabbix_log( LOG_LEVEL_WARNING, "server #%d started [ICMP pinger]",
 			server_num);
+		process_type = ZBX_PROCESS_PINGER;
 		main_pinger_loop(server_num-(CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS));
 	}
 	else if(server_num <= CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS + CONFIG_PINGER_FORKS + CONFIG_ALERTER_FORKS)
 	{
 		zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Alerter]",
 			server_num);
+		process_type = ZBX_PROCESS_ALERTER;
 		main_alerter_loop();
 	}
 	else if(server_num <= CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS + CONFIG_PINGER_FORKS + CONFIG_ALERTER_FORKS
@@ -1162,6 +1168,7 @@ int MAIN_ZABBIX_ENTRY(void)
 	{
 		zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Housekeeper]",
 			server_num);
+		process_type = ZBX_PROCESS_HOUSEKEEPER;
 		main_housekeeper_loop();
 	}
 	else if(server_num <= CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS + CONFIG_PINGER_FORKS + CONFIG_ALERTER_FORKS
@@ -1169,6 +1176,7 @@ int MAIN_ZABBIX_ENTRY(void)
 	{
 		zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Timer]",
 			server_num);
+		process_type = ZBX_PROCESS_TIMER;
 		main_timer_loop();
 	}
 	else if(server_num <= CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS + CONFIG_PINGER_FORKS + CONFIG_ALERTER_FORKS
@@ -1184,6 +1192,7 @@ int MAIN_ZABBIX_ENTRY(void)
 			server_num);
 #endif
 /*		zabbix_log( LOG_LEVEL_WARNING, "Before main_poller_loop(%d,%d)",ZBX_POLLER_TYPE_UNREACHABLE,server_num - (CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS + CONFIG_PINGER_FORKS +CONFIG_ALERTER_FORKS+CONFIG_HOUSEKEEPER_FORKS + CONFIG_TIMER_FORKS)); */
+		process_type = ZBX_PROCESS_UNREACHABLE_POLLER;
 		main_poller_loop(ZBX_POLLER_TYPE_UNREACHABLE,
 				server_num - (CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS + CONFIG_PINGER_FORKS + CONFIG_ALERTER_FORKS+CONFIG_HOUSEKEEPER_FORKS + CONFIG_TIMER_FORKS));
 	}
@@ -1194,6 +1203,7 @@ int MAIN_ZABBIX_ENTRY(void)
 		zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Node watcher. Node ID:%d]",
 				server_num,
 				CONFIG_NODEID);
+		process_type = ZBX_PROCESS_NODEWATCHER;
 		main_nodewatcher_loop();
 	}
 	else if(server_num <= CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS + CONFIG_PINGER_FORKS + CONFIG_ALERTER_FORKS
@@ -1202,6 +1212,7 @@ int MAIN_ZABBIX_ENTRY(void)
 	{
 		zabbix_log( LOG_LEVEL_WARNING, "server #%d started [HTTP Poller]",
 				server_num);
+		process_type = ZBX_PROCESS_HTTPPOLLER;
 		main_httppoller_loop(server_num - CONFIG_POLLER_FORKS - CONFIG_TRAPPERD_FORKS -CONFIG_PINGER_FORKS
 				- CONFIG_ALERTER_FORKS - CONFIG_HOUSEKEEPER_FORKS - CONFIG_TIMER_FORKS
 				- CONFIG_UNREACHABLE_POLLER_FORKS - CONFIG_NODEWATCHER_FORKS);
@@ -1218,6 +1229,7 @@ int MAIN_ZABBIX_ENTRY(void)
 		zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Discoverer. SNMP:OFF]",
 				server_num);
 #endif
+		process_type = ZBX_PROCESS_DISCOVERER;
 		main_discoverer_loop(server_num - CONFIG_POLLER_FORKS - CONFIG_TRAPPERD_FORKS -CONFIG_PINGER_FORKS
 				- CONFIG_ALERTER_FORKS - CONFIG_HOUSEKEEPER_FORKS - CONFIG_TIMER_FORKS
 				- CONFIG_UNREACHABLE_POLLER_FORKS - CONFIG_NODEWATCHER_FORKS - CONFIG_HTTPPOLLER_FORKS);
