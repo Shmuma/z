@@ -274,13 +274,13 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: type <- %u", meta->last_type);
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: last_ofs <- %u", meta->last_ofs);
 
-	if (xwrite (p_meta, fd, meta, sizeof (hfs_meta_t) - sizeof (meta->meta)) == -1)
+	if (write (fd, meta, sizeof (hfs_meta_t) - sizeof (meta->meta)) == -1)
 		goto err_exit;
 
-	if (xlseek (p_meta, fd, sizeof (hfs_meta_item_t)*(meta->blocks-1), SEEK_CUR) == -1)
+	if (lseek (fd, sizeof (hfs_meta_item_t)*(meta->blocks-1), SEEK_CUR) == -1)
 		goto err_exit;
 
-	if (xwrite (p_meta, fd, &item, sizeof (item)) == -1)
+	if (write (fd, &item, sizeof (item)) == -1)
 		goto err_exit;
 
 	close (fd);
@@ -293,10 +293,10 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	if ((fd = xopen (p_data, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
 		goto err_exit;
 
-	if (xlseek (p_data, fd, ofs, SEEK_SET) == -1)
+	if (lseek (fd, ofs, SEEK_SET) == -1)
 		goto err_exit;
 
-	if (xwrite (p_data, fd, values, len * count) == -1)
+	if (write (fd, values, len * count) == -1)
 		goto err_exit;
 
 	close (fd);
@@ -353,16 +353,16 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
         if ((fd = xopen (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
             goto err_exit;
 
-        if (xlseek (p_meta, fd, sizeof (meta->blocks) * 3, SEEK_SET) == -1)
+        if (lseek (fd, sizeof (meta->blocks) * 3, SEEK_SET) == -1)
             goto err_exit;
 
-        if (xwrite (p_meta, fd, &meta->last_ofs, sizeof (meta->last_ofs)) == -1)
+        if (write (fd, &meta->last_ofs, sizeof (meta->last_ofs)) == -1)
             goto err_exit;
 
-        if (xlseek (p_meta, fd, sizeof (hfs_meta_item_t) * (meta->blocks-1), SEEK_CUR) == -1)
+        if (lseek (fd, sizeof (hfs_meta_item_t) * (meta->blocks-1), SEEK_CUR) == -1)
             goto err_exit;
 
-        if (xwrite (p_meta, fd, ip, sizeof (hfs_meta_item_t)) == -1)
+        if (write (fd, ip, sizeof (hfs_meta_item_t)) == -1)
             goto err_exit;
 
         close (fd);
@@ -1903,8 +1903,8 @@ int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_u
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_item_values_dbl: read(): %s", strerror(errno));
 	
 	if (val.kind != 0) {
-		close (fd)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_item_values_dbl error. Incorrect type (%d)", kind);
+		close (fd);
+		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_item_values_dbl error. Incorrect type (%d)", val.kind);
 		return 0;
 	}
 
@@ -1944,7 +1944,7 @@ int HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_u
 	
 	if (val.kind != 1) {
 		close (fd);
-		zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_values_int error. Incorrect type (%d)", kind);	
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_values_int error. Incorrect type (%d)", val.kind);
 		return 0;
 	}
 
