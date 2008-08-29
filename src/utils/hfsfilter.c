@@ -69,16 +69,16 @@ int main (int argc, char** argv)
 			if (is_valid_val (&val, sizeof (val))) {
 				clear = 0;
 				if (meta->meta[i].type == IT_DOUBLE) {
-					if (count > 100)
-						if (val.d < 0 || val.d > (max.d * 100000.0))
+					if (count > 1000)
+						if (val.d < 0 || val.d > (max.d * 1000000.0))
 							clear = 1;
 					if (!clear)
 						if (max.d < val.d)
 							max.d = val.d;
 				}
 				else {
-					if (count > 100)
-						if (val.l > (max.l * 100000))
+					if (count > 1000)
+						if (val.l > (max.l * 1000000))
 							clear = 1;
 					if (!clear)
 						if (max.l < val.l)
