@@ -154,16 +154,13 @@ COpt::counter_up('perm');
 
 		$where = '';
 
-		if ( !is_null($nodeid) )	$where .= ' and '.DBin_node('h.hostid', $nodeid);
-	
 		if(is_array($hostid))	$where .= ' and h.hostid in ('.implode(',', $hostid).') ';
 		elseif(isset($hostid))	$where .= ' and h.hostid in ('.$hostid.') ';
 
-		$sql = 'select distinct n.nodeid,n.name as node_name,h.hostid,h.host '.
+		$sql = 'select distinct h.hostid,h.host '.
 			' from hosts h left join hosts_groups hg on hg.hostid=h.hostid '.
-			' left join nodes n on '.DBid2nodeid('h.hostid').'=n.nodeid '.
-			' where h.hostid>0 '.$where.' group by h.hostid,n.nodeid,n.name,h.host '.
-			' order by n.name,n.nodeid, h.host';
+			' where h.hostid>0 '.$where.' group by h.hostid,h.host '.
+			' order by h.host';
 
 		$db_hosts = DBselect($sql);
 		$hosts = array();
@@ -173,15 +170,14 @@ COpt::counter_up('perm');
 			$host_data['permission'] = NULL;
 			$hosts[$host_data['hostid']] = $host_data;
 		}
-	
-		$sql = 'select distinct n.nodeid,n.name as node_name,h.hostid,h.host, min(r.permission) as permission,ug.userid '.
+
+		$sql = 'select distinct h.hostid,h.host, min(r.permission) as permission,ug.userid '.
 			' from hosts h left join hosts_groups hg on hg.hostid=h.hostid '.
 			' left join groups g on g.groupid=hg.groupid '.
 			' left join rights r on r.id=g.groupid and r.type='.RESOURCE_TYPE_GROUP.
 			' left join users_groups ug on ug.usrgrpid=r.groupid and ug.userid='.$userid.
-			' left join nodes n on '.DBid2nodeid('h.hostid').'=n.nodeid '.
-			' where ug.userid='.$userid.$where.' group by h.hostid,n.nodeid,n.name,h.host,ug.userid '.
-			' order by n.name,n.nodeid, h.host, permission desc, userid desc';
+			' where ug.userid='.$userid.$where.' group by h.hostid,h.host,ug.userid '.
+			' order by h.host, permission desc, userid desc';
 
 		$db_hosts = DBselect($sql);
 		while($host_data = DBfetch($db_hosts))
@@ -189,24 +185,20 @@ COpt::counter_up('perm');
 
 		foreach ($hosts as $host_data)
 		{
-//			It seems that host details are not required by the logic
-//			$host_data += DBfetch(DBselect('select * from hosts where hostid='.$host_data['hostid']));
-
-			if(empty($host_data['nodeid'])) $host_data['nodeid'] = id2nodeid($host_data['hostid']);
-
 			/* if no rights defined used node rights */
-			if( (empty($host_data['permission']) || empty($host_data['userid'])) )
-			{
-				if(!isset($nodes))
-				{
-					$nodes = get_accessible_nodes_by_user($user_data,
-						PERM_DENY,PERM_MODE_GE,PERM_RES_DATA_ARRAY);
-				}
-				if( !isset($nodes[$host_data['nodeid']]) || $user_type==USER_TYPE_ZABBIX_USER )
-					$host_data['permission'] = PERM_DENY;
-				else
-					$host_data['permission'] = $nodes[$host_data['nodeid']]['permission'];
-			}
+			if( (empty($host_data['userid'])))
+				$host_data['permission'] = PERM_DENY;
+			if (empty($host_data['permission'])) {
+				// default user rights according to user type
+				switch ($user_type) {
+				case USER_TYPE_ZABBIX_USER:
+					$host_data['permission'] = PERM_DENY; break;
+				case USER_TYPE_ZABBIX_ADMIN:
+					$host_data['permission'] = PERM_READ_ONLY; break;
+				case USER_TYPE_SUPER_ADMIN:
+					$host_data['permission'] = PERM_READ_WRITE; break;
+                            }
+                        }
 
 			if(eval('return ('.$host_data["permission"].' '.perm_mode2comparator($perm_mode).' '.$perm.')? 0 : 1;'))
 				continue;
@@ -251,40 +243,38 @@ COpt::counter_up('perm');
 
 		$where = array();
 
-		if ( !is_null($nodeid) )	array_push($where, DBin_node('hg.groupid', $nodeid));
-	
 		if(count($where)) 	$where = ' where '.implode(' and ',$where);
 		else			$where = '';
 	
 		/* if no rights defined used node rights */
-		$db_groups = DBselect('select n.nodeid as nodeid,n.name as node_name,hg.groupid,hg.name,min(r.permission) as permission,g.userid'.
+		$db_groups = DBselect('select hg.groupid,hg.name,min(r.permission) as permission,g.userid'.
 			' from groups hg left join rights r on r.id=hg.groupid and r.type='.RESOURCE_TYPE_GROUP.
 			' left join users_groups g on r.groupid=g.usrgrpid and g.userid='.$userid.
-			' left join nodes n on '.DBid2nodeid('hg.groupid').'=n.nodeid '.
-			$where.' group by n.nodeid, n.name, hg.groupid, hg.name, g.userid, g.userid '.
-			' order by n.name, hg.name, permission desc');
+			$where.' group by hg.groupid, hg.name, g.userid, g.userid '.
+			' order by hg.name, permission desc');
 
 		$processed = array();
 		while($group_data = DBfetch($db_groups))
 		{
-			if(is_null($group_data['nodeid'])) $group_data['nodeid'] = id2nodeid($group_data['groupid']);
-
 			/* deny if no rights defined */
 			if( is_null($group_data['permission']) || is_null($group_data['userid']) )
 			{
 				if(isset($processed[$group_data['groupid']]))
 					continue;
 
-				if(!isset($nodes))
-				{
-					$nodes = get_accessible_nodes_by_user($user_data,
-						PERM_DENY,PERM_MODE_GE,PERM_RES_DATA_ARRAY);
-				}
-
-				if( !isset($nodes[$group_data['nodeid']]) || $user_type==USER_TYPE_ZABBIX_USER )
+				if( (empty($group_data['userid'])))
 					$group_data['permission'] = PERM_DENY;
-				else
-					$group_data['permission'] = $nodes[$group_data['nodeid']]['permission'];
+				if (empty($group_data['permission'])) {
+					// default user rights according to user type
+					switch ($user_type) {
+					case USER_TYPE_ZABBIX_USER:
+						$group_data['permission'] = PERM_DENY; break;
+					case USER_TYPE_ZABBIX_ADMIN:
+						$group_data['permission'] = PERM_READ_ONLY; break;
+					case USER_TYPE_SUPER_ADMIN:
+						$group_data['permission'] = PERM_READ_WRITE; break;
+					}
+				}
 			}
 
 //			$processed[$group_data['permission']] = true;
