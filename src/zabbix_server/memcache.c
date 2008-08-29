@@ -343,10 +343,10 @@ int memcache_zbx_setitem(DB_ITEM *item)
 	memcached_return rc;
 	size_t len, item_len;
 
-	len = strlen(value->key) + strlen(value->host_name) + 2;
+	len = strlen(item->key) + strlen(item->host_name) + 2;
 
-	strkey = (char *) zbx_malloc(strkey, len));
-	zbx_snprintf(strkey, len, "%s|%s", value->key, value->host_name);
+	strkey = (char *) zbx_malloc(strkey, len);
+	zbx_snprintf(strkey, len, "%s|%s", item->key, item->host_name);
 
 	zabbix_log(LOG_LEVEL_DEBUG, "[memcache] memcache_setitem()"
 		    "[%s]", strkey);
