@@ -313,6 +313,9 @@ DB_ITEM
 	char	*logtimefmt;
 	zbx_uint64_t	valuemapid;
 	char	*delay_flex;
+#ifdef HAVE_MEMCACHE
+	int	from_memcache;
+#endif
 };
  
 DB_FUNCTION

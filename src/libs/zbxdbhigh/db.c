@@ -39,6 +39,10 @@
 #include "dbsync.h"
 #include "hfs.h"
 
+#ifdef HAVE_MEMCACHE
+#include "memcache.h"
+#endif
+
 extern char* CONFIG_HFS_PATH;
 
 void	DBclose(void)
@@ -1596,6 +1600,10 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	item->trends = 0;
 	item->lastcheck = 0;
 
+#ifdef HAVE_MEMCACHE
+	item->from_memcache = 0;
+#endif
+
 	ZBX_STR2UINT64(item->itemid, row[0]);
 /*	item->itemid=atoi(row[0]); */
 	zbx_snprintf(item->key, ITEM_KEY_LEN, "%s", row[1]);
@@ -1742,6 +1750,10 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 			item->prevorgvalue_null = (item->prevorgvalue_str == NULL) ? 1 : 0;
 			break;
 	}
+#ifdef HAVE_MEMCACHE
+	if (process_type == ZBX_PROCESS_TRAPPERD)
+		memcache_zbx_setitem(item);
+#endif
 }
 
 int	DBget_item_by_itemid(int itemid, DB_ITEM *item)
@@ -1770,6 +1782,60 @@ void DBfree_item(DB_ITEM *item)
 {
 	if (!item)
 		return;
+#ifdef HAVE_MEMCACHE
+	if (item->from_memcache) {
+		if (item->delay_flex)
+			free(item->delay_flex);
+
+		if (item->description)
+			free(item->description);
+
+		if (item->eventlog_source)
+			free(item->eventlog_source);
+
+		if (item->formula)
+			free(item->formula);
+
+		if (item->host_dns)
+			free(item->host_dns);
+
+		if (item->host_ip)
+			free(item->host_ip);
+
+		if (item->host_name)
+			free(item->host_name);
+
+		if (item->logtimefmt)
+			free(item->logtimefmt);
+
+		if (item->shortname)
+			free(item->shortname);
+
+		if (item->siteid)
+			free(item->siteid);
+
+		if (item->snmp_community)
+			free(item->snmp_community);
+
+		if (item->snmp_oid)
+			free(item->snmp_oid);
+
+		if (item->snmpv3_authpassphrase)
+			free(item->snmpv3_authpassphrase);
+
+		if (item->snmpv3_privpassphrase)
+			free(item->snmpv3_privpassphrase);
+
+		if (item->snmpv3_securityname)
+			free(item->snmpv3_securityname);
+
+		if (item->trapper_hosts)
+			free(item->trapper_hosts);
+
+		if (item->units)
+			free(item->units);
+	}
+#endif
 
 	switch(item->value_type) {
 		case ITEM_VALUE_TYPE_FLOAT:

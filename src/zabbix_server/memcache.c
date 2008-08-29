@@ -165,6 +165,7 @@ DB_ITEM *memcache_zbx_unserialize_item(char *itemstr)
 	zabbix_log(LOG_LEVEL_DEBUG, "[memcache] memcache_zbx_unserialize_item()");
 
 	item = (DB_ITEM *) zbx_malloc(item, sizeof(DB_ITEM));
+	item->from_memcache = 1;
 
 	l = sizeof(item->itemid);
 	memcpy(&item->itemid, p, l);			p += l;
