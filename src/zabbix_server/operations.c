@@ -37,6 +37,7 @@
 #include "db.h"
 #include "log.h"
 #include "zlog.h"
+#include "hfs.h"
 
 #include "poller/poller.h"
 #include "poller/checks_agent.h"
@@ -100,7 +101,7 @@ static	void	send_to_user_medias(DB_EVENT *event,DB_OPERATION *operation, zbx_uin
 
 		DBadd_alert(operation->actionid, userid, event->objectid, media.mediatypeid,media.sendto,operation->shortdata,operation->longdata);
 		if (CONFIG_HFS_PATH)
-			HFS_add_alert(CONFIG_HFS_PATH, CONFIG_SERVER_SITE, time (NULL), operation->actionid, userid, event->objectid, 
+			HFS_add_alert(CONFIG_HFS_PATH, CONFIG_SERVER_SITE, (hfs_time_t) time (NULL), operation->actionid, userid, event->objectid, 
 				      media.mediatypeid, media.sendto, operation->shortdata, operation->longdata);
 	}
 	DBfree_result(result);
