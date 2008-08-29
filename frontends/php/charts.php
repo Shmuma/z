@@ -223,7 +223,7 @@ function show_graph ($table, $graphid, $effectiveperiod)
 	$table->AddRow ($cols);
 
 	$g = get_graph_by_graphid ($graphid);
-	if (trim ($g['description']) != "")
+	if (in_array("description", $g) && trim ($g['description']) != "")
 	{
 		$cols = array (New CCol(""), New CCol("<div class=chart_description>" . description_html($g['description']) . "</div>",
 						      "description"),
