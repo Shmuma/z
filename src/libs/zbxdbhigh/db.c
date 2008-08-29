@@ -1468,26 +1468,12 @@ int	DBadd_alert(zbx_uint64_t actionid, zbx_uint64_t userid, zbx_uint64_t trigger
 	char	*subject_esc	= NULL;
 	char	*message_esc	= NULL;
 	
-	int	size;
-
 	zabbix_log(LOG_LEVEL_DEBUG,"In add_alert(triggerid[%d])",triggerid);
 
 	now = time(NULL);
-
-	size = strlen(sendto) * 3 / 2 + 1;
-	sendto_esc = zbx_malloc(sendto_esc, size);
-	memset(sendto_esc, 0, size);
-	DBescape_string(sendto, sendto_esc, size);
-
-	size = strlen(subject) * 3 / 2 + 1;
-	subject_esc = zbx_malloc(subject_esc, size);
-	memset(subject_esc, 0, size);
-	DBescape_string(subject,subject_esc,size);
-	
-	size = strlen(message) * 3 / 2 + 1;
-	message_esc = zbx_malloc(message_esc,size);
-	memset(message_esc, 0, size);
-	DBescape_string(message,message_esc,size);
+	sendto_esc = DBdyn_escape_string(sendto);
+	subject_esc = DBdyn_escape_string(subject);
+	message_esc = DBdyn_escape_string(message);
 	
 	DBexecute("insert into alerts (alertid, actionid,triggerid,userid,clock,mediatypeid,sendto,subject,message,status,retries)"
 		" values (" ZBX_FS_UI64 "," ZBX_FS_UI64 "," ZBX_FS_UI64 "," ZBX_FS_UI64 ",%d," ZBX_FS_UI64 ",'%s','%s','%s',0,0)",
