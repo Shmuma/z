@@ -37,6 +37,7 @@
 #include "events.h"
 #include "threads.h"
 #include "dbsync.h"
+#include "hfs.h"
 
 extern char* CONFIG_HFS_PATH;
 
@@ -1706,7 +1707,8 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	switch(item->value_type) {
 		case ITEM_VALUE_TYPE_FLOAT:
 			HFS_get_item_values_dbl(CONFIG_HFS_PATH, item->siteid, item->itemid,
-						&item->lastclock, &item->nextcheck,
+						(hfs_time_t *)&item->lastclock,
+						(hfs_time_t *)&item->nextcheck,
 						&item->prevvalue_dbl,
 						&item->lastvalue_dbl,
 						&item->prevorgvalue_dbl);
@@ -1717,7 +1719,8 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 			break;
 		case ITEM_VALUE_TYPE_UINT64:
 			HFS_get_item_values_int(CONFIG_HFS_PATH, item->siteid, item->itemid,
-						&item->lastclock, &item->nextcheck,
+						(hfs_time_t *)&item->lastclock,
+						(hfs_time_t *)&item->nextcheck,
 						&item->prevvalue_uint64,
 						&item->lastvalue_uint64,
 						&item->prevorgvalue_uint64);
@@ -1727,8 +1730,9 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 			item->prevorgvalue_null = (item->prevorgvalue_uint64 == 0) ? 1 : 0;
 			break;
 		default:
-			HFS_get_item_values_str(CONFIG_HFS_PATH, item->siteid, item->itemid
-						&item->lastclock, &item->nextcheck,
+			HFS_get_item_values_str(CONFIG_HFS_PATH, item->siteid, item->itemid,
+						(hfs_time_t *)&item->lastclock,
+						(hfs_time_t *)&item->nextcheck,
 						&item->prevvalue_str,
 						&item->lastvalue_str,
 						&item->prevorgvalue_str);
@@ -1773,14 +1777,32 @@ void DBfree_item(DB_ITEM *item)
 			return;
 	}
 
-	if (item->prevvalue_null == 0)
-		free(item->prevvalue_str);
+	if (item->prevvalue_null == 0) {
+		if (item->prevvalue_str)
+			free(item->prevvalue_str);
+		else
+			zabbix_log(LOG_LEVEL_ERR,"DBfree_item(): %s: "
+				    "(prevvalue_null == 0) && (prevvalue_str == NULL)",
+				    item->key);
+	}
 
-	if (item->lastvalue_null == 0)
-		free(item->lastvalue_str);
+	if (item->lastvalue_null == 0) {
+		if (item->lastvalue_str)
+			free(item->lastvalue_str);
+		else
+			zabbix_log(LOG_LEVEL_ERR,"DBfree_item(): %s: "
+				    "(lastvalue_null == 0) && (lastvalue_str == NULL)",
+				    item->key);
+	}
 
-	if (item->prevorgvalue_null == 0)
-		free(item->prevorgvalue_str);
+	if (item->prevorgvalue_null == 0) {
+		if (item->prevorgvalue_str)
+			free(item->prevorgvalue_str);
+		else
+			zabbix_log(LOG_LEVEL_ERR,"DBfree_item(): %s: "
+				    "(prevorgvalue_null == 0) && (prevorgvalue_str == NULL)",
+				    item->key);
+	}
 }
 
 /*
