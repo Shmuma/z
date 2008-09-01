@@ -525,9 +525,11 @@ include_once "include/page_header.php";
 
 		foreach($applications as $id => $appid){
 	
-			$sql = 'SELECT ia.itemid,i.hostid,i.key_'.
+			$sql = 'SELECT ia.itemid,i.hostid,i.key_,s.name as siteid '.
 					' FROM items_applications ia '.
-					  ' LEFT JOIN items i ON ia.itemid=i.itemid '.
+					' LEFT JOIN items i ON ia.itemid=i.itemid '.
+					' left join hosts h on i.hostid = h.hostid '.
+					' left join sites s on h.siteid = s.siteid '.
 					' WHERE ia.applicationid='.$appid.
 					  ' AND i.hostid='.$_REQUEST['hostid'].
 					  ' AND '.DBin_node('ia.applicationid');
@@ -536,13 +538,13 @@ include_once "include/page_header.php";
 			while($item=DBfetch($res_items)){
 
 					if(isset($_REQUEST["activate"])){
-						if($result&=activate_item($item['itemid'])){
+						if($result&=activate_item($item["siteid"], $item['itemid'])){
 							$host = get_host_by_hostid($item['hostid']);
 							add_audit(AUDIT_ACTION_UPDATE, AUDIT_RESOURCE_ITEM,S_ITEM.' ['.$item['key_'].'] ['.$id.'] '.S_HOST.' ['.$host['host'].'] '.S_ITEMS_ACTIVATED);
 						}
 					}
 					else{
-						if($result&=disable_item($item['itemid'])){
+						if($result&=disable_item($item["siteid"], $item['itemid'])){
 							$host = get_host_by_hostid($item['hostid']);
 							add_audit(AUDIT_ACTION_UPDATE, AUDIT_RESOURCE_ITEM,S_ITEM." [".$item["key_"]."] [".$id."] ".S_HOST." [".$host['host']."] ".S_ITEMS_DISABLED);
 						}

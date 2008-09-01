@@ -335,16 +335,17 @@
 
 	# Update Item status
 
-	function	update_item_status($itemid,$status)
-	{
-		if($status==ITEM_STATUS_ACTIVE)
-			$sql="update items set status=$status,error='' where itemid=$itemid";
-		else
-			$sql="update items set status=$status where itemid=$itemid";
+// 	function	update_item_status($siteid,$itemid,$status)
+// 	{
+// 		if($status==ITEM_STATUS_ACTIVE)
+// 			$sql="update items set status=$status,error='' where itemid=$itemid";
+// 		else
+// 			$sql="update items set status=$status where itemid=$itemid";
 
-		$result = DBexecute($sql);
-		return $result;
-	}
+// 		$result = DBexecute($sql);
+// 		zabbix_hfs_update_item_status ($siteid, $itemid, $status);
+// 		return $result;
+// 	}
 
 	/******************************************************************************
 	 *                                                                            *
@@ -680,31 +681,33 @@
 
 	# Activate Item
 
-	function	activate_item($itemid){
+	function	activate_item($siteid, $itemid){
 		 // first update status for child items
-		$db_tmp_items = DBselect("select itemid, hostid from items where templateid=$itemid");
+		$db_tmp_items = DBselect("select s.name as siteid, i.itemid, i.hostid from items i, hosts h, sites s where i.templateid=$itemid and h.hostid=i.hostid and h.siteid = s.siteid");
 		while($db_tmp_item = DBfetch($db_tmp_items)){
 		// recursion
-			activate_item($db_tmp_item["itemid"]);
+			activate_item($db_tmp_item["siteid"], $db_tmp_item["itemid"]);
 		}
 
 		$result = DBexecute("update items set status=".ITEM_STATUS_ACTIVE.",error='',nextcheck=0 where itemid=$itemid");
+		zabbix_hfs_update_item_status ($siteid, $itemid, ITEM_STATUS_ACTIVE);
 		return $result;
 	}
 
 	# Disable Item
 
-	function	disable_item($itemid)
+	function	disable_item($siteid, $itemid)
 	{
 		 // first update status for child items
-		$db_tmp_items = DBselect("select itemid, hostid from items where templateid=$itemid");
+		$db_tmp_items = DBselect("select s.name as siteid, i.itemid, i.hostid from items i, hosts h, sites s where i.templateid=$itemid and h.hostid=i.hostid and h.siteid = s.siteid");
 		while($db_tmp_item = DBfetch($db_tmp_items))
 		{
 		// recursion
-			disable_item($db_tmp_item["itemid"]);
+			disable_item($db_tmp_item["siteid"], $db_tmp_item["itemid"]);
 		}
 
 		$result = DBexecute("update items set status=".ITEM_STATUS_DISABLED." where itemid=$itemid");
+		zabbix_hfs_update_item_status ($siteid, $itemid, ITEM_STATUS_DISABLED);
 		return $result;
 	}
 
@@ -716,9 +719,10 @@
 	function	get_item_by_itemid($itemid)
 	{
 		$row = DBfetch(DBselect("select items.*, sites.name as sitename ".
-					"from items, sites ".
+					"from items, hosts, sites ".
 					"where items.itemid=$itemid ".
-					"and items.siteid = sites.siteid"));
+                                        "and items.hostid = hosts.hostid ".
+                                        "and hosts.siteid = sites.siteid "));
 		if($row)
 		{
 			return	$row;

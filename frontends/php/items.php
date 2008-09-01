@@ -456,8 +456,7 @@ include_once "include/page_header.php";
 			foreach($group_itemid as $id)
 			{
 				if(!($item = get_item_by_itemid($id)))	continue;
-				
-				if(activate_item($id))
+				if(activate_item($item["sitename"], $id))
 				{
 					$result = true;
 					$host = get_host_by_hostid($item["hostid"]);
@@ -476,7 +475,7 @@ include_once "include/page_header.php";
 			{
 				if(!($item = get_item_by_itemid($id)))	continue;
 
-				if(disable_item($id))
+				if(disable_item($item["sitename"], $id))
 				{
 					$result = true;				
 				
