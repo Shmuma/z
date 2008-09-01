@@ -748,7 +748,7 @@ char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemi
             snprintf (res, len, "%s/%s/items/%llu/%llu/stderr.data", hfs_base_dir, siteid, item_ord, itemid);
 	    break;
     case NK_TriggerStatus:
-	    snprintf (res, len, "%s/%s/triggers/%llu/status.data", hfs_base_dir, siteid, itemid);
+	    snprintf (res, len, "%s/%s/misc/triggers.data", hfs_base_dir, siteid);
 	    break;
     case NK_Alert:
 	    snprintf (res, len, "%s/%s/misc/alerts.data", hfs_base_dir, siteid);
@@ -2375,14 +2375,11 @@ size_t HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint
 	return res_count;
 }
 
-
-
 void HFS_update_trigger_value(const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, int new_value, hfs_time_t now)
 {
 	char* name = get_name (hfs_path, siteid, triggerid, NK_TriggerStatus);
 	int fd;
-
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_trigger_value entered");
+	trigger_value_t val = { new_value, now };
 
 	if (!name)
 		return;
@@ -2397,37 +2394,28 @@ void HFS_update_trigger_value(const char* hfs_path, const char* siteid, zbx_uint
 	}
 	free (name);
 
-	/* place write lock on that file or wait for unlock */
-/* 	if (!obtain_lock (fd, 1)) { */
-/* 		if (close (fd) == -1) */
-/* 			zabbix_log(LOG_LEVEL_CRIT, "HFS_update_trigger_value: close(): %s", strerror(errno)); */
-/* 		return; */
-/* 	} */
+	/* seek at trigger's ID */
+	if (lseek (fd, triggerid*sizeof (val), SEEK_SET) < 0) {
+		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_trigger_value: lseek(): %s", strerror(errno));
+	} else {
+		if (write (fd, &val, sizeof (val)) < 0)
+			zabbix_log(LOG_LEVEL_CRIT, "HFS_update_trigger_value: lseek(): %s", strerror(errno));
+	}
 
-	/* lock obtained, write data */
-	if (write (fd, &new_value, sizeof (new_value)) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_trigger_value: write(): %s", strerror(errno));
-	if (write (fd, &now, sizeof (now)) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_trigger_value: write(): %s", strerror(errno));
-
-	/* release lock */
-/* 	release_lock (fd, 1); */
-
-	if (close (fd) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_trigger_value: close(): %s", strerror(errno));
-
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_trigger_value leave");
+	close (fd);
 	return;
 }
 
 
 
-int HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, int* value, hfs_time_t* when)
+int HFS_get_triggers_values (const char* hfs_path, const char* siteid, hfs_trigger_value_t** res)
 {
 	char* name = get_name (hfs_path, siteid, triggerid, NK_TriggerStatus);
 	int fd;
+	int buf_s, buf_c, count = 0, buf_size = 0, i;
+	trigger_value_t* buf;
+	zbx_uint64_t triggerid = 0;
 
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_trigger_value entered");
 	if (!name)
 		return 0;
 
@@ -2441,27 +2429,30 @@ int HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64_
 	}
 	free (name);
 
-	/* obtain read lock */
-/* 	if (!obtain_lock (fd, 0)) { */
-/* 		if (close (fd) == -1) */
-/* 			zabbix_log(LOG_LEVEL_CRIT, "HFS_get_trigger_value: close(): %s", strerror(errno)); */
-/* 		return 0; */
-/* 	} */
+	buf_s = 1024;
+	buf = (trigger_value_t*)malloc (buf_s * sizeof (trigger_value_t));
+	*res = NULL;
 
-	/* reading data */
-	if (read (fd, value, sizeof (*value)) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_trigger_value: read(): %s", strerror(errno));
-	if (read (fd, when, sizeof (*when)) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_trigger_value: read(): %s", strerror(errno));
-
-	/* release read lock */
-/* 	release_lock (fd, 0); */
+	while ((buf_c = read (fd, buf, buf_s * sizeof (trigger_value_t))) > 0) {
+		buf_c /= sizeof (trigger_value_t);
+		for (i = 0; i < buf_c; i++) {
+			triggerid++;
+			if (!buf[i].when)
+				continue;
+			if (count == buf_size)
+				*res = (hfs_trigger_value_t*)realloc (*res, (buf_size += 256) * sizeof (hfs_trigger_value_t));
+			(*res)[count].when = buf[i].when;
+			(*res)[count].triggerid = triggerid-1;
+			(*res)[count].value = buf[i].value;
+			count++;
+		}
+	}
 
 	if (close (fd) == -1)
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_trigger_value: close(): %s", strerror(errno));
 
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_trigger_value leave");
-	return 1;	
+	return count;
 }
 
 
