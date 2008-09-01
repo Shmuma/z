@@ -2410,7 +2410,7 @@ void HFS_update_trigger_value(const char* hfs_path, const char* siteid, zbx_uint
 
 int HFS_get_triggers_values (const char* hfs_path, const char* siteid, hfs_trigger_value_t** res)
 {
-	char* name = get_name (hfs_path, siteid, triggerid, NK_TriggerStatus);
+	char* name = get_name (hfs_path, siteid, 0, NK_TriggerStatus);
 	int fd;
 	int buf_s, buf_c, count = 0, buf_size = 0, i;
 	trigger_value_t* buf;
@@ -2448,12 +2448,51 @@ int HFS_get_triggers_values (const char* hfs_path, const char* siteid, hfs_trigg
 		}
 	}
 
-	if (close (fd) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_trigger_value: close(): %s", strerror(errno));
-
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_trigger_value leave");
+	close (fd);
 	return count;
 }
+
+
+
+int HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, hfs_trigger_value_t* res)
+{
+	char* name = get_name (hfs_path, siteid, 0, NK_TriggerStatus);
+	int fd;
+	trigger_value_t val;
+
+	if (!name)
+		return 0;
+
+	/* open file for reading */
+	fd = open (name, O_RDONLY);
+	if (fd < 0) {
+		if (errno != ENOENT)
+			zabbix_log(LOG_LEVEL_CRIT, "HFS_get_trigger_value: open(): %s: %s", name, strerror(errno));
+		free (name);
+		return 0;
+	}
+	free (name);
+
+	if (lseek (fd, sizeof (trigger_value_t) * triggerid, SEEK_SET) < 0) {
+		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_trigger_value: lseek(): %s", strerror (errno));
+		close (fd);
+		return 0;
+	}
+
+        if (read (fd, &val, sizeof (val)) < sizeof (val)) {
+		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_trigger_value: read(): %s", strerror (errno));
+		close (fd);
+		return 0;
+        }
+
+        res->triggerid = triggerid;
+        res->when = val.when;
+        res->value = val.value;
+
+	close (fd);
+	return 1;
+}
+
 
 
 

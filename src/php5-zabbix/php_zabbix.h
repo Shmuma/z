@@ -27,6 +27,7 @@ PHP_FUNCTION(zabbix_hfs_item_status);
 PHP_FUNCTION(zabbix_hfs_update_item_status);
 PHP_FUNCTION(zabbix_hfs_item_stderr);
 PHP_FUNCTION(zabbix_hfs_item_values);
+PHP_FUNCTION(zabbix_hfs_triggers_values);
 PHP_FUNCTION(zabbix_hfs_trigger_value);
 
 ZEND_BEGIN_MODULE_GLOBALS(zabbix)
