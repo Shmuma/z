@@ -33,6 +33,8 @@
 #include "checks_snmp.h"
 
 #include "daemon.h"
+#include "hfs.h"
+
 
 extern char* CONFIG_HFS_PATH;
 
@@ -415,6 +417,10 @@ int get_values(void)
 					item.key,
 					item.host_name);
 				DBupdate_item_status_to_notsupported(item.itemid, agent.msg);
+				if (CONFIG_HFS_PATH)
+					HFS_update_item_status (CONFIG_HFS_PATH, item.siteid, item.itemid,
+							ITEM_STATUS_NOTSUPPORTED, "Not supported by ZABBIX agent");
+
 	/*			if(HOST_STATUS_UNREACHABLE == item.host_status)*/
 				if(HOST_AVAILABLE_TRUE != item.host_available)
 				{
