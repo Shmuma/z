@@ -1992,7 +1992,8 @@ void HFS_update_item_status (const char* hfs_base_dir, const char* siteid, zbx_u
 	zabbix_log(LOG_LEVEL_DEBUG, "got name %s", name);
 
 	/* open file for writing */
-	fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	/* S_IWGRP is not a mistake! We need this file writeable by web server. */
+	fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
 
 	if (fd < 0) {
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_item_status: open(): %s: %s", name, strerror(errno));

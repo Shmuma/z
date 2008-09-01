@@ -22,6 +22,7 @@ static zend_function_entry php_zabbix_functions[] = {
 	PHP_FE(zabbix_hfs_read_str, NULL)
 	PHP_FE(zabbix_hfs_last_str, NULL)
 	PHP_FE(zabbix_hfs_hosts_availability, NULL)
+	PHP_FE(zabbix_hfs_update_item_status, NULL)
 	PHP_FE(zabbix_hfs_item_status, NULL)
 	PHP_FE(zabbix_hfs_item_stderr, NULL)
 	PHP_FE(zabbix_hfs_item_values, NULL)
@@ -496,6 +497,21 @@ PHP_FUNCTION(zabbix_hfs_hosts_availability)
 
 	if (count)
 		free (statuses);
+}
+/* }}} */
+
+
+/* {{{ proto null zabbix_hfs_update_item_status(char *site, int itemid, int status) */
+PHP_FUNCTION(zabbix_hfs_update_item_status)
+{
+	long long itemid = 0, status;
+	char *site = NULL;
+	int site_len = 0;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll", &site, &site_len, &itemid, &status) == FAILURE)
+		RETURN_FALSE;
+
+        HFS_update_item_status (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, status, NULL);
 }
 /* }}} */
 
