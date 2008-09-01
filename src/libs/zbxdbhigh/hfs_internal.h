@@ -51,6 +51,12 @@ typedef struct __attribute__ ((packed)) {
 } item_value_int_t;
 
 
+typedef struct __attribute__ ((packed)) {
+	int value;
+	hfs_time_t when;
+} trigger_value_t;
+
+
 int is_trend_type (item_type_t type);
 int make_directories (const char* path);
 hfs_meta_t* read_metafile (const char* metafile);

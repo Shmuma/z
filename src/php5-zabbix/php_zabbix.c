@@ -26,6 +26,7 @@ static zend_function_entry php_zabbix_functions[] = {
 	PHP_FE(zabbix_hfs_item_status, NULL)
 	PHP_FE(zabbix_hfs_item_stderr, NULL)
 	PHP_FE(zabbix_hfs_item_values, NULL)
+	PHP_FE(zabbix_hfs_triggers_values, NULL)
 	PHP_FE(zabbix_hfs_trigger_value, NULL)
 	{NULL, NULL, NULL}
 };
@@ -658,6 +659,41 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 /* }}} */
 
 
+/* {{{ proto array zabbix_hfs_triggers_values(char *site) */
+PHP_FUNCTION(zabbix_hfs_triggers_values)
+{
+	char *site = NULL;
+	int site_len = 0, count, i;
+        hfs_trigger_value_t* values;
+        char buf[100];
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &site, &site_len) == FAILURE)
+		RETURN_FALSE;
+
+	count = HFS_get_triggers_values (ZABBIX_GLOBAL(hfs_base_dir), site, &values);
+
+        if (array_init(return_value) == FAILURE)
+		RETURN_FALSE;
+
+        for (i = 0; i < count; i++) {
+            zval *z_obj;
+
+            MAKE_STD_ZVAL (z_obj);
+            object_init (z_obj);
+
+            zbx_snprintf (buf, sizeof (buf), "%lld", values[i].triggerid);
+
+            add_property_long (z_obj, "when", values[i].when);
+            add_property_long (z_obj, "value", values[i].value);
+            add_assoc_zval (return_value, buf, z_obj);
+        }
+
+        if (count)
+            free (values);
+}
+/* }}} */
+
+
 /* {{{ proto object zabbix_hfs_trigger_value(char *site, int triggerid) */
 PHP_FUNCTION(zabbix_hfs_trigger_value)
 {
@@ -665,17 +701,18 @@ PHP_FUNCTION(zabbix_hfs_trigger_value)
 	char *site = NULL;
 	int site_len = 0, value;
 	hfs_time_t when;
+        hfs_trigger_value_t val;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl", &site, &site_len, &triggerid) == FAILURE)
 		RETURN_FALSE;
 
-	if (!HFS_get_trigger_value (ZABBIX_GLOBAL(hfs_base_dir), site, triggerid, &value, &when))
+	if (!HFS_get_trigger_value (ZABBIX_GLOBAL(hfs_base_dir), site, triggerid, &val))
 		RETURN_FALSE;
 
         if (object_init(return_value) == FAILURE)
 		RETURN_FALSE;
 
-	add_property_long (return_value, "value", value);
-	add_property_long (return_value, "when", when);
+	add_property_long (return_value, "value", val.value);
+	add_property_long (return_value, "when", val.when);
 }
 /* }}} */

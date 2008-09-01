@@ -868,15 +868,24 @@ COpt::profiling_start('prepare data');
 
 		unset($items);
 		unset($hosts);
+
+		if (zbx_hfs_available ()) {
+			$hfs_triggers = array ();
+			foreach (zbx_hfs_sites ($groupid, 0) as $site)
+				$hfs_triggers += zabbix_hfs_triggers_values ($site);
+		}
+                else
+			$hfs_triggers = 0;
+
 		// get rid of warnings about $triggers undefined
 		$items = array();
 		while($row = DBfetch($result))
 		{
-			if (zbx_hfs_available ()) {
-				$hfs_trigger = zabbix_hfs_trigger_value ($row["siteid"], $row["triggerid"]);
-				if (is_object ($hfs_trigger))
-					$row["tr_value"] = $hfs_trigger->value;
+			if (is_array ($hfs_triggers))
+				if (array_key_exists ($row["triggerid"], $hfs_triggers))
+					$row["tr_value"] = $hfs_triggers[$row["triggerid"]]->value;
 
+			if (zbx_hfs_available ()) {
 				$hfs_item = zabbix_hfs_item_values ($row["siteid"], $row["itemid"], $row["value_type"]);
 				if (is_array ($hfs_item))
 					$row["lastvalue"] = $hfs_item["lastvalue"];

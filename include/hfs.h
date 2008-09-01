@@ -156,8 +156,16 @@ int		HFS_get_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint
 int		HFS_get_item_stderr (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, char** stderr);
 
 /* trigger statuses */
+typedef struct {
+	zbx_uint64_t triggerid;
+	int value;
+	hfs_time_t when;
+} hfs_trigger_value_t;
+
+
 void		HFS_update_trigger_value(const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, int new_value, hfs_time_t now);
-int		HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, int* value, hfs_time_t* when);
+int		HFS_get_triggers_values (const char* hfs_path, const char* siteid, hfs_trigger_value_t** res);
+int		HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, hfs_trigger_value_t* res);
 
 /* alerts history */
 void 		HFS_add_alert(const char* hfs_path, const char* siteid, hfs_time_t clock, zbx_uint64_t actionid, zbx_uint64_t userid, 

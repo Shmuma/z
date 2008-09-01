@@ -340,6 +340,14 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 		$cond.=($show_unknown == 0)?' AND t.value<>2 ':'';
 	}
 
+	if (zbx_hfs_available ()) {
+		$hfs_triggers = array ();
+		foreach (zbx_hfs_sites ($_REQUEST['groupid'], $_REQUEST['hostid']) as $site)
+			$hfs_triggers += zabbix_hfs_triggers_values ($site);
+	}
+	else
+		$hfs_triggers = 0;
+
 	$result = DBselect('SELECT DISTINCT t.triggerid,t.status,t.description, '.
 							' t.expression,t.priority,t.lastchange,t.comments,t.url,t.value,h.host,s.name as siteid '.
 					' FROM triggers t,hosts h,items i,functions f,sites s '.
@@ -362,21 +370,18 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 
 		if(isset($_REQUEST["btnSelect"]) && '' != $txt_select && ((stristr($description, $txt_select)) == ($_REQUEST["btnSelect"]=="Inverse select"))) continue;
 
-		if (zbx_hfs_available()) {
-			$hfs_trigger = zabbix_hfs_trigger_value ($row["siteid"], $row["triggerid"]);
+		if (is_array ($hfs_triggers)) 
+			if (array_key_exists ($row["triggerid"], $hfs_triggers)) {
+				$row["value"] = $hfs_triggers[$row["triggerid"]]->value;
+				$row["lastchange"] = $hfs_triggers[$row["triggerid"]]->when;
 
-			if (is_object($hfs_trigger)) {
-				$row["value"] = $hfs_trigger->value;
-				$row["lastchange"] = $hfs_trigger->when;
-			}
-
-			// when trigger values got from HFS, we must filter them manually
-			if ($show_unknown == 0 && $row["value"] == 2)
-				continue;
-			if ($onlytrue == 'true')
-				if ($row["value"] != 1 && ((time ()-$row["lastchange"]) > TRIGGER_BLINK_PERIOD))
+				// when trigger values got from HFS, we must filter them manually
+				if ($show_unknown == 0 && $row["value"] == 2)
 					continue;
-		}
+				if ($onlytrue == 'true')
+					if ($row["value"] != 1 && ((time ()-$row["lastchange"]) > TRIGGER_BLINK_PERIOD))
+						continue;
+			}
 
 		if($row["url"] != "")
 		{
