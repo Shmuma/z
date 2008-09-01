@@ -1,2 +1,2 @@
 # recalculate trends on HFS (ETO)
-40 */2 * * * zabbix /sbin/ip a | grep -q secondary || find /gpfs/ETO/items/ -name history.data -a -mmin +60 | while read n; do /usr/sbin/hfs_trends_upd $(dirname $n) >> /gpfs/ETO/logs/trends.log; done
+40 */2 * * * zabbix /sbin/ip a | grep -q secondary || find /gpfs/ETO/items/ -name history.data -a -mmin +300 | while read n; do /usr/sbin/hfs_trends_upd $(dirname $n) >> /gpfs/ETO/logs/trends.log; done
