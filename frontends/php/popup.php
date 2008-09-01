@@ -324,6 +324,14 @@ include_once "include/page_header.php";
 				($real_hosts ? " and h.status<>".HOST_STATUS_TEMPLATE : "").
 				" order by h.host,h.hostid";
 
+		// obtain hash of all hosts with their statuses
+		if (zbx_hfs_available ()) {
+			$hfs_statuses = array ();
+			foreach (zbx_hfs_sites ($groupid, 0) as $site)
+				$hfs_statuses += zabbix_hfs_hosts_availability ($site);
+		}
+		else
+			$hfs_statuses = 0;
 
 		$db_hosts = DBselect($sql);
 		while($host = DBfetch($db_hosts))
@@ -362,13 +370,11 @@ include_once "include/page_header.php";
 				$port = $host["port"];
 
 				// update availability from HFS
-				if (zbx_hfs_available ()) {
-					$hfs_status = zabbix_hfs_host_availability ($host["sitename"], $host["hostid"]);
-
-					if (is_object ($hfs_status)) {
-						$host["available"] = $hfs_status->available;
-						$host["error"] = $hfs_status->error;
-					}
+				if (is_array ($hfs_statuses)) {
+					if (array_key_exists ($host["hostid"], $hfs_statuses))
+						$host["available"] = $hfs_statuses[$host["hostid"]]->available;
+					else
+						$host["available"] = HOST_AVAILABLE_UNKNOWN;
 				}
 
 				if($host["available"] == HOST_AVAILABLE_TRUE)	

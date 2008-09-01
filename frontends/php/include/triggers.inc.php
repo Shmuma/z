@@ -1795,6 +1795,15 @@
 			' order by t.description');
 		unset($triggers);
 		unset($hosts);
+
+		if (zbx_hfs_available ()) {
+			$hfs_triggers = array ();
+			foreach (zbx_hfs_sites ($groupid, 0) as $site)
+				$hfs_triggers += zabbix_hfs_triggers_values ($site);
+		}
+		else
+			$hfs_triggers = 0;
+
 		// get rid of warnings about $triggers undefined
 		$triggers = array();
 		$count = 0;
@@ -1806,13 +1815,11 @@
 				break;
 			}
 
-			if (zbx_hfs_available()) {
-				$hfs_trigger = zabbix_hfs_trigger_value ($row["siteid"], $row["triggerid"]);
-				if (is_object($hfs_trigger)) {
-					$row["value"] = $hfs_trigger->value;
-					$row["lastchange"] = $hfs_trigger->when;
+			if (is_array ($hfs_triggers))
+				if (array_key_exists ($row["triggerid"], $hfs_triggers)) {
+					$row["value"] = $hfs_triggers[$row["triggerid"]]->value;
+					$row["lastchange"] = $hfs_triggers[$row["triggerid"]]->when;
 				}
-			}
 
 			$row['host'] = get_node_name_by_elid($row['hostid']).$row['host'];
 			$row['description'] = expand_trigger_description_constants($row['description'], $row);
