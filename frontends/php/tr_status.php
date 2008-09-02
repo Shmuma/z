@@ -370,18 +370,18 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 
 		if(isset($_REQUEST["btnSelect"]) && '' != $txt_select && ((stristr($description, $txt_select)) == ($_REQUEST["btnSelect"]=="Inverse select"))) continue;
 
-		if (is_array ($hfs_triggers)) 
+		if (is_array ($hfs_triggers))
 			if (array_key_exists ($row["triggerid"], $hfs_triggers)) {
 				$row["value"] = $hfs_triggers[$row["triggerid"]]->value;
 				$row["lastchange"] = $hfs_triggers[$row["triggerid"]]->when;
-
-				// when trigger values got from HFS, we must filter them manually
-				if ($show_unknown == 0 && $row["value"] == 2)
-					continue;
-				if ($onlytrue == 'true')
-					if ($row["value"] != 1 && ((time ()-$row["lastchange"]) > TRIGGER_BLINK_PERIOD))
-						continue;
 			}
+
+		// when trigger values got from HFS, we must filter them manually
+		if ($show_unknown == 0 && $row["value"] == 2)
+			continue;
+		if ($onlytrue == 'true')
+			if ($row["value"] != 1 && ((time ()-$row["lastchange"]) > TRIGGER_BLINK_PERIOD))
+				continue;
 
 		if($row["url"] != "")
 		{
