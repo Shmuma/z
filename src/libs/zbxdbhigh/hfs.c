@@ -1544,22 +1544,14 @@ int HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t ite
 		goto end; // error
 	}
 
-/* 	if (!obtain_lock (fd, 0)) { */
-/* 		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: cannot obtain lock", p_data); */
-/* 		goto end; */
-/* 	} */
-
-	if ((ofs = lseek(fd, meta->last_ofs, SEEK_SET)) == -1) {
-		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to change file offset = %u: %s", p_data, meta->last_ofs, strerror(errno));
-		goto end; // error
-	}
+	ofs = meta->last_ofs;
 
 	for (i = (meta->blocks-1); i >= 0; i--) {
 		ip = meta->meta + i;
 		ts = ip->end;
 
 		while (count > 0 && ip->start <= ts) {
-			if ((ofs = lseek(fd, (ofs - sizeof(val.l)), SEEK_SET)) == -1) {
+			if ((ofs = lseek(fd, ofs, SEEK_SET)) == -1) {
 				zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: unable to change file offset: %s", p_data, strerror(errno));
 				goto end;
 			}
@@ -1575,16 +1567,15 @@ int HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t ite
 			}
 
 			ts = (ts - ip->delay);
+			ofs -= sizeof(val.l);
 		}
 
 		if (count == 0)
 			break;
 	}
 end:
-	if (fd != -1) {
-/* 		release_lock (fd, 0); */
+	if (fd != -1)
 		close(fd);
-	}
 
 	xfree(p_data);
 	free_meta(meta);
