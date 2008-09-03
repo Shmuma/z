@@ -15,7 +15,7 @@ inline size_t xstrlen(const char *s)
 inline void *xmemcpy(void *dest, const void *src, size_t n)
 {
 	memcpy(dest, (src ? src : "\0"), n);
-	return ((char *) dest + n);
+	return (((char *) dest) + n);
 }
 
 inline char *xstrdup(const char *src)
@@ -85,10 +85,10 @@ size_t get_itemsize(DB_ITEM *item)
 
 char *memcache_zbx_serialize_item(DB_ITEM *item, size_t item_len)
 {
-	char *ptr, *p;
+	char *ptr = NULL, *p;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "[memcache] memcache_zbx_serialize_item()"
-		    "(%s, %s)", item->key, item->host_name);
+		    "[%s|%s]", item->key, item->host_name);
 
 	ptr = (char *) zbx_malloc(ptr, item_len);
 	p = ptr;
@@ -150,21 +150,18 @@ char *memcache_zbx_serialize_item(DB_ITEM *item, size_t item_len)
 	p = xmemcpy(p, &item->eventlog_severity,	sizeof(item->eventlog_severity));
 	p = xmemcpy(p, item->eventlog_source,		xstrlen(item->eventlog_source));
 	p = xmemcpy(p, item->logtimefmt,		xstrlen(item->logtimefmt));
-	p = xmemcpy(p, item->delay_flex,		xstrlen(item->delay_flex));
 	p = xmemcpy(p, &item->valuemapid,		sizeof(item->valuemapid));
-
+	p = xmemcpy(p, item->delay_flex,		xstrlen(item->delay_flex));
 	return ptr;
 }
 
-DB_ITEM *memcache_zbx_unserialize_item(char *itemstr)
+void memcache_zbx_unserialize_item(DB_ITEM *item, char *itemstr)
 {
-	DB_ITEM *item = NULL;
 	char *p = itemstr;
 	size_t l;
 
 	zabbix_log(LOG_LEVEL_DEBUG, "[memcache] memcache_zbx_unserialize_item()");
 
-	item = (DB_ITEM *) zbx_malloc(item, sizeof(DB_ITEM));
 	item->from_memcache = 1;
 
 	l = sizeof(item->itemid);
@@ -182,8 +179,7 @@ DB_ITEM *memcache_zbx_unserialize_item(char *itemstr)
 	item->siteid = xstrdup(p);			p += xstrlen(item->siteid);
 	item->description = xstrdup(p);			p += xstrlen(item->description);
 
-	l = sizeof(item->key);
-	xmemcpy(&item->key, p, l);			p += l;
+	xmemcpy(item->key, p, ITEM_KEY_LEN_MAX);	p += ITEM_KEY_LEN_MAX;
 
 	item->host_name = xstrdup(p);			p += xstrlen(item->host_name);
 	item->host_ip = xstrdup(p);			p += xstrlen(item->host_ip);
@@ -295,41 +291,41 @@ DB_ITEM *memcache_zbx_unserialize_item(char *itemstr)
 
 	item->eventlog_source = xstrdup(p);		p += xstrlen(item->eventlog_source);
 	item->logtimefmt = xstrdup(p);			p += xstrlen(item->logtimefmt);
-	item->delay_flex = xstrdup(p);			p += xstrlen(item->delay_flex);
 
 	l = sizeof(item->valuemapid);
 	xmemcpy(&item->valuemapid, p, l);		p += l;
 
-	return item;
+	item->delay_flex = xstrdup(p);			p += xstrlen(item->delay_flex);
 }
 
-int memcache_zbx_getitem(char *key, char *host, DB_ITEM *res)
+int memcache_zbx_getitem(char *key, char *host, DB_ITEM *item)
 {
-	char *memkey, *memvalue;
+	char *strkey = NULL, *stritem = NULL;
 	uint32_t flags;
 	memcached_return rc;
-	size_t len, value_len;
+	size_t len, item_len;
 
 	len = strlen(key) + strlen(host) + 2;
 
-	if ((memkey = (char *) malloc(len)) == NULL)
-		return -1;
-
-	zbx_snprintf(memkey, len, "%s|%s", key, host);
+	strkey = (char *) zbx_malloc(strkey, len);
+	zbx_snprintf(strkey, len, "%s|%s", key, host);
 
 	zabbix_log(LOG_LEVEL_DEBUG, "[memcache] memcache_getitem()"
-		    "[%s]", memkey);
+		    "[%s]", strkey);
 
-	memvalue = memcached_get(mem_conn, memkey, len, &value_len, &flags, &rc);
-	free(memkey);
+	stritem = memcached_get(mem_conn, strkey, len, &item_len, &flags, &rc);
+	free(strkey);
 
-	if (rc == MEMCACHED_SUCCESS && memvalue != NULL) {
-		res = memcache_zbx_unserialize_item(memvalue);
-		free(memvalue);
+	if (rc == MEMCACHED_SUCCESS) {
+		memcache_zbx_unserialize_item(item, stritem);
+		free(stritem);
 		return 1;
 	}
-	else if (rc == MEMCACHED_NOTFOUND)
+	else if (rc == MEMCACHED_NOTFOUND) {
+		if (stritem)
+			free(stritem);
 		return 0;
+	}
 
 	zabbix_log(LOG_LEVEL_ERR, "[memcache] memcache_getitem(): ERR: %s",
 		memcached_strerror(mem_conn, rc));

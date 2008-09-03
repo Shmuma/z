@@ -1589,6 +1589,7 @@ char*	DBdyn_escape_string(const char *str)
 void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 {
 	char	*s;
+	int	rc = 0;
 
 	/* Zabbix developers is morons. Some DB_ITEM pointers is not
 	   initialized after DBget_item_from_db(). */
@@ -1620,79 +1621,12 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	item->history=atoi(row[12]);
 	item->value_type=atoi(row[17]);
 
-	s=row[13];
-	item->lastvalue_str=NULL;
-	if(DBis_null(s)==SUCCEED)
-	{
-		item->lastvalue_null=1;
-	}
-	else
-	{
-		item->lastvalue_null=0;
-		item->lastvalue_str=s;
-		switch(item->value_type) {
-			case ITEM_VALUE_TYPE_FLOAT:
-				item->lastvalue_dbl=atof(s);
-				break;
-			case ITEM_VALUE_TYPE_UINT64:
-				ZBX_STR2UINT64(item->lastvalue_uint64,s);
-				break;
-		}	
-	}
-	s=row[14];
-	item->prevvalue_str=NULL;
-	if(DBis_null(s)==SUCCEED)
-	{
-		item->prevvalue_null=1;
-	}
-	else
-	{
-		item->prevvalue_null=0;
-		item->prevvalue_str=s;
-		switch(item->value_type) {
-			case ITEM_VALUE_TYPE_FLOAT:
-				item->prevvalue_dbl=atof(s);
-				break;
-			case ITEM_VALUE_TYPE_UINT64:
-				ZBX_STR2UINT64(item->prevvalue_uint64,s);
-				break;
-		}	
-	}
 	ZBX_STR2UINT64(item->hostid, row[15]);
 	item->host_status=atoi(row[16]);
 
 	item->host_errors_from=atoi(row[18]);
 	item->snmp_port=atoi(row[19]);
 	item->delta=atoi(row[20]);
-
-	s=row[21];
-	item->prevorgvalue_str=NULL;
-	if(DBis_null(s)==SUCCEED)
-	{
-		item->prevorgvalue_null=1;
-	}
-	else
-	{
-		item->prevorgvalue_null=0;
-		item->prevorgvalue_str=s;
-		switch(item->value_type) {
-			case ITEM_VALUE_TYPE_FLOAT:
-				item->prevorgvalue_dbl=atof(s);
-				break;
-			case ITEM_VALUE_TYPE_UINT64:
-				ZBX_STR2UINT64(item->prevorgvalue_uint64,s);
-				break;
-		}	
-	}
-	s=row[22];
-	if(DBis_null(s)==SUCCEED)
-	{
-		item->lastclock=0;
-	}
-	else
-	{
-		item->lastclock=atoi(s);
-	}
 
 	item->units=row[23];
 	item->multiplier=atoi(row[24]);
@@ -1712,44 +1646,63 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	item->host_dns=row[36];
 	item->siteid=row[37];
 
+	item->prevvalue_null    = 0;
+	item->lastvalue_null    = 0;
+	item->prevorgvalue_null = 0;
+
+	item->prevvalue_str = NULL;
+	item->lastvalue_str = NULL;
+	item->prevorgvalue_str = NULL;
+
 	switch(item->value_type) {
 		case ITEM_VALUE_TYPE_FLOAT:
-			HFS_get_item_values_dbl(CONFIG_HFS_PATH, item->siteid, item->itemid,
-						(hfs_time_t *)&item->lastclock,
-						(hfs_time_t *)&item->nextcheck,
-						&item->prevvalue_dbl,
-						&item->lastvalue_dbl,
-						&item->prevorgvalue_dbl);
-
-			item->prevvalue_null    = (item->prevvalue_dbl == 0.0)    ? 1 : 0;
-			item->lastvalue_null    = (item->lastvalue_dbl == 0.0)    ? 1 : 0;
-			item->prevorgvalue_null = (item->prevorgvalue_dbl == 0.0) ? 1 : 0;
+			rc = HFS_get_item_values_dbl(CONFIG_HFS_PATH, item->siteid, item->itemid,
+						    (hfs_time_t *)&item->lastclock,
+						    (hfs_time_t *)&item->nextcheck,
+						    &item->prevvalue_dbl,
+						    &item->lastvalue_dbl,
+						    &item->prevorgvalue_dbl);
+			if (!rc) {
+				item->prevvalue_dbl = 0.0;
+				item->lastvalue_dbl = 0.0;
+				item->prevorgvalue_dbl = 0.0;
+			}
 			break;
 		case ITEM_VALUE_TYPE_UINT64:
-			HFS_get_item_values_int(CONFIG_HFS_PATH, item->siteid, item->itemid,
-						(hfs_time_t *)&item->lastclock,
-						(hfs_time_t *)&item->nextcheck,
-						&item->prevvalue_uint64,
-						&item->lastvalue_uint64,
-						&item->prevorgvalue_uint64);
-
-			item->prevvalue_null    = (item->prevvalue_uint64 == 0)    ? 1 : 0;
-			item->lastvalue_null    = (item->lastvalue_uint64 == 0)    ? 1 : 0;
-			item->prevorgvalue_null = (item->prevorgvalue_uint64 == 0) ? 1 : 0;
+			rc = HFS_get_item_values_int(CONFIG_HFS_PATH, item->siteid, item->itemid,
+						    (hfs_time_t *)&item->lastclock,
+						    (hfs_time_t *)&item->nextcheck,
+						    &item->prevvalue_uint64,
+						    &item->lastvalue_uint64,
+						    &item->prevorgvalue_uint64);
+			if (!rc) {
+				item->prevvalue_uint64 = 0;
+				item->lastvalue_uint64 = 0;
+				item->prevorgvalue_uint64 = 0;
+			}
 			break;
 		default:
-			HFS_get_item_values_str(CONFIG_HFS_PATH, item->siteid, item->itemid,
-						(hfs_time_t *)&item->lastclock,
-						(hfs_time_t *)&item->nextcheck,
-						&item->prevvalue_str,
-						&item->lastvalue_str,
-						&item->prevorgvalue_str);
-
-			item->prevvalue_null    = (item->prevvalue_str == NULL)    ? 1 : 0;
-			item->lastvalue_null    = (item->lastvalue_str == NULL)    ? 1 : 0;
-			item->prevorgvalue_null = (item->prevorgvalue_str == NULL) ? 1 : 0;
+			rc = HFS_get_item_values_str(CONFIG_HFS_PATH, item->siteid, item->itemid,
+						    (hfs_time_t *)&item->lastclock,
+						    (hfs_time_t *)&item->nextcheck,
+						    &item->prevvalue_str,
+						    &item->lastvalue_str,
+						    &item->prevorgvalue_str);
+			if (!rc) {
+				item->prevvalue_str = NULL;
+				item->lastvalue_str = NULL;
+				item->prevorgvalue_str = NULL;
+			}
 			break;
 	}
+	if (!rc) {
+		item->lastclock 	= 0;
+		item->nextcheck		= 0;
+		item->prevvalue_null    = 1;
+		item->lastvalue_null    = 1;
+		item->prevorgvalue_null = 1;
+	}
+
 #ifdef HAVE_MEMCACHE
 	if (process_type == ZBX_PROCESS_TRAPPERD)
 		memcache_zbx_setitem(item);
@@ -1782,92 +1735,111 @@ void DBfree_item(DB_ITEM *item)
 {
 	if (!item)
 		return;
+
+	zabbix_log(LOG_LEVEL_DEBUG, "In DBfree_item(%s) [from-memcache=%d]",
+		    item->key, item->from_memcache);
+
 #ifdef HAVE_MEMCACHE
 	if (item->from_memcache) {
-		if (item->delay_flex)
+		if (item->delay_flex) {
 			free(item->delay_flex);
+			item->delay_flex = NULL;
+		}
 
-		if (item->description)
+		if (item->description) {
 			free(item->description);
+			item->description = NULL;
+		}
 
-		if (item->eventlog_source)
+		if (item->eventlog_source) {
 			free(item->eventlog_source);
+			item->eventlog_source = NULL;
+		}
 
-		if (item->formula)
+		if (item->formula) {
 			free(item->formula);
+			item->formula = NULL;
+		}
 
-		if (item->host_dns)
+		if (item->host_dns) {
 			free(item->host_dns);
+			item->host_dns = NULL;
+		}
 
-		if (item->host_ip)
+		if (item->host_ip) {
 			free(item->host_ip);
+			item->host_ip = NULL;
+		}
 
-		if (item->host_name)
+		if (item->host_name) {
 			free(item->host_name);
+			item->host_name = NULL;
+		}
 
-		if (item->logtimefmt)
+		if (item->logtimefmt) {
 			free(item->logtimefmt);
+			item->logtimefmt = NULL;
+		}
 
-		if (item->shortname)
+		if (item->shortname) {
 			free(item->shortname);
+			item->shortname = NULL;
+		}
 
-		if (item->siteid)
+		if (item->siteid) {
 			free(item->siteid);
+			item->siteid = NULL;
+		}
 
-		if (item->snmp_community)
+		if (item->snmp_community) {
 			free(item->snmp_community);
+			item->snmp_community = NULL;
+		}
 
-		if (item->snmp_oid)
+		if (item->snmp_oid) {
 			free(item->snmp_oid);
+			item->snmp_oid = NULL;
+		}
 
-		if (item->snmpv3_authpassphrase)
+		if (item->snmpv3_authpassphrase) {
 			free(item->snmpv3_authpassphrase);
+			item->snmpv3_authpassphrase = NULL;
+		}
 
-		if (item->snmpv3_privpassphrase)
+		if (item->snmpv3_privpassphrase) {
 			free(item->snmpv3_privpassphrase);
+			item->snmpv3_privpassphrase = NULL;
+		}
 
-		if (item->snmpv3_securityname)
+		if (item->snmpv3_securityname) {
 			free(item->snmpv3_securityname);
+			item->snmpv3_securityname = NULL;
+		}
 
-		if (item->trapper_hosts)
+		if (item->trapper_hosts) {
 			free(item->trapper_hosts);
+			item->trapper_hosts = NULL;
+		}
 
-		if (item->units)
+		if (item->units) {
 			free(item->units);
+			item->units = NULL;
+		}
 	}
 #endif
-
-	switch(item->value_type) {
-		case ITEM_VALUE_TYPE_FLOAT:
-		case ITEM_VALUE_TYPE_UINT64:
-			return;
+	if (item->prevvalue_str) {
+		free(item->prevvalue_str);
+		item->prevvalue_str = NULL;
 	}
 
-	if (item->prevvalue_null == 0) {
-		if (item->prevvalue_str)
-			free(item->prevvalue_str);
-		else
-			zabbix_log(LOG_LEVEL_ERR,"DBfree_item(): %s: "
-				    "(prevvalue_null == 0) && (prevvalue_str == NULL)",
-				    item->key);
+	if (item->lastvalue_str) {
+		free(item->lastvalue_str);
+		item->lastvalue_str = NULL;
 	}
 
-	if (item->lastvalue_null == 0) {
-		if (item->lastvalue_str)
-			free(item->lastvalue_str);
-		else
-			zabbix_log(LOG_LEVEL_ERR,"DBfree_item(): %s: "
-				    "(lastvalue_null == 0) && (lastvalue_str == NULL)",
-				    item->key);
-	}
-
-	if (item->prevorgvalue_null == 0) {
-		if (item->prevorgvalue_str)
-			free(item->prevorgvalue_str);
-		else
-			zabbix_log(LOG_LEVEL_ERR,"DBfree_item(): %s: "
-				    "(prevorgvalue_null == 0) && (prevorgvalue_str == NULL)",
-				    item->key);
+	if (item->prevorgvalue_str) {
+		free(item->prevorgvalue_str);
+		item->prevorgvalue_str = NULL;
 	}
 }
 

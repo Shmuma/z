@@ -301,15 +301,16 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 
 	init_result(&agent);
 
-	DBescape_string(server, server_esc, MAX_STRING_LEN);
-	DBescape_string(key, key_esc, MAX_STRING_LEN);
-
 #ifdef HAVE_MEMCACHE
 	if (process_type == ZBX_PROCESS_TRAPPERD)
 		in_cache = memcache_zbx_getitem(key, server, &item);
 
 	if (in_cache != 1) {
-		zabbix_log( LOG_LEVEL_DEBUG, "In process_data: '%s %s' not found in memcached", key, server);
+		zabbix_log( LOG_LEVEL_DEBUG, "In process_data: [NOT IN MEMCACHE] '%s %s'", key, server);
+
+		DBescape_string(server, server_esc, MAX_STRING_LEN);
+		DBescape_string(key, key_esc, MAX_STRING_LEN);
+
 #endif
 		result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.host='%s' and i.key_='%s' and i.status in (%d,%d) and i.type in (%d,%d) and" ZBX_COND_NODEID " and " ZBX_COND_SITE,
 			ZBX_SQL_ITEM_SELECT,
@@ -335,7 +336,7 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 #ifdef HAVE_MEMCACHE
 	}
 	else {
-		zabbix_log( LOG_LEVEL_DEBUG, "In process_data: '%s %s' in memcached", key, server);
+		zabbix_log( LOG_LEVEL_DEBUG, "In process_data: [IN MEMCACHE] '%s %s'", key, server);
 	}
 #endif
 
@@ -623,14 +624,6 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 {
 	char	value_esc[MAX_STRING_LEN];
 	int	nextcheck;
-#ifdef HAVE_MEMCACHE
-	zbx_item_status_t prev_status              = item->status;
-	int               prev_nextcheck           = item->nextcheck;
-	char             *prev_prevorgvalue_str    = item->prevorgvalue_str;
-	double            prev_prevorgvalue_dbl    = item->prevorgvalue_dbl;
-	zbx_uint64_t      prev_prevorgvalue_uint64 = item->prevorgvalue_uint64;
-	int               prev_prevorgvalue_null   = item->prevorgvalue_null;
-#endif
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In update_item()");
 
@@ -892,24 +885,26 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 		}
 	}
 
-	item->prevvalue_str	= item->lastvalue_str;
-	item->prevvalue_dbl	= item->lastvalue_dbl;
-	item->prevvalue_uint64	= item->lastvalue_uint64;
-	item->prevvalue_null	= item->lastvalue_null;
+	if (item->prevvalue_str)
+		free(item->prevvalue_str);
+	item->prevvalue_str 		= (item->lastvalue_str) ? strdup(item->lastvalue_str) : NULL;
+	item->prevvalue_dbl		= item->lastvalue_dbl;
+	item->prevvalue_uint64		= item->lastvalue_uint64;
+	item->prevvalue_null		= item->lastvalue_null;
 
-	item->lastvalue_uint64	= value->ui64;
-	item->lastvalue_dbl	= value->dbl;
-	item->lastvalue_str	= value->str;
-	item->lastvalue_null	= 0;
+	if (item->lastvalue_str)
+		free(item->lastvalue_str);
+	item->lastvalue_str 		= (value->str) ? strdup(value->str) : NULL;
+	item->lastvalue_uint64		= value->ui64;
+	item->lastvalue_dbl		= value->dbl;
+	item->lastvalue_null		= 0;
 
-#ifdef HAVE_MEMCACHE
-	if (process_type == ZBX_PROCESS_TRAPPERD) {
-		item->prevorgvalue_uint64	= value->ui64;
-		item->prevorgvalue_dbl		= value->dbl;
-		item->prevorgvalue_str		= value->str;
-		item->prevorgvalue_null		= 0;
-	}
-#endif
+	if (item->prevorgvalue_str)
+		free(item->prevorgvalue_str);
+	item->prevorgvalue_str		= (value->str) ? strdup(value->str) : NULL;
+	item->prevorgvalue_uint64	= value->ui64;
+	item->prevorgvalue_dbl		= value->dbl;
+	item->prevorgvalue_null		= 0;
 
 /* Update item status if required */
 	if(item->status == ITEM_STATUS_NOTSUPPORTED)
@@ -923,17 +918,12 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 		item->status = ITEM_STATUS_ACTIVE;
 
 #ifdef HAVE_MEMCACHE
-		if (process_type != ZBX_PROCESS_TRAPPERD) {
+		if (process_type != ZBX_PROCESS_TRAPPERD)
 #endif
 		DBexecute("update items set status=%d,error='' where itemid=" ZBX_FS_UI64,
 			ITEM_STATUS_ACTIVE,
 			item->itemid);
-#ifdef HAVE_MEMCACHE
-		}
-		else {
-			item->status = ITEM_STATUS_ACTIVE;
-		}
-#endif
+
 		if (CONFIG_HFS_PATH)
 			HFS_update_item_status (CONFIG_HFS_PATH, item->siteid, item->itemid, ITEM_STATUS_ACTIVE, NULL);
 	}
@@ -943,15 +933,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 #ifdef HAVE_MEMCACHE
 	if (process_type == ZBX_PROCESS_TRAPPERD) {
 		item->nextcheck = nextcheck;
-
 		memcache_zbx_setitem(item);
-
-		item->status              = prev_status;
-		item->nextcheck           = prev_nextcheck;
-		item->prevorgvalue_uint64 = prev_prevorgvalue_uint64;
-		item->prevorgvalue_dbl    = prev_prevorgvalue_dbl;
-		item->prevorgvalue_str    = prev_prevorgvalue_str;
-		item->prevorgvalue_null   = prev_prevorgvalue_null;
 	}
 #endif
 
