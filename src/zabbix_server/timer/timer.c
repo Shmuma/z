@@ -86,6 +86,8 @@ void main_timer_loop()
 			update_functions(&item);
 			update_triggers(item.itemid);
 			DBcommit();
+
+			DBfree_item(&item);
 		}
 
 		DBfree_result(result);

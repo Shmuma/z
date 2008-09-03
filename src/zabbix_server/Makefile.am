@@ -25,6 +25,11 @@ zabbix_server_SOURCES = \
 	functions.c functions.h \
 	server.c
 
+if MEMCACHE
+zabbix_server_SOURCES += \
+	memcache.c memcache.h
+endif
+
 if JABBER 
 JABBER_LDADD = $(top_srcdir)/src/libs/zbxjabber/libzbxjabber.a
 endif

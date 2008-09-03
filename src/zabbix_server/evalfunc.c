@@ -1977,6 +1977,7 @@ int evaluate_function2(char *value,char *host,char *key,char *function,char *par
 
 /* Cannot call DBfree_result until evaluate_FUNC */
 	DBfree_result(result);
+	DBfree_item(&item);
 
 	zabbix_log(LOG_LEVEL_DEBUG, "End evaluate_function2(result:%s)",
 		value);
