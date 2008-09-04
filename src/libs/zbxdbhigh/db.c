@@ -1659,6 +1659,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 		case ITEM_VALUE_TYPE_FLOAT:
 			rc = HFS_get_item_values_dbl(CONFIG_HFS_PATH, item->siteid, item->itemid,
 						    &lastclock, &nextcheck,
+						    &item->prevvalue_dbl,
 						    &item->lastvalue_dbl,
 						    &item->prevorgvalue_dbl);
 			if (!rc) {
