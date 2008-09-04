@@ -414,7 +414,10 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 		}
  	}
 
-	DBfree_result(result);
+#ifdef HAVE_MEMCACHE
+	if (!in_cache)
+#endif
+		DBfree_result(result);
 
 	free_result(&agent);
 
