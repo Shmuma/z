@@ -1590,6 +1590,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 {
 	char	*s;
 	int	rc = 0;
+	hfs_time_t lastclock, nextcheck;
 
 	/* Zabbix developers is morons. Some DB_ITEM pointers is not
 	   initialized after DBget_item_from_db(). */
@@ -1657,9 +1658,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	switch(item->value_type) {
 		case ITEM_VALUE_TYPE_FLOAT:
 			rc = HFS_get_item_values_dbl(CONFIG_HFS_PATH, item->siteid, item->itemid,
-						    (hfs_time_t *)&item->lastclock,
-						    (hfs_time_t *)&item->nextcheck,
-						    &item->prevvalue_dbl,
+						    &lastclock, &nextcheck,
 						    &item->lastvalue_dbl,
 						    &item->prevorgvalue_dbl);
 			if (!rc) {
@@ -1670,8 +1669,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 			break;
 		case ITEM_VALUE_TYPE_UINT64:
 			rc = HFS_get_item_values_int(CONFIG_HFS_PATH, item->siteid, item->itemid,
-						    (hfs_time_t *)&item->lastclock,
-						    (hfs_time_t *)&item->nextcheck,
+						    &lastclock, &nextcheck,
 						    &item->prevvalue_uint64,
 						    &item->lastvalue_uint64,
 						    &item->prevorgvalue_uint64);
@@ -1683,8 +1681,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 			break;
 		default:
 			rc = HFS_get_item_values_str(CONFIG_HFS_PATH, item->siteid, item->itemid,
-						    (hfs_time_t *)&item->lastclock,
-						    (hfs_time_t *)&item->nextcheck,
+						    &lastclock, &nextcheck,
 						    &item->prevvalue_str,
 						    &item->lastvalue_str,
 						    &item->prevorgvalue_str);
@@ -1695,12 +1692,16 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 			}
 			break;
 	}
+
 	if (!rc) {
 		item->lastclock 	= 0;
 		item->nextcheck		= 0;
 		item->prevvalue_null    = 1;
 		item->lastvalue_null    = 1;
 		item->prevorgvalue_null = 1;
+	} else {
+		item->lastclock = lastclock;
+		item->nextcheck = nextcheck;
 	}
 
 #ifdef HAVE_MEMCACHE
