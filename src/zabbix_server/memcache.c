@@ -351,7 +351,8 @@ int memcache_zbx_setitem(DB_ITEM *item)
 	stritem = memcache_zbx_serialize_item(item, item_len);
 
 	rc = memcached_set(mem_conn, strkey, (len-1), stritem, item_len,
-			    (time_t)30, (uint32_t)0);
+			    (time_t)(CONFIG_MEMCACHE_ITEMS_TTL > 0 ? CONFIG_MEMCACHE_ITEMS_TTL : 1),
+			    (uint32_t)0);
 	free(strkey);
 	free(stritem);
 

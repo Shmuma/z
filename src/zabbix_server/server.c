@@ -181,6 +181,11 @@ int     CONFIG_SERVER_STARTUP_TIME      = 0;
 /* Path to store History on disk (directory). If not specified, old DB engine used. */
 char	*CONFIG_HFS_PATH		= NULL;
 
+#ifdef HAVE_MEMCACHE
+char *CONFIG_MEMCACHE_SERVER		= NULL;
+int CONFIG_MEMCACHE_ITEMS_TTL		= 30;
+#endif
+
 /******************************************************************************
  *                                                                            *
  * Function: init_config                                                      *
@@ -241,6 +246,10 @@ void	init_config(void)
 		{"ServerMasterIp",&CONFIG_MASTER_IP,0,TYPE_STRING,PARM_OPT,0,0},
 		{"ServerMasterPort",&CONFIG_MASTER_PORT,0,TYPE_INT,PARM_OPT,0,0},
 		{"ServerHistoryFSPath",&CONFIG_HFS_PATH,0,TYPE_STRING,PARM_OPT,0,0},
+#ifdef HAVE_MEMCACHE
+		{"MemcacheServers",&CONFIG_MEMCACHE_SERVER,0,TYPE_STRING,PARM_OPT,0,0},
+		{"MemcacheItemsTTL",&CONFIG_MEMCACHE_ITEMS_TTL,0,TYPE_INT,PARM_OPT,0,0},
+#endif
 		{0}
 	};
 
@@ -1006,7 +1015,6 @@ int MAIN_ZABBIX_ENTRY(void)
 #ifdef HAVE_MEMCACHE
 	memcached_server_st	*mem_servers;
 	memcached_return	 mem_rc;
-	char *mem_server_list = "localhost";
 #endif
 
         DB_RESULT       result;
@@ -1140,7 +1148,9 @@ int MAIN_ZABBIX_ENTRY(void)
 		if ((mem_conn = memcached_create(NULL)) == NULL)
 			zabbix_log(LOG_LEVEL_ERR, "memcached_create() == NULL");
 
-		mem_servers = memcached_servers_parse(mem_server_list);
+		mem_servers = memcached_servers_parse(CONFIG_MEMCACHE_SERVER ?
+						      CONFIG_MEMCACHE_SERVER :
+						      "localhost");
 		mem_rc = memcached_server_push(mem_conn, mem_servers);
 		memcached_server_list_free(mem_servers);
 
