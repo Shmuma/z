@@ -628,6 +628,16 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 	char	value_esc[MAX_STRING_LEN];
 	int	nextcheck;
 
+	AGENT_RESULT prev_value;
+
+	prev_value.type = value->type;
+	prev_value.ui64 = value->ui64;
+	prev_value.dbl  = value->dbl;
+	prev_value.str  = NULL;
+
+	if(GET_STR_RESULT(value))
+		prev_value.str  = strdup(value->str);
+
 	zabbix_log( LOG_LEVEL_DEBUG, "In update_item()");
 
 	value_esc[0]	= '\0';
@@ -904,9 +914,9 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 
 	if (item->prevorgvalue_str)
 		free(item->prevorgvalue_str);
-	item->prevorgvalue_str		= (value->str) ? strdup(value->str) : NULL;
-	item->prevorgvalue_uint64	= value->ui64;
-	item->prevorgvalue_dbl		= value->dbl;
+	item->prevorgvalue_str		= prev_value.str;
+	item->prevorgvalue_uint64	= prev_value.ui64;
+	item->prevorgvalue_dbl		= prev_value.dbl;
 	item->prevorgvalue_null		= 0;
 
 /* Update item status if required */
