@@ -692,7 +692,7 @@
 			return	$result;
 		}
  
-		add_event($triggerid,TRIGGER_VALUE_UNKNOWN);
+		//		add_event($triggerid,TRIGGER_VALUE_UNKNOWN);
  
 		if( null == ($expression = implode_exp($expression,$triggerid)) )
 		{
@@ -1027,7 +1027,7 @@
 			update_trigger_status($db_chd_trigger["triggerid"],$status);
 		}
 
-		add_event($triggerid,TRIGGER_VALUE_UNKNOWN);
+		//		add_event($triggerid,TRIGGER_VALUE_UNKNOWN);
 		return	DBexecute("update triggers set status=$status where triggerid=$triggerid");
 	}
 
@@ -1257,7 +1257,7 @@
 		$now = time();
 		while($row=DBfetch($result))
 		{
-			if(!add_event($row["triggerid"],TRIGGER_VALUE_UNKNOWN,$now)) continue;
+// 			if(!add_event($row["triggerid"],TRIGGER_VALUE_UNKNOWN,$now)) continue;
 
 			DBexecute('update triggers set value='.TRIGGER_VALUE_UNKNOWN.' where triggerid='.$row["triggerid"]);
 		}
@@ -1442,7 +1442,7 @@
 
 		$expression = implode_exp($expression,$triggerid); /* errors can be ignored cose function must return NULL */
 
-		if($event_to_unknown) add_event($triggerid,TRIGGER_VALUE_UNKNOWN);
+// 		if($event_to_unknown) add_event($triggerid,TRIGGER_VALUE_UNKNOWN);
 		reset_items_nextcheck($triggerid);
 
 		$sql="update triggers set";
