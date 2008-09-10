@@ -1631,30 +1631,13 @@ void HFS_update_host_availability (const char* hfs_base_dir, const char* siteid,
 	}
 	xfree (name);
 
-/* 	/\* place write lock on that file or wait for unlock *\/ */
-/* 	if (!obtain_lock (fd, 1)) { */
-/* 		close (fd); */
-/* 		return; */
-/* 	} */
-
 	/* lock obtained, write data at needed position */
 	lseek (fd, (sizeof (available) + sizeof (clock))*hostid, SEEK_SET);
 	if (write (fd, &available, sizeof (available)) == -1 ||
 	    write (fd, &clock, sizeof (clock)) == -1)
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_host_availability: write(): %s",  strerror(errno));
 
-/* 	write_str (fd, error); */
-
-/* 	/\* truncate file *\/ */
-/* 	if (ftruncate (fd, lseek (fd, 0, SEEK_CUR)) == -1) */
-/* 		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_host_availability: ftruncate(): %s", strerror(errno)); */
-
-/* 	/\* release lock *\/ */
-/* 	release_lock (fd, 1); */
-
-	if (close (fd) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_host_availability: close(): %s", strerror(errno));
-
+	close (fd);
 	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_host_availability leave");
 }
 
