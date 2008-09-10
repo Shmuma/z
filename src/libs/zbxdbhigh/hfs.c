@@ -1386,6 +1386,11 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 	hfs_off_t ofs;
 	hfs_meta_item_t *ip;
 
+	char* buffer = NULL;
+	const int buf_size = 1024; /* amount of items can be stored in buffer */
+	int buf_items;             /* amount of items read from file */
+	int i;
+
 	p = (graph_to_ts - graph_from_ts);
 	z = (p - graph_from_ts % p);
 	x = (sizex - 1);
@@ -1405,6 +1410,12 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 	else {
 		val = &val_trends;
 		val_len = sizeof(val_trends);
+	}
+
+	buffer = (char*)malloc (buf_size * val_len);
+        if (!buffer) {
+		zabbix_log(LOG_LEVEL_CRIT, "HFS: memory allocation error");
+		return 0;
 	}
 
 	if ((block = HFS_find_meta(hfs_base_dir, siteid, is_trend, itemid, ts, &meta)) == -1) {
@@ -1442,11 +1453,6 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 		goto out;
 	}
 
-/* 	if (!obtain_lock (fd, 0)) { */
-/* 		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: cannot obtain lock", p_data); */
-/* 		goto out; */
-/* 	} */
-
 	if ((ofs = find_meta_ofs (ts, meta, NULL)) == -1) {
 		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: %lld: unable to get offset in file", p_data, ts);
 		goto out;
@@ -1457,77 +1463,80 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 		goto out;
 	}
 
-	while (read (fd, val, val_len) > 0) {
+	while ((buf_items = read (fd, buffer, buf_size * val_len)) > 0) {
+		buf_items /= val_len;
 
-		cur_group = (long) (x * ((ts + z) % p) / p);
-		if (group == -1)
-			group = cur_group;
+		for (i = 0; i < buf_items; i++) {
+			val = buffer + i * val_len;
 
-		ts += ip->delay;
+			cur_group = (long) (x * ((ts + z) % p) / p);
+			if (group == -1)
+				group = cur_group;
 
-		if (!is_valid_val(val, val_len))
-			continue;
+			ts += ip->delay;
 
-		if (result_size <= items) {
-			result_size += alloc_item_values;
-			*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * result_size));
-			HFS_init_trend_value(is_trend, ip->type, val, &((*result)[items].value));
-		}
-
-		if (group != cur_group) {
-			(*result)[items].type  = ip->type;
-			(*result)[items].group = cur_group;
-			(*result)[items].count = count;
-			(*result)[items].clock = ts;
-
-			group = cur_group;
-			count = 0;
-			items++;
+			if (!is_valid_val(val, val_len))
+				continue;
 
 			if (result_size <= items) {
 				result_size += alloc_item_values;
 				*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * result_size));
+				HFS_init_trend_value(is_trend, ip->type, val, &((*result)[items].value));
 			}
 
-			HFS_init_trend_value(is_trend, ip->type, val, &((*result)[items].value));
+			if (group != cur_group) {
+				(*result)[items].type  = ip->type;
+				(*result)[items].group = cur_group;
+				(*result)[items].count = count;
+				(*result)[items].clock = ts;
+
+				group = cur_group;
+				count = 0;
+				items++;
+
+				if (result_size <= items) {
+					result_size += alloc_item_values;
+					*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * result_size));
+				}
+
+				HFS_init_trend_value(is_trend, ip->type, val, &((*result)[items].value));
+			}
+
+			if (count > 0) {
+				HFS_init_trend_value(is_trend, ip->type, val, &val_temp);
+				recalculate_trend(&val_temp,
+						  (*result)[items].value,
+						  ip->type);
+				(*result)[items].value = val_temp;
+			}
+
+			if (ts >= to_ts)
+				goto out;
+
+			if (ts >= ip->end) {
+				block++;
+
+				if (block >= meta->blocks)
+					goto out;
+
+				ip = meta->meta + block;
+			}
+
+			count++;
 		}
-
-		if (count > 0) {
-			HFS_init_trend_value(is_trend, ip->type, val, &val_temp);
-			recalculate_trend(&val_temp,
-					  (*result)[items].value,
-					  ip->type);
-			(*result)[items].value = val_temp;
-		}
-
-		if (ts >= to_ts)
-			break;
-
-		if (ts >= ip->end) {
-			block++;
-
-			if (block >= meta->blocks)
-				break;
-
-			ip = meta->meta + block;
-		}
-
-		count++;
 	}
 
 out:
 	free_meta (meta);
 	xfree(p_data);
 	if (fd != -1) {
-/* 		release_lock (fd, 0); */
 		close(fd);
 	}
-
 	if (result_size > items)
 		*result = (hfs_item_value_t *) realloc(*result, (sizeof(hfs_item_value_t) * items));
-
-	zabbix_log(LOG_LEVEL_DEBUG,
-		"HFS: HFSread_item: Out items=%d\n", items);
+	if (buffer)
+		free (buffer);
+	zabbix_log(LOG_LEVEL_DEBUG, "HFS: HFSread_item: Out items=%d\n", items);
 
 	return items;
 }
