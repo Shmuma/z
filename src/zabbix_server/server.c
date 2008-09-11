@@ -1144,24 +1144,8 @@ int MAIN_ZABBIX_ENTRY(void)
 /*		for(;;)	zbx_sleep(3600);*/
 	}
 #ifdef HAVE_MEMCACHE
-	else {
-		if ((mem_conn = memcached_create(NULL)) == NULL)
-			zabbix_log(LOG_LEVEL_ERR, "memcached_create() == NULL");
-
-		mem_servers = memcached_servers_parse(CONFIG_MEMCACHE_SERVER ?
-						      CONFIG_MEMCACHE_SERVER :
-						      "localhost");
-		mem_rc = memcached_server_push(mem_conn, mem_servers);
-		memcached_server_list_free(mem_servers);
-
-		if (mem_rc != MEMCACHED_SUCCESS) {
-			zabbix_log(LOG_LEVEL_ERR, "memcached_server_push(): %s",
-				memcached_strerror(mem_conn, mem_rc));
-			memcached_free(mem_conn);
-			return 1;
-		}
-		zabbix_log(LOG_LEVEL_DEBUG, "Connect with memcached done");
-	}
+	else
+		memcache_zbx_connect();
 #endif
 
 	if(server_num <= CONFIG_POLLER_FORKS)
@@ -1272,10 +1256,8 @@ int MAIN_ZABBIX_ENTRY(void)
 				- CONFIG_UNREACHABLE_POLLER_FORKS - CONFIG_NODEWATCHER_FORKS - CONFIG_HTTPPOLLER_FORKS);
 	}
 #ifdef HAVE_MEMCACHE
-	if (mem_conn != NULL)
-		memcached_free(mem_conn);
+	memcache_zbx_disconnect();
 #endif
-
 	return SUCCEED;
 }
 

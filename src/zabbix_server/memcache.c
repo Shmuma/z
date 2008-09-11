@@ -23,6 +23,41 @@ inline char *xstrdup(const char *src)
 	return (((src) && ((*src) != '\0')) ? strdup(src) : NULL );
 }
 
+int memcache_zbx_connect(void)
+{
+	memcached_server_st	*mem_servers;
+	memcached_return	 mem_rc;
+
+	if (mem_conn)
+		memcached_free(mem_conn);
+
+	if ((mem_conn = memcached_create(NULL)) == NULL)
+		zabbix_log(LOG_LEVEL_ERR, "memcached_create() == NULL");
+
+	mem_servers = memcached_servers_parse(CONFIG_MEMCACHE_SERVER ?
+					      CONFIG_MEMCACHE_SERVER :
+					      "localhost");
+	mem_rc = memcached_server_push(mem_conn, mem_servers);
+	memcached_server_list_free(mem_servers);
+
+	if (mem_rc != MEMCACHED_SUCCESS) {
+		zabbix_log(LOG_LEVEL_ERR, "memcached_server_push(): %s",
+			   memcached_strerror(mem_conn, mem_rc));
+		memcached_free(mem_conn);
+		mem_conn = NULL;
+		return -1;
+	}
+	zabbix_log(LOG_LEVEL_DEBUG, "Connect with memcached done");
+	return 0;
+}
+
+int memcache_zbx_disconnect(void)
+{
+	if (mem_conn != NULL)
+		memcached_free(mem_conn);
+	return 0;
+}
+
 size_t get_itemsize(DB_ITEM *item)
 {
 	size_t len = 0;
