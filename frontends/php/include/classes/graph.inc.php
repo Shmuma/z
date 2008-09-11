@@ -35,6 +35,10 @@
 	define("GRAPH_TYPE_NORMAL",	0);
 	define("GRAPH_TYPE_STACKED",	1);
 
+	define("GRAPH_COMPACT_NORMAL",	0);
+	define("GRAPH_COMPACT_MEDIUM",	1);
+	define("GRAPH_COMPACT_SMALL",	2);
+
 	define('ZBX_MAX_TREND_DIFF', 3600);
 	
 	define('ZBX_GRAPH_MAX_SKIP_CELL', 16);
@@ -144,8 +148,7 @@
 			$this->m_showWorkPeriod = 1;
 			$this->m_showTriggers = 1;
 
-			$this->compactX = 0;
-			$this->compactY = 0;
+			$this->compactX = $this->compactY = GRAPH_COMPACT_NORMAL;
 
 /*			if($this->period<=3600)
 			{
@@ -160,10 +163,22 @@
 
 		function updateShifts()
 		{
-			if ($this->compactX == 0)
+			switch (max ($this->compactX, $this->compactY)) {
+			case GRAPH_COMPACT_NORMAL:
 				$shift = 60;
-			else
+				$rshift = 20;
+				$lshift = 10;
+				break;
+			case GRAPH_COMPACT_MEDIUM:
 				$shift = 25;
+				$rshift = 20;
+				$lshift = 10;
+				break;
+			case GRAPH_COMPACT_SMALL:
+				$lshift = 4;
+				$rshift = $shift = 2;
+				break;
+			}
 			if( ($this->yaxisleft == 1) && ($this->yaxisright == 1))
 			{
 				$this->shiftXleft = $shift;
@@ -172,11 +187,11 @@
 			else if($this->yaxisleft == 1)
 			{
 				$this->shiftXleft = $shift;
-				$this->shiftXright = 20;
+				$this->shiftXright = $rshift;
 			}
 			else if($this->yaxisright == 1)
 			{
-				$this->shiftXleft = 10;
+				$this->shiftXleft = $lshift;
 				$this->shiftXright = $shift;
 			}
 #			$this->sizeX = $this->sizeX - $this->shiftXleft-$this->shiftXright;
@@ -375,14 +390,14 @@
 		{
 			$minute=60; $hour=$minute*60; $day=$hour*24;
 			$str = " (";
-			if ($this->compactX == 0)
+			if ($this->compactX == GRAPH_COMPACT_NORMAL)
 				$str .= " ";
 
 			$days=floor($this->period/$day);
 			$hours=floor(($this->period%$day)/$hour);
 			$minutes=floor((($this->period%$day)%$hour)/$minute);
 			$str.=($days>0 ? $days."d" : "").($hours>0 ?  $hours."h" : "").($minutes>0 ? $minutes."m" : "");
-			if ($this->compactX == 0)
+			if ($this->compactX == GRAPH_COMPACT_NORMAL)
 				$str.=" history ";
 
 			$hour=1; $day=$hour*24;
@@ -402,16 +417,30 @@
 			if(!isset($this->header))
 			{
 				$host = $this->items[0]["host"];
-				if ($this->compactX != 0 && ereg ("[^.]+", $host, $regs))
-					$host = $regs[0];
-				$str="$host:".$this->items[0]["description"];
+				if (ereg ("[^.]+", $host, $regs))
+					$shost = $regs[0];
+				else
+					$shost = $host;
+
+				switch ($this->compactX) {
+				case GRAPH_COMPACT_NORMAL:
+					$str="$host:".$this->items[0]["description"];
+					break;
+				case GRAPH_COMPACT_MEDIUM:
+					$str="$shost:".$this->items[0]["description"];
+					break;
+				case GRAPH_COMPACT_SMALL:
+					$str="$shost";
+					break;
+				}
 			}
 			else
 			{
 				$str=$this->header;
 			}
 
-			$str=$str.$this->period2str($this->period);
+			if ($this->compactX != GRAPH_COMPACT_SMALL)
+				$str=$str.$this->period2str($this->period);
 
 			if($this->sizeX < 500)
 			{
@@ -432,8 +461,16 @@
 
 		function detectCompact ()
 		{
-			$this->compactX = $this->compactX ? 1 : $this->sizeX/24 <= 10;
-			$this->compactY = $this->compactY ? 1 : $this->sizeY/6 <= 15;
+			$this->compactX = GRAPH_COMPACT_NORMAL;
+			if ($this->sizeX < 250)
+				$this->compactX = GRAPH_COMPACT_MEDIUM;
+			if ($this->sizeX < 100)
+				$this->compactX = GRAPH_COMPACT_SMALL;
+			$this->compactY = GRAPH_COMPACT_NORMAL;
+			if ($this->sizeY < 200)
+				$this->compactY = GRAPH_COMPACT_MEDIUM;
+			if ($this->sizeY < 50)
+				$this->compactY = GRAPH_COMPACT_SMALL;
 		}
 
 		function setCompact ($compact)
@@ -454,13 +491,13 @@
 		function drawGrid()
 		{
 			$this->drawSmallRectangle();
-			if ($this->compactY == 0) {
+			if ($this->compactY == GRAPH_COMPACT_NORMAL) {
 				for($i=1;$i<=5;$i++) {
 					DashedLine($this->im,$this->shiftXleft,$i*($this->sizeY/6)+$this->shiftY,$this->sizeX+$this->shiftXleft,$i*($this->sizeY/6)+$this->shiftY,$this->GetColor("Gray"));
 				}
 			}
 		
-			if ($this->compactX == 0) {
+			if ($this->compactX == GRAPH_COMPACT_NORMAL && $this->compactY == GRAPH_COMPACT_NORMAL) {
 				for($i=1;$i<=23;$i++) {
 					DashedLine($this->im,$i*($this->sizeX/24)+$this->shiftXleft,$this->shiftY,$i*($this->sizeX/24)+$this->shiftXleft,$this->sizeY+$this->shiftY,$this->GetColor("Gray"));
 				}
@@ -604,7 +641,7 @@
 
 		function drawLogo()
 		{
-			ImageStringUp($this->im,0,$this->fullSizeX-10,$this->fullSizeY-50, "http://www.zabbix.com", $this->GetColor("Gray"));
+			ImageStringUp($this->im,0,$this->fullSizeX-10,$this->fullSizeY-50, "http://www.yandex.ru", $this->GetColor("Gray"));
 		}
 
 		function GetColor($color,$alfa=50)
@@ -640,7 +677,7 @@
 				if(strlen($this->items[$i]["description"])>$max_desc_len)	$max_desc_len=strlen($this->items[$i]["description"]);
 			}
 
-			$delta = $this->compactX ? 5 : 62;
+			$delta = $this->compactX == GRAPH_COMPACT_MEDIUM ? 5 : 62;
 
 			for($i=0;$i<$this->num;$i++)
 			{
@@ -1296,7 +1333,7 @@
 
 //			$this->im = imagecreate($this->sizeX+$this->shiftX+61,$this->sizeY+2*$this->shiftY+40);
 
-			$this->detectCompact ();
+ 			$this->detectCompact ();
 			set_image_header();
 
 			check_authorisation();
@@ -1313,13 +1350,18 @@
 			$this->calcTriggers();
 
 			$this->fullSizeX = $this->sizeX+$this->shiftXleft+$this->shiftXright+1;
-			if ($this->compactY == 0)
-				if ($this->compactX == 0)
-					$this->fullSizeY = $this->sizeY+$this->shiftY+62+12*($this->num+ (($this->sizeY < 120) ? 0 : count($this->triggers)))+8;
-				else
-					$this->fullSizeY = $this->sizeY+$this->shiftY+12*($this->num+ (($this->sizeY < 120) ? 0 : count($this->triggers)))+8;
-			else
-				$this->fullSizeY = $this->sizeY+$this->shiftY+12;
+			$delta = $this->compactX == GRAPH_COMPACT_NORMAL ? 62 : 0;
+			switch (max ($this->compactX, $this->compactY)) {
+			case GRAPH_COMPACT_NORMAL:
+				$this->fullSizeY = $this->sizeY+$this->shiftY+$delta+12*($this->num+ (($this->sizeY < 120) ? 0 : count($this->triggers)))+8;
+				break;
+			case GRAPH_COMPACT_MEDIUM:
+				$this->fullSizeY = $this->sizeY+$this->shiftY+15;
+				break;
+			case GRAPH_COMPACT_SMALL:
+				$this->fullSizeY = $this->sizeY+$this->shiftY+5;
+				break;
+			}
 
 			if(function_exists("ImageColorExactAlpha")&&function_exists("ImageCreateTrueColor")&&@imagecreatetruecolor(1,1))
 				$this->im = ImageCreateTrueColor($this->fullSizeX,$this->fullSizeY);
@@ -1416,18 +1458,22 @@
 				}
 			}
 	
-
-			$this->DrawLeftSide();
-			$this->DrawRightSide();
-			$this->drawTriggers();
-
-			if ($this->compactY == 0) {
-				if ($this->compactX == 0)
-					$this->drawLogo();
-				$this->drawLegend();
+			if ($this->compactX != GRAPH_COMPACT_SMALL && $this->compactY != GRAPH_COMPACT_SMALL) {
+				$this->DrawLeftSide();
+				$this->DrawRightSide();
 			}
 
-			if ($this->compactX == 0) {
+			$this->drawTriggers();
+
+			if ($this->compactX == GRAPH_COMPACT_NORMAL && $this->compactY == GRAPH_COMPACT_NORMAL)
+				$this->drawLogo();
+
+			if ($this->compactY != GRAPH_COMPACT_SMALL) {
+				if ($this->compactX != GRAPH_COMPACT_SMALL && $num < 3)
+					$this->drawLegend();
+			}
+
+			if ($this->compactX == GRAPH_COMPACT_NORMAL && $this->compactY == GRAPH_COMPACT_NORMAL) {
 				$end_time=getmicrotime();
 				$str=sprintf("%0.2f",($end_time-$start_time));
 				ImageString($this->im, 0,$this->fullSizeX-120,$this->fullSizeY-12,"Generated in $str sec", $this->GetColor("Gray"));
@@ -1435,7 +1481,7 @@
 
 			unset($this->items, $this->data);
 			
-			if ($this->help_button_text)
+			if ($this->help_button_text && $this->compactX == GRAPH_COMPACT_NORMAL)
 			{
 				ImageString(
 				  $this->im, 5,
