@@ -462,12 +462,12 @@
 		function detectCompact ()
 		{
 			$this->compactX = GRAPH_COMPACT_NORMAL;
-			if ($this->sizeX < 250)
+			if ($this->sizeX < 200)
 				$this->compactX = GRAPH_COMPACT_MEDIUM;
 			if ($this->sizeX < 100)
 				$this->compactX = GRAPH_COMPACT_SMALL;
 			$this->compactY = GRAPH_COMPACT_NORMAL;
-			if ($this->sizeY < 200)
+			if ($this->sizeY < 100)
 				$this->compactY = GRAPH_COMPACT_MEDIUM;
 			if ($this->sizeY < 50)
 				$this->compactY = GRAPH_COMPACT_SMALL;
