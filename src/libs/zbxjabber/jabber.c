@@ -430,6 +430,11 @@ int	send_jabber(char *username, char *passwd, char *sendto, char *message, char 
 	int ret = FAIL;
 	int iks_error = IKS_OK;
 
+	/* we ignore sigpipe signal. Jabber connection can timeout and
+	   socket will give us sigpipe. We should have change to
+	   handle this.*/
+	signal (SIGPIPE, SIG_IGN);
+
 	assert(error);
 
 	zabbix_log( LOG_LEVEL_DEBUG, "JABBER: sending message");
