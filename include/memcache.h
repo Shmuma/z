@@ -12,6 +12,7 @@ int memcache_zbx_connect(void);
 int memcache_zbx_disconnect(void);
 int memcache_zbx_getitem(char *key, char *host, DB_ITEM *res);
 int memcache_zbx_setitem(DB_ITEM *value);
+int memcache_zbx_item_remove(DB_ITEM *item);
 int memcache_zbx_is_item_expire(DB_ITEM *item);
 
 #endif // HAVE_MEMCACHE
