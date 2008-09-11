@@ -305,10 +305,8 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 	if (process_type == ZBX_PROCESS_TRAPPERD) {
 		in_cache = memcache_zbx_getitem(key, server, &item);
 
-		if (in_cache == 1 && memcache_zbx_is_item_expire(&item)) {
-			memcache_zbx_item_remove(&item);
+		if (in_cache == 1 && memcache_zbx_is_item_expire(&item))
 			in_cache = 0;
-		}
 	}
 
 	if (in_cache != 1) {

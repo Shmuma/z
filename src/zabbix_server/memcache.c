@@ -392,7 +392,8 @@ int memcache_zbx_setitem(DB_ITEM *item)
 	stritem = memcache_zbx_serialize_item(item, item_len);
 
 	rc = memcached_set(mem_conn, strkey, (len-1), stritem, item_len,
-			    (time_t)0, (uint32_t)0);
+			    (time_t)(CONFIG_MEMCACHE_ITEMS_TTL * 2),
+			    (uint32_t)0);
 	free(strkey);
 	free(stritem);
 
@@ -417,6 +418,8 @@ int memcache_zbx_item_remove(DB_ITEM *item)
 		    "[%s]", strkey);
 
 	rc = memcached_delete(mem_conn, strkey, len, (time_t)0);
+	free(strkey);
+
 	if (rc == MEMCACHED_SUCCESS || rc == MEMCACHED_BUFFERED)
 		return 1;
 
