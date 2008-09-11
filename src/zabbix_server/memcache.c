@@ -2,6 +2,7 @@
 #include "comms.h"
 #include "db.h"
 #include "log.h"
+#include "hfs.h"
 #include "memcache.h"
 
 #include <string.h>
@@ -114,7 +115,8 @@ size_t get_itemsize(DB_ITEM *item)
 		sizeof(item->lastvalue_uint64) +
 		sizeof(item->prevorgvalue_uint64) +
 		sizeof(item->prevvalue_uint64) +
-		sizeof(item->valuemapid);
+		sizeof(item->valuemapid) +
+		sizeof(item->cache_time);
 	return len;
 }
 
@@ -127,6 +129,7 @@ char *memcache_zbx_serialize_item(DB_ITEM *item, size_t item_len)
 
 	ptr = (char *) zbx_malloc(ptr, item_len);
 	p = ptr;
+	p = xmemcpy(p, &item->cache_time,		sizeof(item->cache_time));
 	p = xmemcpy(p, &item->itemid,			sizeof(item->itemid));
 	p = xmemcpy(p, &item->hostid,			sizeof(item->hostid));
 	p = xmemcpy(p, &item->type,			sizeof(item->type));
@@ -198,6 +201,9 @@ void memcache_zbx_unserialize_item(DB_ITEM *item, char *itemstr)
 	zabbix_log(LOG_LEVEL_DEBUG, "[memcache] memcache_zbx_unserialize_item()");
 
 	item->from_memcache = 1;
+
+	l = sizeof(item->cache_time);
+	memcpy(&item->cache_time, p, l);		p += l;
 
 	l = sizeof(item->itemid);
 	memcpy(&item->itemid, p, l);			p += l;
@@ -386,8 +392,7 @@ int memcache_zbx_setitem(DB_ITEM *item)
 	stritem = memcache_zbx_serialize_item(item, item_len);
 
 	rc = memcached_set(mem_conn, strkey, (len-1), stritem, item_len,
-			    (time_t)(CONFIG_MEMCACHE_ITEMS_TTL > 0 ? CONFIG_MEMCACHE_ITEMS_TTL : 1),
-			    (uint32_t)0);
+			    (time_t)0, (uint32_t)0);
 	free(strkey);
 	free(stritem);
 
@@ -395,4 +400,15 @@ int memcache_zbx_setitem(DB_ITEM *item)
 		return 1;
 
 	return -1;
+}
+
+int memcache_zbx_is_item_expire(DB_ITEM *item)
+{
+	hfs_time_t cur_time;
+
+	if (!item->cache_time)
+		return 1;
+
+	cur_time = time(NULL);
+	return ((cur_time - item->cache_time) >= CONFIG_MEMCACHE_ITEMS_TTL);
 }

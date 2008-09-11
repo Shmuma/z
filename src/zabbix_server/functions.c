@@ -305,7 +305,7 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 	if (process_type == ZBX_PROCESS_TRAPPERD)
 		in_cache = memcache_zbx_getitem(key, server, &item);
 
-	if (in_cache != 1) {
+	if (in_cache != 1 || memcache_zbx_is_item_expire(&item)) {
 		zabbix_log( LOG_LEVEL_DEBUG, "In process_data: [NOT IN MEMCACHE] '%s %s'", key, server);
 
 		DBescape_string(server, server_esc, MAX_STRING_LEN);

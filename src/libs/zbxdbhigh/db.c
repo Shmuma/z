@@ -1604,6 +1604,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 
 #ifdef HAVE_MEMCACHE
 	item->from_memcache = 0;
+	item->cache_time = 0;
 #endif
 
 	ZBX_STR2UINT64(item->itemid, row[0]);
@@ -1706,8 +1707,10 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	}
 
 #ifdef HAVE_MEMCACHE
-	if (process_type == ZBX_PROCESS_TRAPPERD)
+	if (process_type == ZBX_PROCESS_TRAPPERD) {
+		item->cache_time = time(NULL);
 		memcache_zbx_setitem(item);
+	}
 #endif
 }
 
