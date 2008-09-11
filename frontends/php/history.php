@@ -479,7 +479,7 @@ COpt::profiling_start("history");
 
 				$result = DBselect("select h.clock,h.value,i.valuemapid from $h_table h, items i".
 					" where h.itemid=i.itemid and i.itemid=".$_REQUEST["itemid"].
-					" order by clock desc", $count);
+					" order by clock desc", 500);
 				while ($row = DBfetch($result)) {
 					$val->value = $row["value"];
 					$val->clock = $row["clock"];
