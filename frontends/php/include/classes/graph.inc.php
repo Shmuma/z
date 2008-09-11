@@ -437,6 +437,8 @@
 			else
 			{
 				$str=$this->header;
+				if (ereg ("[^.]+", $str, $regs) && max ($this->compactX, $this->compactY) != GRAPH_COMPACT_NORMAL)
+					$str = $regs[0];
 			}
 
 			if ($this->compactX != GRAPH_COMPACT_SMALL)

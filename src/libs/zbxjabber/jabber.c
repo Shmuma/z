@@ -103,7 +103,7 @@ zbx_io_send (void *socket, const char *data, size_t len)
 
 	if ( !sock )	return IKS_NET_RWERR;
 
-	if ( write(*sock, data, len) < len) return IKS_NET_RWERR;
+	if ( write(*sock, data, len) == -1) return IKS_NET_RWERR;
 	return IKS_OK;
 }
 
