@@ -187,6 +187,11 @@ int main_alerter_loop()
 	DB_ALERT	alert;
 	DB_MEDIATYPE	mediatype;
 
+	/* we ignore sigpipe signal. Jabber connection can timeout and
+	   socket will give us sigpipe. We should have change to
+	   handle this.*/
+	signal (SIGPIPE, SIG_IGN);
+
 	zbx_setproctitle("connecting to the database");
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 
