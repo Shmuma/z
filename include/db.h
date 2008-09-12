@@ -24,6 +24,9 @@
 /* time_t */
 #include <time.h>
 
+/* hfs_time_t */
+#include "hfs.h"
+
 #include "common.h"
 #include "zbxdb.h"
 
@@ -313,6 +316,10 @@ DB_ITEM
 	char	*logtimefmt;
 	zbx_uint64_t	valuemapid;
 	char	*delay_flex;
+#ifdef HAVE_MEMCACHE
+	int	from_memcache;
+	hfs_time_t	cache_time;
+#endif
 };
  
 DB_FUNCTION

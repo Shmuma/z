@@ -53,6 +53,12 @@
 #include <time.h>
 #endif
 
+#ifdef HAVE_MEMCACHE
+memcached_st *mem_conn = NULL;
+#endif
+
+zbx_process_type_t process_type = -1;
+
 char *progname = NULL;
 char title_message[] = "ZABBIX Server (daemon)";
 char usage_message[] = "[-hV] [-c <file>] [-n <nodeid>]";
@@ -175,6 +181,11 @@ int     CONFIG_SERVER_STARTUP_TIME      = 0;
 /* Path to store History on disk (directory). If not specified, old DB engine used. */
 char	*CONFIG_HFS_PATH		= NULL;
 
+#ifdef HAVE_MEMCACHE
+char *CONFIG_MEMCACHE_SERVER		= NULL;
+int CONFIG_MEMCACHE_ITEMS_TTL		= 30;
+#endif
+
 /******************************************************************************
  *                                                                            *
  * Function: init_config                                                      *
@@ -235,6 +246,10 @@ void	init_config(void)
 		{"ServerMasterIp",&CONFIG_MASTER_IP,0,TYPE_STRING,PARM_OPT,0,0},
 		{"ServerMasterPort",&CONFIG_MASTER_PORT,0,TYPE_INT,PARM_OPT,0,0},
 		{"ServerHistoryFSPath",&CONFIG_HFS_PATH,0,TYPE_STRING,PARM_OPT,0,0},
+#ifdef HAVE_MEMCACHE
+		{"MemcacheServers",&CONFIG_MEMCACHE_SERVER,0,TYPE_STRING,PARM_OPT,0,0},
+		{"MemcacheItemsTTL",&CONFIG_MEMCACHE_ITEMS_TTL,0,TYPE_INT,PARM_OPT,0,0},
+#endif
 		{0}
 	};
 
@@ -997,6 +1012,11 @@ int main(int argc, char **argv)
 
 int MAIN_ZABBIX_ENTRY(void)
 {
+#ifdef HAVE_MEMCACHE
+	memcached_server_st	*mem_servers;
+	memcached_return	 mem_rc;
+#endif
+
         DB_RESULT       result;
         DB_ROW          row;
 
@@ -1123,7 +1143,10 @@ int MAIN_ZABBIX_ENTRY(void)
 		main_watchdog_loop();
 /*		for(;;)	zbx_sleep(3600);*/
 	}
-
+#ifdef HAVE_MEMCACHE
+	else
+		memcache_zbx_connect();
+#endif
 
 	if(server_num <= CONFIG_POLLER_FORKS)
 	{
@@ -1135,10 +1158,12 @@ int MAIN_ZABBIX_ENTRY(void)
 		zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Poller. SNMP:OFF]",
 			server_num);
 #endif
+		process_type = ZBX_PROCESS_POLLER;
 		main_poller_loop(ZBX_POLLER_TYPE_NORMAL, server_num);
 	}
 	else if(server_num <= CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS)
 	{
+		process_type = ZBX_PROCESS_TRAPPERD;
 /* Run trapper processes then do housekeeping */
 		child_trapper_main(server_num, &listen_sock);
 
@@ -1149,12 +1174,14 @@ int MAIN_ZABBIX_ENTRY(void)
 	{
 		zabbix_log( LOG_LEVEL_WARNING, "server #%d started [ICMP pinger]",
 			server_num);
+		process_type = ZBX_PROCESS_PINGER;
 		main_pinger_loop(server_num-(CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS));
 	}
 	else if(server_num <= CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS + CONFIG_PINGER_FORKS + CONFIG_ALERTER_FORKS)
 	{
 		zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Alerter]",
 			server_num);
+		process_type = ZBX_PROCESS_ALERTER;
 		main_alerter_loop();
 	}
 	else if(server_num <= CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS + CONFIG_PINGER_FORKS + CONFIG_ALERTER_FORKS
@@ -1162,6 +1189,7 @@ int MAIN_ZABBIX_ENTRY(void)
 	{
 		zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Housekeeper]",
 			server_num);
+		process_type = ZBX_PROCESS_HOUSEKEEPER;
 		main_housekeeper_loop();
 	}
 	else if(server_num <= CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS + CONFIG_PINGER_FORKS + CONFIG_ALERTER_FORKS
@@ -1169,6 +1197,7 @@ int MAIN_ZABBIX_ENTRY(void)
 	{
 		zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Timer]",
 			server_num);
+		process_type = ZBX_PROCESS_TIMER;
 		main_timer_loop();
 	}
 	else if(server_num <= CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS + CONFIG_PINGER_FORKS + CONFIG_ALERTER_FORKS
@@ -1184,6 +1213,7 @@ int MAIN_ZABBIX_ENTRY(void)
 			server_num);
 #endif
 /*		zabbix_log( LOG_LEVEL_WARNING, "Before main_poller_loop(%d,%d)",ZBX_POLLER_TYPE_UNREACHABLE,server_num - (CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS + CONFIG_PINGER_FORKS +CONFIG_ALERTER_FORKS+CONFIG_HOUSEKEEPER_FORKS + CONFIG_TIMER_FORKS)); */
+		process_type = ZBX_PROCESS_UNREACHABLE_POLLER;
 		main_poller_loop(ZBX_POLLER_TYPE_UNREACHABLE,
 				server_num - (CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS + CONFIG_PINGER_FORKS + CONFIG_ALERTER_FORKS+CONFIG_HOUSEKEEPER_FORKS + CONFIG_TIMER_FORKS));
 	}
@@ -1194,6 +1224,7 @@ int MAIN_ZABBIX_ENTRY(void)
 		zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Node watcher. Node ID:%d]",
 				server_num,
 				CONFIG_NODEID);
+		process_type = ZBX_PROCESS_NODEWATCHER;
 		main_nodewatcher_loop();
 	}
 	else if(server_num <= CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS + CONFIG_PINGER_FORKS + CONFIG_ALERTER_FORKS
@@ -1202,6 +1233,7 @@ int MAIN_ZABBIX_ENTRY(void)
 	{
 		zabbix_log( LOG_LEVEL_WARNING, "server #%d started [HTTP Poller]",
 				server_num);
+		process_type = ZBX_PROCESS_HTTPPOLLER;
 		main_httppoller_loop(server_num - CONFIG_POLLER_FORKS - CONFIG_TRAPPERD_FORKS -CONFIG_PINGER_FORKS
 				- CONFIG_ALERTER_FORKS - CONFIG_HOUSEKEEPER_FORKS - CONFIG_TIMER_FORKS
 				- CONFIG_UNREACHABLE_POLLER_FORKS - CONFIG_NODEWATCHER_FORKS);
@@ -1218,11 +1250,14 @@ int MAIN_ZABBIX_ENTRY(void)
 		zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Discoverer. SNMP:OFF]",
 				server_num);
 #endif
+		process_type = ZBX_PROCESS_DISCOVERER;
 		main_discoverer_loop(server_num - CONFIG_POLLER_FORKS - CONFIG_TRAPPERD_FORKS -CONFIG_PINGER_FORKS
 				- CONFIG_ALERTER_FORKS - CONFIG_HOUSEKEEPER_FORKS - CONFIG_TIMER_FORKS
 				- CONFIG_UNREACHABLE_POLLER_FORKS - CONFIG_NODEWATCHER_FORKS - CONFIG_HTTPPOLLER_FORKS);
 	}
-
+#ifdef HAVE_MEMCACHE
+	memcache_zbx_disconnect();
+#endif
 	return SUCCEED;
 }
 
