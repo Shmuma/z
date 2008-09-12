@@ -7,7 +7,7 @@ Group: System Environment/Daemons
 License: GPL
 Source: %{realname}-%{version}_yandex25.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
-BuildPrereq: libsqlora8-devel, net-snmp-devel, setproctitle-devel, iksemel-devel, pkgconfig, libmemcached
+BuildPrereq: libsqlora8-devel, net-snmp-devel, setproctitle-devel, iksemel-devel, pkgconfig, php-devel, libmemcached
 Requires: libsqlora8, net-snmp, setproctitle, iksemel, libmemcached, memcached
 Summary: A network monitor.
 
