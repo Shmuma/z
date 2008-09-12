@@ -151,6 +151,7 @@ static int process_value(char *key, char *host, AGENT_RESULT *value)
 	DBcommit();
  
 	DBfree_result(result);
+	DBfree_item(&item);
 
 	return SUCCEED;
 }

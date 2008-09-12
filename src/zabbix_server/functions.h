@@ -25,6 +25,10 @@
 #include "db.h"
 #include "sysinfo.h"
 
+#ifdef HAVE_MEMCACHE
+#include "memcache.h"
+#endif
+
 /* filter used in SQL queries. Sites table (s alias) and hosts table
    (h alias) must be joined for this to work */
 #define ZBX_COND_SITE " s.siteid = h.siteid and %s "

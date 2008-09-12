@@ -176,28 +176,6 @@ int xopen(const char *fn, int flags, mode_t mode)
 }
 
 
-ssize_t xwrite(const char *fn, int fd, const void *buf, size_t count)
-{
-	ssize_t rc;
-	if ((rc = write(fd, buf, count)) == -1) {
-		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: write: %s", fn, strerror(errno));
-		close(fd);
-	}
-	return rc;
-}
-
-hfs_off_t xlseek(const char *fn, int fd, hfs_off_t offset, int whence)
-{
-	hfs_off_t rc;
-	if ((rc = lseek(fd, offset, whence)) == -1) {
-		zabbix_log(LOG_LEVEL_CRIT,
-			"HFS: %s: lseek(fd, %lld (%d), %d): %s",
-			fn, offset, whence, strerror(errno));
-		close(fd);
-	}
-	return rc;
-}
-
 int store_values (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t clock, int delay, void* value, int len, int count, item_type_t type)
 {
     char *p_meta = NULL, *p_data = NULL;

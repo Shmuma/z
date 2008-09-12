@@ -168,7 +168,7 @@ void	update_triggers(zbx_uint64_t itemid)
 		{
 			DBupdate_trigger_value(&trigger, exp_value, time(NULL), NULL);
 			if (CONFIG_HFS_PATH && trigger.value != exp_value)
-				HFS_update_trigger_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, trigger.triggerid, exp_value, time(NULL));
+				HFS_update_trigger_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, trigger.triggerid, exp_value, (hfs_time_t) time(NULL));
 		}
 		zbx_free(exp);
 	}
@@ -282,6 +282,9 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 	DB_ITEM	item;
 	time_t ts = 0;
 
+#ifdef HAVE_MEMCACHE
+	int	in_cache = 0;
+#endif
 	char	server_esc[MAX_STRING_LEN];
 	char	key_esc[MAX_STRING_LEN];
 
@@ -298,63 +301,53 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 
 	init_result(&agent);
 
-	DBescape_string(server, server_esc, MAX_STRING_LEN);
-	DBescape_string(key, key_esc, MAX_STRING_LEN);
+#ifdef HAVE_MEMCACHE
+	if (process_type == ZBX_PROCESS_TRAPPERD) {
+		in_cache = memcache_zbx_getitem(key, server, &item);
 
-	result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.host='%s' and i.key_='%s' and i.status in (%d,%d) and i.type in (%d,%d) and" ZBX_COND_NODEID " and " ZBX_COND_SITE,
-		ZBX_SQL_ITEM_SELECT,
-		HOST_STATUS_MONITORED,
-		server_esc,
-		key_esc,
-		ITEM_STATUS_ACTIVE, ITEM_STATUS_NOTSUPPORTED,
-		ITEM_TYPE_TRAPPER,
-		ITEM_TYPE_ZABBIX_ACTIVE,
-		LOCAL_NODE("h.hostid"),
-		getSiteCondition ());
-
-	row=DBfetch(result);
-
-	if(!row)
-	{
-		DBfree_result(result);
-		return FAIL;
-/*
-		zabbix_log( LOG_LEVEL_DEBUG, "Before checking autoregistration for [%s]",
-			server);
-
-		if(autoregister(server) == SUCCEED)
-		{
-			DBfree_result(result);
-
-			result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.host='%s' and i.key_='%s' and i.status=%d and i.type in (%d,%d) and" ZBX_COND_NODEID,
-				ZBX_SQL_ITEM_SELECT,
-				HOST_STATUS_MONITORED,
-				server_esc,
-				key_esc,
-				ITEM_STATUS_ACTIVE,
-				ITEM_TYPE_TRAPPER,
-				ITEM_TYPE_ZABBIX_ACTIVE,
-				LOCAL_NODE("h.hostid"));
-			row = DBfetch(result);
-			if(!row)
-			{
-				DBfree_result(result);
-				return  FAIL;
-			}
-		}
-		else
-		{
-			DBfree_result(result);
-			return  FAIL;
-		}
-*/
+		if (in_cache == 1 && memcache_zbx_is_item_expire(&item))
+			in_cache = 0;
 	}
 
-	DBget_item_from_db(&item,row);
+	if (in_cache != 1) {
+		zabbix_log( LOG_LEVEL_DEBUG, "In process_data: [NOT IN MEMCACHE] '%s %s'", key, server);
+
+		DBescape_string(server, server_esc, MAX_STRING_LEN);
+		DBescape_string(key, key_esc, MAX_STRING_LEN);
+
+#endif
+		result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.host='%s' and i.key_='%s' and i.status in (%d,%d) and i.type in (%d,%d) and" ZBX_COND_NODEID " and " ZBX_COND_SITE,
+			ZBX_SQL_ITEM_SELECT,
+			HOST_STATUS_MONITORED,
+			server_esc,
+			key_esc,
+			ITEM_STATUS_ACTIVE, ITEM_STATUS_NOTSUPPORTED,
+			ITEM_TYPE_TRAPPER,
+			ITEM_TYPE_ZABBIX_ACTIVE,
+			LOCAL_NODE("h.hostid"),
+			getSiteCondition ());
+
+		row=DBfetch(result);
+
+		if(!row)
+		{
+			DBfree_result(result);
+			return FAIL;
+		}
+
+		DBget_item_from_db(&item,row);
+
+#ifdef HAVE_MEMCACHE
+	}
+	else {
+		zabbix_log( LOG_LEVEL_DEBUG, "In process_data: [IN MEMCACHE] '%s %s'", key, server);
+	}
+#endif
 
 	if( (item.type==ITEM_TYPE_ZABBIX_ACTIVE) && (zbx_tcp_check_security(sock,item.trapper_hosts,1) == FAIL))
 	{
 		DBfree_result(result);
+		DBfree_item(&item);
 		return  FAIL;
 	}
 
@@ -425,9 +418,14 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 		}
  	}
 
-	DBfree_result(result);
+#ifdef HAVE_MEMCACHE
+	if (!in_cache)
+#endif
+		DBfree_result(result);
 
 	free_result(&agent);
+
+	DBfree_item(&item);
 
 	return SUCCEED;
 }
@@ -584,9 +582,13 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 		{
 			if(GET_STR_RESULT(value))
 				DBadd_history_log(0, item->itemid,value->str,now,item->timestamp,item->eventlog_source,item->eventlog_severity);
+#ifndef HAVE_MEMCACHE
 			DBexecute("update items set lastlogsize=%d where itemid=" ZBX_FS_UI64,
 				item->lastlogsize,
 				item->itemid);
+#else
+//			memcache_zbx_setitem(item);
+#endif
 		}
 		else if(item->value_type==ITEM_VALUE_TYPE_TEXT)
 		{
@@ -630,6 +632,16 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 	char	value_esc[MAX_STRING_LEN];
 	int	nextcheck;
 
+	AGENT_RESULT prev_value;
+
+	prev_value.type = value->type;
+	prev_value.ui64 = value->ui64;
+	prev_value.dbl  = value->dbl;
+	prev_value.str  = NULL;
+
+	if(GET_STR_RESULT(value))
+		prev_value.str  = strdup(value->str);
+
 	zabbix_log( LOG_LEVEL_DEBUG, "In update_item()");
 
 	value_esc[0]	= '\0';
@@ -641,6 +653,10 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 		{
 			DBescape_string(value->str, value_esc, sizeof(value_esc));
 		}
+
+#ifdef HAVE_MEMCACHE
+		if (process_type != ZBX_PROCESS_TRAPPERD)
+#endif
 		DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,lastvalue='%s',lastclock=%d where itemid=" ZBX_FS_UI64,
 			nextcheck,
 			value_esc,
@@ -650,15 +666,15 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 		if (CONFIG_HFS_PATH) {
 		    switch (item->value_type) {
 		    case ITEM_VALUE_TYPE_STR:
-			HFS_update_item_values_str (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+			HFS_update_item_values_str (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)now, (hfs_time_t)nextcheck,
 						    item->lastvalue_null ? NULL : item->lastvalue_str, value->str, NULL);
 			break;
 		    case ITEM_VALUE_TYPE_FLOAT:
-			HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+			HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)now, (hfs_time_t)nextcheck,
 						    item->lastvalue_null ? 0.0 : item->lastvalue_dbl, value->dbl, 0.0);
 			break;
 		    case ITEM_VALUE_TYPE_UINT64:
-			HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
+			HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)now, (hfs_time_t)nextcheck,
 						    item->lastvalue_null ? 0 : item->lastvalue_uint64, value->ui64, 0);
 			break;
 		    }
@@ -677,6 +693,9 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 					   Otherwise function update_functions and update_triggers won't work correctly*/
 					if(now != item->lastclock)
 					{
+#ifdef HAVE_MEMCACHE
+						if (process_type != ZBX_PROCESS_TRAPPERD)
+#endif
 						DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_DBL "',"
 							"lastvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
 							nextcheck,
@@ -695,6 +714,9 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 					}
 					else
 					{
+#ifdef HAVE_MEMCACHE
+						if (process_type != ZBX_PROCESS_TRAPPERD)
+#endif
 						DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_DBL "',"
 							"lastvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
 							nextcheck,
@@ -712,6 +734,9 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 				}
 				else
 				{
+#ifdef HAVE_MEMCACHE
+					if (process_type != ZBX_PROCESS_TRAPPERD)
+#endif
 					DBexecute("update items set nextcheck=%d,prevorgvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
 						nextcheck,
 						value->dbl,
@@ -732,6 +757,9 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 				{
 					if(now != item->lastclock)
 					{
+#ifdef HAVE_MEMCACHE
+						if (process_type != ZBX_PROCESS_TRAPPERD)
+#endif
 						DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_UI64 "',"
 							"lastvalue='" ZBX_FS_UI64 "',lastclock=%d where itemid=" ZBX_FS_UI64,
 							nextcheck,
@@ -750,6 +778,9 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 					}
 					else
 					{
+#ifdef HAVE_MEMCACHE
+						if (process_type != ZBX_PROCESS_TRAPPERD)
+#endif
 						DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_UI64 "',"
 							"lastvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
 							calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex,now),
@@ -769,6 +800,9 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 				}
 				else
 				{
+#ifdef HAVE_MEMCACHE
+					if (process_type != ZBX_PROCESS_TRAPPERD)
+#endif
 					DBexecute("update items set nextcheck=%d,prevorgvalue='" ZBX_FS_UI64 "',lastclock=%d where itemid=" ZBX_FS_UI64,
 						calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex,now),
 						value->ui64,
@@ -791,6 +825,9 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 			{
 				if((item->prevorgvalue_null == 0) && (item->prevorgvalue_dbl <= value->dbl))
 				{
+#ifdef HAVE_MEMCACHE
+				    if (process_type != ZBX_PROCESS_TRAPPERD)
+#endif
 				    DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_DBL "',"
 						"lastvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
 						calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex,now),
@@ -798,6 +835,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 						(value->dbl - item->prevorgvalue_dbl),
 						(int)now,
 						item->itemid);
+
 				    if (CONFIG_HFS_PATH)
 					    HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
 									item->lastvalue_dbl, value->dbl - item->prevorgvalue_dbl, value->dbl);
@@ -805,11 +843,15 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 				}
 				else
 				{
+#ifdef HAVE_MEMCACHE
+				    if (process_type != ZBX_PROCESS_TRAPPERD)
+#endif
 				    DBexecute("update items set nextcheck=%d,prevorgvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
 						calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex, now),
 						value->dbl,
 						(int)now,
 						item->itemid);
+
 				    if (CONFIG_HFS_PATH)
 					    HFS_update_item_values_dbl (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
 									item->lastvalue_dbl, value->dbl, value->dbl);
@@ -822,6 +864,9 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 			{
 				if((item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= value->ui64))
 				{
+#ifdef HAVE_MEMCACHE
+				    if (process_type != ZBX_PROCESS_TRAPPERD)
+#endif
 				    DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_UI64 "',"
 						"lastvalue='" ZBX_FS_UI64 "',lastclock=%d where itemid=" ZBX_FS_UI64,
 						calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex,now),
@@ -829,6 +874,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 						(value->ui64 - item->prevorgvalue_uint64),
 						(int)now,
 						item->itemid);
+
 				    if (CONFIG_HFS_PATH)
 					    HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
 									item->lastvalue_uint64,
@@ -838,11 +884,15 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 				}
 				else
 				{
+#ifdef HAVE_MEMCACHE
+					if (process_type != ZBX_PROCESS_TRAPPERD)
+#endif
     					DBexecute("update items set nextcheck=%d,prevorgvalue='" ZBX_FS_UI64 "',lastclock=%d where itemid=" ZBX_FS_UI64,
 						calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex, now),
 						value->ui64,
 						(int)now,
 						item->itemid);
+
 					if (CONFIG_HFS_PATH)
 						HFS_update_item_values_int (CONFIG_HFS_PATH, item->siteid, item->itemid, (int)now, nextcheck,
 									    item->lastvalue_uint64,
@@ -852,15 +902,26 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 		}
 	}
 
-	item->prevvalue_str	= item->lastvalue_str;
-	item->prevvalue_dbl	= item->lastvalue_dbl;
-	item->prevvalue_uint64	= item->lastvalue_uint64;
-	item->prevvalue_null	= item->lastvalue_null;
+	if (item->prevvalue_str)
+		free(item->prevvalue_str);
+	item->prevvalue_str 		= (item->lastvalue_str) ? strdup(item->lastvalue_str) : NULL;
+	item->prevvalue_dbl		= item->lastvalue_dbl;
+	item->prevvalue_uint64		= item->lastvalue_uint64;
+	item->prevvalue_null		= item->lastvalue_null;
 
-	item->lastvalue_uint64	= value->ui64;
-	item->lastvalue_dbl	= value->dbl;
-	item->lastvalue_str	= value->str;
-	item->lastvalue_null	= 0;
+	if (item->lastvalue_str)
+		free(item->lastvalue_str);
+	item->lastvalue_str 		= (value->str) ? strdup(value->str) : NULL;
+	item->lastvalue_uint64		= value->ui64;
+	item->lastvalue_dbl		= value->dbl;
+	item->lastvalue_null		= 0;
+
+	if (item->prevorgvalue_str)
+		free(item->prevorgvalue_str);
+	item->prevorgvalue_str		= prev_value.str;
+	item->prevorgvalue_uint64	= prev_value.ui64;
+	item->prevorgvalue_dbl		= prev_value.dbl;
+	item->prevorgvalue_null		= 0;
 
 /* Update item status if required */
 	if(item->status == ITEM_STATUS_NOTSUPPORTED)
@@ -873,15 +934,25 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 			item->host_name);
 		item->status = ITEM_STATUS_ACTIVE;
 
+#ifdef HAVE_MEMCACHE
+		if (process_type != ZBX_PROCESS_TRAPPERD)
+#endif
 		DBexecute("update items set status=%d,error='' where itemid=" ZBX_FS_UI64,
 			ITEM_STATUS_ACTIVE,
 			item->itemid);
+
 		if (CONFIG_HFS_PATH)
 			HFS_update_item_status (CONFIG_HFS_PATH, item->siteid, item->itemid, ITEM_STATUS_ACTIVE, NULL);
 	}
 
 	/* Required for nodata() */
 	item->lastclock = now;
+#ifdef HAVE_MEMCACHE
+	if (process_type == ZBX_PROCESS_TRAPPERD) {
+		item->nextcheck = nextcheck;
+		memcache_zbx_setitem(item);
+	}
+#endif
 
 	zabbix_log( LOG_LEVEL_DEBUG, "End update_item()");
 }
@@ -1151,6 +1222,7 @@ void	flush_history (void** token)
 	if (state->server)
 		free (state->server);
 	DBfree_result(state->result);
+	DBfree_item(&state->item);
 	free (state);
 	*token = NULL;
 }

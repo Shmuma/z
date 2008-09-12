@@ -224,6 +224,8 @@ static void update_key_status(zbx_uint64_t hostid,int host_status)
 
 			update_triggers(item.itemid);
 		}
+
+		DBfree_item(&item);
 	}
 	else
 	{
@@ -269,7 +271,8 @@ int get_values(void)
 
 	now = time(NULL);
 
-	zbx_snprintf(tmp,sizeof(tmp)-1,ZBX_FS_UI64,0);
+	//zbx_snprintf(tmp,sizeof(tmp)-1,ZBX_FS_UI64,0);
+	bzero(tmp, MAX_STRING_LEN);
 	unreachable_hosts=zbx_strdcat(unreachable_hosts,tmp);
 
 	/* Poller for unreachable hosts */
@@ -354,6 +357,7 @@ int get_values(void)
 			{
 				zabbix_log( LOG_LEVEL_DEBUG, "Host " ZBX_FS_UI64 " is unreachable. Skipping [%s]",
 					item.hostid,item.key);
+				DBfree_item(&item);
 				continue;
 			}
 		}
@@ -524,6 +528,7 @@ int get_values(void)
 		}
 		free_result(&agent);
 		DBcommit();
+		DBfree_item(&item);
 	}
 
 	zbx_free(unreachable_hosts);
