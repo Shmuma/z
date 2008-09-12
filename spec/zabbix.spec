@@ -2,10 +2,10 @@
 
 Name: zabbix-mysql
 Version: 1.4.4
-Release: yandex_24
+Release: yandex_25
 Group: System Environment/Daemons
 License: GPL
-Source: %{realname}-%{version}_yandex24.tar.gz
+Source: %{realname}-%{version}_yandex25.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
 BuildPrereq: mysql, mysql-devel, net-snmp-devel, setproctitle-devel, iksemel-devel, pkgconfig
 Requires: mysql, net-snmp, setproctitle, iksemel
@@ -30,10 +30,10 @@ Group: System Environment/Daemons
 the zabbix network monitor agent.
 
 %prep
-%setup -q -n %{realname}-%{version}_yandex24
+%setup -q -n %{realname}-%{version}_yandex25
 
 %build
-%configure --enable-server --enable-agent --with-mysql --with-jabber --with-net-snmp
+%configure --enable-server --enable-agent --enable-memcache --with-mysql --with-jabber --with-net-snmp
 make
 
 # adjust in several files /home/zabbix
