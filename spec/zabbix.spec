@@ -7,8 +7,8 @@ Group: System Environment/Daemons
 License: GPL
 Source: %{realname}-%{version}_yandex25.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
-BuildPrereq: mysql, mysql-devel, net-snmp-devel, setproctitle-devel, iksemel-devel, pkgconfig
-Requires: mysql, net-snmp, setproctitle, iksemel
+BuildPrereq: mysql, mysql-devel, net-snmp-devel, setproctitle-devel, iksemel-devel, pkgconfig, libmemcached
+Requires: mysql, net-snmp, setproctitle, iksemel, libmemcached, memcached
 Summary: A network monitor.
 
 %define zabbix_bindir 	        %{_sbindir}
