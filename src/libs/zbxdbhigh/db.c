@@ -1588,7 +1588,6 @@ char*	DBdyn_escape_string(const char *str)
 
 void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 {
-	char	*s;
 	int	rc = 0;
 	hfs_time_t lastclock, nextcheck;
 
