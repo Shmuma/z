@@ -138,6 +138,9 @@
 /* Define to 1 if you have the <math.h> header file. */
 #undef HAVE_MATH_H
 
+/* Define to 1 if you're using memcached */
+#undef HAVE_MEMCACHE
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
