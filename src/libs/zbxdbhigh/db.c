@@ -1713,28 +1713,6 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 #endif
 }
 
-int	DBget_item_by_itemid(int itemid, DB_ITEM *item)
-{
-	DB_RESULT	result;
-	DB_ROW		row;
-
-	result = DBselect("select %s where h.hostid=i.hostid and i.itemid=" ZBX_FS_UI64,
-		ZBX_SQL_ITEM_SELECT,
-		itemid);
-
-	row = DBfetch(result);
-
-	if(!row) {
-		DBfree_result(result);
-		return 0;
-	}
-
-	DBget_item_from_db(item, row);
-	DBfree_result(result);
-
-	return 1;
-}
-
 void DBfree_item(DB_ITEM *item)
 {
 	if (!item)
