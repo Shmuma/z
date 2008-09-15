@@ -797,7 +797,9 @@ void	substitute_simple_macros(DB_EVENT *event, DB_ACTION *action, char **data, i
 	struct  tm      *tm;
 
 	DB_RESULT	result;
+	DB_RESULT	result1;
 	DB_ROW		row;
+	DB_ROW		row1;
 	DB_ITEM 	item;
 	zbx_uint64_t    itemid;
 
@@ -1209,15 +1211,25 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 			else
 			{
 				ZBX_STR2UINT64(itemid, row[0]);
-				DBget_item_by_itemid(itemid, &item);
-				strscpy(tmp, item.lastvalue_str);
+				result1 = DBselect("select %s where h.hostid=i.hostid and i.itemid=" ZBX_FS_UI64,
+						  ZBX_SQL_ITEM_SELECT, itemid);
+				row1 = DBfetch(result1);
 
-				add_value_suffix(tmp, sizeof(tmp), item.units, item.value_type);
+				if(row1) {
+					DBget_item_from_db(&item, row1);
 
-				replace_to = zbx_dsprintf(replace_to, "%s",
-					tmp);
+					strscpy(tmp, item.lastvalue_str);
+					add_value_suffix(tmp, sizeof(tmp), item.units, item.value_type);
+					replace_to = zbx_dsprintf(replace_to, "%s", tmp);
 
-				DBfree_item(&item);
+					DBfree_item(&item);
+				}
+				else {
+					replace_to = zbx_dsprintf(replace_to, "%s",
+						STR_UNKNOWN_VARIABLE);
+				}
+
+				DBfree_result(result1);
 			}
 
 			DBfree_result(result);
