@@ -1061,18 +1061,18 @@ COpt::profiling_stop('prepare table');
 
 		if($use_housekeeper)
 		{
-			$housekeeperid = get_dbid('housekeeper','housekeeperid');
-			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)".
-				" values ($housekeeperid,'history_log','itemid',$itemid)");
-			$housekeeperid = get_dbid('housekeeper','housekeeperid');
-			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)".
-				" values ($housekeeperid,'history_uint','itemid',$itemid)");
-			$housekeeperid = get_dbid('housekeeper','housekeeperid');
-			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)".
-				" values ($housekeeperid,'history_str','itemid',$itemid)");
-			$housekeeperid = get_dbid('housekeeper','housekeeperid');
-			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)".
-				" values ($housekeeperid,'history','itemid',$itemid)");
+// 			$housekeeperid = get_dbid('housekeeper','housekeeperid');
+// 			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)".
+// 				" values ($housekeeperid,'history_log','itemid',$itemid)");
+// 			$housekeeperid = get_dbid('housekeeper','housekeeperid');
+// 			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)".
+// 				" values ($housekeeperid,'history_uint','itemid',$itemid)");
+// 			$housekeeperid = get_dbid('housekeeper','housekeeperid');
+// 			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)".
+// 				" values ($housekeeperid,'history_str','itemid',$itemid)");
+// 			$housekeeperid = get_dbid('housekeeper','housekeeperid');
+// 			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)".
+// 				" values ($housekeeperid,'history','itemid',$itemid)");
 			return TRUE;
 		}
 
@@ -1092,9 +1092,9 @@ COpt::profiling_stop('prepare table');
 	{
 		if($use_housekeeper)
 		{
-			$housekeeperid = get_dbid('housekeeper','housekeeperid');
-			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)".
-				" values ($housekeeperid, 'trends','itemid',$itemid)");
+// 			$housekeeperid = get_dbid('housekeeper','housekeeperid');
+// 			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)".
+// 				" values ($housekeeperid, 'trends','itemid',$itemid)");
 			return TRUE;
 		}
 		return	DBexecute("delete from trends where itemid=$itemid");

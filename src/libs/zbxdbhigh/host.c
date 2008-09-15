@@ -790,9 +790,9 @@ static int	DBdelete_trends_by_itemid(
 {
 	if( use_housekeeper )
 	{
-		DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)"
-			" values (" ZBX_FS_UI64 ", 'trends','itemid'," ZBX_FS_UI64 ")", 
-				DBget_maxid("housekeeper","housekeeperid"), itemid);
+/* 		DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)" */
+/* 			" values (" ZBX_FS_UI64 ", 'trends','itemid'," ZBX_FS_UI64 ")",  */
+/* 				DBget_maxid("housekeeper","housekeeperid"), itemid); */
 	}
 	else
 	{
@@ -829,18 +829,18 @@ static int	DBdelete_history_by_itemid(
 	{
 		if( use_housekeeper )
 		{
-			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)"
-					" values (" ZBX_FS_UI64 ",'history_log','itemid'," ZBX_FS_UI64 ")", 
-						DBget_maxid("housekeeper","housekeeperid"), itemid);
-			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)"
-							" values (" ZBX_FS_UI64 ",'history_uint','itemid'," ZBX_FS_UI64 ")", 
-								DBget_maxid("housekeeper","housekeeperid"), itemid);
-			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)"
-							" values (" ZBX_FS_UI64 ",'history_str','itemid'," ZBX_FS_UI64 ")", 
-								DBget_maxid("housekeeper","housekeeperid"), itemid);
-			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)"
-								" values (" ZBX_FS_UI64 ",'history','itemid'," ZBX_FS_UI64 ")", 
-									DBget_maxid("housekeeper","housekeeperid"), itemid);
+/* 			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)" */
+/* 					" values (" ZBX_FS_UI64 ",'history_log','itemid'," ZBX_FS_UI64 ")",  */
+/* 						DBget_maxid("housekeeper","housekeeperid"), itemid); */
+/* 			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)" */
+/* 							" values (" ZBX_FS_UI64 ",'history_uint','itemid'," ZBX_FS_UI64 ")",  */
+/* 								DBget_maxid("housekeeper","housekeeperid"), itemid); */
+/* 			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)" */
+/* 							" values (" ZBX_FS_UI64 ",'history_str','itemid'," ZBX_FS_UI64 ")",  */
+/* 								DBget_maxid("housekeeper","housekeeperid"), itemid); */
+/* 			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)" */
+/* 								" values (" ZBX_FS_UI64 ",'history','itemid'," ZBX_FS_UI64 ")",  */
+/* 									DBget_maxid("housekeeper","housekeeperid"), itemid); */
 		}
 		else
 		{
