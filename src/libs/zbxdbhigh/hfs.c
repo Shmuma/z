@@ -21,6 +21,7 @@
 #include "log.h"
 #include "hfs.h"
 #include "hfs_internal.h"
+#include "db.h"
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -730,6 +731,12 @@ char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemi
 	    break;
     case NK_Alert:
 	    snprintf (res, len, "%s/%s/misc/alerts.data", hfs_base_dir, siteid);
+	    break;
+    case NK_EventTrigger:
+	    snprintf (res, len, "%s/%s/triggers/%llu/%llu/events.data", hfs_base_dir, siteid, item_ord, itemid);
+	    break;
+    case NK_EventHost:
+	    snprintf (res, len, "%s/%s/hosts/%llu/%llu/events.data", hfs_base_dir, siteid, item_ord, itemid);
 	    break;
     }
 
@@ -2463,8 +2470,8 @@ void HFS_add_alert(const char* hfs_path, const char* siteid, hfs_time_t clock, z
 	int len = 0, fd;
 	char* p_name = get_name (hfs_path, siteid, 0, NK_Alert);
 
-	if ((fd = xopen (p_name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
-		zabbix_log (LOG_LEVEL_DEBUG, "Canot open file %s", p_name);
+	if ((fd = xopen (p_name, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
+		zabbix_log (LOG_LEVEL_ERR, "HFS_add_alert: Canot open file %s", p_name);
 		free (p_name);
 		return;
 	}
@@ -2474,8 +2481,6 @@ void HFS_add_alert(const char* hfs_path, const char* siteid, hfs_time_t clock, z
 /* 			zabbix_log(LOG_LEVEL_CRIT, "hfs: HFS_add_alert: close(): %s", strerror(errno)); */
 /* 		return; */
 /* 	} */
-
-	lseek (fd, 0, SEEK_END);
 
 	free (p_name);
 
@@ -2498,4 +2503,61 @@ void HFS_add_alert(const char* hfs_path, const char* siteid, hfs_time_t clock, z
 
 	close (fd);
 	return;
+}
+
+
+
+void HFS_add_event (const char* hfs_path, const char* siteid, void* event/*DB_EVENT*/)
+{
+	DB_EVENT* ev = (DB_EVENT*)event;
+	char* f_name;
+	int fd;
+	event_value_t value;
+
+	if (!ev)
+		return;
+
+	/* prepare event structure */
+	value.eventid = ev->eventid;
+	value.triggerid = ev->objectid;
+	value.clock = ev->clock;
+	value.val = ev->value;
+	value.ack = ev->acknowledged;
+
+	/* events storeed in two places:
+	   1. per-trigger file to be able get all trigger's events at once,
+	   2. per-host file
+	 */
+	f_name = get_name (hfs_path, siteid, ev->objectid, NK_EventTrigger);
+
+	if (!f_name)
+		return;
+
+	if ((fd = xopen (f_name, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
+		zabbix_log (LOG_LEVEL_ERR, "HFS_add_event: Canot open file %s", f_name);
+		free (f_name);
+		return;
+	}
+
+	free (f_name);
+
+	write (fd, &value, sizeof (value));
+	close (fd);
+
+	/* per-host file */
+	f_name = get_name (hfs_path, siteid, ev->hostid, NK_EventHost);
+
+	if (!f_name)
+		return;
+
+	if ((fd = xopen (f_name, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
+		zabbix_log (LOG_LEVEL_ERR, "HFS_add_event: Canot open file %s", f_name);
+		free (f_name);
+		return;
+	}
+
+	free (f_name);
+
+	write (fd, &value, sizeof (value));
+	close (fd);
 }

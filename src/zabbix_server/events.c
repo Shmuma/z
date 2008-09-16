@@ -42,10 +42,16 @@
 #include "db.h"
 #include "log.h"
 #include "zlog.h"
+#include "hfs.h"
 
 #include "actions.h"
 #include "functions.h"
 #include "events.h"
+
+
+extern char* CONFIG_SERVER_SITE;
+extern char* CONFIG_HFS_PATH;
+
 
 /******************************************************************************
  *                                                                            *
@@ -74,7 +80,7 @@ static void	add_trigger_info(DB_EVENT *event)
 	{
 		triggerid = event->objectid;
 
-		result = DBselect("select description,priority,comments,url from triggers where triggerid=" ZBX_FS_UI64,
+		result = DBselect("select t.description,t.priority,t.comments,t.url,h.hostid from triggers t, functions f, items i where triggerid=" ZBX_FS_UI64 " and t.triggerid=f.triggerid and f.itemid=i.itemid",
 			triggerid);
 		row = DBfetch(result);
 		event->trigger_description[0]=0;
@@ -87,6 +93,7 @@ static void	add_trigger_info(DB_EVENT *event)
 			event->trigger_priority = atoi(row[1]);
 			event->trigger_comments	= strdup(row[2]);
 			event->trigger_url	= strdup(row[3]);
+			ZBX_STR2UINT64(event->hostid, row[4]);
 		}
 		DBfree_result(result);
 
@@ -166,6 +173,8 @@ int	process_event(DB_EVENT *event)
 		event->objectid,
 		event->clock,
 		event->value);
+	if (event->source == EVENT_SOURCE_TRIGGERS)
+		HFS_add_event (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, event);
 
 	/* Cancel currently active alerts */
 /*	if(event->value == TRIGGER_VALUE_FALSE || event->value == TRIGGER_VALUE_TRUE)
