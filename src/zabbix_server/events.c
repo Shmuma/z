@@ -80,7 +80,7 @@ static void	add_trigger_info(DB_EVENT *event)
 	{
 		triggerid = event->objectid;
 
-		result = DBselect("select t.description,t.priority,t.comments,t.url,h.hostid from triggers t, functions f, items i where triggerid=" ZBX_FS_UI64 " and t.triggerid=f.triggerid and f.itemid=i.itemid",
+		result = DBselect("select t.description,t.priority,t.comments,t.url,i.hostid from triggers t, functions f, items i where t.triggerid=" ZBX_FS_UI64 " and t.triggerid=f.triggerid and f.itemid=i.itemid",
 			triggerid);
 		row = DBfetch(result);
 		event->trigger_description[0]=0;
@@ -174,7 +174,8 @@ int	process_event(DB_EVENT *event)
 		event->clock,
 		event->value);
 	if (event->source == EVENT_SOURCE_TRIGGERS)
-		HFS_add_event (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, event);
+		HFS_add_event (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, event->eventid, event->objectid, 
+			       event->clock, event->value, event->acknowledged, event->hostid);
 
 	/* Cancel currently active alerts */
 /*	if(event->value == TRIGGER_VALUE_FALSE || event->value == TRIGGER_VALUE_TRUE)

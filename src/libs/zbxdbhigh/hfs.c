@@ -21,7 +21,6 @@
 #include "log.h"
 #include "hfs.h"
 #include "hfs_internal.h"
-#include "db.h"
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -2507,28 +2506,25 @@ void HFS_add_alert(const char* hfs_path, const char* siteid, hfs_time_t clock, z
 
 
 
-void HFS_add_event (const char* hfs_path, const char* siteid, void* event/*DB_EVENT*/)
+void HFS_add_event (const char* hfs_path, const char* siteid, zbx_uint64_t eventid, zbx_uint64_t triggerid, 
+		    hfs_time_t clock, int val, int ack, zbx_uint64_t hostid)
 {
-	DB_EVENT* ev = (DB_EVENT*)event;
 	char* f_name;
 	int fd;
 	event_value_t value;
 
-	if (!ev)
-		return;
-
 	/* prepare event structure */
-	value.eventid = ev->eventid;
-	value.triggerid = ev->objectid;
-	value.clock = ev->clock;
-	value.val = ev->value;
-	value.ack = ev->acknowledged;
+	value.eventid 	= eventid;
+	value.triggerid = triggerid;
+	value.clock 	= clock;
+	value.val 	= val;
+	value.ack 	= ack;
 
 	/* events storeed in two places:
 	   1. per-trigger file to be able get all trigger's events at once,
 	   2. per-host file
 	 */
-	f_name = get_name (hfs_path, siteid, ev->objectid, NK_EventTrigger);
+	f_name = get_name (hfs_path, siteid, triggerid, NK_EventTrigger);
 
 	if (!f_name)
 		return;
@@ -2545,7 +2541,7 @@ void HFS_add_event (const char* hfs_path, const char* siteid, void* event/*DB_EV
 	close (fd);
 
 	/* per-host file */
-	f_name = get_name (hfs_path, siteid, ev->hostid, NK_EventHost);
+	f_name = get_name (hfs_path, siteid, hostid, NK_EventHost);
 
 	if (!f_name)
 		return;
