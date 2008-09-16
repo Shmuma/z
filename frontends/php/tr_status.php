@@ -121,12 +121,6 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 	
 ?>
 <?php
-	if(isset($audio))
-	{
-		play_sound($audio);
-	}
-?>                                                                                                             
-<?php
 	$sort		 = get_request('sort',		'priority');
 	$noactions	 = get_request('noactions',	'true');
 	$compact	 = get_request('compact',	'true');
