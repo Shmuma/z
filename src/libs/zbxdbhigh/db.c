@@ -1740,8 +1740,12 @@ void DBfree_item(DB_ITEM *item)
 	if (!item)
 		return;
 
+#ifdef HAVE_MEMCACHE
 	zabbix_log(LOG_LEVEL_DEBUG, "In DBfree_item(%s) [from-memcache=%d]",
 		    item->key, item->from_memcache);
+#else
+	zabbix_log(LOG_LEVEL_DEBUG, "In DBfree_item(%s)", item->key);
+#endif
 
 #ifdef HAVE_MEMCACHE
 	if (item->from_memcache) {
