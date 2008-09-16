@@ -2511,7 +2511,7 @@ void HFS_add_event (const char* hfs_path, const char* siteid, zbx_uint64_t event
 {
 	char* f_name;
 	int fd;
-	event_value_t value;
+	hfs_event_value_t value;
 
 	/* prepare event structure */
 	value.eventid 	= eventid;
@@ -2556,4 +2556,54 @@ void HFS_add_event (const char* hfs_path, const char* siteid, zbx_uint64_t event
 
 	write (fd, &value, sizeof (value));
 	close (fd);
+}
+
+
+int HFS_get_trigger_events (const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, int skip, int count, hfs_event_value_t** res)
+{
+	char* f_name = get_name (hfs_path, siteid, triggerid, NK_EventTrigger);
+	struct stat st;
+	int total, fd;
+	hfs_off_t ofs, res_count;
+
+	if (!f_name)
+		return 0;
+
+	if (stat (f_name, &st)) {
+		free (f_name);
+		return 0;
+	}
+
+	total = st.st_size / sizeof (hfs_event_value_t);
+	if (total <= skip) {
+		free (f_name);
+		return 0;
+	}
+
+	if (total-skip < count)
+		count = total-skip;
+	ofs = (total-skip-count)*sizeof (hfs_event_value_t);
+	fd = open (f_name, O_RDONLY);
+
+	if (fd < 0) {
+		zabbix_log (LOG_LEVEL_ERR, "HFS_get_trigger_events: Canot open file %s", f_name);
+		free (f_name);
+		return 0;
+	}
+	free (f_name);
+
+	lseek (fd, ofs, SEEK_SET);
+
+	*res = (hfs_event_value_t*)malloc (sizeof (hfs_event_value_t) * count);
+
+	if (!*res) {
+		zabbix_log (LOG_LEVEL_ERR, "HFS_get_trigger_events: Memory allocation error");
+		close (fd);
+		return 0;
+	}
+
+	res_count = read (fd, *res, count * sizeof (hfs_event_value_t)) / sizeof (hfs_event_value_t);
+	close (fd);
+
+	return res_count;
 }

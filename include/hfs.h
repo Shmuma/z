@@ -171,8 +171,19 @@ int		HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64
 void 		HFS_add_alert(const char* hfs_path, const char* siteid, hfs_time_t clock, zbx_uint64_t actionid, zbx_uint64_t userid, 
 			      zbx_uint64_t triggerid,  zbx_uint64_t mediatypeid, char *sendto, char *subject, char *message);
 
+
+/* trigger events  */
+typedef struct __attribute__ ((packed)) {
+	zbx_uint64_t eventid;
+	zbx_uint64_t triggerid;
+	hfs_time_t clock;
+	unsigned char val;
+	unsigned char ack;
+} hfs_event_value_t;
+
 void		HFS_add_event (const char* hfs_path, const char* siteid, zbx_uint64_t eventid, zbx_uint64_t triggerid, 
 			       hfs_time_t clock, int val, int ack, zbx_uint64_t hostid);
 
+int		HFS_get_trigger_events (const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, int skip, int count, hfs_event_value_t** res);
 
 #endif

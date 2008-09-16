@@ -59,14 +59,6 @@ typedef struct __attribute__ ((packed)) {
 } trigger_value_t;
 
 
-typedef struct __attribute__ ((packed)) {
-	zbx_uint64_t eventid;
-	zbx_uint64_t triggerid;
-	hfs_time_t clock;
-	unsigned char val;
-	unsigned char ack;
-} event_value_t;
-
 
 int is_trend_type (item_type_t type);
 int make_directories (const char* path);
