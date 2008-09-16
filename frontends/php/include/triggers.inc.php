@@ -1806,15 +1806,8 @@
 
 		// get rid of warnings about $triggers undefined
 		$triggers = array();
-		$count = 0;
 		while($row = DBfetch($result))
 		{
-			$count++;
-                        // if we trying to display more than 1000 triggers, display blame message
-			if ($count > 1000) {
-				break;
-			}
-
 			if (is_array ($hfs_triggers))
 				if (array_key_exists ($row["triggerid"], $hfs_triggers)) {
 					$row["value"] = $hfs_triggers[$row["triggerid"]]->value;
@@ -1852,11 +1845,6 @@
 			return $table;
 		}
 		sort($hosts);
-
-		if ($count > 1000) {
-			$table = new CTableInfo(S_TOO_MANY_OBJECTS);
-			return $table;
-		}
 
 		$header=array(new CCol(S_TRIGGERS,'center'));
 		foreach($hosts as $hostname)
