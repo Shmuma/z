@@ -22,6 +22,7 @@
 	require_once "include/config.inc.php";
 	require_once "include/acknow.inc.php";
 	require_once "include/triggers.inc.php";
+	require_once "include/hfs.inc.php";
 
 	$page["title"]		= "S_ALARMS";
 	$page["file"]		= "tr_events.php";
@@ -49,11 +50,12 @@ include_once "include/page_header.php";
 	if(!check_right_on_trigger_by_triggerid(PERM_READ_ONLY, $_REQUEST["triggerid"]))
 		access_deny();
 
-	$trigger_data = DBfetch(DBselect('SELECT h.host, t.* '.
-						' FROM hosts h, items i, functions f, triggers t '.
+	$trigger_data = DBfetch(DBselect('SELECT h.host, t.*, s.name as siteid '.
+						' FROM hosts h, items i, functions f, triggers t, sites s '.
 	                        	' WHERE i.itemid=f.itemid AND f.triggerid=t.triggerid '.
 						' AND t.triggerid='.$_REQUEST["triggerid"].
-						' AND h.hostid=i.hostid AND '.DBin_node('t.triggerid')));
+					 ' AND h.hostid=i.hostid AND '.DBin_node('t.triggerid').
+					 ' AND h.siteid=s.siteid'));
 ?>
 <?php
 	$_REQUEST["limit"] = get_request("limit","NO");
@@ -81,28 +83,43 @@ include_once "include/page_header.php";
 	show_table_header(S_EVENTS_BIG.': "'.$description.'"'.BR.$expression, $form);
 ?>
 <?php
-	$sql_cond = '';
-	if($show_unknown == 0){
-		$sql_cond = ' AND value<>2 ';
+	$rows = array();
+	$count = 0;
+
+	if (zbx_hfs_available ()) {
+		$hfs_events = zabbix_hfs_trigger_events ($trigger_data["siteid"], $_REQUEST['triggerid'], (integer)$_REQUEST["limit"]);
+		rsort ($hfs_events);
+
+		foreach ($hfs_events as $event) {
+			if ($show_unknown == 0 && $event->val == 2)
+				continue;
+			if (!empty($rows) && $rows[$count]['value'] != $event->val)
+				$count++;
+			$rows[$count]["clock"] = $event->clock;
+			$rows[$count]["value"] = $event->val;
+			$rows[$count]["acknowledged"] = $event->ack;
+		}
+	} else {
+		$sql_cond = '';
+		if($show_unknown == 0){
+			$sql_cond = ' AND value<>2 ';
+		}
+
+		$result=DBselect('SELECT * FROM events WHERE objectid='.$_REQUEST['triggerid'].
+				 ' AND object='.EVENT_OBJECT_TRIGGER.
+				 $sql_cond.
+				 ' ORDER BY clock DESC',$_REQUEST['limit']);
+		while($row=DBfetch($result)){
+			if(!empty($rows) && $rows[$count]['value'] != $row['value']){
+				$count++;
+			}
+			$rows[$count] = $row;
+		}
 	}
-	
-	$result=DBselect('SELECT * FROM events WHERE objectid='.$_REQUEST['triggerid'].
-						' AND object='.EVENT_OBJECT_TRIGGER.
-						$sql_cond.
-					' ORDER BY clock DESC',$_REQUEST['limit']);
 
 	$table = new CTableInfo();
 	$table->SetHeader(array(S_TIME,S_STATUS,S_ACKNOWLEDGED,S_DURATION,S_SUM,"%"));
 	$table->ShowStart();
-
-	$rows = array();
-	$count = 0;
-	while($row=DBfetch($result)){
-		if(!empty($rows) && $rows[$count]['value'] != $row['value']){
-			$count++;
-		}
-		$rows[$count] = $row;
-	}
 
 	$truesum=0;
 	$falsesum=0;

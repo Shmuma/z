@@ -1,0 +1,186 @@
+<?xml version="1.0"?>
+<zabbix_export version="1.0" date="12.09.08" time="12.18">
+	<hosts>
+		<host name="T.Memcache">
+			<ip>0.0.0.0</ip>
+			<port>10050</port>
+			<status>3</status>
+			<groups>
+				<group>Templates</group>
+			</groups>
+			<items>
+				<item type="7" key="memcache.connections" value_type="3">
+					<description>Connections</description>
+					<delay>5</delay>
+					<history>90</history>
+					<trends>365</trends>
+					<formula>1</formula>
+					<snmp_community>public</snmp_community>
+					<snmp_oid>interfaces.ifTable.ifEntry.ifInOctets.1</snmp_oid>
+					<snmp_port>161</snmp_port>
+					<applications>
+						<application>Memcache</application>
+					</applications>
+				</item>
+				<item type="7" key="memcache.get" value_type="3">
+					<description>Get requests per second</description>
+					<delay>5</delay>
+					<history>90</history>
+					<trends>365</trends>
+					<units>gets/s</units>
+					<delta>1</delta>
+					<formula>1</formula>
+					<snmp_community>public</snmp_community>
+					<snmp_oid>interfaces.ifTable.ifEntry.ifInOctets.1</snmp_oid>
+					<snmp_port>161</snmp_port>
+					<applications>
+						<application>Memcache</application>
+					</applications>
+				</item>
+				<item type="7" key="memcache.hits" value_type="3">
+					<description>Cache hits per second</description>
+					<delay>5</delay>
+					<history>90</history>
+					<trends>365</trends>
+					<units>hits/s</units>
+					<delta>1</delta>
+					<formula>1</formula>
+					<snmp_community>public</snmp_community>
+					<snmp_oid>interfaces.ifTable.ifEntry.ifInOctets.1</snmp_oid>
+					<snmp_port>161</snmp_port>
+					<applications>
+						<application>Memcache</application>
+					</applications>
+				</item>
+				<item type="7" key="memcache.items" value_type="3">
+					<description>Items stored</description>
+					<delay>5</delay>
+					<history>90</history>
+					<trends>365</trends>
+					<formula>1</formula>
+					<snmp_community>public</snmp_community>
+					<snmp_oid>interfaces.ifTable.ifEntry.ifInOctets.1</snmp_oid>
+					<snmp_port>161</snmp_port>
+					<applications>
+						<application>Memcache</application>
+					</applications>
+				</item>
+				<item type="7" key="memcache.misses" value_type="3">
+					<description>Cache misses per second</description>
+					<delay>5</delay>
+					<history>90</history>
+					<trends>365</trends>
+					<units>misses/s</units>
+					<delta>1</delta>
+					<formula>1</formula>
+					<snmp_community>public</snmp_community>
+					<snmp_oid>interfaces.ifTable.ifEntry.ifInOctets.1</snmp_oid>
+					<snmp_port>161</snmp_port>
+					<applications>
+						<application>Memcache</application>
+					</applications>
+				</item>
+				<item type="7" key="memcache.set" value_type="3">
+					<description>Set requests per second</description>
+					<delay>5</delay>
+					<history>90</history>
+					<trends>365</trends>
+					<units>sets/s</units>
+					<delta>1</delta>
+					<formula>1</formula>
+					<snmp_community>public</snmp_community>
+					<snmp_oid>interfaces.ifTable.ifEntry.ifInOctets.1</snmp_oid>
+					<snmp_port>161</snmp_port>
+					<applications>
+						<application>Memcache</application>
+					</applications>
+				</item>
+				<item type="7" key="memcache.system_time" value_type="0">
+					<description>System time</description>
+					<delay>5</delay>
+					<history>90</history>
+					<trends>365</trends>
+					<units>s</units>
+					<formula>1</formula>
+					<snmp_community>public</snmp_community>
+					<snmp_oid>interfaces.ifTable.ifEntry.ifInOctets.1</snmp_oid>
+					<snmp_port>161</snmp_port>
+					<applications>
+						<application>Memcache</application>
+					</applications>
+				</item>
+				<item type="7" key="memcache.total_connecions" value_type="3">
+					<description>Connections per second</description>
+					<delay>5</delay>
+					<history>90</history>
+					<trends>365</trends>
+					<units>conns/s</units>
+					<delta>1</delta>
+					<formula>1</formula>
+					<snmp_community>public</snmp_community>
+					<snmp_oid>interfaces.ifTable.ifEntry.ifInOctets.1</snmp_oid>
+					<snmp_port>161</snmp_port>
+					<applications>
+						<application>Memcache</application>
+					</applications>
+				</item>
+				<item type="7" key="memcache.total_items" value_type="3">
+					<description>Items stored per second</description>
+					<delay>5</delay>
+					<history>90</history>
+					<trends>365</trends>
+					<units>items/s</units>
+					<delta>1</delta>
+					<formula>1</formula>
+					<snmp_community>public</snmp_community>
+					<snmp_oid>interfaces.ifTable.ifEntry.ifInOctets.1</snmp_oid>
+					<snmp_port>161</snmp_port>
+					<applications>
+						<application>Memcache</application>
+					</applications>
+				</item>
+				<item type="7" key="memcache.uptime" value_type="3">
+					<description>Memcache uptime</description>
+					<delay>60</delay>
+					<history>90</history>
+					<trends>365</trends>
+					<units>s</units>
+					<formula>1</formula>
+					<snmp_community>public</snmp_community>
+					<snmp_oid>interfaces.ifTable.ifEntry.ifInOctets.1</snmp_oid>
+					<snmp_port>161</snmp_port>
+					<applications>
+						<application>Memcache</application>
+					</applications>
+				</item>
+				<item type="7" key="memcache.user_time" value_type="0">
+					<description>User time</description>
+					<delay>5</delay>
+					<history>90</history>
+					<trends>365</trends>
+					<units>s</units>
+					<formula>1</formula>
+					<snmp_community>public</snmp_community>
+					<snmp_oid>interfaces.ifTable.ifEntry.ifInOctets.1</snmp_oid>
+					<snmp_port>161</snmp_port>
+					<applications>
+						<application>Memcache</application>
+					</applications>
+				</item>
+				<item type="7" key="memcache.version" value_type="1">
+					<description>Memcache version</description>
+					<delay>600</delay>
+					<history>90</history>
+					<trends>365</trends>
+					<formula>1</formula>
+					<snmp_community>public</snmp_community>
+					<snmp_oid>interfaces.ifTable.ifEntry.ifInOctets.1</snmp_oid>
+					<snmp_port>161</snmp_port>
+					<applications>
+						<application>Memcache</application>
+					</applications>
+				</item>
+			</items>
+		</host>
+	</hosts>
+</zabbix_export>

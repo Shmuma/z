@@ -32,6 +32,8 @@ typedef enum {
 	NK_TriggerStatus,
 	NK_Alert,
 	NK_HostError,
+	NK_EventTrigger,
+	NK_EventHost,
 } name_kind_t;
 
 typedef void (*fold_fn_t) (void* db_val, void* state);
@@ -55,6 +57,7 @@ typedef struct __attribute__ ((packed)) {
 	int value;
 	hfs_time_t when;
 } trigger_value_t;
+
 
 
 int is_trend_type (item_type_t type);

@@ -313,11 +313,10 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 
 	if (in_cache != 1) {
 		zabbix_log( LOG_LEVEL_DEBUG, "In process_data: [NOT IN MEMCACHE] '%s %s'", key, server);
-
+#endif
 		DBescape_string(server, server_esc, MAX_STRING_LEN);
 		DBescape_string(key, key_esc, MAX_STRING_LEN);
 
-#endif
 		result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.host='%s' and i.key_='%s' and i.status in (%d,%d) and i.type in (%d,%d) and" ZBX_COND_NODEID " and " ZBX_COND_SITE,
 			ZBX_SQL_ITEM_SELECT,
 			HOST_STATUS_MONITORED,

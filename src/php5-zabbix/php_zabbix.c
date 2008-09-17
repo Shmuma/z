@@ -28,6 +28,7 @@ static zend_function_entry php_zabbix_functions[] = {
 	PHP_FE(zabbix_hfs_item_values, NULL)
 	PHP_FE(zabbix_hfs_triggers_values, NULL)
 	PHP_FE(zabbix_hfs_trigger_value, NULL)
+	PHP_FE(zabbix_hfs_trigger_events, NULL)
 	{NULL, NULL, NULL}
 };
 
@@ -716,3 +717,40 @@ PHP_FUNCTION(zabbix_hfs_trigger_value)
 	add_property_long (return_value, "when", val.when);
 }
 /* }}} */
+
+
+/* {{{ proto array zabbix_hfs_trigger_events(char *site, int triggerid, int count) */
+PHP_FUNCTION(zabbix_hfs_trigger_events)
+{
+	int i, count;
+	long long triggerid = 0;
+	char *site = NULL;
+	int site_len = 0, res_count;
+	hfs_event_value_t* res;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll", &site, &site_len, &triggerid, &count) == FAILURE)
+		RETURN_FALSE;
+
+        if (array_init(return_value) == FAILURE)
+		RETURN_FALSE;
+
+	res_count = HFS_get_trigger_events (ZABBIX_GLOBAL(hfs_base_dir), site, triggerid, count, &res);
+
+	if (res_count) {
+		for (i = 0; i < res_count; i++) {
+			zval *z_obj;
+
+			MAKE_STD_ZVAL(z_obj);
+			object_init(z_obj);
+
+			add_property_long(z_obj, "triggerid", res[i].triggerid);
+			add_property_long(z_obj, "clock", res[i].clock);
+			add_property_long(z_obj, "val", res[i].val);
+			add_property_long(z_obj, "ack", res[i].ack);
+			add_next_index_object(return_value, z_obj TSRMLS_CC);
+		}
+		free (res);
+	}
+}
+/* }}} */
+
