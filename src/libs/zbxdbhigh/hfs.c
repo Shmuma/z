@@ -2559,7 +2559,7 @@ void HFS_add_event (const char* hfs_path, const char* siteid, zbx_uint64_t event
 }
 
 
-int HFS_get_trigger_events (const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, int skip, int count, hfs_event_value_t** res)
+int HFS_get_trigger_events (const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, int count, hfs_event_value_t** res)
 {
 	char* f_name = get_name (hfs_path, siteid, triggerid, NK_EventTrigger);
 	struct stat st;
@@ -2575,14 +2575,11 @@ int HFS_get_trigger_events (const char* hfs_path, const char* siteid, zbx_uint64
 	}
 
 	total = st.st_size / sizeof (hfs_event_value_t);
-	if (total <= skip) {
-		free (f_name);
-		return 0;
-	}
-
-	if (total-skip < count)
-		count = total-skip;
-	ofs = (total-skip-count)*sizeof (hfs_event_value_t);
+	if (count == 0)
+		count = total;
+	if (total < count)
+		count = total;
+	ofs = (total-count)*sizeof (hfs_event_value_t);
 	fd = open (f_name, O_RDONLY);
 
 	if (fd < 0) {

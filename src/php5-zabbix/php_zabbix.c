@@ -719,25 +719,25 @@ PHP_FUNCTION(zabbix_hfs_trigger_value)
 /* }}} */
 
 
-/* {{{ proto array zabbix_hfs_trigger_events(char *site, int triggerid, int skip, int count) */
+/* {{{ proto array zabbix_hfs_trigger_events(char *site, int triggerid, int count) */
 PHP_FUNCTION(zabbix_hfs_trigger_events)
 {
-	int i, skip, count;
+	int i, count;
 	long long triggerid = 0;
 	char *site = NULL;
 	int site_len = 0, res_count;
 	hfs_event_value_t* res;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "slll", &site, &site_len, &triggerid, &skip, &count) == FAILURE)
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll", &site, &site_len, &triggerid, &count) == FAILURE)
 		RETURN_FALSE;
 
         if (array_init(return_value) == FAILURE)
 		RETURN_FALSE;
 
-	res_count = HFS_get_trigger_events (ZABBIX_GLOBAL(hfs_base_dir), site, triggerid, skip, count, &res);
+	res_count = HFS_get_trigger_events (ZABBIX_GLOBAL(hfs_base_dir), site, triggerid, count, &res);
 
 	if (res_count) {
-		for (i = res_count-1; i >= 0; i--) {
+		for (i = 0; i < res_count; i++) {
 			zval *z_obj;
 
 			MAKE_STD_ZVAL(z_obj);

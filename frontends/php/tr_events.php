@@ -88,6 +88,7 @@ include_once "include/page_header.php";
 
 	if (zbx_hfs_available ()) {
 		$hfs_events = zabbix_hfs_trigger_events ($trigger_data["siteid"], $_REQUEST['triggerid'], (integer)$_REQUEST["limit"]);
+		rsort ($hfs_events);
 
 		foreach ($hfs_events as $event) {
 			if ($show_unknown == 0 && $event->val == 2)
