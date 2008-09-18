@@ -318,8 +318,8 @@ DB_ITEM
 	zbx_uint64_t	valuemapid;
 	char	*delay_flex;
 #ifdef HAVE_MEMCACHE
-	int	from_memcache;
 	hfs_time_t	cache_time;
+	char	*db_item_str;
 #endif
 };
  
