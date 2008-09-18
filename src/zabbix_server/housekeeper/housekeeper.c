@@ -334,13 +334,13 @@ int main_housekeeper_loop()
 
 /*		zbx_setproctitle("housekeeper [removing old history]");*/
 
-		d = housekeeping_history_and_trends(now);
-		zabbix_log( LOG_LEVEL_WARNING, "Deleted %d records from history and trends",
-			d);
+/* 		d = housekeeping_history_and_trends(now); */
+/* 		zabbix_log( LOG_LEVEL_WARNING, "Deleted %d records from history and trends", */
+/* 			d); */
 
-		zbx_setproctitle("housekeeper [removing old history]");
+/* 		zbx_setproctitle("housekeeper [removing old history]"); */
 
-		housekeeping_process_log(now);
+/* 		housekeeping_process_log(now); */
 
 		zbx_setproctitle("housekeeper [removing old events]");
 
@@ -359,7 +359,7 @@ int main_housekeeper_loop()
 /* Transaction is not required here. It causes timeouts under MySQL */
 /*		DBcommit();*/
 
-		DBvacuum();
+/* 		DBvacuum(); */
 
 		zabbix_log( LOG_LEVEL_DEBUG, "Sleeping for %d hours",
 			CONFIG_HOUSEKEEPING_FREQUENCY);
