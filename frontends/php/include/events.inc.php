@@ -38,7 +38,7 @@
 		$sql_from = $sql_cond = "";
 
 	        $availiable_groups= get_accessible_groups_by_user($USER_DETAILS,PERM_READ_LIST, null, null, get_current_nodeid());
-	        $availiable_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_LIST, null, null, get_current_nodeid());
+// 	        $availiable_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_LIST, null, null, get_current_nodeid());
 		
 		if($hostid > 0)
 		{
@@ -49,11 +49,11 @@
 			$sql_from = ", hosts_groups hg ";
 			$sql_cond = " and h.hostid=hg.hostid and hg.groupid=".$groupid;
 		}
-		else
-		{
-			$sql_from = ", hosts_groups hg ";
-			$sql_cond = " and h.hostid in (".$availiable_hosts.") ";
-		}
+// 		else
+// 		{
+// 			$sql_from = ", hosts_groups hg ";
+// 			$sql_cond = " and h.hostid in (".$availiable_hosts.") ";
+// 		}
 	
 //---
 		$trigger_list = '';
@@ -71,17 +71,32 @@
 		}
 
 		if(!empty($triggers)){
-			$trigger_list = '('.trim($trigger_list,',').')';
-			$sql_cond=($show_unknown == 0)?(' AND e.value<>'.TRIGGER_VALUE_UNKNOWN.' '):('');
-			
-			$sql = 'SELECT e.eventid, e.objectid as triggerid,e.clock,e.value '.
+			if (zbx_hfs_available ()) {
+				// obtain list of hosts to fetch events from
+				$sql = "select h.hostid, s.name as siteid from hosts h, sites s ".$sql_from.
+					" where h.siteid = s.siteid ".$sql_cond." and h.status=".HOST_STATUS_MONITORED;
+				$res = DBselect ($sql);
+				$hfs_events = array ();
+				$hosts = array ();
+				while ($row = DBfetch ($res)) {
+					$hosts[$row['hostid']] = new stdClass();
+					$hosts[$row['hostid']]->site = $row['siteid'];
+					$hosts[$row['hostid']]->begin = 0;
+					$hosts[$row['hostid']]->stop = 0;
+				}
+			} else {
+				$trigger_list = '('.trim($trigger_list,',').')';
+				$sql_cond=($show_unknown == 0)?(' AND e.value<>'.TRIGGER_VALUE_UNKNOWN.' '):('');
+
+				$sql = 'SELECT e.eventid, e.objectid as triggerid,e.clock,e.value '.
 					' FROM events e '.
 					' WHERE '.zbx_sql_mod('e.object',1000).'='.EVENT_OBJECT_TRIGGER.
 					  ' AND e.objectid IN '.$trigger_list.
 					  $sql_cond.
 					' ORDER BY e.eventid DESC';
-	
-			$result = DBselect($sql,10*($start+$num));
+
+				$result = DBselect($sql,10*($start+$num));
+			}
 		}
 		       
 		$table = new CTableInfo(S_NO_EVENTS_FOUND); 

@@ -30,6 +30,7 @@ PHP_FUNCTION(zabbix_hfs_item_values);
 PHP_FUNCTION(zabbix_hfs_triggers_values);
 PHP_FUNCTION(zabbix_hfs_trigger_value);
 PHP_FUNCTION(zabbix_hfs_trigger_events);
+PHP_FUNCTION(zabbix_hfs_host_events);
 
 ZEND_BEGIN_MODULE_GLOBALS(zabbix)
 char *hfs_base_dir;
