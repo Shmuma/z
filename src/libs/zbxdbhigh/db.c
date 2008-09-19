@@ -1554,8 +1554,8 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	item->lastcheck = 0;
 
 #ifdef HAVE_MEMCACHE
+	item->from_memcache = 0;
 	item->cache_time = 0;
-	item->db_item_str = NULL;
 #endif
 
 	ZBX_STR2UINT64(item->itemid, row[0]);
@@ -1672,15 +1672,97 @@ void DBfree_item(DB_ITEM *item)
 
 #ifdef HAVE_MEMCACHE
 	zabbix_log(LOG_LEVEL_DEBUG, "In DBfree_item(%s) [from-memcache=%d]",
-		   item->key, ((item->db_item_str != NULL) ? "yes" : "no"));
+		   item->key, item->from_memcache);
 #else
 	zabbix_log(LOG_LEVEL_DEBUG, "In DBfree_item(%s)", item->key);
 #endif
 
 #ifdef HAVE_MEMCACHE
-	if (item->db_item_str) {
-		free(item->db_item_str);
-		item->db_item_str = NULL;
+	if (item->from_memcache) {
+		if (item->delay_flex) {
+			free(item->delay_flex);
+			item->delay_flex = NULL;
+		}
+
+		if (item->description) {
+			free(item->description);
+			item->description = NULL;
+		}
+
+		if (item->eventlog_source) {
+			free(item->eventlog_source);
+			item->eventlog_source = NULL;
+		}
+
+		if (item->formula) {
+			free(item->formula);
+			item->formula = NULL;
+		}
+
+		if (item->host_dns) {
+			free(item->host_dns);
+			item->host_dns = NULL;
+		}
+
+		if (item->host_ip) {
+			free(item->host_ip);
+			item->host_ip = NULL;
+		}
+
+		if (item->host_name) {
+			free(item->host_name);
+			item->host_name = NULL;
+		}
+
+		if (item->logtimefmt) {
+			free(item->logtimefmt);
+			item->logtimefmt = NULL;
+		}
+
+		if (item->shortname) {
+			free(item->shortname);
+			item->shortname = NULL;
+		}
+
+		if (item->siteid) {
+			free(item->siteid);
+			item->siteid = NULL;
+		}
+
+		if (item->snmp_community) {
+			free(item->snmp_community);
+			item->snmp_community = NULL;
+		}
+
+		if (item->snmp_oid) {
+			free(item->snmp_oid);
+			item->snmp_oid = NULL;
+		}
+
+		if (item->snmpv3_authpassphrase) {
+			free(item->snmpv3_authpassphrase);
+			item->snmpv3_authpassphrase = NULL;
+		}
+
+		if (item->snmpv3_privpassphrase) {
+			free(item->snmpv3_privpassphrase);
+			item->snmpv3_privpassphrase = NULL;
+		}
+
+		if (item->snmpv3_securityname) {
+			free(item->snmpv3_securityname);
+			item->snmpv3_securityname = NULL;
+		}
+
+		if (item->trapper_hosts) {
+			free(item->trapper_hosts);
+			item->trapper_hosts = NULL;
+		}
+
+		if (item->units) {
+			free(item->units);
+			item->units = NULL;
+		}
 	}
 #endif
 	if (item->prevvalue_str) {
