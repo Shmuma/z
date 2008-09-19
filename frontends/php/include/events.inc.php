@@ -29,10 +29,15 @@
 		}
 	}
 
+	function events_sort ($a, $b)
+	{
+		return $b["clock"] - $a["clock"];
+	}
+
 	function	get_history_of_triggers_events($start,$num, $groupid=0, $hostid=0)
 	{
 		global $USER_DETAILS;
-		
+
 		$show_unknown = get_profile('web.events.show_unknown',0);
 		
 		$sql_from = $sql_cond = "";
@@ -76,7 +81,6 @@
 				$sql = "select h.hostid, s.name as siteid from hosts h, sites s ".$sql_from.
 					" where h.siteid = s.siteid ".$sql_cond." and h.status=".HOST_STATUS_MONITORED;
 				$res = DBselect ($sql);
-				$hfs_events = array ();
 				$hosts = array ();
 				while ($row = DBfetch ($res)) {
 					$hosts[$row['hostid']] = new stdClass();
@@ -84,6 +88,60 @@
 					$hosts[$row['hostid']]->begin = 0;
 					$hosts[$row['hostid']]->stop = 0;
 				}
+
+				print "<pre>\n";
+				// collect events
+				$done = 0;
+				$res_events = array ();
+				while (!$done && $num) {
+					$done = 1;
+					$events = array ();
+					foreach ($hosts as $hostid => $obj) {
+ 						if ($obj->stop)
+							continue;
+						$done = 0;
+						$hfs_events = zabbix_hfs_host_events ($obj->site, $hostid, $obj->begin, 100);
+						rsort ($hfs_events);
+						
+						if (is_array ($hfs_events) && count ($hfs_events) > 0) {
+							$events = array_merge ($events, $hfs_events);
+							$hosts[$hostid]->begin += count ($hfs_events);
+							if (count ($hfs_events) < 100)
+								$hosts[$hostid]->stop = 1;
+						}
+						else
+							$hosts[$hostid]->stop = 1;
+					}
+
+					if ($done)
+						break;
+
+					// sort resulting array by timestamp
+					usort ($events, "events_sort");
+					$len = count ($events);
+
+					if ($len == 0)
+						break;
+					if ($start > 0)  {
+						if ($len <= $start) {
+							$start -= $len;
+							$events = array ();
+						} else
+							array_splice ($events, $start);
+						$len = count ($events);
+					}
+
+					if ($start == 0) {
+						print "$len asd $num, ";
+						if ($len > $num) {
+							array_splice ($events, 0, $num);
+							$len = count ($events);
+						}
+						$res_events = array_merge ($res_events, $events);
+						$num -= $len;
+					}
+				}
+				print "</pre>";
 			} else {
 				$trigger_list = '('.trim($trigger_list,',').')';
 				$sql_cond=($show_unknown == 0)?(' AND e.value<>'.TRIGGER_VALUE_UNKNOWN.' '):('');
@@ -95,7 +153,23 @@
 					  $sql_cond.
 					' ORDER BY e.eventid DESC';
 
-				$result = DBselect($sql,10*($start+$num));
+				$result = DBselect($sql,($start+$num));
+				$res_events = array ();
+
+				while ($row = DBfetch ($result)) {
+					if(($show_unknown == 0) && ($row['value'] == TRIGGER_VALUE_UNKNOWN)) 
+						continue;
+					if ($start > 0) {
+						$start--;
+						continue;
+					}
+
+					if ($num > 0)
+						break;
+						
+					$res_events[] = $row;
+					$num--;
+				}
 			}
 		}
 		       
@@ -114,13 +188,14 @@
 		$col=0;
 		$skip = $start;
 
-		while(!empty($triggers) && ($col<$num) && ($row=DBfetch($result))){
+		foreach ($res_events as $row) {
+// 		while(!empty($triggers) && ($col<$num) && ($row=DBfetch($result))){
 			
-			if($skip > 0){
-				if(($show_unknown == 0) && ($row['value'] == TRIGGER_VALUE_UNKNOWN)) continue;
-				$skip--;
-				continue;
-			}
+// 			if($skip > 0){
+// 				if(($show_unknown == 0) && ($row['value'] == TRIGGER_VALUE_UNKNOWN)) continue;
+// 				$skip--;
+// 				continue;
+// 			}
 			
 			if($row["value"] == 0)
 			{
@@ -135,8 +210,8 @@
 				$value=new CCol(S_UNKNOWN_BIG,"unknown");
 			}
 			
-			$row = array_merge($triggers[$row['triggerid']],$row);
-			if(($show_unknown == 0) && (!event_initial_time($row,$show_unknown))) continue;
+			$row = array_merge($triggers[$row["triggerid"]],$row);
+// 			if(($show_unknown == 0) && (!event_initial_time($row,$show_unknown))) continue;
 				
 			$table->AddRow(array(
 				date("Y.M.d H:i:s",$row["clock"]),

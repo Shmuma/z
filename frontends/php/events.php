@@ -29,7 +29,7 @@
 	
 	define('ZBX_PAGE_DO_REFRESH', 1);
 
-include_once "include/page_header.php";
+	include_once "include/page_header.php";
 
 ?>
 <?php
