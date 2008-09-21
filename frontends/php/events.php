@@ -29,7 +29,7 @@
 	
 	define('ZBX_PAGE_DO_REFRESH', 1);
 
-include_once "include/page_header.php";
+	include_once "include/page_header.php";
 
 ?>
 <?php
@@ -156,6 +156,8 @@ include_once "include/page_header.php";
 	$r_form->SetMethod('get');
 	
 	$r_form->AddVar('start',$_REQUEST['start']);
+	$r_form->AddVar('groupid',$_REQUEST['groupid']);
+	$r_form->AddVar('hostid',$_REQUEST['hostid']);
 
 	$btnPrev = new CButton("prev","<< Prev ".PAGE_SIZE);
 	if($_REQUEST["start"] <= 0)

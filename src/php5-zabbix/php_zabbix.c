@@ -778,12 +778,12 @@ PHP_FUNCTION(zabbix_hfs_host_events)
 			zval *z_obj;
 
 			MAKE_STD_ZVAL(z_obj);
-			object_init(z_obj);
+			array_init (z_obj);
 
-			add_property_long(z_obj, "triggerid", res[i].triggerid);
-			add_property_long(z_obj, "clock", res[i].clock);
-			add_property_long(z_obj, "val", res[i].val);
-			add_property_long(z_obj, "ack", res[i].ack);
+			add_assoc_long(z_obj, "triggerid", res[i].triggerid);
+			add_assoc_long(z_obj, "clock", res[i].clock);
+			add_assoc_long(z_obj, "value", res[i].val);
+			add_assoc_long(z_obj, "ack", res[i].ack);
 			add_next_index_object(return_value, z_obj TSRMLS_CC);
 		}
 		free (res);
