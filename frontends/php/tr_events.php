@@ -153,7 +153,10 @@ include_once "include/page_header.php";
 			$sum=$dissum;
 		}
 	
-		$proc=(100*$sum)/($falsesum+$truesum+$dissum);
+		if ($falsesum+$truesum+$dissum > 0)
+			$proc=(100*$sum)/($falsesum+$truesum+$dissum);
+		else
+			$proc = 0;
 		$proc=round($proc*100)/100;
 		$proc="$proc%";
  
