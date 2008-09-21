@@ -25,8 +25,19 @@ char *help_message[] = { "Help", 0 };
 
 int main (int argc, char** argv)
 {
+	zbx_uint64_t eventid, triggerid;
+	hfs_time_t clock;
+	int val, ack;
+	zbx_uint64_t hostid;
+
 	if (argc != 3) {
 		printf ("Usage: hfsevents hfs_path site\n");
 		return 0;
 	}
+
+	while (scanf ("%lld %lld %lld %d %d %lld", &eventid, &triggerid, &clock, &val, &ack, &hostid) == 6) {
+		HFS_add_event (argv[1], argv[2], eventid, triggerid, clock, val, ack, hostid);
+	}
+
+	return 0;
 }
