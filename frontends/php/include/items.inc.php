@@ -1056,11 +1056,19 @@ COpt::profiling_stop('prepare table');
 	 ******************************************************************************/
 	function	delete_history_by_itemid($itemid, $use_housekeeper=0)
 	{
-		$result = delete_trends_by_itemid($itemid,$use_housekeeper);
-		if(!$result)	return $result;
+		if (zbx_hfs_available ()) {
+			// obtain site of this item
+			$row = DBfetch (DBselect ("select s.name as siteid from items i, hosts h, sites s where ".
+						  "i.hostid = h.hostid and h.siteid = s.siteid and i.itemid = $itemid"));
+			if ($row)
+				zabbix_hfs_clear_item_history ($row["siteid"], $itemid);
+			return TRUE;
+		} else {
+			$result = delete_trends_by_itemid($itemid,$use_housekeeper);
+			if(!$result)	return $result;
 
-		if($use_housekeeper)
-		{
+			if($use_housekeeper)
+			{
 // 			$housekeeperid = get_dbid('housekeeper','housekeeperid');
 // 			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)".
 // 				" values ($housekeeperid,'history_log','itemid',$itemid)");
@@ -1073,14 +1081,15 @@ COpt::profiling_stop('prepare table');
 // 			$housekeeperid = get_dbid('housekeeper','housekeeperid');
 // 			DBexecute("insert into housekeeper (housekeeperid,tablename,field,value)".
 // 				" values ($housekeeperid,'history','itemid',$itemid)");
+				return TRUE;
+			}
+
+			DBexecute("delete from history_log where itemid=$itemid");
+			DBexecute("delete from history_uint where itemid=$itemid");
+			DBexecute("delete from history_str where itemid=$itemid");
+			DBexecute("delete from history where itemid=$itemid");
 			return TRUE;
 		}
-
-		DBexecute("delete from history_log where itemid=$itemid");
-		DBexecute("delete from history_uint where itemid=$itemid");
-		DBexecute("delete from history_str where itemid=$itemid");
-		DBexecute("delete from history where itemid=$itemid");
-		return TRUE;
 	}
 
 	/******************************************************************************

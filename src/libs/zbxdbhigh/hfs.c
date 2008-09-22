@@ -388,7 +388,7 @@ int make_directories (const char* path)
 	buf[len] = 0;
 	if (stat (buf, &st)) {
 	    if (errno == ENOENT) {
-		if (mkdir (buf, 0755)) {
+		if (mkdir (buf, 0775)) {
 		    zabbix_log(LOG_LEVEL_ERR, "HFS: make_directories: mkdir(): %s", strerror(errno));
 		    return errno;
 		}
@@ -2649,4 +2649,20 @@ int HFS_get_host_events (const char* hfs_path, const char* siteid, zbx_uint64_t 
 	close (fd);
 
 	return res_count;
+}
+
+
+void HFS_clear_item_history (const char* hfs_path, const char* siteid, zbx_uint64_t itemid)
+{
+	name_kind_t kinds[] = {
+		NK_ItemMeta, NK_ItemData, NK_TrendItemMeta, NK_TrendItemData, NK_ItemValues
+	};
+	char* f_name;
+	int i;
+
+	for (i = 0; i < sizeof (kinds) / sizeof (kinds[0]); i++) {
+		f_name = get_name (hfs_path, siteid, itemid, kinds[i]);
+		unlink (f_name);
+		free (f_name);
+	}
 }

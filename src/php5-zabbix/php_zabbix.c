@@ -30,6 +30,7 @@ static zend_function_entry php_zabbix_functions[] = {
 	PHP_FE(zabbix_hfs_trigger_value, NULL)
 	PHP_FE(zabbix_hfs_trigger_events, NULL)
 	PHP_FE(zabbix_hfs_host_events, NULL)
+	PHP_FE(zabbix_hfs_clear_item_history, NULL)
 	{NULL, NULL, NULL}
 };
 
@@ -788,5 +789,21 @@ PHP_FUNCTION(zabbix_hfs_host_events)
 		}
 		free (res);
 	}
+}
+/* }}} */
+
+
+/* {{{ proto bool zabbix_hfs_clear_item_history(char *site, int itemid) */
+PHP_FUNCTION(zabbix_hfs_clear_item_history)
+{
+	long long itemid = 0;
+	char *site = NULL;
+	int site_len = 0;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl", &site, &site_len, &itemid) == FAILURE)
+		RETURN_FALSE;
+
+	HFS_clear_item_history (ZABBIX_GLOBAL(hfs_base_dir), site, itemid);
+	RETURN_TRUE;
 }
 /* }}} */

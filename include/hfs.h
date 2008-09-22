@@ -187,4 +187,6 @@ void		HFS_add_event (const char* hfs_path, const char* siteid, zbx_uint64_t even
 int		HFS_get_trigger_events (const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, int count, hfs_event_value_t** res);
 int		HFS_get_host_events (const char* hfs_path, const char* siteid, zbx_uint64_t hostid, int skip, int count, hfs_event_value_t** res);
 
+void		HFS_clear_item_history (const char* hfs_path, const char* siteid, zbx_uint64_t itemid);
+
 #endif
