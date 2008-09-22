@@ -39,9 +39,16 @@
 		return $a["value"] != TRIGGER_VALUE_UNKNOWN ;
 	}
 
+	function filter_removed_triggers ($a)
+	{
+		global $triggers;
+		return array_key_exists ($a["triggerid"], $triggers);
+	}
+
 	function	get_history_of_triggers_events($start,$num, $groupid=0, $hostid=0)
 	{
 		global $USER_DETAILS;
+		global $triggers;
 
 		$show_unknown = get_profile('web.events.show_unknown',0);
 		$page = $num;
@@ -118,6 +125,9 @@
 					// filter unknown values
 					if ($show_unknown == 0)
 						$events = array_filter ($events, "filter_unknown_events");
+
+					// filter removed values
+					$events = array_filter ($events, "filter_removed_triggers");
 
 					// sort resulting array by timestamp
 					usort ($events, "events_sort");
