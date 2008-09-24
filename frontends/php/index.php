@@ -67,7 +67,7 @@
 				// if succeeded:
 				// 1. generate sessionid using username and random number
 				$sessionid = md5(time().$name.rand(0,10000000));
-				zbx_setcookie('zbx_sessionid', $sessionid, 86400);
+				zbx_setcookie('zbx_sessionid', $sessionid, time()+86400);
 
 				add_audit(AUDIT_ACTION_LOGIN,AUDIT_RESOURCE_USER,"Correct domain login [".$name."]");
 
@@ -126,7 +126,7 @@
 			if($row)
 			{
 				$sessionid = md5(time().$password.$name.rand(0,10000000));
-				zbx_setcookie('zbx_sessionid', $sessionid, 86400);
+				zbx_setcookie('zbx_sessionid', $sessionid, time()+86400);
 			
 				DBexecute("insert into sessions (sessionid,userid,lastaccess)".
 					  " values (".zbx_dbstr($sessionid).",".$row["userid"].",".time().")");
