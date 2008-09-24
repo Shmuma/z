@@ -21,6 +21,7 @@
 <?php
 	require_once "include/config.inc.php";
 	require_once "include/forms.inc.php";
+	require_once "include/users.inc.php";
 
 	$page["title"]	= "S_ZABBIX_BIG";
 	$page["file"]	= "index.php";
@@ -57,34 +58,93 @@
 
 	if(isset($_REQUEST["enter"])&&($_REQUEST["enter"]=="Enter"))
 	{
-		$name = get_request("name","");
-		$password = md5(get_request("password",""));
+		if ($PAM_AUTH) {
+			// trying to perform PAM authentification
+			$name = get_request("name","");
+			$password = get_request("password","");
+			$err = "";
+			if (pam_auth ($name, $password, $err)) {
+				// if succeeded:
+				// 1. generate sessionid using username and random number
+				$sessionid = md5(time().$name.rand(0,10000000));
+				zbx_setcookie('zbx_sessionid',$sessionid);
 
-		$row = DBfetch(DBselect("select u.userid,u.alias,u.name,u.surname,u.url,u.refresh from users u where".
-			" u.alias=".zbx_dbstr($name)." and u.passwd=".zbx_dbstr($password).
-			' and '.DBin_node('u.userid', $ZBX_LOCALNODEID)));
+				add_audit(AUDIT_ACTION_LOGIN,AUDIT_RESOURCE_USER,"Correct domain login [".$name."]");
 
-		if($row)
-		{
-			$sessionid = md5(time().$password.$name.rand(0,10000000));
-			zbx_setcookie('zbx_sessionid',$sessionid);
-			
-			DBexecute("insert into sessions (sessionid,userid,lastaccess)".
-				" values (".zbx_dbstr($sessionid).",".$row["userid"].",".time().")");
+				// 2. check that user is in our database, if not, add it with minimal privilegies (copy guest user)
+				$row = DBfetch(DBselect("select u.userid,u.alias,u.name,u.surname,u.url,u.refresh from users u where".
+							" u.alias=".zbx_dbstr($name)));
+				if (!$row) {
+					$userid = get_dbid("users","userid");
 
-			add_audit(AUDIT_ACTION_LOGIN,AUDIT_RESOURCE_USER,"Correct login [".$name."]");
-			
-			if(empty($row["url"]))
-			{
-				$row["url"] = "index.php";
+					// lookup user info via winbind
+					exec ("wbinfo -i '$name' | cut -d ':' -f 5 | sed 's/ /\\n/'", $info);
+
+					$u_name = "Domain";
+					$u_surname = "User";
+					if (count ($info) == 2) {
+						$u_name = $info[0];
+						$u_surname = $info[1];
+					}
+
+					$result =  DBexecute('insert into users (userid,name,surname,alias,passwd,url,autologout,lang,refresh,type)'.
+							     ' values ('.$userid.','.zbx_dbstr($u_name).','.zbx_dbstr($u_surname).','.zbx_dbstr($name).
+							     ','.zbx_dbstr ("").','.zbx_dbstr ("").',900,'.zbx_dbstr ("en_gb").', 30, 1)');
+					if ($result) {
+						$row = DBfetch (DBselect ('select usrgrpid from usrgrp where name='.zbx_dbstr ("Guests")));
+						if ($row) {
+							$grpid = $row["usrgrpid"];
+							$id = get_dbid('users_groups','id');
+							DBexecute ("insert into users_groups (id, usrgrpid, userid) values ($id, $grpid, $userid)");
+						}
+					} else {
+						add_audit(AUDIT_ACTION_LOGIN,AUDIT_RESOURCE_USER,"Cannot add new user $name in database");
+						return;
+					}
+					$row = DBfetch(DBselect("select u.userid,u.alias,u.name,u.surname,u.url,u.refresh from users u where".
+								" u.alias=".zbx_dbstr($name)));
+				}
+
+				DBexecute("insert into sessions (sessionid,userid,lastaccess)".
+					  " values (".zbx_dbstr($sessionid).",".$row["userid"].",".time().")");
+				if(empty($row["url"]))
+					$row["url"] = "index.php";
+				Redirect($row["url"]);
+				return;
+			} else {
+				$_REQUEST['message'] = "Login name or password is incorrect";
+				add_audit(AUDIT_ACTION_LOGIN,AUDIT_RESOURCE_USER,"Login failed [".$name."]");
 			}
-			Redirect($row["url"]);
-			return;
-		}
-		else
-		{
-			$_REQUEST['message'] = "Login name or password is incorrect";
-			add_audit(AUDIT_ACTION_LOGIN,AUDIT_RESOURCE_USER,"Login failed [".$name."]");
+		} else {
+			$name = get_request("name","");
+			$password = md5(get_request("password",""));
+
+			$row = DBfetch(DBselect("select u.userid,u.alias,u.name,u.surname,u.url,u.refresh from users u where".
+						" u.alias=".zbx_dbstr($name)." and u.passwd=".zbx_dbstr($password).
+						' and '.DBin_node('u.userid', $ZBX_LOCALNODEID)));
+
+			if($row)
+			{
+				$sessionid = md5(time().$password.$name.rand(0,10000000));
+				zbx_setcookie('zbx_sessionid',$sessionid);
+			
+				DBexecute("insert into sessions (sessionid,userid,lastaccess)".
+					  " values (".zbx_dbstr($sessionid).",".$row["userid"].",".time().")");
+
+				add_audit(AUDIT_ACTION_LOGIN,AUDIT_RESOURCE_USER,"Correct login [".$name."]");
+			
+				if(empty($row["url"]))
+				{
+					$row["url"] = "index.php";
+				}
+				Redirect($row["url"]);
+				return;
+			}
+			else
+			{
+				$_REQUEST['message'] = "Login name or password is incorrect";
+				add_audit(AUDIT_ACTION_LOGIN,AUDIT_RESOURCE_USER,"Login failed [".$name."]");
+			}
 		}
 	}
 
