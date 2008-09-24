@@ -64,7 +64,7 @@
 			}
 			else
 			{
-				zbx_setcookie("zbx_sessionid", $sessionid, 86400);
+				zbx_setcookie("zbx_sessionid", $sessionid, time()+86400);
 				DBexecute("update sessions set lastaccess=".time()." where sessionid=".zbx_dbstr($sessionid));
 			}
 		}
