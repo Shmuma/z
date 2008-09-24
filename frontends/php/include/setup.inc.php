@@ -838,7 +838,7 @@
 ** Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 **/
 
-global $DB_TYPE, $DB_SERVER, $DB_PORT, $DB_DATABASE, $DB_USER, $DB_PASSWORD, $IMAGE_FORMAT_DEFAULT;
+global $DB_TYPE, $DB_SERVER, $DB_PORT, $DB_DATABASE, $DB_USER, $DB_PASSWORD, $IMAGE_FORMAT_DEFAULT, $PAM_AUTH;
 
 $DB_TYPE	= "'.$this->GetConfig('DB_TYPE'		,'unknown').'";
 $DB_SERVER	= "'.$this->GetConfig('DB_SERVER'	,'unknown').'";
@@ -848,6 +848,9 @@ $DB_USER	= "'.$this->GetConfig('DB_USER'		,'unknown').'";
 $DB_PASSWORD	= "'.$this->GetConfig('DB_PASSWORD'	,'').'";
 
 $IMAGE_FORMAT_DEFAULT	= IMAGE_FORMAT_PNG;
+
+$PAM_AUTH	= 0;
+
 ?>';
 		}
 	}

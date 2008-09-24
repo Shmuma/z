@@ -191,7 +191,7 @@
 
 	function	add_user_group($name,$users=array(),$rights=array())
 	{
-		if(DBfetch(DBselect('select * from usrgrp where name='.zbx_dbstr($name).' and '.DBin_node('usrgrpid', get_current_nodeid(false)))))
+		if(DBfetch(DBselect('select * from usrgrp where name='.zbx_dbstr($name))))
 		{
 			error("Group '$name' already exists");
 			return 0;
