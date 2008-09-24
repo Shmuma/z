@@ -47,7 +47,7 @@ mv modules/*.so .
 
 install -d %{buildroot}%{_sysconfdir}/php.d
 install -d %{buildroot}%{_sysconfdir}/pam.d
-install -d %{buildroot}%{_libdir}/php/extensions
+install -d %{buildroot}%{_libdir}/php/modules
 
 install -m755 %{soname} %{buildroot}%{_libdir}/php/modules/
 
@@ -83,7 +83,7 @@ fi
 %doc README CREDITS package*.xml 
 %config(noreplace) %attr(0644,root,root) %{_sysconfdir}/pam.d/%{name}
 %config(noreplace) %attr(0644,root,root) %{_sysconfdir}/php.d/%{inifile}
-%attr(0755,root,root) %{_libdir}/php/extensions/%{soname}
+%attr(0755,root,root) %{_libdir}/php/modules/%{soname}
 
 
 %changelog
