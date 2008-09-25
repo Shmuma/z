@@ -699,8 +699,10 @@ include_once "include/page_header.php";
 					" order by g.name");
 			while($row=DBfetch($result))
 			{
-				if ($_REQUEST["groupid"] == 0)
+				if (!isset ($_REQUEST["groupid"]) || $_REQUEST["groupid"] == 0) {
+					print "<pre>$row[groupid]</pre>\n";
 					$_REQUEST["groupid"] = $row["groupid"];
+				}
 				$cmbGroups->AddItem($row["groupid"],$row["name"]);
 				if($row["groupid"] == $_REQUEST["groupid"]) $correct_host = 1;
 			}
