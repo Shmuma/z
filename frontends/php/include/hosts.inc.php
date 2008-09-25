@@ -704,7 +704,7 @@ require_once "include/items.inc.php";
 
 		$with_node = "";
 
-// 		$accessed_hosts = get_accessible_hosts_by_user($USER_DETAILS,$perm,null,null,get_current_nodeid(!$only_current_node));
+		$accessed_hosts = get_accessible_hosts_by_user($USER_DETAILS,$perm,null,null,get_current_nodeid(!$only_current_node));
 
 //SDI(get_current_nodeid(!$only_current_node));
 //SDI($accessed_hosts);
@@ -722,8 +722,7 @@ require_once "include/items.inc.php";
 				$with_node = " and ".DBin_node('g.groupid', get_current_nodeid(!$only_current_node));
 
 				if(!DBfetch(DBselect("select distinct g.groupid from groups g, hosts_groups hg, hosts h".$item_table.
-						     //	" where hg.groupid=g.groupid and h.hostid=hg.hostid and h.hostid in (".$accessed_hosts.") ".
-					" where hg.groupid=g.groupid and h.hostid=hg.hostid ".
+					" where hg.groupid=g.groupid and h.hostid=hg.hostid and h.hostid in (".$accessed_hosts.") ".
 					" and g.groupid=".$groupid.$with_host_status.$with_items.$with_node)))
 				{
 					$groupid = 0;
