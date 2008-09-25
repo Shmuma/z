@@ -761,8 +761,7 @@ require_once "include/items.inc.php";
 //SDI('C: '.$a_groupid.' : '.$a_hostid);
 
 				if($db_host = DBfetch(DBselect("select distinct h.hostid,h.host from hosts h ".$item_table.$group_table.
-							       //					" where h.hostid in (".$accessed_hosts.") "
-					" where 1=1 "
+					" where h.hostid in (".$accessed_hosts.") "
 					.$with_host_status.$with_items.$witth_group.$with_node.
 					" order by h.host")))
 				{
@@ -774,9 +773,8 @@ require_once "include/items.inc.php";
 				if($hostid > 0)
 				{
 					if(!DBfetch(DBselect("select distinct h.hostid from hosts h".$item_table.
-						" where h.hostid=".$hostid.$with_host_status.$with_items.$with_node
-						)))
-						//						" and h.hostid in (".$accessed_hosts.") ")))
+						" where h.hostid=".$hostid.$with_host_status.$with_items.$with_node.
+						" and h.hostid in (".$accessed_hosts.") ")))
 					{
 							$hostid = 0;
 					}
