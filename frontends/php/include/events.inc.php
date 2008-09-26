@@ -82,6 +82,8 @@
 			$trigger_list.=$rowz['triggerid'].',';
 		}
 
+		$res_events = array ();
+
 		if(!empty($triggers)){
 			if (zbx_hfs_available ()) {
 				// obtain list of hosts to fetch events from
@@ -98,7 +100,6 @@
 
 				// collect events
 				$done = 0;
-				$res_events = array ();
 				while (!$done && $num) {
 					$done = 1;
 					$events = array ();
@@ -167,7 +168,6 @@
 					' ORDER BY e.eventid DESC';
 
 				$result = DBselect($sql,($start+$num));
-				$res_events = array ();
 
 				while ($row = DBfetch ($result)) {
 					if(($show_unknown == 0) && ($row['value'] == TRIGGER_VALUE_UNKNOWN)) 
