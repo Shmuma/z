@@ -237,6 +237,7 @@
 
 	'S_INCORRECT_TRIGGER'=>			'Incorrect trigger',
 	'S_INCORRECT_HOST'=>			'Incorrect host',
+	'S_HOST_MUST_BELONG_TO_GROUP'=>		'Host must belong to at least one group',
 	'S_INCORRECT_PERIOD'=>			'Incorrect period',
 	'S_INCORRECT_IP'=>			'Incorrect ip',
 	'S_INCORRECT_DISCOVERY_CHECK'=>		'Incorrect discovery check',

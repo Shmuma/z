@@ -3993,7 +3993,7 @@ include_once 'include/discovery.inc.php';
 // add groups
 			$db_groups=DBselect("select distinct groupid from hosts_groups where hostid=".$_REQUEST["hostid"].
 				" and groupid in (".
-				get_accessible_groups_by_user($USER_DETAILS,PERM_READ_LIST,null,null,get_current_nodeid()).
+				get_accessible_groups_by_user($USER_DETAILS,PERM_READ_WRITE,null,null,get_current_nodeid()).
 				") ");
 			while($db_group=DBfetch($db_groups)){
 				if(in_array($db_group["groupid"],$groups)) continue;
@@ -4043,7 +4043,7 @@ include_once 'include/discovery.inc.php';
 		
 		$db_groups=DBselect("select distinct groupid,name from groups ".
 			" where groupid in (".
-			get_accessible_groups_by_user($USER_DETAILS,PERM_READ_LIST,null,null,get_current_nodeid()).
+			get_accessible_groups_by_user($USER_DETAILS,PERM_READ_WRITE,null,null,get_current_nodeid()).
 			") order by name");
 		while($db_group=DBfetch($db_groups))
 		{
