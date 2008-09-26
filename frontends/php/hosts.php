@@ -56,10 +56,6 @@ include_once "include/page_header.php";
 
 	if(count($available_groups) == 0) $available_groups = array(-1);
 	$available_groups = implode(',', $available_groups);
-
- 	if (!isset ($_REQUEST["groupid"]) || $_REQUEST["groupid"] == 0) {
- 		$_REQUEST["groupid"] = $available_groups[0];
- 	}
 ?>
 <?php
 //		VAR			TYPE	OPTIONAL FLAGS	VALIDATION	EXCEPTION
@@ -687,7 +683,6 @@ include_once "include/page_header.php";
 				$status_filter = " and h.status in (".HOST_STATUS_TEMPLATE.") ";
 				
 			$cmbGroups = new CComboBox("groupid",get_request("groupid",0),"submit()");
-// 			$cmbGroups->AddItem(0,S_ALL_SMALL);
 			$result=DBselect("select distinct g.groupid,g.name from groups g,hosts_groups hg,hosts h".
 					" where g.groupid in (".$available_groups.") ".
 					" and g.groupid=hg.groupid and h.hostid=hg.hostid".$status_filter.
