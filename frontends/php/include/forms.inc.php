@@ -4250,10 +4250,11 @@ include_once 'include/discovery.inc.php';
 		$frmHostG->AddRow(S_GROUP_NAME,new CTextBox("gname",$name,30));
 
 		$cmbHosts = new CListBox("hosts[]",$hosts,10);
-		$db_hosts=DBselect("select distinct hostid,host from hosts".
-			" where status<>".HOST_STATUS_DELETED.
-			" and hostid in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,null,null,get_current_nodeid()).")".
-			" order by host");
+		$db_hosts=DBselect("select distinct h.hostid,h.host from hosts h, hosts_groups hg".
+			" where h.status<>".HOST_STATUS_DELETED.
+ 		        " and h.hostid = hg.hostid ".
+			" and hg.groupid in (".get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY,null,null,get_current_nodeid()).")".
+			" order by h.host");
 		while($db_host=DBfetch($db_hosts))
 		{
 			$cmbHosts->AddItem(

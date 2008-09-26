@@ -56,6 +56,7 @@ include_once "include/page_header.php";
 
 	if(count($available_groups) == 0) $available_groups = array(-1);
 	$available_groups = implode(',', $available_groups);
+
 ?>
 <?php
 //		VAR			TYPE	OPTIONAL FLAGS	VALIDATION	EXCEPTION
@@ -687,12 +688,21 @@ include_once "include/page_header.php";
 					" where g.groupid in (".$available_groups.") ".
 					" and g.groupid=hg.groupid and h.hostid=hg.hostid".$status_filter.
 					" order by g.name");
+			$first = -1;
+			$valid = 0;
 			while($row=DBfetch($result))
 			{
+				if ($first < 0)
+					$first = $row["groupid"];
 				if (!isset ($_REQUEST["groupid"]) || $_REQUEST["groupid"] == 0)
 					$_REQUEST["groupid"] = $row["groupid"];
 				$cmbGroups->AddItem($row["groupid"],$row["name"]);
+				if ($_REQUEST["groupid"] == $row["groupid"])
+					$valid = 1;
 			}
+
+			if (!$valid)
+				$_REQUEST["groupid"] = $first;
 
 			$frmForm = new CForm();
 			$frmForm->SetMethod('get');
