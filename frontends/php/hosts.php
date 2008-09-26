@@ -178,69 +178,64 @@ include_once "include/page_header.php";
 				if(isset($accessible_groups[$gid])) continue;
 				access_deny();
 			}
-		}
-		else
-		{
-			if(count(get_accessible_nodes_by_user($USER_DETAILS,PERM_READ_WRITE,PERM_MODE_LT,PERM_RES_IDS_ARRAY,get_current_nodeid())))
-				access_deny();
+			$templates = get_request('templates', array());
 
-		}
-
-		$templates = get_request('templates', array());
-
-		if(isset($_REQUEST["hostid"]))
-		{
-			if(isset($_REQUEST['clear_templates'])) 
+			if(isset($_REQUEST["hostid"]))
 			{
-				foreach($_REQUEST['clear_templates'] as $id)
+				if(isset($_REQUEST['clear_templates']))
 				{
-					unlink_template($_REQUEST["hostid"], $id, false);
+					foreach($_REQUEST['clear_templates'] as $id)
+					{
+						unlink_template($_REQUEST["hostid"], $id, false);
+					}
+				}
+
+				$result = update_host($_REQUEST["hostid"],
+					$_REQUEST["host"],$_REQUEST["port"],$_REQUEST["status"],$useip,$_REQUEST["dns"],
+					$_REQUEST["ip"],$_REQUEST["siteid"],$templates,$_REQUEST["newgroup"],$groups);
+
+				$msg_ok 	= S_HOST_UPDATED;
+				$msg_fail 	= S_CANNOT_UPDATE_HOST;
+				$audit_action 	= AUDIT_ACTION_UPDATE;
+
+				$hostid = $_REQUEST["hostid"];
+			} else {
+				$hostid = add_host(
+					$_REQUEST["host"],$_REQUEST["port"],$_REQUEST["status"],$useip,$_REQUEST["dns"],
+					$_REQUEST["ip"],$_REQUEST["siteid"],$templates,$_REQUEST["newgroup"],$groups);
+
+				$msg_ok 	= S_HOST_ADDED;
+				$msg_fail 	= S_CANNOT_ADD_HOST;
+				$audit_action 	= AUDIT_ACTION_ADD;
+
+				$result		= $hostid;
+			}
+
+			if($result){
+				delete_host_profile($hostid);
+
+				if(get_request("useprofile","no") == "yes"){
+					$result = add_host_profile($hostid,
+						$_REQUEST["devicetype"],$_REQUEST["name"],$_REQUEST["os"],
+						$_REQUEST["serialno"],$_REQUEST["tag"],$_REQUEST["macaddress"],
+						$_REQUEST["hardware"],$_REQUEST["software"],$_REQUEST["contact"],
+						$_REQUEST["location"],$_REQUEST["notes"]);
 				}
 			}
 
-			$result = update_host($_REQUEST["hostid"],
-				$_REQUEST["host"],$_REQUEST["port"],$_REQUEST["status"],$useip,$_REQUEST["dns"],
-				$_REQUEST["ip"],$_REQUEST["siteid"],$templates,$_REQUEST["newgroup"],$groups);
+			show_messages($result, $msg_ok, $msg_fail);
+			if($result){
+				add_audit($audit_action,AUDIT_RESOURCE_HOST,
+					"Host [".$_REQUEST["host"]."] IP [".$_REQUEST["ip"]."] ".
+					"Status [".$_REQUEST["status"]."]");
 
-			$msg_ok 	= S_HOST_UPDATED;
-			$msg_fail 	= S_CANNOT_UPDATE_HOST;
-			$audit_action 	= AUDIT_ACTION_UPDATE;
-
-			$hostid = $_REQUEST["hostid"];
-		} else {
-			$hostid = add_host(
-				$_REQUEST["host"],$_REQUEST["port"],$_REQUEST["status"],$useip,$_REQUEST["dns"],
-				$_REQUEST["ip"],$_REQUEST["siteid"],$templates,$_REQUEST["newgroup"],$groups);
-
-			$msg_ok 	= S_HOST_ADDED;
-			$msg_fail 	= S_CANNOT_ADD_HOST;
-			$audit_action 	= AUDIT_ACTION_ADD;
-
-			$result		= $hostid;
-		}
-
-		if($result){
-			delete_host_profile($hostid);
-
-			if(get_request("useprofile","no") == "yes"){
-				$result = add_host_profile($hostid,
-					$_REQUEST["devicetype"],$_REQUEST["name"],$_REQUEST["os"],
-					$_REQUEST["serialno"],$_REQUEST["tag"],$_REQUEST["macaddress"],
-					$_REQUEST["hardware"],$_REQUEST["software"],$_REQUEST["contact"],
-					$_REQUEST["location"],$_REQUEST["notes"]);
+				unset($_REQUEST["form"]);
+				unset($_REQUEST["hostid"]);
 			}
+			unset($_REQUEST["save"]);
+		} else {
+			show_error_message (S_HOST_MUST_BELONG_TO_GROUP);
 		}
-
-		show_messages($result, $msg_ok, $msg_fail);
-		if($result){
-			add_audit($audit_action,AUDIT_RESOURCE_HOST,
-				"Host [".$_REQUEST["host"]."] IP [".$_REQUEST["ip"]."] ".
-				"Status [".$_REQUEST["status"]."]");
-
-			unset($_REQUEST["form"]);
-			unset($_REQUEST["hostid"]);
-		}
-		unset($_REQUEST["save"]);
 	}
 
 /* DELETE HOST */ 
