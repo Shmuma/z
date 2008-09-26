@@ -57,9 +57,9 @@ include_once "include/page_header.php";
 	if(count($available_groups) == 0) $available_groups = array(-1);
 	$available_groups = implode(',', $available_groups);
 
-	if (!isset ($_REQUEST["groupid"]) || $_REQUEST["groupid"]) {
-		$_REQUEST["groupid"] = $available_groups[0];
-	}
+ 	if (!isset ($_REQUEST["groupid"]) || $_REQUEST["groupid"] == 0) {
+ 		$_REQUEST["groupid"] = $available_groups[0];
+ 	}
 ?>
 <?php
 //		VAR			TYPE	OPTIONAL FLAGS	VALIDATION	EXCEPTION
