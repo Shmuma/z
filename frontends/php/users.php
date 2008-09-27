@@ -390,8 +390,7 @@ include_once "include/page_header.php";
 				$db_sessions = DBselect('select count(*) as count, max(s.lastaccess) as lastaccess'.
 					' from sessions s, users u'.
 					' where s.userid='.$db_user['userid'].' and s.userid=u.userid '.
-					' and ((s.lastaccess+u.autologout)>='.time().
-					' or u.autologout=0)');
+					' and (s.lastaccess+7200)>='.time());
 				$db_ses_cnt=DBfetch($db_sessions);
 
 				if($db_ses_cnt["count"]>0)
