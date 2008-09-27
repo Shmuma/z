@@ -50,8 +50,8 @@ include_once "include/page_header.php";
 
 	}
 
-	if(! ($db_data = DBfetch(DBselect("select i.itemid from items i ".
-		" where i.hostid in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY).") ".
+	if(! ($db_data = DBfetch(DBselect("select i.itemid from items i, hosts_groups hg ".
+		" where hg.hostid=i.hostid and hg.groupid in (".get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY).") ".
 		" and i.itemid=".$_REQUEST["itemid"]))))
 	{
 		access_deny();
