@@ -70,7 +70,7 @@ include_once "include/page_header.php";
 	
 	$_REQUEST["keep"] = get_request("keep", 1); // possible excessed REQUEST variable !!!
 
-	$_REQUEST["period"] = get_request("period",get_profile("web.graph[".$_REQUEST["graphid"]."].period", ZBX_PERIOD_DEFAULT));
+	$_REQUEST["period"] = get_request("period",get_profile("web.graph.period", ZBX_PERIOD_DEFAULT));
 	$effectiveperiod = navigation_bar_calc();
 
 	validate_group_with_host(PERM_READ_ONLY,array("allow_all_hosts","monitored_hosts","with_items"));
@@ -87,7 +87,7 @@ include_once "include/page_header.php";
 <?php
 	if($_REQUEST["graphid"] > 0 && $_REQUEST["period"] >= ZBX_MIN_PERIOD)
 	{
-		update_profile("web.graph[".$_REQUEST["graphid"]."].period",$_REQUEST["period"]);
+		update_profile("web.graph.period",$_REQUEST["period"]);
 	}
 
 	update_profile("web.charts.graphid",$_REQUEST["graphid"]);
