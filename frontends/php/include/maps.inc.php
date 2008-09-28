@@ -90,6 +90,7 @@
 			$result = true;
 			
 			$denyed_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT);
+			$denyed_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT);
 						
 			while(($se_data = DBfetch($db_result)) && $result)
 			{
@@ -107,9 +108,9 @@
 					case SYSMAP_ELEMENT_TYPE_TRIGGER:
 						if( DBfetch(DBselect('select triggerid from triggers where triggerid='.$se_data['elementid'])) &&
 						    !DBfetch(DBselect("select distinct t.*".
-							" from triggers t,items i,functions f".
+							" from triggers t,items i,hosts_groups hg, functions f".
 							" where f.itemid=i.itemid and t.triggerid=f.triggerid".
-							" and i.hostid not in (".$denyed_hosts.") and t.triggerid=".$se_data['elementid'])))
+							" and hg.hostid=i.hostid and hg.groupid not in (".$denyed_groups.") and t.triggerid=".$se_data['elementid'])))
 						{
 							$result = false;
 						}

@@ -53,10 +53,10 @@ include_once "include/page_header.php";
 
 	check_fields($fields);
 
-	$accessible_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,null,null,get_current_nodeid());
+	$accessible_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY);
 
-	if(!($httptest_data = DBfetch(DBselect('select ht.* from httptest ht, applications a '.
-		' where a.hostid in ('.$accessible_hosts.') and a.applicationid=ht.applicationid '.
+	if(!($httptest_data = DBfetch(DBselect('select ht.* from httptest ht, applications a, hosts_groups hg '.
+		' where hg.groupid in ('.$accessible_groups.') and hg.hostid=a.hostid and a.applicationid=ht.applicationid '.
 		' and ht.httptestid='.$_REQUEST['httptestid']))))
 	{
 		access_deny();

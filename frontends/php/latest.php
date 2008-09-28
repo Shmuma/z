@@ -107,7 +107,6 @@ include_once "include/page_header.php";
 // 	$cmbGroup->AddItem(0,S_ALL_SMALL);
 	
 	$availiable_groups= get_accessible_groups_by_user($USER_DETAILS,PERM_READ_LIST, null, null, get_current_nodeid());
-	$availiable_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_LIST, null, null, get_current_nodeid());
 
 	$result=DBselect("select distinct g.groupid,g.name from groups g, hosts_groups hg, hosts h, items i ".
 		" where g.groupid in (".$availiable_groups.") ".
@@ -127,15 +126,15 @@ include_once "include/page_header.php";
 		$sql="select distinct h.hostid,h.host from hosts h,items i,hosts_groups hg where h.status=".HOST_STATUS_MONITORED.
 			" and h.hostid=i.hostid and hg.groupid=".$_REQUEST["groupid"]." and hg.hostid=h.hostid".
 			" and i.status=".ITEM_STATUS_ACTIVE.
-			" and h.hostid in (".$availiable_hosts.") ".
+			" and hg.groupid in (".$availiable_groups.") ".
 			" group by h.hostid,h.host order by h.host";
 	}
 	else
 	{
 		$cmbHosts->AddItem(0,S_ALL_SMALL);
-		$sql="select distinct h.hostid,h.host from hosts h,items i where h.status=".HOST_STATUS_MONITORED.
+		$sql="select distinct h.hostid,h.host from hosts h,hosts_groups hg,,items i where h.status=".HOST_STATUS_MONITORED.
 			" and i.status=".ITEM_STATUS_ACTIVE." and h.hostid=i.hostid".
-			" and h.hostid in (".$availiable_hosts.") ".
+			" and hg.hostid=h.hostid and hg.groupid in (".$availiable_groups.") ".
 			" group by h.hostid,h.host order by h.host";
 	}
 	$result=DBselect($sql);
@@ -184,8 +183,8 @@ include_once "include/page_header.php";
 
 	$any_app_exist = false;
 		
-	$db_applications = DBselect("select distinct h.host,h.hostid,a.* from applications a,hosts h ".
-		" where a.hostid=h.hostid".$compare_host.' and h.hostid in ('.$availiable_hosts.')'.
+	$db_applications = DBselect("select distinct h.host,h.hostid,a.* from applications a,hosts h,hosts_groups hg ".
+		" where a.hostid=h.hostid".$compare_host.' and hg.hostid=h.hostid and hg.groupid in ('.$availiable_groups.')'.
 		" and h.status=".HOST_STATUS_MONITORED." order by a.name,a.applicationid,h.host");
 	while($db_app = DBfetch($db_applications))
 	{		
@@ -294,13 +293,13 @@ include_once "include/page_header.php";
 	
 
 	$sql = 'SELECT DISTINCT h.host,h.hostid '.
-			' FROM hosts h, items i LEFT JOIN items_applications ia ON ia.itemid=i.itemid'.
+			' FROM hosts h, hosts_groups hg, items i LEFT JOIN items_applications ia ON ia.itemid=i.itemid'.
 			' WHERE ia.itemid is NULL '.
-				' AND h.hostid=i.hostid '.
+				' AND h.hostid=i.hostid and hg.hostid=h.hostid '.
 				' AND h.status='.HOST_STATUS_MONITORED.
 				' AND i.status='.ITEM_STATUS_ACTIVE.
 				$compare_host.
-				' AND h.hostid in ('.$availiable_hosts.') '.
+				' AND hg.groupid in ('.$availiable_groups.') '.
 			' ORDER BY h.host';
 		
 	$db_appitems = DBselect($sql);

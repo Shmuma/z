@@ -70,7 +70,7 @@ include_once "include/page_header.php";
 	
 	$_REQUEST["keep"] = get_request("keep", 1); // possible excessed REQUEST variable !!!
 
-	$_REQUEST["period"] = get_request("period",get_profile("web.graph[".$_REQUEST["graphid"]."].period", ZBX_PERIOD_DEFAULT));
+	$_REQUEST["period"] = get_request("period",get_profile("web.graph.period", ZBX_PERIOD_DEFAULT));
 	$effectiveperiod = navigation_bar_calc();
 
 	validate_group_with_host(PERM_READ_ONLY,array("allow_all_hosts","monitored_hosts","with_items"));
@@ -87,7 +87,7 @@ include_once "include/page_header.php";
 <?php
 	if($_REQUEST["graphid"] > 0 && $_REQUEST["period"] >= ZBX_MIN_PERIOD)
 	{
-		update_profile("web.graph[".$_REQUEST["graphid"]."].period",$_REQUEST["period"]);
+		update_profile("web.graph.period",$_REQUEST["period"]);
 	}
 
 	update_profile("web.charts.graphid",$_REQUEST["graphid"]);
@@ -96,15 +96,15 @@ include_once "include/page_header.php";
 	$h1 = array(S_GRAPHS_BIG.SPACE."/".SPACE);
 	
 	$availiable_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_LIST, null, null, get_current_nodeid());
-	$denyed_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT);
+	$denyed_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT);
 
 	if($_REQUEST['graphid'] > 0 && DBfetch(DBselect('select distinct graphid from graphs where graphid='.$_REQUEST['graphid'])))
 	{
-		if(! ($row = DBfetch(DBselect(" select distinct h.host, g.name from hosts h, items i, graphs_items gi, graphs g ".
+		if(! ($row = DBfetch(DBselect(" select distinct h.host, g.name from hosts h, hosts_groups hg, items i, graphs_items gi, graphs g ".
 					" where h.status=".HOST_STATUS_MONITORED.
 					" and h.hostid=i.hostid and g.graphid=".$_REQUEST["graphid"].
-					" and i.itemid=gi.itemid and gi.graphid=g.graphid".
-					" and h.hostid not in (".$denyed_hosts.") ".
+					" and hg.hostid=h.hostid and i.itemid=gi.itemid and gi.graphid=g.graphid".
+					" and hg.groupid not in (".$denyed_groups.") ".
 					' and '.DBin_node('g.graphid').
 					" order by h.host, g.name"
 				))))
@@ -146,14 +146,14 @@ include_once "include/page_header.php";
 		$sql = " select distinct h.hostid,h.host from hosts h,items i,hosts_groups hg, graphs_items gi ".
 			" where h.status=".HOST_STATUS_MONITORED.
 			" and h.hostid=i.hostid and hg.groupid=".$_REQUEST["groupid"]." and hg.hostid=h.hostid ".
-			" and h.hostid not in (".$denyed_hosts.") and i.itemid=gi.itemid".
+			" and hg.groupid not in (".$denyed_groups.") and i.itemid=gi.itemid".
 			" order by h.host";
 	}
 	else
 	{
-		$sql = "select distinct h.hostid,h.host from hosts h,items i, graphs_items gi where h.status=".HOST_STATUS_MONITORED.
-			" and i.status=".ITEM_STATUS_ACTIVE." and h.hostid=i.hostid".
-			" and h.hostid not in (".$denyed_hosts.") and i.itemid=gi.itemid".
+		$sql = "select distinct h.hostid,h.host from hosts h, hosts_groups hg, items i, graphs_items gi where h.status=".HOST_STATUS_MONITORED.
+			" and i.status=".ITEM_STATUS_ACTIVE." and h.hostid=i.hostid and hg.hostid=h.hostid ".
+			" and hg.groupid not in (".$denyed_groups.") and i.itemid=gi.itemid".
 			" order by h.host";
 	}
 	$result=DBselect($sql);
@@ -169,10 +169,10 @@ include_once "include/page_header.php";
 
 	if($_REQUEST["hostid"] > 0)
 	{
-		$sql = "select distinct g.graphid,g.name from graphs g,graphs_items gi,items i".
+		$sql = "select distinct g.graphid,g.name from graphs g,graphs_items gi,items i, hosts_groups hg ".
 			" where i.itemid=gi.itemid and g.graphid=gi.graphid and i.hostid=".$_REQUEST["hostid"].
 			' and '.DBin_node('g.graphid').
-			" and i.hostid not in (".$denyed_hosts.") ".
+			" and h.hostid=hg.hostid and hg.groupid not in (".$denyed_groups.") ".
 			" order by g.name";
 	}
 	elseif ($_REQUEST["groupid"] > 0)
@@ -181,17 +181,17 @@ include_once "include/page_header.php";
 			" where i.itemid=gi.itemid and g.graphid=gi.graphid and i.hostid=hg.hostid and hg.groupid=".$_REQUEST["groupid"].
 			" and i.hostid=h.hostid and h.status=".HOST_STATUS_MONITORED.
 			' and '.DBin_node('g.graphid').
-			" and h.hostid not in (".$denyed_hosts.") ".
+			" and hg.groupid not in (".$denyed_groups.") ".
 			" order by g.name";
 		$need_hostname = 1;
 	}
 	else
 	{
-		$sql = "select distinct g.graphid,g.name,h.host as hostname from graphs g,graphs_items gi,items i,hosts h".
+		$sql = "select distinct g.graphid,g.name,h.host as hostname from graphs g,graphs_items gi,items i,hosts h,hosts_groups hg".
 			" where i.itemid=gi.itemid and g.graphid=gi.graphid ".
 			" and i.hostid=h.hostid and h.status=".HOST_STATUS_MONITORED.
 			' and '.DBin_node('g.graphid').
-			" and h.hostid not in (".$denyed_hosts.") ".
+			" and hg.hostid=h.hostid and hg.groupid not in (".$denyed_groups.") ".
 			" order by g.name";
 		$need_hostname = 1;
 	}

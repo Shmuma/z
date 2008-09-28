@@ -1788,9 +1788,9 @@
 		}
 
 		$result=DBselect('select distinct t.triggerid,t.description,t.expression,t.value,t.priority,t.lastchange,h.hostid,h.host,s.name as siteid'.
-			' from hosts h,items i,triggers t, functions f, sites s '.$group_where.
+			' from hosts h,hosts_groups hg,items i,triggers t, functions f, sites s '.$group_where.
 			' h.status='.HOST_STATUS_MONITORED.' and h.hostid=i.hostid and i.itemid=f.itemid and f.triggerid=t.triggerid'.
-			' and h.hostid in ('.get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, null, null, get_current_nodeid()).') '.
+			' and hg.hostid=h.hostid and hg.groupid in ('.get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY, null, null, get_current_nodeid()).') '.
 			' and t.status='.TRIGGER_STATUS_ENABLED.' and i.status='.ITEM_STATUS_ACTIVE.' and s.siteid = h.siteid'.
 			' order by t.description');
 		unset($triggers);

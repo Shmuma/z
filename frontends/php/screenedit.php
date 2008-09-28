@@ -88,7 +88,6 @@ include_once "include/page_header.php";
 	$cmbHosts = new CComboBox("hostid",$_REQUEST["hostid"],"submit()");
 
 	$availiable_groups= get_accessible_groups_by_user($USER_DETAILS,PERM_READ_LIST, null, null, get_current_nodeid());
-	$availiable_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_LIST, null, null, get_current_nodeid());
 
 	$result=DBselect("select distinct g.groupid,g.name from groups g, hosts_groups hg, hosts h, items i ".
 		" where g.groupid in (".$availiable_groups.") ".
@@ -109,14 +108,14 @@ include_once "include/page_header.php";
 		$sql="select distinct h.hostid,h.host from hosts h,items i,hosts_groups hg where h.status=".HOST_STATUS_MONITORED.
 			" and h.hostid=i.hostid and hg.groupid=".$_REQUEST["groupid"]." and hg.hostid=h.hostid".
 			" and i.status=".ITEM_STATUS_ACTIVE.
-			" and h.hostid in (".$availiable_hosts.") ".
+			" and hg.groupid in (".$availiable_groups.") ".
 			" group by h.hostid,h.host order by h.host";
 	}
 	else
 	{
-		$sql="select distinct h.hostid,h.host from hosts h,items i where h.status=".HOST_STATUS_MONITORED.
+		$sql="select distinct h.hostid,h.host from hosts h,hosts_groups hg,items i where h.status=".HOST_STATUS_MONITORED.
 			" and i.status=".ITEM_STATUS_ACTIVE." and h.hostid=i.hostid".
-			" and h.hostid in (".$availiable_hosts.") ".
+			" and hg.hostid=h.hostid and hg.groupid in (".$availiable_groups.") ".
 			" group by h.hostid,h.host order by h.host";
 	}
 	$result=DBselect($sql);
