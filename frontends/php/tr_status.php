@@ -109,7 +109,7 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 	$_REQUEST["compact"]		=	get_request("compact", get_profile("web.tr_status.compact", 'true'));
 	$_REQUEST['show_unknown']	=	get_request('show_unknown',get_profile('web.tr_status.show_unknown',0));
 
-	$options = array("allow_all_hosts","always_select_first_host","monitored_hosts","with_monitored_items");
+	$options = array("allow_all_hosts","monitored_hosts","with_monitored_items");
 	if(!$ZBX_WITH_SUBNODES)	array_push($options,"only_current_node");
 	
 	validate_group_with_host(PERM_READ_ONLY,$options,"web.tr_status.groupid","web.tr_status.hostid");
@@ -150,17 +150,14 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 		" order by g.name");
 	while($row=DBfetch($result))
 	{
-		$cmbGroup->AddItem(
-				$row['groupid'],
-				get_node_name_by_elid($row['groupid']).$row['name']
-				);
+		$cmbGroup->AddItem($row['groupid'], $row['name']);
 		unset($row);
 	}
 	$r_form->AddItem(array(S_GROUP.SPACE,$cmbGroup));
-	
+
+	$cmbHosts->AddItem(0,S_ALL_SMALL);
 	if($_REQUEST["groupid"] > 0){
-	
-		$sql='SELECT h.hostid,h.host '.
+		$sql='SELECT distinct h.hostid,h.host '.
 			' FROM hosts h,items i,hosts_groups hg, functions f, triggers t '.
 			' WHERE h.status='.HOST_STATUS_MONITORED.
 				' AND h.hostid=i.hostid '.
@@ -175,8 +172,6 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 			' ORDER BY h.host';
 	}
 	else{
-	
-		$cmbHosts->AddItem(0,S_ALL_SMALL);
 		$sql='SELECT h.hostid,h.host '.
 			' FROM hosts h,hosts_groups hg,items i, functions f, triggers t '.
 			' WHERE h.status='.HOST_STATUS_MONITORED.
@@ -195,10 +190,7 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 	while($row=DBfetch($result))
 	{
 		$flag |= $_REQUEST['hostid'] == $row['hostid'];
-		$cmbHosts->AddItem(
-				$row['hostid'],
-				get_node_name_by_elid($row['hostid']).$row['host']
-				);
+		$cmbHosts->AddItem($row['hostid'], $row['host']);
 	}
 	if(!$flag) $_REQUEST['hostid'] = 0;
 
@@ -326,7 +318,8 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 		default:			$sort="order by t.priority desc, t.description";
 	}
 
-	$cond=($_REQUEST['hostid'] > 0)?' AND h.hostid='.$_REQUEST['hostid'].' ':'';
+	$cond  = ($_REQUEST['hostid'] > 0)?' AND h.hostid='.$_REQUEST['hostid'].' ':'';
+	$cond .= ($_REQUEST['groupid'] > 0)?' AND hg.groupid='.$_REQUEST['groupid'].' ':'';
 
 	if (!zbx_hfs_available()) {
 		$cond .=($onlytrue=='true')?' AND ((t.value=1) OR (('.time().' - lastchange)<'.TRIGGER_BLINK_PERIOD.')) ':'';
