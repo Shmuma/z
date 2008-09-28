@@ -59,7 +59,7 @@ include_once 'include/discovery.inc.php';
 						if(!DBfetch(DBselect("select distinct t.*".
 							" from triggers t,items i,hosts_groups hg,functions f".
 							" where f.itemid=i.itemid and t.triggerid=f.triggerid".
-							" and h.hostid=hg.hostid and hg.groupid not in (".$denyed_groups.") and t.triggerid=".$ac_data['value'])))
+							" and i.hostid=hg.hostid and hg.groupid not in (".$denyed_groups.") and t.triggerid=".$ac_data['value'])))
 						{
 							$result = false;
 						}
@@ -103,7 +103,7 @@ include_once 'include/discovery.inc.php';
 					if(!DBfetch(DBselect("select distinct t.*".
 						" from triggers t,items i,hosts_groups hg,functions f".
 						" where f.itemid=i.itemid and t.triggerid=f.triggerid".
-						" and hg.hostid=h.hostid and hg.groupid not in (".$denyed_groups.") and t.triggerid=".$ac_data['value'])))
+						" and hg.hostid=i.hostid and hg.groupid not in (".$denyed_groups.") and t.triggerid=".$ac_data['value'])))
 					{
 						error(S_INCORRECT_TRIGGER);
 						$result = false;

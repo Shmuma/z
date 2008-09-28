@@ -772,7 +772,7 @@ require_once "include/items.inc.php";
 				if($hostid > 0)
 				{
 					if(!DBfetch(DBselect("select distinct h.hostid from hosts h,hosts_groups hg".$item_table.
-						" where hg.hostid=h.hostid and h.hostid=".$hostid.$with_host_status.$with_items.$with_node
+						" where hg.hostid=h.hostid and h.hostid=".$hostid.$with_host_status.$with_items.$with_node.
 						" and hg.groupid in (".$accessed_groups.") ")))
 					{
 							$hostid = 0;
