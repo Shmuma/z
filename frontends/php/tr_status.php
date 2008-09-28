@@ -170,7 +170,7 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 				' AND i.itemid=f.itemid '.
 				' AND t.triggerid=f.triggerid '.
 				' AND t.status='.TRIGGER_STATUS_ENABLED.
-				' AND h.hostid in ('.$availiable_hosts.') '.
+				' AND hg.groupid in ('.$availiable_groups.') '.
 			' GROUP BY h.hostid,h.host '.
 			' ORDER BY h.host';
 	}
@@ -178,14 +178,14 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 	
 		$cmbHosts->AddItem(0,S_ALL_SMALL);
 		$sql='SELECT h.hostid,h.host '.
-			' FROM hosts h,items i, functions f, triggers t '.
+			' FROM hosts h,hosts_groups hg,items i, functions f, triggers t '.
 			' WHERE h.status='.HOST_STATUS_MONITORED.
 				' AND i.status='.ITEM_STATUS_ACTIVE.
 				' AND h.hostid=i.hostid'.
 				' AND i.itemid=f.itemid '.
 				' AND t.triggerid=f.triggerid '.
 				' AND t.status='.TRIGGER_STATUS_ENABLED.
-				' AND h.hostid in ('.$availiable_hosts.') '.
+				' AND h.hostid=hg.hostid and hg.groupid in ('.$availiable_groups.') '.
 			' GROUP BY h.hostid,h.host '.
 			' ORDER BY h.host';
 	}

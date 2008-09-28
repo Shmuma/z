@@ -147,7 +147,7 @@ if(isset($_REQUEST['saction'])){
 		add_audit_if($result,$audit_acrion,AUDIT_RESOURCE_IT_SERVICE,' Name ['.$_REQUEST["name"].'] id ['.$serviceid.']');
 			
 	} elseif(isset($_REQUEST["add_server"])){
-		if(!($host_data = DBfetch(DBselect('select h.* from hosts h where '.DBin_node('h.hostid').' and h.hostid not in ('.$denyed_hosts.') and h.hostid='.$_REQUEST["serverid"])))){
+		if(!($host_data = DBfetch(DBselect('select h.* from hosts h,hosts_groups hg where '.DBin_node('h.hostid').' and hg.hostid=h.hostid and hg.groupid not in ('.$denyed_groups.') and h.hostid='.$_REQUEST["serverid"])))){
 			access_deny();
 		}
 		
@@ -205,8 +205,9 @@ if(isset($_REQUEST['pservices'])){
 					' LEFT JOIN triggers t ON s.triggerid=t.triggerid '.
 					' LEFT JOIN functions f ON t.triggerid=f.triggerid '.
 					' LEFT JOIN items i ON f.itemid=i.itemid '.
+					' LEFT JOIN hosts_groups hg ON i.hostid=hg.hostid '.
 					' LEFT JOIN services_links sl ON s.serviceid=sl.servicedownid '.
-				' WHERE (i.hostid IS null OR i.hostid NOT IN ('.$denyed_hosts.')) '.
+				' WHERE (i.hostid IS null OR hg.groupid NOT IN ('.$denyed_groups.')) '.
 					' AND '.DBin_node('s.serviceid').
 					' AND s.serviceid NOT IN ('.$childs_str.$service['serviceid'].') order by s.sortorder,s.name';
 	} else {
@@ -215,9 +216,10 @@ if(isset($_REQUEST['pservices'])){
 				' LEFT JOIN triggers t ON s.triggerid=t.triggerid '.
 				' LEFT JOIN functions f ON t.triggerid=f.triggerid '.
 				' LEFT JOIN items i ON f.itemid=i.itemid '.
+				' LEFT JOIN hosts_groups hg ON i.hostid=hg.hostid '.
 				' LEFT JOIN services_links sl ON s.serviceid=sl.servicedownid '.
 			' WHERE (i.hostid IS null '.
-					' OR i.hostid NOT IN ('.$denyed_hosts.') '.
+					' OR hg.groupid NOT IN ('.$denyed_groups.') '.
 					' ) '.
 				' AND '.DBin_node('s.serviceid').
 			' ORDER BY s.sortorder,s.name';
@@ -283,8 +285,9 @@ if(isset($_REQUEST['cservices'])){
 					' LEFT JOIN triggers t ON s.triggerid=t.triggerid '.
 					' LEFT JOIN functions f ON t.triggerid=f.triggerid '.
 					' LEFT JOIN items i on f.itemid=i.itemid '.
+					' LEFT JOIN hosts_groups hg ON i.hostid=hg.hostid '.
 					' LEFT JOIN services_links sl on s.serviceid=sl.servicedownid '.
-				' WHERE (i.hostid is null or i.hostid not in ('.$denyed_hosts.')) '.
+				' WHERE (i.hostid is null or hg.groupid not in ('.$denyed_groups.')) '.
 				' AND '.DBin_node('s.serviceid').
 				' AND s.serviceid NOT IN ('.$childs_str.$service['serviceid'].') '.
 				' ORDER BY s.sortorder,s.name';
@@ -295,8 +298,9 @@ if(isset($_REQUEST['cservices'])){
 					' LEFT JOIN triggers t ON s.triggerid=t.triggerid '.
 					' LEFT JOIN functions f ON t.triggerid=f.triggerid '.
 					' LEFT JOIN items i on f.itemid=i.itemid '.
+					' LEFT JOIN hosts_groups hg ON i.hostid=hg.hostid '.
 					' LEFT JOIN services_links sl on s.serviceid=sl.servicedownid '.
-				' WHERE (i.hostid is null or i.hostid not in ('.$denyed_hosts.')) '.
+				' WHERE (i.hostid is null or hg.groupid not in ('.$denyed_groups.')) '.
 				' AND '.DBin_node('s.serviceid').
 				' ORDER BY s.sortorder,s.name';
 	}
@@ -425,7 +429,8 @@ if(isset($_REQUEST['sform'])){
 					' LEFT JOIN triggers t ON s.triggerid=t.triggerid '.
 					' LEFT JOIN functions f ON t.triggerid=f.triggerid '.
 					' LEFT JOIN items i ON f.itemid=i.itemid '.
-				' WHERE (i.hostid is null or i.hostid not in ('.$denyed_hosts.')) '.
+					' LEFT JOIN hosts_groups hg ON i.hostid=hg.hostid '.
+				' WHERE (i.hostid is null or hg.groupid not in ('.$denyed_groups.')) '.
 					' AND '.DBin_node('s.serviceid').
 					' AND sl.serviceupid=s1.serviceid '.
 					' AND sl.servicedownid=s2.serviceid '.
