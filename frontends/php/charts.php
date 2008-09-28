@@ -172,7 +172,7 @@ include_once "include/page_header.php";
 		$sql = "select distinct g.graphid,g.name from graphs g,graphs_items gi,items i, hosts_groups hg ".
 			" where i.itemid=gi.itemid and g.graphid=gi.graphid and i.hostid=".$_REQUEST["hostid"].
 			' and '.DBin_node('g.graphid').
-			" and h.hostid=hg.hostid and hg.groupid not in (".$denyed_groups.") ".
+			" and i.hostid=hg.hostid and hg.groupid not in (".$denyed_groups.") ".
 			" order by g.name";
 	}
 	elseif ($_REQUEST["groupid"] > 0)

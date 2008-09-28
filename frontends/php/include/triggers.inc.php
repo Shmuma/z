@@ -1782,7 +1782,7 @@
 		$table = new CTableInfo(S_NO_TRIGGERS_DEFINED);
 		if($groupid > 0)
 		{
-			$group_where = ',hosts_groups hg where hg.groupid='.$groupid.' and hg.hostid=h.hostid and';
+			$group_where = ' where hg.groupid='.$groupid.' and ';
 		} else {
 			$group_where = ' where';
 		}
