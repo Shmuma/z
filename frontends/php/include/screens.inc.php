@@ -58,8 +58,8 @@
 						if(!isset($itemid))
 							$itemid = array($ac_data['resourceid']);
 
-						if(DBfetch(DBselect("select itemid from items where itemid in (".implode(',',$itemid).") ".
-							" and hostid in (".$denyed_hosts.")")))
+						if(DBfetch(DBselect("select distinct i.itemid from items i,hosts_groups hg where i.itemid in (".implode(',',$itemid).") ".
+							" and hg.hostid=i.hostid and hg.groupid in (".$denyed_groups.")")))
 						{
 							$result = false;
 						}	

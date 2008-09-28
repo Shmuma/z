@@ -62,11 +62,11 @@
 
 			$ok = $uncn = $info = $warn = $avg = $high = $dis = 0;
 
-			$db_priority = DBselect("select t.priority,t.value,count(*) as cnt from triggers t,hosts h,items i,functions f".
+			$db_priority = DBselect("select t.priority,t.value,count(*) as cnt from triggers t,hosts h,hosts_groups hg,items i,functions f".
 				" where t.status=".TRIGGER_STATUS_ENABLED." and f.itemid=i.itemid ".
 				" and h.hostid=i.hostid and h.status=".HOST_STATUS_MONITORED." and t.triggerid=f.triggerid ".
 				" and i.status=".ITEM_STATUS_ACTIVE.
-				' and h.hostid in ('.get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,
+				' and hg.hostid=h.hostid and hg.groupid in ('.get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY,
 					null, null, $this->nodeid).') '.
 				" group by priority,t.value");
 			while($row=DBfetch($db_priority))

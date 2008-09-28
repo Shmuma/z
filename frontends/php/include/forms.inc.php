@@ -3571,23 +3571,23 @@ include_once 'include/discovery.inc.php';
 			if (isset ($_REQUEST["hostid"]) && $_REQUEST["hostid"] > 0)
 				$sql = "select distinct g.graphid,g.name,n.name as node_name, h.host".
 				" from graphs g left join graphs_items gi on g.graphid=gi.graphid left join items i on gi.itemid=i.itemid ".
-				" left join hosts h on h.hostid=i.hostid left join nodes n on n.nodeid= ".
+				" left join hosts h on h.hostid=i.hostid left join hosts_groups hg on h.hostid=hg.hostid left join nodes n on n.nodeid= ".
 				DBid2nodeid("g.graphid").
-				" where i.hostid not in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
+				" where hg.groupid not in (".get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
 				" and h.hostid = $_REQUEST[hostid] order by node_name,host,name,graphid";
 			else if (isset ($_REQUEST["groupid"]) && $_REQUEST["groupid"] > 0)
 				$sql = "select distinct g.graphid,g.name,n.name as node_name, h.host".
 				" from graphs g left join graphs_items gi on g.graphid=gi.graphid left join items i on gi.itemid=i.itemid ".
 				" left join hosts h on h.hostid=i.hostid left join nodes n on n.nodeid=".DBid2nodeid("g.graphid").
                                 " left join hosts_groups hg on h.hostid = hg.hostid ".
-				" where i.hostid not in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
+				" where hg.groupid not in (".get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
 				" and hg.groupid = $_REQUEST[groupid] order by node_name,host,name,graphid";
                         else
 				$sql = "select distinct g.graphid,g.name,n.name as node_name, h.host".
 				" from graphs g left join graphs_items gi on g.graphid=gi.graphid left join items i on gi.itemid=i.itemid ".
-				" left join hosts h on h.hostid=i.hostid left join nodes n on n.nodeid= ".
+				" left join hosts h on h.hostid=i.hostid left join hosts_groups hg on h.hostid=hg.hostid left join nodes n on n.nodeid= ".
 				DBid2nodeid("g.graphid").
-				" where i.hostid not in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
+				" where hg.groupid not in (".get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
 				" order by node_name,host,name,graphid";
 
 			$result = DBselect($sql);
@@ -3605,25 +3605,25 @@ include_once 'include/discovery.inc.php';
 		{
 	// Simple graph
 			if (isset ($_REQUEST["hostid"]) && $_REQUEST["hostid"] > 0)
-				$sql = "select n.name as node_name,h.host,i.description,i.itemid,i.key_ from hosts h,items i ".
+				$sql = "select n.name as node_name,h.host,i.description,i.itemid,i.key_ from hosts h,hosts_groups hg,items i ".
 				" left join nodes n on n.nodeid=".DBid2nodeid("i.itemid").
-				" where h.hostid=i.hostid ".
+				" where h.hostid=i.hostid and hg.hostid=h.hostid ".
 				" and h.status=".HOST_STATUS_MONITORED." and i.status=".ITEM_STATUS_ACTIVE.
-				" and i.hostid not in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
+				" and hg.groupid not in (".get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
 				" and h.hostid = $_REQUEST[hostid] order by node_name,h.host,i.description";
 			else if (isset ($_REQUEST["groupid"]) && $_REQUEST["groupid"] > 0)
 				$sql = "select n.name as node_name,h.host,i.description,i.itemid,i.key_ from hosts h,hosts_groups hg,items i ".
 				" left join nodes n on n.nodeid=".DBid2nodeid("i.itemid").
 				" where h.hostid=i.hostid ".
 				" and h.status=".HOST_STATUS_MONITORED." and i.status=".ITEM_STATUS_ACTIVE.
-				" and i.hostid not in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
+				" and hg.groupid not in (".get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
 				" and hg.hostid = h.hostid and hg.groupid = $_REQUEST[groupid] order by node_name,h.host,i.description";
                         else
-				$sql = "select n.name as node_name,h.host,i.description,i.itemid,i.key_ from hosts h,items i ".
+				$sql = "select n.name as node_name,h.host,i.description,i.itemid,i.key_ from hosts h,hosts_groups hg,items i ".
 				" left join nodes n on n.nodeid=".DBid2nodeid("i.itemid").
-				" where h.hostid=i.hostid ".
+				" where h.hostid=i.hostid and hg.hostid=h.hostid ".
 				" and h.status=".HOST_STATUS_MONITORED." and i.status=".ITEM_STATUS_ACTIVE.
-				" and i.hostid not in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
+				" and hg.groupid not in (".get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
 				" order by node_name,h.host,i.description";
 
 			$result=DBselect($sql);
@@ -3657,22 +3657,22 @@ include_once 'include/discovery.inc.php';
 		{
 	// Plain text
 			if (isset ($_REQUEST["hostid"]) && $_REQUEST["hostid"] > 0)
-				$sql = "select n.name as node_name,h.host,i.description,i.itemid,i.key_ from hosts h,items i".
+				$sql = "select n.name as node_name,h.host,i.description,i.itemid,i.key_ from hosts h,hosts_groups hg,items i".
 				" left join nodes n on n.nodeid=".DBid2nodeid("i.itemid").
-				" where h.hostid=i.hostid and h.status=".HOST_STATUS_MONITORED." and i.status=".ITEM_STATUS_ACTIVE.
-				" and i.hostid not in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
+				" where h.hostid=i.hostid and h.hostid=hg.hostid and h.status=".HOST_STATUS_MONITORED." and i.status=".ITEM_STATUS_ACTIVE.
+				" and hg.groupid not in (".get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
 				" and h.hostid = $_REQUEST[hostid] order by node_name,h.host,i.description";
 			else if (isset ($_REQUEST["groupid"]) && $_REQUEST["groupid"] > 0)
 				$sql = "select n.name as node_name,h.host,i.description,i.itemid,i.key_ from hosts h,hosts_groups hg,items i".
 				" left join nodes n on n.nodeid=".DBid2nodeid("i.itemid").
 				" where h.hostid=i.hostid and h.status=".HOST_STATUS_MONITORED." and i.status=".ITEM_STATUS_ACTIVE.
-				" and i.hostid not in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
+				" and hg.groupid not in (".get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
 				" and hg.hostid = h.hostid and hg.groupid = $_REQUEST[groupid] order by node_name,h.host,i.description";
                         else
-				$sql = "select n.name as node_name,h.host,i.description,i.itemid,i.key_ from hosts h,items i".
+				$sql = "select n.name as node_name,h.host,i.description,i.itemid,i.key_ from hosts h,hosts_groups hg,items i".
 				" left join nodes n on n.nodeid=".DBid2nodeid("i.itemid").
-				" where h.hostid=i.hostid and h.status=".HOST_STATUS_MONITORED." and i.status=".ITEM_STATUS_ACTIVE.
-				" and i.hostid not in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
+				" where h.hostid=i.hostid and hg.hostid=h.hostid and h.status=".HOST_STATUS_MONITORED." and i.status=".ITEM_STATUS_ACTIVE.
+				" and hg.groupid not in (".get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT).")".
 				" order by node_name,h.host,i.description";
 
 			$result=DBselect($sql);
@@ -4587,12 +4587,12 @@ include_once 'include/discovery.inc.php';
 
 		$cmbType = new CComboBox("elementtype",$elementtype,"submit()");
 
-		$denyed_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT);
+		$denyed_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT);
 		$allowed_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY);
 		
-		$db_hosts = DBselect("select distinct n.name as node_name,h.hostid,h.host from hosts h".
+		$db_hosts = DBselect("select distinct n.name as node_name,h.hostid,h.host from hosts h,hosts_groups hg".
 			" left join nodes n on n.nodeid=".DBid2nodeid("h.hostid").
-			" where h.hostid not in(".$denyed_hosts.")".
+			" where h.hostid=hg.hostid and hg.groupid not in(".$denyed_groups.")".
 			" order by node_name,h.host");
 		if($db_hosts)
 			$cmbType->AddItem(SYSMAP_ELEMENT_TYPE_HOST,	S_HOST);
@@ -4620,9 +4620,9 @@ include_once 'include/discovery.inc.php';
 		{
 			$host = "";
 
-			$host_info = DBfetch(DBselect("select distinct n.name as node_name,h.hostid,h.host from hosts h ".
+			$host_info = DBfetch(DBselect("select distinct n.name as node_name,h.hostid,h.host from hosts h,hosts_groups hg ".
 				" left join nodes n on n.nodeid=".DBid2nodeid("h.hostid").
-				" where h.hostid not in(".$denyed_hosts.") and  hostid=".$elementid.
+				" where hg.hostid=h.hostid and hg.groupid not in(".$denyed_groups.") and  hostid=".$elementid.
 				" order by node_name,h.host"));
 			if($host_info)
 				$host = $host_info["host"];
@@ -4661,9 +4661,9 @@ include_once 'include/discovery.inc.php';
 			$trigger = "";
 			$trigger_info = DBfetch(DBselect("select distinct n.name as node_name,h.hostid,h.host,t.*".
 				" from triggers t left join functions f on t.triggerid=f.triggerid ".
-				" left join items i on i.itemid=f.itemid left join hosts h on h.hostid=i.hostid ".
+				" left join items i on i.itemid=f.itemid left join hosts h on h.hostid=i.hostid left join hosts_groups hg on h.hostid=hg.hostid ".
 				" left join nodes n on n.nodeid=".DBid2nodeid("t.triggerid").
-				" where h.hostid not in (".$denyed_hosts.") and t.triggerid=".$elementid.
+				" where hg.groupid not in (".$denyed_groups.") and t.triggerid=".$elementid.
 				" order by node_name,h.host,t.description"));
 			
 			if($trigger_info)

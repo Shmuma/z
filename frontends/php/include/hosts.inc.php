@@ -705,6 +705,7 @@ require_once "include/items.inc.php";
 		$with_node = "";
 
 // 		$accessed_hosts = get_accessible_hosts_by_user($USER_DETAILS,$perm,null,null,get_current_nodeid(!$only_current_node));
+ 		$accessed_groups = get_accessible_groups_by_user($USER_DETAILS,$perm,null,null,get_current_nodeid(!$only_current_node));
 
 //SDI(get_current_nodeid(!$only_current_node));
 //SDI($accessed_hosts);
@@ -722,8 +723,7 @@ require_once "include/items.inc.php";
 				$with_node = " and ".DBin_node('g.groupid', get_current_nodeid(!$only_current_node));
 
 				if(!DBfetch(DBselect("select distinct g.groupid from groups g, hosts_groups hg, hosts h".$item_table.
-						     //	" where hg.groupid=g.groupid and h.hostid=hg.hostid and h.hostid in (".$accessed_hosts.") ".
-					" where hg.groupid=g.groupid and h.hostid=hg.hostid ".
+						     " where hg.groupid=g.groupid and h.hostid=hg.hostid and hg.groupid in (".$accessed_groups.") ".
 					" and g.groupid=".$groupid.$with_host_status.$with_items.$with_node)))
 				{
 					$groupid = 0;
@@ -753,16 +753,14 @@ require_once "include/items.inc.php";
 					{
 						$hostid = 0;
 					}
-					$group_table = " ,hosts_groups hg ";
-					$witth_group = " and hg.hostid=h.hostid and hg.groupid=".$groupid;
+					$witth_group = " and hg.groupid=".$groupid;
 				}
 
 				$with_node = " and ".DBin_node('h.hostid',get_current_nodeid(!$only_current_node));
 //SDI('C: '.$a_groupid.' : '.$a_hostid);
 
-				if($db_host = DBfetch(DBselect("select distinct h.hostid,h.host from hosts h ".$item_table.$group_table.
-							       //					" where h.hostid in (".$accessed_hosts.") "
-					" where 1=1 "
+				if($db_host = DBfetch(DBselect("select distinct h.hostid,h.host from hosts h,hosts_groups hg ".$item_table.$group_table.
+							" where hg.hostid=h.hostid and hg.groupid in (".$accessed_groups.") "
 					.$with_host_status.$with_items.$witth_group.$with_node.
 					" order by h.host")))
 				{
@@ -773,10 +771,9 @@ require_once "include/items.inc.php";
 
 				if($hostid > 0)
 				{
-					if(!DBfetch(DBselect("select distinct h.hostid from hosts h".$item_table.
-						" where h.hostid=".$hostid.$with_host_status.$with_items.$with_node
-						)))
-						//						" and h.hostid in (".$accessed_hosts.") ")))
+					if(!DBfetch(DBselect("select distinct h.hostid from hosts h,hosts_groups hg".$item_table.
+						" where hg.hostid=h.hostid and h.hostid=".$hostid.$with_host_status.$with_items.$with_node
+						" and hg.groupid in (".$accessed_groups.") ")))
 					{
 							$hostid = 0;
 					}
