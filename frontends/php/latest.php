@@ -132,7 +132,7 @@ include_once "include/page_header.php";
 	else
 	{
 		$cmbHosts->AddItem(0,S_ALL_SMALL);
-		$sql="select distinct h.hostid,h.host from hosts h,hosts_groups hg,,items i where h.status=".HOST_STATUS_MONITORED.
+		$sql="select distinct h.hostid,h.host from hosts h,hosts_groups hg,items i where h.status=".HOST_STATUS_MONITORED.
 			" and i.status=".ITEM_STATUS_ACTIVE." and h.hostid=i.hostid".
 			" and hg.hostid=h.hostid and hg.groupid in (".$availiable_groups.") ".
 			" group by h.hostid,h.host order by h.host";

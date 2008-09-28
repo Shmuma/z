@@ -249,12 +249,12 @@ include_once "include/page_header.php";
 			$sql .= ",hosts_groups hg where ".
 				" h.hostid=hg.hostid and hg.groupid=".$groupid." and ";
 
-			$sql .= " and hg.groupid in (".$accessible_groups.")".
+			$sql .= " hg.groupid in (".$accessible_groups.")".
 				($monitored_hosts ? " and h.status=".HOST_STATUS_MONITORED : "").
 				($real_hosts ? ' and h.status<>'.HOST_STATUS_TEMPLATE : '').
 				' order by host,h.hostid';
 
-			$cmbHosts->AddItem(0,S_ALL_SMALL);
+// 			$cmbHosts->AddItem(0,S_ALL_SMALL);
 
 			$db_hosts = DBselect($sql);
 			while($host = DBfetch($db_hosts))

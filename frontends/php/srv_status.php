@@ -78,7 +78,7 @@ include_once "include/page_header.php";
 				' LEFT JOIN services_links sl_p ON  s.serviceid = sl_p.servicedownid and sl_p.soft=0 '.
 				' LEFT JOIN functions f ON t.triggerid=f.triggerid '.
 				' LEFT JOIN items i ON f.itemid=i.itemid '.
-				' LEFT JOIN hosts_groups i ON i.hostid=hg.hostid '.
+				' LEFT JOIN hosts_groups hg ON i.hostid=hg.hostid '.
 			' WHERE '.DBin_node('s.serviceid').
 			' AND (i.hostid is null or hg.groupid not in ('.$denyed_groups.')) '.
 			' ORDER BY s.sortorder, sl_p.serviceupid, s.serviceid';
