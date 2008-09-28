@@ -92,7 +92,6 @@ include_once "include/page_header.php";
 	$cmbGroup = new CComboBox("groupid",$_REQUEST["groupid"],"submit();");
 	$cmbGroup->AddItem(0,S_ALL_SMALL);
 
-	$accessible_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_WRITE,null,null,get_current_nodeid());
 	$accessible_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_LIST, null, null, get_current_nodeid());
 
 	$result=DBselect('select distinct g.groupid,g.name from groups g, hosts_groups hg, hosts h, '.
@@ -115,16 +114,16 @@ include_once "include/page_header.php";
 	{
 		$sql='select distinct h.hostid,h.host from hosts_groups hg, hosts h,applications a,httptest ht '.
 			' where h.status='.HOST_STATUS_MONITORED.' and h.hostid=a.hostid and hg.hostid=h.hostid '.
-			' and hg.groupid='.$_REQUEST["groupid"].' and h.hostid in ('.$accessible_hosts.') '.
+			' and hg.groupid='.$_REQUEST["groupid"].' and hg.groupid in ('.$accessible_groups.') '.
 			' and a.applicationid=ht.applicationid and ht.status='.HTTPTEST_STATUS_ACTIVE.
 			' group by h.hostid,h.host order by h.host';
 	}
 	else
 	{
 		$cmbHosts->AddItem(0,S_ALL_SMALL);
-		$sql='select distinct h.hostid,h.host from hosts h,applications a,httptest ht '.
-			' where h.status='.HOST_STATUS_MONITORED.' and h.hostid=a.hostid and ht.status='.HTTPTEST_STATUS_ACTIVE.
-			' and ht.applicationid=a.applicationid and h.hostid in ('.$accessible_hosts.') '.
+		$sql='select distinct h.hostid,h.host from hosts h,hosts_groups hg,applications a,httptest ht '.
+			' where h.status='.HOST_STATUS_MONITORED.' and h.hostid=a.hostid and hg.hostid=h.hostid and ht.status='.HTTPTEST_STATUS_ACTIVE.
+			' and ht.applicationid=a.applicationid and hg.groupid in ('.$accessible_groups.') '.
 			' group by h.hostid,h.host order by h.host';
 	}
 
@@ -170,10 +169,10 @@ include_once "include/page_header.php";
 	if($_REQUEST["hostid"] > 0)
 		$compare_host = " and h.hostid=".$_REQUEST["hostid"];
 	else
-		$compare_host = " and h.hostid in (".$accessible_hosts.") ";
+		$compare_host = " and hg.groupid in (".$accessible_groups.") ";
 
-	$db_applications = DBselect('select distinct h.host,h.hostid,a.* from applications a,hosts h '.
-		' where a.hostid=h.hostid '.$compare_host.
+	$db_applications = DBselect('select distinct h.host,h.hostid,a.* from applications a,hosts h,hosts_groups hg '.
+		' where h.hostid=hg.hostid and a.hostid=h.hostid '.$compare_host.
 		' order by a.name,a.applicationid,h.host');
 	while($db_app = DBfetch($db_applications))
 	{

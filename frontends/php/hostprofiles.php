@@ -48,10 +48,10 @@ include_once "include/page_header.php";
 
 	$cmbGroup->AddItem(0,S_ALL_SMALL);
 	
-	$availiable_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_LIST, null, null, get_current_nodeid());
+	$availiable_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_LIST);
 
 	$result=DBselect("select distinct g.groupid,g.name from groups g, hosts_groups hg, hosts h, items i ".
-		" where h.hostid in (".$availiable_hosts.") ".
+		" where hg.groupid in (".$availiable_groups.") ".
 		" and hg.groupid=g.groupid and h.status=".HOST_STATUS_MONITORED.
 		" and h.hostid=i.hostid and hg.hostid=h.hostid ".
 		" order by g.name");
@@ -80,14 +80,14 @@ include_once "include/page_header.php";
 			$sql="select h.hostid,h.host,p.name,p.os,p.serialno,p.tag,p.macaddress".
 				" from hosts h,hosts_profiles p,hosts_groups hg where h.hostid=p.hostid".
 				" and h.hostid=hg.hostid and hg.groupid=".$_REQUEST["groupid"].
-				" and h.hostid in (".$availiable_hosts.") ".
+				" and hg.hostid in (".$availiable_groups.") ".
 				" order by h.host";
 		}
 		else
 		{
 			$sql="select h.hostid,h.host,p.name,p.os,p.serialno,p.tag,p.macaddress".
-				" from hosts h,hosts_profiles p where h.hostid=p.hostid".
-				" and h.hostid in (".$availiable_hosts.") ".
+				" from hosts h,hosts_groups hg,hosts_profiles p where h.hostid=p.hostid and hg.hostid=h.hostid ".
+				" and hg.groupid in (".$availiable_groups.") ".
 				" order by h.host";
 		}
 

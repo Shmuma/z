@@ -70,16 +70,13 @@ include_once "include/page_header.php";
 			ITEM_TYPE_EXTERNAL);
 
 	$result = DBselect("select i.itemid,i.nextcheck,i.description,i.key_,i.type,h.host,h.hostid ".
-		" from items i,hosts h ".
+		" from items i,hosts h,hosts_groups hg ".
 		" where i.status=".ITEM_STATUS_ACTIVE." and i.type in (".implode(',',$item_types).") ".
 		" and ((h.status=".HOST_STATUS_MONITORED." and h.available != ".HOST_AVAILABLE_FALSE.") ".
 		" or (h.status=".HOST_STATUS_MONITORED." and h.available=".HOST_AVAILABLE_FALSE." and h.disable_until<=$now)) ".
 		" and i.hostid=h.hostid and i.nextcheck<$now and i.key_ not in ('status','icmpping','icmppingsec','zabbix[log]') ".
 		" and i.value_type not in (".ITEM_VALUE_TYPE_LOG.") ".
-		" and h.hostid in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,null,null,get_current_nodeid()).")".
-//		" and h.hostid in (".get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,null,null,$ZBX_LOCALNODEID).")".
-//		" and ".DBin_node('h.hostid', $ZBX_LOCALNODEID).
-		" and ".DBin_node('h.hostid', get_current_nodeid()).
+		" and hg.hostid=h.hostid and hg.groupid in (".get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY).")".
 		" order by i.nextcheck,h.host,i.description,i.key_");
 
 	$table = new CTableInfo(S_THE_QUEUE_IS_EMPTY);

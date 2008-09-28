@@ -87,14 +87,15 @@ include_once "include/page_header.php";
 
 //----------------------------------------------------------------------
 
-	$denyed_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_WRITE,PERM_MODE_LT);
+	$denyed_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_WRITE,PERM_MODE_LT);
 
 	if(isset($_REQUEST['serviceid']) && $_REQUEST['serviceid'] > 0){
 		$query = "select s.* from services s ".
 			" LEFT JOIN triggers t on s.triggerid=t.triggerid ".
 			" LEFT JOIN functions f on t.triggerid=f.triggerid ".
 			" LEFT JOIN items i on f.itemid=i.itemid ".
-			" where (i.hostid is null or i.hostid not in (".$denyed_hosts.")) ".
+			" left join hosts_groups hg on i.hostid=hg.hostid ".
+			" where (i.hostid is null or hg.groupid not in (".$denyed_groups.")) ".
 			' and '.DBin_node('s.serviceid').
 			" and s.serviceid=".$_REQUEST["serviceid"];
 			

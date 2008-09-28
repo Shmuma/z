@@ -161,7 +161,8 @@ include_once "include/page_header.php";
 
 	$showdisabled = get_request("showdisabled", 0);
 	
-	$accessible_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_WRITE,null,null,get_current_nodeid());
+	$accessible_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_WRITE);
+	$accessible_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_WRITE);
 
 	if(isset($_REQUEST['hostid']) && !in_array($_REQUEST['hostid'], explode(',',$accessible_hosts)))
 	{
@@ -539,8 +540,10 @@ include_once "include/page_header.php";
 		
 		$where_case = array();
 		$from_tables['h'] = 'hosts h';
+		$from_tables['hg'] = 'hosts_groups hg';
 		$where_case[] = 'i.hostid=h.hostid';
-		$where_case[] = 'h.hostid in ('.$accessible_hosts.')';
+		$where_case[] = 'i.hostid=hg.hostid';
+		$where_case[] = 'hg.groupid in ('.$accessible_groups.')';
 
 		$from_tables['s'] = 'sites s';
 		$where_case[] = 'h.siteid = s.siteid';
@@ -560,7 +563,6 @@ include_once "include/page_header.php";
 			}
 			if(isset($_REQUEST['with_group']))
 			{
-				$from_tables['hg'] = 'hosts_groups hg';
 				$from_tables['g'] = 'groups g';
 				$where_case[] = 'i.hostid=hg.hostid';
 				$where_case[] = 'g.groupid=hg.groupid';
@@ -670,7 +672,7 @@ include_once "include/page_header.php";
 // 			$cmbGroup->AddItem(0,S_ALL_SMALL);
 
 			$result=DBselect("select distinct g.groupid,g.name from groups g,hosts_groups hg".
-				" where g.groupid=hg.groupid and hg.hostid in (".$accessible_hosts.") ".
+				" where g.groupid=hg.groupid and hg.groupid in (".$accessible_groups.") ".
 				" order by name");
 			while($row=DBfetch($result))
 			{
@@ -685,13 +687,13 @@ include_once "include/page_header.php";
 			{
 				$sql="select distinct h.hostid,h.host from hosts h,hosts_groups hg".
 					" where hg.groupid=".$_REQUEST["groupid"]." and hg.hostid=h.hostid ".
-					" and h.hostid in (".$accessible_hosts.") ".
+					" and hg.groupid in (".$accessible_groups.") ".
 					" and h.status<>".HOST_STATUS_DELETED." group by h.hostid,h.host order by h.host";
 			}
 			else
 			{
-				$sql="select distinct h.hostid,h.host from hosts h where h.status<>".HOST_STATUS_DELETED.
-					" and h.hostid in (".$accessible_hosts.") ".
+				$sql="select distinct h.hostid,h.host from hosts h, hosts_groups hg where h.status<>".HOST_STATUS_DELETED.
+					" and hg.hostid=h.hostid and hg.groupid in (".$accessible_groups.") ".
 					" group by h.hostid,h.host order by h.host";
 			}
 
