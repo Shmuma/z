@@ -31,7 +31,7 @@ include_once "include/page_header.php";
 
 	$_REQUEST["config"] = get_request("config",get_profile("web.hosts.config",0));
 	
-	$available_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_WRITE,null,PERM_RES_IDS_ARRAY,get_current_nodeid());
+	$available_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_WRITE,null,PERM_RES_IDS_ARRAY,NULL);
 	if(isset($_REQUEST["hostid"]) && $_REQUEST["hostid"] > 0 && !in_array($_REQUEST["hostid"], $available_hosts)) 
 	{
 		access_deny();
@@ -44,14 +44,18 @@ include_once "include/page_header.php";
 	if(count($available_hosts) == 0) $available_hosts = array(-1);
 	$available_hosts = implode(',', $available_hosts);
 
+	$available_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_WRITE,null, PERM_RES_IDS_ARRAY,NULL);
+
 	if(isset($_REQUEST["groupid"]) && $_REQUEST["groupid"] > 0)
 	{
-		if(!in_array($_REQUEST["groupid"], get_accessible_groups_by_user($USER_DETAILS,PERM_READ_WRITE,null,
-			PERM_RES_IDS_ARRAY,get_current_nodeid())))
+		if(!in_array($_REQUEST["groupid"], $available_groups))
 		{
 			access_deny();
 		}
 	}
+
+	if(count($available_groups) == 0) $available_groups = array(-1);
+	$available_groups = implode(',', $available_groups);
 
 ?>
 <?php
@@ -618,7 +622,7 @@ include_once "include/page_header.php";
 		unset($_REQUEST["delete"]);
 	}
 	
-	$available_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_WRITE,null,null,get_current_nodeid()); /* update available_hosts after ACTIONS */
+// 	$available_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_WRITE,null,null,get_current_nodeid()); /* update available_hosts after ACTIONS */
 ?>
 <?php
 	$frmForm = new CForm();
@@ -680,17 +684,25 @@ include_once "include/page_header.php";
 				$status_filter = " and h.status in (".HOST_STATUS_TEMPLATE.") ";
 				
 			$cmbGroups = new CComboBox("groupid",get_request("groupid",0),"submit()");
-// 			$cmbGroups->AddItem(0,S_ALL_SMALL);
 			$result=DBselect("select distinct g.groupid,g.name from groups g,hosts_groups hg,hosts h".
-					" where h.hostid in (".$available_hosts.") ".
+					" where g.groupid in (".$available_groups.") ".
 					" and g.groupid=hg.groupid and h.hostid=hg.hostid".$status_filter.
 					" order by g.name");
+			$first = -1;
+			$valid = 0;
 			while($row=DBfetch($result))
 			{
+				if ($first < 0)
+					$first = $row["groupid"];
 				if (!isset ($_REQUEST["groupid"]) || $_REQUEST["groupid"] == 0)
 					$_REQUEST["groupid"] = $row["groupid"];
 				$cmbGroups->AddItem($row["groupid"],$row["name"]);
+				if ($_REQUEST["groupid"] == $row["groupid"])
+					$valid = 1;
 			}
+
+			if (!$valid)
+				$_REQUEST["groupid"] = $first;
 
 			$frmForm = new CForm();
 			$frmForm->SetMethod('get');
@@ -724,14 +736,10 @@ include_once "include/page_header.php";
 				S_ACTIONS
 				));
 		
-			$sql="select h.*,s.name as sitename from";
-			if(isset($_REQUEST["groupid"]))
-			{
-				$sql .= " hosts h, hosts_groups hg, sites s where";
-				$sql .= " hg.groupid=".$_REQUEST["groupid"]." and hg.hostid=h.hostid and";
-			} else  $sql .= " hosts h, sites s where";
-			$sql .=	" h.hostid in (".$available_hosts.") ".
-				$status_filter.
+			$sql = "select h.*,s.name as sitename from";
+			$sql .= " hosts h, hosts_groups hg, sites s where";
+			$sql .= " hg.groupid=".$_REQUEST["groupid"]." and hg.hostid=h.hostid and";
+			$sql .=	" hg.groupid in (".$available_groups.") ".$status_filter.
 				" and h.siteid = s.siteid order by h.host";
 
 			$result=DBselect($sql);
@@ -739,7 +747,7 @@ include_once "include/page_header.php";
 			// obtain hash of all hosts with their statuses
 			if (zbx_hfs_available ()) {
 				$hfs_statuses = array ();
-				foreach (zbx_hfs_sites (isset($_REQUEST["groupid"]) ? $_REQUEST["groupid"] : 0, 0) as $site)
+				foreach (zbx_hfs_sites ($_REQUEST["groupid"], 0) as $site)
 					$hfs_statuses += zabbix_hfs_hosts_availability ($site);
 			}
 			else
@@ -874,8 +882,6 @@ include_once "include/page_header.php";
 				" # ",
 				S_MEMBERS));
 
-			$available_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_WRITE,null,null,get_current_nodeid());
-
 			$db_groups=DBselect("select groupid,name from groups".
 					" where groupid in (".$available_groups.")".
 					" order by name");
@@ -884,7 +890,6 @@ include_once "include/page_header.php";
 				$db_hosts = DBselect("select distinct h.host, h.status".
 					" from hosts h, hosts_groups hg".
 					" where h.hostid=hg.hostid and hg.groupid=".$db_group["groupid"].
-					" and h.hostid in (".$available_hosts.")".
 					" and h.status not in (".HOST_STATUS_DELETED.") order by host");
 
 				$hosts = array();
@@ -929,15 +934,17 @@ include_once "include/page_header.php";
 		$table = new CTableInfo(S_NO_LINKAGES);
 		$table->SetHeader(array(S_TEMPLATES,S_HOSTS));
 
-		$templates = DBSelect("select * from hosts where status=".HOST_STATUS_TEMPLATE.
-			" and hostid in (".$available_hosts.")".
-			" order by host");
+		$templates = DBSelect("select h.* from hosts h, hosts_groups hg where h.status=".HOST_STATUS_TEMPLATE.
+				      " and hg.groupid in (".$available_groups.")".
+				      " and hg.hostid = h.hostid ".
+				      " order by host");
 		while($template = DBfetch($templates))
 		{
-			$hosts = DBSelect("select h.* from hosts h, hosts_templates ht where ht.templateid=".$template["hostid"].
+			$hosts = DBSelect("select h.* from hosts h, hosts_templates ht, hosts_groups hg where ht.templateid=".$template["hostid"].
 				" and ht.hostid=h.hostid ".
 				" and h.status not in (".HOST_STATUS_TEMPLATE.")".
-				" and h.hostid in (".$available_hosts.")".
+				" and hg.hostid = h.hostid ".
+ 				" and hg.groupid in (".$available_groups.")".
 				" order by host");
 			$host_list = array();
 			while($host = DBfetch($hosts))
@@ -972,8 +979,8 @@ include_once "include/page_header.php";
 			$cmbGroup = new CComboBox("groupid",$_REQUEST["groupid"],"submit();");
 // 			$cmbGroup->AddItem(0,S_ALL_SMALL);
 
-			$result=DBselect("select distinct g.groupid,g.name from groups g,hosts_groups hg".
-				" where g.groupid=hg.groupid and hg.hostid in (".$available_hosts.") ".
+			$result=DBselect("select distinct g.groupid,g.name from groups g".
+				" where g.groupid in (".$available_groups.") ".
 				" order by name");
 			while($row=DBfetch($result))
 			{
@@ -984,20 +991,10 @@ include_once "include/page_header.php";
 			$form->AddItem(S_GROUP.SPACE);
 			$form->AddItem($cmbGroup);
 
-			if(isset($_REQUEST["groupid"]) && $_REQUEST["groupid"]>0)
-			{
-				$sql="select distinct h.hostid,h.host from hosts h,hosts_groups hg".
-					" where hg.groupid=".$_REQUEST["groupid"]." and hg.hostid=h.hostid ".
-					" and h.hostid in (".$available_hosts.") ".
-					" and h.status<>".HOST_STATUS_DELETED." group by h.hostid,h.host order by h.host";
-			}
-			else
-			{
-				$sql="select distinct h.hostid,h.host from hosts h ".
-					" where h.status<>".HOST_STATUS_DELETED.
-					" and h.hostid in (".$available_hosts.") ".
-					" group by h.hostid,h.host order by h.host";
-			}
+			$sql="select distinct h.hostid,h.host from hosts h,hosts_groups hg".
+				" where hg.groupid=".$_REQUEST["groupid"]." and hg.hostid=h.hostid ".
+				" and hg.groupid in (".$available_groups.") ".
+				" and h.status<>".HOST_STATUS_DELETED." group by h.hostid,h.host order by h.host";
 			$cmbHosts = new CComboBox("hostid",$_REQUEST["hostid"],"submit();");
 
 			$result=DBselect($sql);

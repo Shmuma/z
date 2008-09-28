@@ -44,18 +44,18 @@ include_once "include/page_header.php";
 	check_fields($fields);
 ?>
 <?php
-	$denyed_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT);
+	$denyed_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT);
 	
 	if(! ($db_data = DBfetch(DBselect('select distinct  e.*,t.triggerid,t.expression,t.description,t.expression,h.host,h.hostid '.
-			' from hosts h, items i, functions f, events e, triggers t'.
+			' from hosts h, hosts_groups hg, items i, functions f, events e, triggers t'.
 			' where h.hostid=i.hostid and i.itemid=f.itemid and f.triggerid=t.triggerid and e.eventid='.$_REQUEST["eventid"].
-			' and i.hostid not in ('.$denyed_hosts.') and e.objectid=t.triggerid and e.object='.EVENT_OBJECT_TRIGGER.
+			' and h.hostid=hg.hostid and hg.groupid not in ('.$denyed_groups.') and e.objectid=t.triggerid and e.object='.EVENT_OBJECT_TRIGGER.
 			' and '.DBin_node('e.eventid')
 			))))
 	{
 		access_deny();
 	}
-	unset($denyed_hosts);
+	unset($denyed_groups);
 
 	if(isset($_REQUEST["save"]))
 	{

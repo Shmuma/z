@@ -85,8 +85,8 @@ include_once "include/page_header.php";
 	$_REQUEST['items'] = get_request('items', array());
 	$_REQUEST['group_gid'] = get_request('group_gid', array());
 	
-	$availiable_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, null, null, get_current_nodeid());
-	$denyed_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT);
+	$availiable_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY, null, null, get_current_nodeid());
+	$denyed_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT);
 
 	if(isset($_REQUEST["clone"]) && isset($_REQUEST["graphid"]))
 	{
@@ -98,8 +98,7 @@ include_once "include/page_header.php";
 		$items = get_request('items', array());
 		foreach($items as $gitem)
 		{
-			$host = DBfetch(DBselect('select h.* from hosts h,items i where h.hostid=i.hostid and i.itemid='.$gitem['itemid']));
-			if(in_array($host['hostid'], explode(',',$denyed_hosts)))
+			if(!DBfetch(DBselect('select h.* from hosts h,hosts_groups hg,items i where h.hostid=i.hostid and hg.hostid=h.hostid and i.itemid='.$gitem['itemid']."and hg.groupid not in (".$denyed_groups.")")))
 			{
 				access_deny();
 			}
@@ -185,7 +184,7 @@ include_once "include/page_header.php";
 				$hosts_ids = array();
 				$db_hosts = DBselect('select distinct h.hostid from hosts h, hosts_groups hg'.
 					' where h.hostid=hg.hostid and hg.groupid in ('.implode(',',$_REQUEST['copy_targetid']).')'.
-					' and h.hostid in ('.$availiable_hosts.")"
+					' and hg.groupid in ('.$availiable_groups.")"
 					);
 				while($db_host = DBfetch($db_hosts))
 				{
@@ -287,7 +286,7 @@ include_once "include/page_header.php";
 // 		$cmbGroup->AddItem(0,S_ALL_SMALL);
 
 		$result=DBselect("select distinct g.groupid,g.name from groups g, hosts_groups hg, hosts h, items i ".
-			" where h.hostid in (".$availiable_hosts.") ".
+			" where hg.groupid in (".$availiable_groups.") ".
 			" and hg.groupid=g.groupid ".
 			" and h.hostid=i.hostid and hg.hostid=h.hostid ".
 			" order by g.name");
@@ -303,7 +302,7 @@ include_once "include/page_header.php";
 		{
 			$sql="select h.hostid,h.host from hosts h,items i,hosts_groups hg where ".
 				" h.hostid=i.hostid and hg.groupid=".$_REQUEST["groupid"]." and hg.hostid=h.hostid".
-				" and h.hostid in (".$availiable_hosts.") ".
+				" and hg.groupid in (".$availiable_groups.") ".
 				" group by h.hostid,h.host order by h.host";
 		}
 		else
@@ -311,7 +310,7 @@ include_once "include/page_header.php";
 			$cmbHosts->AddItem(0,S_ALL_SMALL);
 			$sql="select h.hostid,h.host from hosts h,items i where ".
 				" h.hostid=i.hostid".
-				" and h.hostid in (".$availiable_hosts.") ".
+				" and hg.groupid in (".$availiable_groups.") ".
 				" group by h.hostid,h.host order by h.host";
 		}
 		$result=DBselect($sql);
@@ -342,9 +341,9 @@ include_once "include/page_header.php";
 		if($_REQUEST["hostid"] > 0)
 		{
 			$result = DBselect("select distinct g.* from graphs g left join graphs_items gi on g.graphid=gi.graphid ".
-				" left join items i on gi.itemid=i.itemid ".
+				" left join items i on gi.itemid=i.itemid left join hosts_groups hg on i.hostid=hg.hostid ".
 				" where i.hostid=".$_REQUEST["hostid"].
-				" and i.hostid not in (".$denyed_hosts.") ".
+				" and hg.groupid not in (".$denyed_groups.") ".
 				' and '.DBin_node('g.graphid').
 				" and i.hostid is not NULL ".
 				" order by g.name, g.graphid");
@@ -352,9 +351,9 @@ include_once "include/page_header.php";
 		else
 		{
 			$result = DBselect("select distinct g.* from graphs g left join graphs_items gi on g.graphid=gi.graphid ".
-				" left join items i on gi.itemid=i.itemid ".
+				" left join items i on gi.itemid=i.itemid left join hosts_groups hg on i.hostid=hg.hostid ".
 				' where '.DBin_node('g.graphid').
-				" and ( i.hostid not in (".$denyed_hosts.")  OR i.hostid is NULL )".
+				" and ( hg.groupid not in (".$denyed_groups.")  OR i.hostid is NULL )".
 				" order by g.name, g.graphid");
 		}
 		while($row=DBfetch($result))

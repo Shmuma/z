@@ -84,6 +84,7 @@ include_once "include/page_header.php";
 		validate_group(PERM_READ_ONLY);
 	
 		$available_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY,null,PERM_RES_IDS_ARRAY,get_current_nodeid());
+		$available_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY);
 
 		$hosts		= get_request('hosts', array());
 		$items		= get_request('items', array());
@@ -105,8 +106,6 @@ include_once "include/page_header.php";
 		$triggers	= zbx_array_val_inc(array_flip(array_intersect(array_keys($triggers),	array_keys($hosts))));
 
 		if(count($hosts)==0) $hosts[-1] = 1;
-
-		$available_hosts = implode(',', $available_hosts);
 	}
 		
 	if(isset($EXPORT_DATA))
@@ -261,7 +260,7 @@ include_once "include/page_header.php";
 			$cmbGroups = new CComboBox("groupid",get_request("groupid",0),"submit()");
 			$cmbGroups->AddItem(0,S_ALL_SMALL);
 			$result=DBselect("select distinct g.groupid,g.name from groups g,hosts_groups hg,hosts h".
-					" where h.hostid in (".$available_hosts.") ".
+					" where hg.groupid in (".$available_groups.") ".
 					" and g.groupid=hg.groupid and h.hostid=hg.hostid".
 					" order by g.name");
 			while($row=DBfetch($result))
@@ -304,8 +303,8 @@ include_once "include/page_header.php";
 			{
 				$sql .= " hosts h,hosts_groups hg where";
 				$sql .= " hg.groupid=".$_REQUEST["groupid"]." and hg.hostid=h.hostid and";
-			} else  $sql .= " hosts h where";
-			$sql .=	" h.hostid in (".$available_hosts.") ".
+			} else  $sql .= " hosts h, hosts_groups hg  where hg.hostid=h.hostid and ";
+			$sql .=	" hg.groupid in (".$available_groups.") ".
 				" order by h.host";
 
 			$result=DBselect($sql);

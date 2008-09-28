@@ -140,10 +140,10 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 
 	$cmbGroup->AddItem(0,S_ALL_SMALL);
 	
-	$availiable_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_LIST, null, null, get_current_nodeid());
+	$availiable_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_LIST, null, null, get_current_nodeid());
 
 	$result=DBselect("select distinct g.groupid,g.name from groups g, hosts_groups hg, hosts h, items i, functions f, triggers t ".
-		" where h.hostid in (".$availiable_hosts.") ".
+		" where hg.groupid in (".$availiable_groups.") ".
 		" AND hg.groupid=g.groupid AND h.status=".HOST_STATUS_MONITORED.
 		" AND h.hostid=i.hostid AND hg.hostid=h.hostid AND i.status=".ITEM_STATUS_ACTIVE.
 		" AND i.itemid=f.itemid AND t.triggerid=f.triggerid AND t.status=".TRIGGER_STATUS_ENABLED.
@@ -344,11 +344,11 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 
 	$result = DBselect('SELECT DISTINCT t.triggerid,t.status,t.description, '.
 							' t.expression,t.priority,t.lastchange,t.comments,t.url,t.value,h.host,s.name as siteid '.
-					' FROM triggers t,hosts h,items i,functions f,sites s '.
+					' FROM triggers t,hosts h,hosts_groups hg,items i,functions f,sites s '.
 					' WHERE f.itemid=i.itemid AND h.hostid=i.hostid '.
 						' AND t.triggerid=f.triggerid AND t.status='.TRIGGER_STATUS_ENABLED.
 						' AND i.status='.ITEM_STATUS_ACTIVE.' AND '.DBin_node('t.triggerid').
-						' AND h.hostid not in ('.get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT).') '. 
+						' AND h.hostid=hg.hostid and hg.groupid not in ('.get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT).') '. 
 						' AND h.siteid = s.siteid '.
 						' AND h.status='.HOST_STATUS_MONITORED.' '.$cond.' '.$sort);
 

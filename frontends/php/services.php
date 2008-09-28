@@ -38,7 +38,7 @@ include_once "include/page_header.php";
 
 //--------------------------------------------------------------------------
 
-$denyed_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_WRITE,PERM_MODE_LT);
+$denyed_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_WRITE,PERM_MODE_LT);
 
 $query = 'SELECT distinct s.serviceid, sl.servicedownid, sl_p.serviceupid as serviceupid,
 		s.name as caption, s.algorithm, t.triggerid, s.sortorder, sl.linkid'.
@@ -48,7 +48,8 @@ $query = 'SELECT distinct s.serviceid, sl.servicedownid, sl_p.serviceupid as ser
 		' LEFT JOIN services_links sl_p ON  s.serviceid = sl_p.servicedownid and sl_p.soft=0 '.
 		' LEFT JOIN functions f ON t.triggerid=f.triggerid '.
 		' LEFT JOIN items i ON f.itemid=i.itemid '.
-	' WHERE (i.hostid is null or i.hostid not in ('.$denyed_hosts.')) '.
+	        ' left join hosts_groups hg on i.hostid=hg.hostid '.
+	' WHERE (i.hostid is null or hg.groupid not in ('.$denyed_groups.')) '.
 		' AND '.DBin_node('s.serviceid').
 	' ORDER BY s.sortorder, sl_p.serviceupid, s.serviceid';
 

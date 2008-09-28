@@ -98,7 +98,6 @@
 		$cmbGroup->AddItem(0,S_ALL_SMALL);
 		
 	        $availiable_groups= get_accessible_groups_by_user($USER_DETAILS,PERM_READ_LIST, null, null, get_current_nodeid());
-		$availiable_hosts = get_accessible_hosts_by_user($USER_DETAILS, PERM_READ_LIST, null, null, get_current_nodeid());
 
 	        $result=DBselect("select distinct g.groupid,g.name from groups g, hosts_groups hg, hosts h, items i ".
 	                " where g.groupid in (".$availiable_groups.") ".
@@ -119,17 +118,17 @@
 				' FROM hosts h,items i,hosts_groups hg '.
 				' WHERE h.status='.HOST_STATUS_MONITORED.
 					' AND h.hostid=i.hostid AND hg.groupid='.$_REQUEST['groupid'].
-					' AND hg.hostid=h.hostid AND h.hostid in ('.$availiable_hosts.') '.
+					' AND hg.hostid=h.hostid AND hg.groupid in ('.$availiable_groups.') '.
 				' GROUP BY h.hostid,h.host '.
 				' ORDER BY h.host';
 		}
 		else
 		{
 			$sql='SELECT h.hostid,h.host '.
-				' FROM hosts h,items i '.
+				' FROM hosts h,hosts_groups hg, items i '.
 				' WHERE h.status='.HOST_STATUS_MONITORED.
-					' AND h.hostid=i.hostid'.
-					' AND h.hostid in ('.$availiable_hosts.') '.
+					' AND h.hostid=i.hostid and hg.hostid=h.hostid '.
+					' AND hg.groupid in ('.$availiable_groups.') '.
 				' GROUP BY h.hostid,h.host '.
 				' ORDER BY h.host';
 		}

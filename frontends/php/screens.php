@@ -107,13 +107,13 @@ include_once "include/page_header.php";
 	unset($first_screen);
 
 	$hostid = isset($_REQUEST["hostid"]) ? $_REQUEST["hostid"] : NULL;
-	$denyed_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT);
+	$denyed_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT);
 	$cmbHosts = new CComboBox("hostid",$hostid,"submit()");
 	$cmbHosts->AddItem(0,S_ALL_SMALL);
 
-	$sql = "select distinct h.hostid,h.host from hosts h,items i, graphs_items gi where h.status=".HOST_STATUS_MONITORED.
+	$sql = "select distinct h.hostid,h.host from hosts h,hosts_groups hg,items i, graphs_items gi where h.status=".HOST_STATUS_MONITORED.
 	       " and i.status=".ITEM_STATUS_ACTIVE." and h.hostid=i.hostid".
-	       " and h.hostid not in (".$denyed_hosts.") and i.itemid=gi.itemid".
+	       " and hg.hostid=h.hostid and hg.groupid not in (".$denyed_groups.") and i.itemid=gi.itemid".
 	       " order by h.host";
 	$result=DBselect($sql);
 

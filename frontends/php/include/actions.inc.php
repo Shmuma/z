@@ -57,9 +57,9 @@ include_once 'include/discovery.inc.php';
 						break;
 					case CONDITION_TYPE_TRIGGER:
 						if(!DBfetch(DBselect("select distinct t.*".
-							" from triggers t,items i,functions f".
+							" from triggers t,items i,hosts_groups hg,functions f".
 							" where f.itemid=i.itemid and t.triggerid=f.triggerid".
-							" and i.hostid not in (".$denyed_hosts.") and t.triggerid=".$ac_data['value'])))
+							" and h.hostid=hg.hostid and hg.groupid not in (".$denyed_groups.") and t.triggerid=".$ac_data['value'])))
 						{
 							$result = false;
 						}
@@ -101,9 +101,9 @@ include_once 'include/discovery.inc.php';
 					break;
 				case CONDITION_TYPE_TRIGGER:
 					if(!DBfetch(DBselect("select distinct t.*".
-						" from triggers t,items i,functions f".
+						" from triggers t,items i,hosts_groups hg,functions f".
 						" where f.itemid=i.itemid and t.triggerid=f.triggerid".
-						" and i.hostid not in (".$denyed_hosts.") and t.triggerid=".$ac_data['value'])))
+						" and hg.hostid=h.hostid and hg.groupid not in (".$denyed_groups.") and t.triggerid=".$ac_data['value'])))
 					{
 						error(S_INCORRECT_TRIGGER);
 						$result = false;
@@ -777,12 +777,12 @@ include_once 'include/discovery.inc.php';
 	{
 		global $USER_DETAILS;
 		
-		$denyed_hosts = get_accessible_hosts_by_user($USER_DETAILS, PERM_READ_ONLY, PERM_MODE_LT);
+		$denyed_groups = get_accessible_hosts_by_user($USER_DETAILS, PERM_READ_ONLY, PERM_MODE_LT);
 		
 		$result=DBselect("select distinct a.alertid,a.clock,mt.description,a.sendto,a.subject,a.message,a.status,a.retries,".
-				"a.error from alerts a,media_type mt,functions f,items i ".
+				"a.error from alerts a,media_type mt,functions f,items i,hosts_groups hg ".
 				" where mt.mediatypeid=a.mediatypeid and a.triggerid=f.triggerid and f.itemid=i.itemid ".
-				" and i.hostid not in (".$denyed_hosts.")".
+				" and hg.hostid=i.hostid and hg.groupid not in (".$denyed_groups.")".
 				' and '.DBin_node('a.alertid').
 				" order by a.clock".
 				" desc",

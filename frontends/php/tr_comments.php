@@ -50,11 +50,11 @@ include_once "include/page_header.php";
 	check_fields($fields);
 ?>
 <?php
-	$denyed_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT);
+	$denyed_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT);
 
-	if(! ($db_data = DBfetch(DBselect('select * from items i, functions f '.
+	if(! ($db_data = DBfetch(DBselect('select * from items i, functions f, hosts_groups hg '.
 	                        ' where i.itemid=f.itemid and f.triggerid='.$_REQUEST["triggerid"].
-				" and i.hostid not in (".$denyed_hosts.")".
+				" and i.hostid=hg.hostid and hg.groupid not in (".$denyed_groups.")".
 				' and '.DBin_node('f.triggerid')
 				))))
 	{

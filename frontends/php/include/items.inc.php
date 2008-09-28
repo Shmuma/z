@@ -852,7 +852,7 @@
 
 		if($groupid > 0)
 		{
-			$group_where = ",hosts_groups hg where hg.groupid=$groupid and hg.hostid=h.hostid and";
+			$group_where = " where hg.hostid=h.hostid and ";
 		} else {
 			$group_where = " where";
 		}
@@ -860,9 +860,9 @@
 COpt::profiling_start('prepare data');
 		$result = DBselect('select distinct h.hostid, h.host, s.name as siteid, i.itemid, i.key_, i.value_type, i.lastvalue, i.units, '.
 			' i.description, t.priority, i.valuemapid, t.value as tr_value, t.triggerid '.
-			' from hosts h, sites s, items i left join  functions f on f.itemid=i.itemid left join triggers t on t.triggerid=f.triggerid '.
+			' from hosts h, hosts_groups hg, sites s, items i left join  functions f on f.itemid=i.itemid left join triggers t on t.triggerid=f.triggerid '.
 			$group_where.
-			' h.hostid in ('.get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, null, null, get_current_nodeid()).') '.
+			' hg.hostid=h.hostid and hg.groupid in ('.get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY, null, null, get_current_nodeid()).') '.
 			' and h.status='.HOST_STATUS_MONITORED.' and h.siteid = s.siteid and h.hostid=i.hostid and i.status='.ITEM_STATUS_ACTIVE.
 			' order by i.description,i.itemid');
 

@@ -95,6 +95,7 @@ include_once "include/page_header.php";
 	update_profile("web.triggers.showdisabled",$showdisabled);
 
 	$accessible_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_WRITE, null, null, get_current_nodeid());
+	$accessible_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_WRITE, null, null, get_current_nodeid());
 
 /* FORM ACTIONS */
 	if(isset($_REQUEST["clone"]) && isset($_REQUEST["triggerid"]))
@@ -315,7 +316,7 @@ include_once "include/page_header.php";
 // 	$cmbGroup->AddItem(0,S_ALL_SMALL);
 	
 	$result=DBselect("select distinct g.groupid,g.name from groups g, hosts_groups hg, hosts h, items i ".
-		" where h.hostid in (".$accessible_hosts.") ".
+		" where hg.groupid in (".$accessible_groups.") ".
 		" and hg.groupid=g.groupid ".
 		" and h.hostid=i.hostid and hg.hostid=h.hostid ".
 		" order by g.name");
@@ -331,15 +332,15 @@ include_once "include/page_header.php";
 	{
 		$sql="select h.hostid,h.host from hosts h,items i,hosts_groups hg where ".
 			" h.hostid=i.hostid and hg.groupid=".$_REQUEST["groupid"]." and hg.hostid=h.hostid".
-			" and h.hostid in (".$accessible_hosts.") ".
+			" and hg.groupid in (".$accessible_groups.") ".
 			" group by h.hostid,h.host order by h.host";
 	}
 	else
 	{
 		$cmbHosts->AddItem(0,S_ALL_SMALL);
-		$sql="select h.hostid,h.host from hosts h,items i ".
+		$sql="select h.hostid,h.host from hosts h,hosts_groups hg,items i ".
 			" where h.hostid=i.hostid ".
-			" and h.hostid in (".$accessible_hosts.") ".
+			" and hg.hostid=h.hostid and hg.groupid in (".$accessible_groups.") ".
 			" group by h.hostid,h.host order by h.host";
 	}
 	$result=DBselect($sql);

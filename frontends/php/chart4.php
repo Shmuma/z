@@ -38,7 +38,7 @@ include_once "include/page_header.php";
 	check_fields($fields);
 ?>
 <?php
-	$denyed_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT);
+	$denyed_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT);
 
 	if(! (DBfetch(DBselect('select distinct  t.triggerid from triggers t where t.triggerid='.$_REQUEST['triggerid']))) )
 	{
@@ -46,9 +46,9 @@ include_once "include/page_header.php";
 	}
 
 	if(! ($db_data = DBfetch(DBselect('select distinct  t.triggerid,t.description,t.expression,h.host,h.hostid '.
-			' from hosts h, items i, functions f, triggers t'.
-			' where h.hostid=i.hostid and i.itemid=f.itemid and f.triggerid=t.triggerid and t.triggerid='.$_REQUEST["triggerid"].
-			' and i.hostid not in ('.$denyed_hosts.') '
+			' from hosts h, hosts_groups hgitems i, functions f, triggers t'.
+			' where h.hostid=i.hostid and h.hostid=hg.hostid and i.itemid=f.itemid and f.triggerid=t.triggerid and t.triggerid='.$_REQUEST["triggerid"].
+			' and hg.groupid not in ('.$denyed_groups.') '
 			))))
 	{
 		access_deny();

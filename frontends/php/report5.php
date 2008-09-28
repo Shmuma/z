@@ -71,13 +71,13 @@ include_once "include/page_header.php";
 		default:	$time_dif=24*3600;	break;
 	}
 
-	$accessible_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_ONLY);
+	$accessible_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY);
 	
         $result=DBselect("select h.host, t.triggerid, t.description, t.description, t.priority, t.expression, count(distinct e.eventid) as count ".
-		" from hosts h, triggers t, functions f, items i, events e where ".
+		" from hosts h, hosts_groups hg, triggers t, functions f, items i, events e where ".
 		" h.hostid = i.hostid and i.itemid = f.itemid and t.triggerid=f.triggerid and ".
 		' t.triggerid=e.objectid and e.object='.EVENT_OBJECT_TRIGGER.' and e.clock>'.(time()-$time_dif).
-		' and h.hostid in ('.$accessible_hosts.') and '.DBin_node('t.triggerid').
+		' and h.hostid=hg.hostid and hg.groupid in ('.$accessible_groups.') and '.DBin_node('t.triggerid').
 		" group by h.host,t.triggerid,t.description,t.expression,t.priority ".
 		" order by count desc, h.host, t.description, t.triggerid", 100);
 

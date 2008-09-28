@@ -51,7 +51,7 @@ include_once "include/page_header.php";
 	check_fields($fields);
 ?>
 <?php
-	$denyed_hosts = get_accessible_hosts_by_user($USER_DETAILS, PERM_READ_ONLY, PERM_MODE_LT, PERM_RES_IDS_ARRAY);
+	$denyed_groups = get_accessible_groups_by_user($USER_DETAILS, PERM_READ_ONLY, PERM_MODE_LT);
 	
 	$items = get_request('items', array());
 
@@ -59,13 +59,9 @@ include_once "include/page_header.php";
 
 	foreach($items as $gitem)
 	{
-		if( !($host = DBfetch(DBselect('select h.* from hosts h,items i where h.hostid=i.hostid and i.itemid='.$gitem['itemid']))) )
+		if( !($host = DBfetch(DBselect('select h.* from hosts h,hosts_groups hg, items i where h.hostid=i.hostid and h.hostid=hg.hostid and hg.groupid not in (".$denyed_groups.") and i.itemid='.$gitem['itemid']))) )
 		{
 			fatal_error(S_NO_ITEM_DEFINED);
-		}
-		if(in_array($host['hostid'], $denyed_hosts))
-		{
-			access_deny();
 		}
 	}
 
