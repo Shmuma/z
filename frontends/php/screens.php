@@ -106,21 +106,21 @@ include_once "include/page_header.php";
 	unset($screen_correct);
 	unset($first_screen);
 
-	$hostid = isset($_REQUEST["hostid"]) ? $_REQUEST["hostid"] : NULL;
-	$denyed_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT);
-	$cmbHosts = new CComboBox("hostid",$hostid,"submit()");
-	$cmbHosts->AddItem(0,S_ALL_SMALL);
+// 	$hostid = isset($_REQUEST["hostid"]) ? $_REQUEST["hostid"] : NULL;
+// 	$denyed_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT);
+// 	$cmbHosts = new CComboBox("hostid",$hostid,"submit()");
+// 	$cmbHosts->AddItem(0,S_ALL_SMALL);
 
-	$sql = "select distinct h.hostid,h.host from hosts h,hosts_groups hg,items i, graphs_items gi where h.status=".HOST_STATUS_MONITORED.
-	       " and i.status=".ITEM_STATUS_ACTIVE." and h.hostid=i.hostid".
-	       " and hg.hostid=h.hostid and hg.groupid not in (".$denyed_groups.") and i.itemid=gi.itemid".
-	       " order by h.host";
-	$result=DBselect($sql);
+// 	$sql = "select distinct h.hostid,h.host from hosts h,hosts_groups hg,items i, graphs_items gi where h.status=".HOST_STATUS_MONITORED.
+// 	       " and i.status=".ITEM_STATUS_ACTIVE." and h.hostid=i.hostid".
+// 	       " and hg.hostid=h.hostid and hg.groupid not in (".$denyed_groups.") and i.itemid=gi.itemid".
+// 	       " order by h.host";
+// 	$result=DBselect($sql);
 
-	while($row=DBfetch($result))
-		$cmbHosts->AddItem($row["hostid"],$row["host"]);
+// 	while($row=DBfetch($result))
+// 		$cmbHosts->AddItem($row["hostid"],$row["host"]);
 
-	$form->AddItem(array(SPACE.S_HOST.SPACE,$cmbHosts));
+// 	$form->AddItem(array(SPACE.S_HOST.SPACE,$cmbHosts));
 
 	if( 0 == $config )
 	{

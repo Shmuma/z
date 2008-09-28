@@ -4590,7 +4590,7 @@ include_once 'include/discovery.inc.php';
 		$denyed_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT);
 		$allowed_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY);
 		
-		$db_hosts = DBselect("select distinct n.name as node_name,h.hostid,h.host from hosts h,hosts_groups hg".
+		$db_hosts = DBselect("select distinct n.name as node_name,h.hostid,h.host from hosts_groups hg,hosts h".
 			" left join nodes n on n.nodeid=".DBid2nodeid("h.hostid").
 			" where h.hostid=hg.hostid and hg.groupid not in(".$denyed_groups.")".
 			" order by node_name,h.host");
@@ -4620,9 +4620,9 @@ include_once 'include/discovery.inc.php';
 		{
 			$host = "";
 
-			$host_info = DBfetch(DBselect("select distinct n.name as node_name,h.hostid,h.host from hosts h,hosts_groups hg ".
+			$host_info = DBfetch(DBselect("select distinct n.name as node_name,h.hostid,h.host from hosts_groups hg,hosts h ".
 				" left join nodes n on n.nodeid=".DBid2nodeid("h.hostid").
-				" where hg.hostid=h.hostid and hg.groupid not in(".$denyed_groups.") and  hostid=".$elementid.
+				" where hg.hostid=h.hostid and hg.groupid not in(".$denyed_groups.") and  h.hostid=".$elementid.
 				" order by node_name,h.host"));
 			if($host_info)
 				$host = $host_info["host"];
