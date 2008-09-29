@@ -21,6 +21,8 @@
 #ifndef ZABBIX_DB_H
 #define ZABBIX_DB_H
 
+#include <stddef.h>
+
 /* time_t */
 #include <time.h>
 
@@ -258,6 +260,10 @@ DB_GRAPH_ITEM
 	char	color[GRAPH_ITEM_COLOR_LEN_MAX];
 };
 
+#ifdef HAVE_MEMCACHE
+#define DYN_DB_ITEM_ELEM	18 // prevorgvalue_str, ...
+#define CHARS_LEN_MAX		21
+#endif
 DB_ITEM
 {
 	zbx_uint64_t	itemid;
@@ -266,7 +272,7 @@ DB_ITEM
 	zbx_item_status_t	status;
 	char	*siteid;
 	char	*description;
-	char	key[ITEM_KEY_LEN_MAX];
+	char	*key;
 	char	*host_name;
 	char	*host_ip;
 	char	*host_dns;
@@ -283,16 +289,16 @@ DB_ITEM
 	int     delay;
 	int     history;
 	int	trends;
-	char	*prevorgvalue_str;
+
 	double	prevorgvalue_dbl;
 	zbx_uint64_t	prevorgvalue_uint64;
 	int	prevorgvalue_null;
-	char	*lastvalue_str;
+
 	double	lastvalue_dbl;
 	zbx_uint64_t	lastvalue_uint64;
 	int	lastclock;
 	int     lastvalue_null;
-	char	*prevvalue_str;
+
 	double	prevvalue_dbl;
 	zbx_uint64_t	prevvalue_uint64;
 	int     prevvalue_null;
@@ -317,12 +323,17 @@ DB_ITEM
 	char	*logtimefmt;
 	zbx_uint64_t	valuemapid;
 	char	*delay_flex;
+
+	char	*prevorgvalue_str;
+	char	*lastvalue_str;
+	char	*prevvalue_str;
 #ifdef HAVE_MEMCACHE
 	hfs_time_t	cache_time;
-	char	*db_item_str;
+	long		chars_len[CHARS_LEN_MAX];
 #endif
+	char		*chars;
 };
- 
+
 DB_FUNCTION
 {
 	zbx_uint64_t     functionid;

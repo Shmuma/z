@@ -420,7 +420,7 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
  	}
 
 #ifdef HAVE_MEMCACHE
-	if (!in_cache)
+	if (in_cache != 1)
 #endif
 		DBfree_result(result);
 
@@ -587,8 +587,6 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 			DBexecute("update items set lastlogsize=%d where itemid=" ZBX_FS_UI64,
 				item->lastlogsize,
 				item->itemid);
-#else
-//			memcache_zbx_setitem(item);
 #endif
 		}
 		else if(item->value_type==ITEM_VALUE_TYPE_TEXT)
@@ -903,25 +901,43 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 		}
 	}
 
-	if (item->prevvalue_str)
-		free(item->prevvalue_str);
-	item->prevvalue_str 		= (item->lastvalue_str) ? strdup(item->lastvalue_str) : NULL;
-	item->prevvalue_dbl		= item->lastvalue_dbl;
-	item->prevvalue_uint64		= item->lastvalue_uint64;
+	if (item->value_type != ITEM_VALUE_TYPE_FLOAT &&
+	    item->value_type != ITEM_VALUE_TYPE_UINT64) {
+		if (!item->chars) {
+			if (item->prevvalue_str)
+				free(item->prevvalue_str);
+
+			if (item->lastvalue_str)
+				free(item->lastvalue_str);
+
+			if (item->prevorgvalue_str)
+				free(item->prevorgvalue_str);
+
+			item->prevvalue_str 		= (item->lastvalue_str) ? strdup(item->lastvalue_str) : NULL;
+			item->lastvalue_str 		= (value->str) ? strdup(value->str) : NULL;
+			item->prevorgvalue_str		= prev_value.str;
+		}
+#ifdef HAVE_MEMCACHE
+		else {
+			memcache_zbx_change_chars(item, 20, item->lastvalue_str);
+			memcache_zbx_change_chars(item, 19, value->str);
+			memcache_zbx_change_chars(item, 18, prev_value.str);
+		}
+#endif
+	}
+	else {
+		item->prevvalue_dbl			= item->lastvalue_dbl;
+		item->prevvalue_uint64			= item->lastvalue_uint64;
+
+		item->lastvalue_uint64			= value->ui64;
+		item->lastvalue_dbl			= value->dbl;
+
+		item->prevorgvalue_uint64		= prev_value.ui64;
+		item->prevorgvalue_dbl			= prev_value.dbl;
+	}
+
 	item->prevvalue_null		= item->lastvalue_null;
-
-	if (item->lastvalue_str)
-		free(item->lastvalue_str);
-	item->lastvalue_str 		= (value->str) ? strdup(value->str) : NULL;
-	item->lastvalue_uint64		= value->ui64;
-	item->lastvalue_dbl		= value->dbl;
 	item->lastvalue_null		= 0;
-
-	if (item->prevorgvalue_str)
-		free(item->prevorgvalue_str);
-	item->prevorgvalue_str		= prev_value.str;
-	item->prevorgvalue_uint64	= prev_value.ui64;
-	item->prevorgvalue_dbl		= prev_value.dbl;
 	item->prevorgvalue_null		= 0;
 
 /* Update item status if required */
@@ -954,6 +970,9 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 		memcache_zbx_setitem(item);
 	}
 #endif
+
+	if(prev_value.str)
+		free(prev_value.str);
 
 	zabbix_log( LOG_LEVEL_DEBUG, "End update_item()");
 }

@@ -55,6 +55,30 @@
 
 #ifdef HAVE_MEMCACHE
 memcached_st *mem_conn = NULL;
+
+size_t DB_ITEM_OFFSETS[CHARS_LEN_MAX] = {
+/*  0 */	offsetof(DB_ITEM, siteid),
+/*  1 */	offsetof(DB_ITEM, description),
+/*  2 */	offsetof(DB_ITEM, key),
+/*  3 */	offsetof(DB_ITEM, host_name),
+/*  4 */	offsetof(DB_ITEM, host_ip),
+/*  5 */	offsetof(DB_ITEM, host_dns),
+/*  6 */	offsetof(DB_ITEM, shortname),
+/*  7 */	offsetof(DB_ITEM, snmp_community),
+/*  8 */	offsetof(DB_ITEM, snmp_oid),
+/*  9 */	offsetof(DB_ITEM, trapper_hosts),
+/* 10 */	offsetof(DB_ITEM, units),
+/* 11 */	offsetof(DB_ITEM, snmpv3_securityname),
+/* 12 */	offsetof(DB_ITEM, snmpv3_authpassphrase),
+/* 13 */	offsetof(DB_ITEM, snmpv3_privpassphrase),
+/* 14 */	offsetof(DB_ITEM, formula),
+/* 15 */	offsetof(DB_ITEM, logtimefmt),
+/* 16 */	offsetof(DB_ITEM, delay_flex),
+/* 17 */	offsetof(DB_ITEM, eventlog_source),
+/* 18 */	offsetof(DB_ITEM, prevorgvalue_str),
+/* 19 */	offsetof(DB_ITEM, lastvalue_str),
+/* 20 */	offsetof(DB_ITEM, prevvalue_str)
+};
 #endif
 
 zbx_process_type_t process_type = -1;
@@ -935,6 +959,11 @@ void test()
  * Comments:                                                                  *
  *                                                                            *
  ******************************************************************************/
+static void test_child_signal_handler(int sig)
+{
+	exit(1);
+}
+
 int main(int argc, char **argv)
 {
 	zbx_task_t	task  = ZBX_TASK_START;
@@ -979,6 +1008,15 @@ int main(int argc, char **argv)
 
 	init_config();
 
+//	if(CONFIG_LOG_FILE == NULL)
+//	{
+//		zabbix_open_log(LOG_TYPE_SYSLOG,CONFIG_LOG_LEVEL,NULL);
+//	}
+//	else
+//	{
+//		zabbix_open_log(LOG_TYPE_FILE,CONFIG_LOG_LEVEL,CONFIG_LOG_FILE);
+//	}
+//
 	switch (task) {
 		case ZBX_TASK_CHANGE_NODEID:
 			change_nodeid(0,nodeid);
@@ -990,6 +1028,7 @@ int main(int argc, char **argv)
 
 #ifdef ZABBIX_TEST
 /*	struct sigaction  phan;
+	zbx_sock_t        listen_sock;
 
 	phan.sa_handler = test_child_signal_handler;
 	sigemptyset(&phan.sa_mask);
@@ -1000,11 +1039,17 @@ int main(int argc, char **argv)
 	sigaction(SIGTERM,      &phan, NULL);
 	sigaction(SIGPIPE,      &phan, NULL);
 	sigaction(SIGCHLD,      &phan, NULL);
-*/
-	test();
 
-	zbx_on_exit();
-	return 0;
+	if( FAIL == zbx_tcp_listen(&listen_sock, CONFIG_LISTEN_IP, (unsigned short)CONFIG_LISTEN_PORT) )
+	{
+		zabbix_log(LOG_LEVEL_CRIT, "Listener failed with error: %s.", zbx_tcp_strerror());
+		exit(1);
+	}
+
+	memcache_zbx_connect();
+	process_type = ZBX_PROCESS_TRAPPERD;
+	child_trapper_main(0, &listen_sock);
+*/
 #endif /* ZABBIX_TEST */
 	
 	return daemon_start(CONFIG_ALLOW_ROOT, "zabbix");
