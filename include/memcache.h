@@ -5,6 +5,8 @@
 #include "db.h"
 #include <libmemcached/memcached.h>
 
+#define MEMCACHE_VERSION 1
+
 extern memcached_st *mem_conn;
 extern int CONFIG_MEMCACHE_ITEMS_TTL;
 extern char *CONFIG_MEMCACHE_SERVER;
