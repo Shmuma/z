@@ -186,7 +186,7 @@ COpt::counter_up('perm');
 		foreach ($hosts as $host_data)
 		{
 			/* if no rights defined used node rights */
-			if( (empty($host_data['userid'])))
+			if ((empty($host_data['userid'])))
 				$host_data['permission'] = PERM_DENY;
 			if (empty($host_data['permission'])) {
 				// default user rights according to user type
@@ -245,40 +245,41 @@ COpt::counter_up('perm');
 
 		if(count($where)) 	$where = ' where '.implode(' and ',$where);
 		else			$where = '';
+
+		$sql = 'select distinct hg.groupid, hg.name from groups hg order by hg.name';
+		$db_groups = DBselect ($sql);
+		$groups = array();
+
+		while ($group_data = DBfetch ($db_groups)) {
+			$group_data['userid'] = NULL;
+			$group_data['permission'] = NULL;
+			$groups[$group_data['groupid']] = $group_data;
+		}
 	
 		/* if no rights defined used node rights */
 		$db_groups = DBselect('select hg.groupid,hg.name,min(r.permission) as permission,g.userid'.
 			' from groups hg left join rights r on r.id=hg.groupid and r.type='.RESOURCE_TYPE_GROUP.
-			' left join users_groups g on r.groupid=g.usrgrpid and g.userid='.$userid.
-			$where.' group by hg.groupid, hg.name, g.userid, g.userid '.
+			' left join users_groups g on r.groupid=g.usrgrpid where g.userid='.$userid.
+			' group by hg.groupid, hg.name, g.userid, g.userid '.
 			' order by hg.name, permission desc');
 
-		$processed = array();
-		while($group_data = DBfetch($db_groups))
-		{
-			/* deny if no rights defined */
-			if( is_null($group_data['permission']) || is_null($group_data['userid']) )
-			{
-				if(isset($processed[$group_data['groupid']]))
-					continue;
+		while ($group_data = DBfetch ($db_groups))
+			$groups[$group_data['groupid']] = $group_data;
 
-				if( (empty($group_data['userid'])))
-					$group_data['permission'] = PERM_DENY;
-				if (empty($group_data['permission'])) {
-					// default user rights according to user type
-					switch ($user_type) {
-					case USER_TYPE_ZABBIX_USER:
-						$group_data['permission'] = PERM_DENY; break;
-					case USER_TYPE_ZABBIX_ADMIN:
-						$group_data['permission'] = PERM_READ_ONLY; break;
-					case USER_TYPE_SUPER_ADMIN:
-						$group_data['permission'] = PERM_READ_WRITE; break;
-					}
+		foreach ($groups as $group_data) {
+			if( (empty($group_data['userid'])))
+				$group_data['permission'] = PERM_DENY;
+			if (empty($group_data['permission'])) {
+				// default user rights according to user type
+				switch ($user_type) {
+				case USER_TYPE_ZABBIX_USER:
+					$group_data['permission'] = PERM_DENY; break;
+				case USER_TYPE_ZABBIX_ADMIN:
+					$group_data['permission'] = PERM_READ_ONLY; break;
+				case USER_TYPE_SUPER_ADMIN:
+					$group_data['permission'] = PERM_READ_WRITE; break;
 				}
 			}
-
-//			$processed[$group_data['permission']] = true;
-			$processed[$group_data['groupid']] = true;
 
 			if(eval('return ('.$group_data["permission"].' '.perm_mode2comparator($perm_mode).' '.$perm.')? 0 : 1;'))
 				continue;
@@ -286,7 +287,7 @@ COpt::counter_up('perm');
 			$result[$group_data['groupid']] = eval('return '.$resdata.';');
 		}
 
-		unset($processed, $group_data, $db_groups);
+		unset($group_data, $db_groups);
 
 		if($perm_res == PERM_RES_STRING_LINE) 
 		{

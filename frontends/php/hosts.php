@@ -985,13 +985,13 @@ include_once "include/page_header.php";
 		$table = new CTableInfo(S_NO_LINKAGES);
 		$table->SetHeader(array(S_TEMPLATES,S_HOSTS));
 
-		$templates = DBSelect("select h.* from hosts h, hosts_groups hg where h.status=".HOST_STATUS_TEMPLATE.
+		$templates = DBSelect("select distinct h.* from hosts h, hosts_groups hg where h.status=".HOST_STATUS_TEMPLATE.
 				      " and hg.groupid in (".$available_groups.")".
 				      " and hg.hostid = h.hostid ".
 				      " order by host");
 		while($template = DBfetch($templates))
 		{
-			$hosts = DBSelect("select h.* from hosts h, hosts_templates ht, hosts_groups hg where ht.templateid=".$template["hostid"].
+			$hosts = DBSelect("select distinct h.* from hosts h, hosts_templates ht, hosts_groups hg where ht.templateid=".$template["hostid"].
 				" and ht.hostid=h.hostid ".
 				" and h.status not in (".HOST_STATUS_TEMPLATE.")".
 				" and hg.hostid = h.hostid ".
