@@ -137,6 +137,7 @@ include_once "include/page_header.php";
 	$dstfld2	= get_request("dstfld2", '');	// second output field on destination form
 	$srcfld1	= get_request("srcfld1", '');	// source table field [can be different from fields of source table]
 	$srcfld2	= get_request("srcfld2", null);	// second source table field [can be different from fields of source table]
+	$extra_key	= get_request("extra_key", '');	// extra_key passed to caller form
 	
 	$monitored_hosts = get_request("monitored_hosts", 0);
 	$real_hosts = get_request("real_hosts", 0);
@@ -171,6 +172,7 @@ include_once "include/page_header.php";
 	$frmTitle->AddVar("srctbl",	$srctbl);
 	$frmTitle->AddVar("srcfld1",	$srcfld1);
 	$frmTitle->AddVar("srcfld2",	$srcfld2);
+	$frmTitle->AddVar("extra_key",	$extra_key);
 
 	if(isset($only_hostid))
 	{

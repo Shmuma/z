@@ -158,11 +158,11 @@ include_once "include/page_header.php";
 			foreach ($templates as $key=>$template) {
 				if ($row = DBfetch (DBselect ("select h.host from hosts_templates ht,hosts h where ht.hostid=$host ".
 							      " and ht.templateid=$key and h.hostid=ht.hostid")))
-					show_message (TRUE, "Template $template is already linked to host $row[host], skipped");
+					show_message ("Template $template is already linked to host $row[host], skipped");
 				else {
 					$hosttemplateid = get_dbid('hosts_templates', 'hosttemplateid');
 					if(!($result = DBexecute('insert into hosts_templates values ('.$hosttemplateid.','.$host.','.$key.')')))
-						show_message (TRUE, "Error adding template linkage between $row[host] and $template");
+						show_message ("Error adding template linkage between $row[host] and $template");
 					else
 						copy_template_elements ($host, $key);
 				}
@@ -182,7 +182,7 @@ include_once "include/page_header.php";
 						delete_template_elements ($host, $key);
 				}
 				else {
-					show_message (TRUE, "Template $template not linked to host with id $host, skipped");
+					show_message ("Template $template not linked to host with id $host, skipped");
 				}
 			}
 		}
