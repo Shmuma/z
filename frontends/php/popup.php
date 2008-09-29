@@ -121,7 +121,8 @@ include_once "include/page_header.php";
 		'real_hosts'=>	array(T_ZBX_INT, O_OPT,	null,	IN('0,1'),	null),
 		'itemtype'=>	array(T_ZBX_INT, O_OPT, null,   null,		null),
 		
-		"select"=>	array(T_ZBX_STR,	O_OPT,	P_SYS|P_ACT,	null,	null)
+		"select"=>	array(T_ZBX_STR,	O_OPT,	P_SYS|P_ACT,	null,	null),
+		"extra_key"=>	array(T_ZBX_STR,	O_OPT,	P_SYS,		null,	null)
 	);
 
 	$allowed_item_types = array(ITEM_TYPE_ZABBIX,ITEM_TYPE_SIMPLE,ITEM_TYPE_INTERNAL,ITEM_TYPE_AGGREGATE);
@@ -383,6 +384,17 @@ include_once "include/page_header.php";
 		}
 		elseif(isset($_REQUEST['select']))
 		{
+			if (isset($_REQUEST['extra_key'])) {
+?>
+
+<script language="JavaScript" type="text/javascript">
+<!--
+	add_variable(null,"<?php echo $_REQUEST['extra_key']; ?>",1,"<?php echo $dstfrm; ?>",window.opener.document);
+-->
+</script>
+<?php
+			}
+
 			$new_templates = array_diff($templates, $existed_templates);
 			if(count($new_templates) > 0) 
 			{
@@ -448,6 +460,9 @@ include_once "include/page_header.php";
 			
 		if($real_hosts)
 			$form->AddVar('real_hosts', 1);
+
+		if(isset($_REQUEST['extra_key']))
+			$form->AddVar('extra_key', $_REQUEST['extra_key']);
 
 		$form->AddVar('dstfrm',$dstfrm);
 		$form->AddVar('dstfld1',$dstfld1);
