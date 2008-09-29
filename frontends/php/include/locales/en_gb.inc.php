@@ -30,6 +30,8 @@
 	'S_ACTIVATE_SELECTED'=>			'Activate selected',
 	'S_DISABLE_SELECTED'=>			'Disable selected',
 	'S_DELETE_SELECTED'=>			'Delete selected',
+	'S_LINK_TEMPLATES'=>			'Link templates ... ',
+	'S_UNLINK_TEMPLATES'=>			'Unlink templates ... ',
 	'S_COPY_SELECTED_TO'=>			'Copy selected to ...',
 
 	'S_TOO_MANY_OBJECTS'=>			'You are trying to display too many objects. Please select one of group above.',
