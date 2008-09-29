@@ -185,18 +185,23 @@ int memcache_zbx_getitem(char *key, char *host, DB_ITEM *item)
 	memcached_return rc;
 	size_t len, item_len;
 
-	len = strlen(key) + strlen(host) + 2;
+	len = strlen(key) + strlen(host) + 5;
 
 	strkey = (char *) zbx_malloc(strkey, len);
-	zbx_snprintf(strkey, len, "%s|%s", key, host);
+	zbx_snprintf(strkey, len, "%c%c|%s|%s",
+		    (char)process_type, (char)MEMCACHE_VERSION,
+		    key, host);
 
 	zabbix_log(LOG_LEVEL_DEBUG, "[memcache] memcache_getitem()"
-		    "[%s]", strkey);
+		    "[%s|%s]", key, host);
 
 	strvalue = memcached_get(mem_conn, strkey, len, &item_len, &flags, &rc);
 	free(strkey);
 
 	if (rc == MEMCACHED_SUCCESS) {
+		if (!item_len)
+			return 0;
+
 		memcache_zbx_unserialize_item(strvalue, item);
 //		free(strvalue);
 		return 1;
@@ -217,10 +222,12 @@ int memcache_zbx_setitem(DB_ITEM *item)
 	memcached_return rc;
 	size_t len, item_len;
 
-	len = strlen(item->key) + strlen(item->host_name) + 2;
+	len = strlen(item->key) + strlen(item->host_name) + 5;
 
 	strkey = (char *) zbx_malloc(strkey, len);
-	zbx_snprintf(strkey, len, "%s|%s", item->key, item->host_name);
+	zbx_snprintf(strkey, len, "%c%c|%s|%s",
+		    (char)process_type, (char)MEMCACHE_VERSION,
+		    item->key, item->host_name);
 
 	zabbix_log(LOG_LEVEL_DEBUG, "[memcache] memcache_setitem()"
 		    "[%s]", strkey);
@@ -245,10 +252,12 @@ int memcache_zbx_item_remove(DB_ITEM *item)
 	memcached_return rc;
 	size_t len;
 
-	len = strlen(item->key) + strlen(item->host_name) + 2;
+	len = strlen(item->key) + strlen(item->host_name) + 5;
 
 	strkey = (char *) zbx_malloc(strkey, len);
-	zbx_snprintf(strkey, len, "%s|%s", item->key, item->host_name);
+	zbx_snprintf(strkey, len, "%c%c|%s|%s",
+		    (char)process_type, (char)MEMCACHE_VERSION,
+		    item->key, item->host_name);
 
 	zabbix_log(LOG_LEVEL_DEBUG, "[memcache] memcache_remove()"
 		    "[%s]", strkey);
