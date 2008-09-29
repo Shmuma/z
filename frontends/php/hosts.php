@@ -69,6 +69,9 @@ include_once "include/page_header.php";
 		"groups"=>	array(T_ZBX_INT, O_OPT,	P_SYS,	DB_ID, NULL),
 		"sites"=>	array(T_ZBX_INT, O_OPT,	P_SYS,	DB_ID, NULL),
 		"applications"=>array(T_ZBX_INT, O_OPT,	P_SYS,	DB_ID, NULL),
+		"link_templates"=>array(T_ZBX_INT, O_OPT, P_SYS,	DB_ID,	NULL),
+		"unlink_templates"=>array(T_ZBX_INT, O_OPT, P_SYS,	DB_ID,	NULL),
+
 /* host */
 		"hostid"=>	array(T_ZBX_INT, O_OPT,	P_SYS,  DB_ID,		'(isset({config})&&({config}==0))&&(isset({form})&&({form}=="update"))'),
 		"host"=>	array(T_ZBX_STR, O_OPT,	NULL,   NOT_EMPTY,	'isset({config})&&({config}==0||{config}==3)&&isset({save})'),
@@ -127,6 +130,7 @@ include_once "include/page_header.php";
 		"delete"=>		array(T_ZBX_STR, O_OPT, P_SYS|P_ACT,	NULL,	NULL),
 		"delete_and_clear"=>	array(T_ZBX_STR, O_OPT, P_SYS|P_ACT,	NULL,	NULL),
 		"cancel"=>	array(T_ZBX_STR, O_OPT, P_SYS,	NULL,	NULL),
+
 /* other */
 		"form"=>	array(T_ZBX_STR, O_OPT, P_SYS,	NULL,	NULL),
 		"form_refresh"=>array(T_ZBX_STR, O_OPT, NULL,	NULL,	NULL)
@@ -144,10 +148,47 @@ include_once "include/page_header.php";
 	update_profile("web.hosts.config",$_REQUEST["config"]);
 ?>
 <?php
-
 /************ ACTIONS FOR HOSTS ****************/
+/* LINK TEMPLATES */
+	if (($_REQUEST["config"]==0 || $_REQUEST["config"]==3) && isset($_REQUEST["link_templates"]))
+	{
+		$templates = get_request ("templates", array ());
+		$hosts = get_request ("hosts", array ());
+		foreach ($hosts as $host) {
+			foreach ($templates as $key=>$template) {
+				if ($row = DBfetch (DBselect ("select h.host from hosts_templates ht,hosts h where ht.hostid=$host ".
+							      " and ht.templateid=$key and h.hostid=ht.hostid")))
+					show_message (TRUE, "Template $template is already linked to host $row[host], skipped");
+				else {
+					$hosttemplateid = get_dbid('hosts_templates', 'hosttemplateid');
+					if(!($result = DBexecute('insert into hosts_templates values ('.$hosttemplateid.','.$host.','.$key.')')))
+						show_message (TRUE, "Error adding template linkage between $row[host] and $template");
+					else
+						copy_template_elements ($host, $key);
+				}
+			}
+		}
+	}
+/* UNLINK TEMPLATES */
+	elseif (($_REQUEST["config"]==0 || $_REQUEST["config"]==3) && isset($_REQUEST["unlink_templates"]))
+	{
+		$templates = get_request ("templates", array ());
+		$hosts = get_request ("hosts", array ());
+		foreach ($hosts as $host) {
+			foreach ($templates as $key=>$template) {
+				if ($row = DBfetch (DBselect ("select h.host from hosts_templates ht,hosts h where ht.hostid=$host ".
+							      " and ht.templateid=$key and h.hostid=ht.hostid"))) {
+					if($result = DBexecute('delete from hosts_templates where hostid='.$host.' and templateid='.$key))
+						delete_template_elements ($host, $key);
+				}
+				else {
+					show_message (TRUE, "Template $template not linked to host with id $host, skipped");
+				}
+			}
+		}
+	}
 /* UNLINK HOST */
-	if(($_REQUEST["config"]==0 || $_REQUEST["config"]==3) && (isset($_REQUEST["unlink"]) || isset($_REQUEST["unlink_and_clear"])))
+	elseif(($_REQUEST["config"]==0 || $_REQUEST["config"]==3) && (isset($_REQUEST["unlink"]) || isset($_REQUEST["unlink_and_clear"])))
 	{
 		$_REQUEST['clear_templates'] = get_request('clear_templates', array());
 		if(isset($_REQUEST["unlink"]))
@@ -849,7 +890,17 @@ include_once "include/page_header.php";
 				$show_only_tmp ? NULL : SPACE,
 				new CButtonQMessage('delete',S_DELETE_SELECTED,S_DELETE_SELECTED_HOSTS_Q),
 				$show_only_tmp ? SPACE : NULL,
-				$show_only_tmp ? new CButtonQMessage('delete_and_clear',S_DELETE_SELECTED_WITH_LINKED_ELEMENTS,S_DELETE_SELECTED_HOSTS_Q) : NULL
+				$show_only_tmp ? new CButtonQMessage('delete_and_clear',S_DELETE_SELECTED_WITH_LINKED_ELEMENTS,S_DELETE_SELECTED_HOSTS_Q) : NULL,
+				SPACE,
+				new CButton('add_template',S_LINK_TEMPLATES,
+					    "return PopUp('popup.php?dstfrm=".$form->GetName().
+					    "&extra_key=link_templates&dstfld1=hosts&srctbl=templates&srcfld1=hosts".
+					    "',450,450)", 'T'),
+				SPACE,
+				new CButton('del_template',S_UNLINK_TEMPLATES,
+					    "return PopUp('popup.php?dstfrm=".$form->GetName().
+					    "&extra_key=unlink_templates&dstfld1=hosts&srctbl=templates&srcfld1=hosts".
+					    "',450,450)", 'T')
 				);
 			$table->SetFooter(new CCol($footerButtons));
 
