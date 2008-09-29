@@ -1555,12 +1555,13 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 
 #ifdef HAVE_MEMCACHE
 	item->cache_time = 0;
-	item->db_item_str = NULL;
 #endif
+	item->chars = NULL;
 
 	ZBX_STR2UINT64(item->itemid, row[0]);
 /*	item->itemid=atoi(row[0]); */
-	zbx_snprintf(item->key, ITEM_KEY_LEN, "%s", row[1]);
+/*	zbx_snprintf(item->key, ITEM_KEY_LEN, "%s", row[1]); */
+	item->key=row[1];
 	item->host_name=row[2];
 	item->port=atoi(row[3]);
 	item->delay=atoi(row[4]);
@@ -1672,30 +1673,30 @@ void DBfree_item(DB_ITEM *item)
 
 #ifdef HAVE_MEMCACHE
 	zabbix_log(LOG_LEVEL_DEBUG, "In DBfree_item(%s) [from-memcache=%d]",
-		   item->key, ((item->db_item_str != NULL) ? "yes" : "no"));
+		   item->key, ((item->chars != NULL) ? "yes" : "no"));
 #else
 	zabbix_log(LOG_LEVEL_DEBUG, "In DBfree_item(%s)", item->key);
 #endif
 
-#ifdef HAVE_MEMCACHE
-	if (item->db_item_str) {
-		free(item->db_item_str);
-		item->db_item_str = NULL;
-	}
-#endif
-	if (item->prevvalue_str) {
-		free(item->prevvalue_str);
-		item->prevvalue_str = NULL;
-	}
+	if (item->chars == NULL) {
+		if (item->prevvalue_str) {
+			free(item->prevvalue_str);
+			item->prevvalue_str = NULL;
+		}
 
-	if (item->lastvalue_str) {
-		free(item->lastvalue_str);
-		item->lastvalue_str = NULL;
-	}
+		if (item->lastvalue_str) {
+			free(item->lastvalue_str);
+			item->lastvalue_str = NULL;
+		}
 
-	if (item->prevorgvalue_str) {
-		free(item->prevorgvalue_str);
-		item->prevorgvalue_str = NULL;
+		if (item->prevorgvalue_str) {
+			free(item->prevorgvalue_str);
+			item->prevorgvalue_str = NULL;
+		}
+	}
+	else {
+		free(item->chars);
+		item->chars = NULL;
 	}
 }
 
