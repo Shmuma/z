@@ -326,7 +326,7 @@ CREATE TABLE auditlog (
 	clock		number(10)		DEFAULT '0'	NOT NULL,
 	action		number(10)		DEFAULT '0'	NOT NULL,
 	resourcetype		number(10)		DEFAULT '0'	NOT NULL,
-	details		varchar2(128)		DEFAULT '0'	,
+	details		varchar2(1024)		DEFAULT '0'	,
 	PRIMARY KEY (auditid)
 );
 CREATE INDEX auditlog_1 on auditlog (userid,clock);
