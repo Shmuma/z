@@ -308,7 +308,7 @@ FIELD		|userid		|t_id		|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|clock		|t_time		|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|action		|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|resourcetype	|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
-FIELD		|details	|t_varchar(128)	|'0'	|NOT NULL	|ZBX_SYNC
+FIELD		|details	|t_varchar(1024)	|'0'	|NOT NULL	|ZBX_SYNC
 INDEX		|1		|userid,clock
 INDEX		|2		|clock
 

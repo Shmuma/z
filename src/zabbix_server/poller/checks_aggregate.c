@@ -20,6 +20,12 @@
 #include "common.h"
 #include "checks_aggregate.h"
 
+#include "hfs.h"
+
+
+extern char* CONFIG_HFS_PATH;
+
+
 static	int	evaluate_one(double *result, int *num, char *grpfunc, char const *value_str, int valuetype)
 {
 	int	ret = SUCCEED;
@@ -77,6 +83,359 @@ static	int	evaluate_one(double *result, int *num, char *grpfunc, char const *val
 
 	return ret;
 }
+
+
+/* ---------------------------------------- */
+/* HFS aggregate hooks                      */
+static double* aggr_gather_last (aggregate_item_info_t* items, int items_count, const char* param)
+{
+	double* res = (double*)malloc (sizeof (double) * items_count);
+	int i;
+	hfs_time_t lastclock, nextcheck;
+	double prev, prevorg;
+	zbx_uint64_t i_prev, i_last, i_prevorg;
+
+	if (!res)
+		return res;
+
+	for (i = 0; i < items_count; i++) {
+		switch (items[i].value_type) {
+		case ITEM_VALUE_TYPE_FLOAT:
+			if (!HFS_get_item_values_dbl (CONFIG_HFS_PATH, items[i].site, items[i].itemid, &lastclock, &nextcheck, &prev, res+i, &prevorg))
+				res[i] = 0;
+			break;
+
+		case ITEM_VALUE_TYPE_UINT64:
+			if (!HFS_get_item_values_int (CONFIG_HFS_PATH, items[i].site, items[i].itemid, &lastclock, &nextcheck,
+						      &i_prev, &i_last, &i_prevorg))
+				res[i] = 0;
+			else
+				res[i] = i_last;
+			break;
+		}
+	}
+
+	return res;
+}
+
+static double* aggr_gather_sum (aggregate_item_info_t* items, int items_count, const char* param)
+{
+	double* res = (double*)malloc (sizeof (double) * items_count);
+	int i, seconds;
+	hfs_time_t arg;
+
+	if (!res)
+		return res;
+
+	if (param[0] == '#') {
+		seconds = 0;
+		arg = atoi (param+1);
+	} else {
+		seconds = 1;
+		arg = time (NULL) - atoi (param) + 1;
+	}
+
+	for (i = 0; i < items_count; i++) {
+		switch (items[i].value_type) {
+		case ITEM_VALUE_TYPE_FLOAT:
+			res[i] = HFS_get_sum_float (CONFIG_HFS_PATH, items[i].site, items[i].itemid, arg, seconds);
+			break;
+		case ITEM_VALUE_TYPE_UINT64:
+			res[i] = HFS_get_sum_u64 (CONFIG_HFS_PATH, items[i].site, items[i].itemid, arg, seconds);
+			break;
+		}
+	}
+
+	return res;
+}
+
+
+static double* aggr_gather_min (aggregate_item_info_t* items, int items_count, const char* param)
+{
+	double* res = (double*)malloc (sizeof (double) * items_count);
+	int i, seconds;
+	hfs_time_t arg;
+
+	if (!res)
+		return res;
+
+	if (param[0] == '#') {
+		seconds = 0;
+		arg = atoi (param+1);
+	} else {
+		seconds = 1;
+		arg = time (NULL) - atoi (param) + 1;
+	}
+
+	for (i = 0; i < items_count; i++) {
+		switch (items[i].value_type) {
+		case ITEM_VALUE_TYPE_FLOAT:
+			res[i] = HFS_get_min_float (CONFIG_HFS_PATH, items[i].site, items[i].itemid, arg, seconds);
+			break;
+		case ITEM_VALUE_TYPE_UINT64:
+			res[i] = HFS_get_min_u64 (CONFIG_HFS_PATH, items[i].site, items[i].itemid, arg, seconds);
+			break;
+		}
+	}
+
+	return res;
+}
+
+
+static double* aggr_gather_max (aggregate_item_info_t* items, int items_count, const char* param)
+{
+	double* res = (double*)malloc (sizeof (double) * items_count);
+	int i, seconds;
+	hfs_time_t arg;
+
+	if (!res)
+		return res;
+
+	if (param[0] == '#') {
+		seconds = 0;
+		arg = atoi (param+1);
+	} else {
+		seconds = 1;
+		arg = time (NULL) - atoi (param) + 1;
+	}
+
+	for (i = 0; i < items_count; i++) {
+		switch (items[i].value_type) {
+		case ITEM_VALUE_TYPE_FLOAT:
+			res[i] = HFS_get_max_float (CONFIG_HFS_PATH, items[i].site, items[i].itemid, arg, seconds);
+			break;
+		case ITEM_VALUE_TYPE_UINT64:
+			res[i] = HFS_get_max_u64 (CONFIG_HFS_PATH, items[i].site, items[i].itemid, arg, seconds);
+			break;
+		}
+	}
+
+	return res;
+}
+
+
+static double* aggr_gather_delta (aggregate_item_info_t* items, int items_count, const char* param)
+{
+	double* res = (double*)malloc (sizeof (double) * items_count);
+	int i, seconds;
+	hfs_time_t arg;
+
+	if (!res)
+		return res;
+
+	if (param[0] == '#') {
+		seconds = 0;
+		arg = atoi (param+1);
+	} else {
+		seconds = 1;
+		arg = time (NULL) - atoi (param) + 1;
+	}
+
+	for (i = 0; i < items_count; i++) {
+		switch (items[i].value_type) {
+		case ITEM_VALUE_TYPE_FLOAT:
+			res[i] = HFS_get_delta_float (CONFIG_HFS_PATH, items[i].site, items[i].itemid, arg, seconds);
+			break;
+		case ITEM_VALUE_TYPE_UINT64:
+			res[i] = HFS_get_delta_u64 (CONFIG_HFS_PATH, items[i].site, items[i].itemid, arg, seconds);
+			break;
+		}
+	}
+
+	return res;
+}
+
+
+static double* aggr_gather_count (aggregate_item_info_t* items, int items_count, const char* param)
+{
+	double* res = (double*)malloc (sizeof (double) * items_count);
+	int i;
+	hfs_time_t arg;
+
+	if (!res)
+		return res;
+
+	arg = time (NULL) - atoi (param) + 1;
+
+	for (i = 0; i < items_count; i++)
+		res[i] = HFS_get_count (CONFIG_HFS_PATH, items[i].site, items[i].itemid, arg);
+
+	return res;
+}
+
+
+static aggregate_gather_hook_t hfs_gather_hooks[] = {
+	{ "last",   aggr_gather_last },
+	{ "sum",    aggr_gather_sum  },
+	{ "min",    aggr_gather_min  },
+	{ "max",    aggr_gather_max  },
+	{ "delta",  aggr_gather_delta },
+	{ "count",  aggr_gather_count },
+};
+
+
+/* ---------------------------------------- */
+/* HFS gather hooks                          */
+static double aggr_reduce_max (double* vals, int count)
+{
+	int i;
+	double res = 0;
+
+	if (count > 0)
+		res = vals[0];
+
+	for (i = 1; i < count; i++)
+		if (vals[i] > res)
+			res = vals[i];
+
+	return res;
+}
+
+
+static double aggr_reduce_min (double* vals, int count)
+{
+	int i;
+	double res = 0;
+
+	if (count > 0)
+		res = vals[0];
+
+	for (i = 1; i < count; i++)
+		if (vals[i] < res)
+			res = vals[i];
+
+	return res;
+}
+
+
+static double aggr_reduce_sum (double* vals, int count)
+{
+	int i;
+	double res = 0;
+
+	for (i = 0; i < count; i++)
+		res += vals[i];
+	return res;
+}
+
+
+static double aggr_reduce_avg (double* vals, int count)
+{
+	return aggr_reduce_sum (vals, count) / count;
+}
+
+
+
+static aggregate_reduce_hook_t hfs_reduce_hooks[] = {
+	{ "grpmax", aggr_reduce_max },
+	{ "grpsum", aggr_reduce_sum },
+	{ "grpavg", aggr_reduce_avg },
+	{ "grpmin", aggr_reduce_min },
+};
+
+
+static aggregate_item_info_t* get_aggregate_items (const char* hostgroup, const char* itemkey, int* count)
+{
+	DB_RESULT result;
+	DB_ROW row;
+	char hostgroup_esc[MAX_STRING_LEN], itemkey_esc[MAX_STRING_LEN];
+	aggregate_item_info_t* res = NULL, *tmp;
+	int buf_count = 0;
+
+	DBescape_string (itemkey,itemkey_esc,MAX_STRING_LEN);
+	DBescape_string (hostgroup,hostgroup_esc,MAX_STRING_LEN);
+
+	result = DBselect ("select i.itemid,i.value_type,s.name as siteid from items i, hosts h, hosts_groups hg, groups g, sites s "
+			   " where i.hostid=h.hostid and h.hostid=hg.hostid and g.groupid=hg.groupid and s.siteid=h.siteid "
+			   " and g.name='%s' and i.key_='%s' and i.status=%d and h.status=%d and i.value_type in (%d,%d)",
+			   hostgroup_esc, itemkey_esc,
+			   ITEM_STATUS_ACTIVE, HOST_STATUS_MONITORED,
+			   ITEM_VALUE_TYPE_FLOAT, ITEM_VALUE_TYPE_UINT64);
+	*count = 0;
+
+	while ((row = DBfetch (result))) {
+		if (*count == buf_count) {
+			tmp = res;
+			res = (aggregate_item_info_t*)realloc (res, (buf_count += 16)*sizeof (aggregate_item_info_t));
+			if (!res) {
+				zabbix_log (LOG_LEVEL_WARNING, "get_aggregate_items: Memory allocation error");
+				free (tmp);
+				DBfree_result (result);
+				*count = 0;
+				return NULL;
+			}
+		}
+
+		res[*count].itemid = zbx_atoui64 (row[0]);
+		res[*count].value_type = atoi (row[1]);
+		strcpy (res[*count].site, row[2]);
+		(*count)++;
+	}
+
+	DBfree_result (result);
+
+	return res;
+}
+
+
+/*
+ * grpfunc: grpmax, grpmin, grpsum, grpavg
+ * itemfunc: last, min, max, avg, sum,count
+ */
+static int	evaluate_aggregate_hfs(AGENT_RESULT *res,char *grpfunc, char *hostgroup, char *itemkey, char *itemfunc, char *param)
+{
+	int i, result = NOTSUPPORTED, found = 0;
+	aggregate_item_info_t* items;
+	int items_count;
+	double* items_values = NULL;
+
+	/* obtain list of items with sites */
+	items = get_aggregate_items (hostgroup, itemkey, &items_count);
+
+	if (!items) {
+		/* I don't know, said Ivan Susanin... */
+		SET_DBL_RESULT (res, 0);
+		return SUCCEED;
+	}
+
+	/* call apropriate hook to obtain per-item value */
+	for (i = 0; i < sizeof (hfs_gather_hooks) / sizeof (hfs_gather_hooks[0]) && !found; i++)
+		if (strcmp (itemfunc, hfs_gather_hooks[i].itemfunc) == 0) {
+			found = 1;
+			items_values = hfs_gather_hooks[i].hook (items, items_count, param);
+		}
+
+	if (!found) {
+		zabbix_log( LOG_LEVEL_WARNING, "evaluate_aggregate_hfs: Unsupported itemfunc function [%s])", itemfunc);
+		free (items);
+		return FAIL;
+	}
+
+	if (!items_values) {
+		zabbix_log( LOG_LEVEL_WARNING, "evaluate_aggregate_hfs: memory allocation error)");
+		free (items);
+		return FAIL;
+	}
+
+	/* we have item's data. Perform calculations. */
+	found = 0;
+	for (i = 0; i < sizeof (hfs_reduce_hooks) / sizeof (hfs_reduce_hooks[0]) && !found; i++)
+		if (strcmp (grpfunc, hfs_reduce_hooks[i].grpfunc) == 0) {
+			found = 1;
+			SET_DBL_RESULT (res, hfs_reduce_hooks[i].hook (items_values, items_count));
+		}
+
+	free (items);
+	free (items_values);
+
+	if (!found)  {
+		zabbix_log( LOG_LEVEL_WARNING, "evaluate_aggregate_hfs: Unsupported grpfunc function [%s])", grpfunc);
+		return FAIL;
+	}
+
+	return SUCCEED;
+}
+
 
 /*
  * grpfunc: grpmax, grpmin, grpsum, grpavg
@@ -356,11 +715,14 @@ int	get_value_aggregate(DB_ITEM *item, AGENT_RESULT *result)
 		function_item,
 		parameter);
 
-	if( (ret == SUCCEED) &&
-		(evaluate_aggregate(result,function_grp, group, itemkey, function_item, parameter) != SUCCEED)
-	)
-	{
-		ret = NOTSUPPORTED;
+	if (ret == SUCCEED) {
+	if (CONFIG_HFS_PATH) {
+		if (evaluate_aggregate_hfs (result, function_grp, group, itemkey, function_item, parameter) != SUCCEED)
+			ret = NOTSUPPORTED;
+	}
+	else
+		if (evaluate_aggregate(result,function_grp, group, itemkey, function_item, parameter) != SUCCEED)
+			ret = NOTSUPPORTED;
 	}
 
 	return ret;
