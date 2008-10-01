@@ -2187,12 +2187,6 @@ size_t HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint6
 		return 0;
 	}
 
-/* 	if (!obtain_lock (fd, 0)) { */
-/* 		if (close (fd) == -1) */
-/* 			zabbix_log(LOG_LEVEL_CRIT, "hfs: HFSread_item_str: close(): %s", strerror(errno)); */
-/* 		return 0; */
-/* 	} */
-
 	free (p_name);
 
 	/* search for start position */
@@ -2218,7 +2212,7 @@ size_t HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint6
 		if (clock >= from)
 			break;
 
-		if (lseek (fd, len + 1 + sizeof (len), SEEK_CUR) == (off_t)-1) {
+		if (lseek (fd, len + (len ? 1 : 0) + sizeof (len), SEEK_CUR) == (off_t)-1) {
 			eof = 1;
 			break;
 		}
@@ -2238,16 +2232,19 @@ size_t HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint6
 
 			*result = tmp;
 			tmp[count-1].clock = clock;
-			tmp[count-1].value = (char*)malloc (len+1);
+			if (len) {
+				tmp[count-1].value = (char*)malloc (len+1);
 
-			if (!tmp[count-1].value)
-				break;
-
-			if (read (fd, tmp[count-1].value, len+1) != len+1) {
-				free (tmp[count-1].value);
-				count--;
-				break;
+				if (!tmp[count-1].value)
+					break;
+				if (read (fd, tmp[count-1].value, len+1) != len+1) {
+					free (tmp[count-1].value);
+					count--;
+					break;
+				}
 			}
+			else
+				tmp[count-1].value = NULL;
 
 			/* read metadata of next string */
 			if (read (fd, &len, sizeof (len)) != sizeof (len) || 
@@ -2260,7 +2257,6 @@ size_t HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint6
 		}
 	}
 
-/* 	release_lock (fd, 0); */
 	close (fd);
 
 	return count;
@@ -2284,12 +2280,6 @@ size_t HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint
 		free (p_name);
 		return 0;
 	}
-
-/* 	if (!obtain_lock (fd, 0)) { */
-/* 		if (close (fd) == -1) */
-/* 			zabbix_log(LOG_LEVEL_CRIT, "hfs: HFSread_item_str: close(): %s", strerror(errno)); */
-/* 		return 0; */
-/* 	} */
 
 	free (p_name);
 
@@ -2316,24 +2306,36 @@ size_t HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint
 
 		*result = tmp;
 
-		if (lseek (fd, ofs - (sizeof (len) + sizeof (clock) + len + 1), SEEK_SET) == -1) {
-			res_count--;
-			break;
+		if (!len) {
+			/* empty string - special case */
+			if (lseek (fd, ofs - (sizeof (len) + sizeof (clock)), SEEK_SET) == -1) {
+				res_count--;
+				break;
+			}
+
+			tmp[res_count-1].value = NULL;
+			read (fd, &tmp[res_count-1].clock, sizeof (tmp[res_count-1].clock));
+			ofs = lseek (fd, ofs - (sizeof (len)*2 + sizeof (clock)), SEEK_SET);
 		}
+		else {
+			if (lseek (fd, ofs - (sizeof (len) + sizeof (clock) + len + 1), SEEK_SET) == -1) {
+				res_count--;
+				break;
+			}
 
-		tmp[res_count-1].value = (char*)malloc (len + 1);
-		if (!tmp[res_count-1].value) {
-			res_count--;
-			break;
+			tmp[res_count-1].value = (char*)malloc (len + 1);
+			if (!tmp[res_count-1].value) {
+				res_count--;
+				break;
+			}
+
+			read (fd, &tmp[res_count-1].clock, sizeof (tmp[res_count-1].clock));
+			read (fd, &len, sizeof (len));
+			read (fd, tmp[res_count-1].value, len + 1);
+			ofs = lseek (fd, ofs - (sizeof (len)*2 + sizeof (clock) + len + 1), SEEK_SET);
+			if (ofs == -1)
+				break;
 		}
-
-		read (fd, &tmp[res_count-1].clock, sizeof (tmp[res_count-1].clock));
-		read (fd, &len, sizeof (len));
-		read (fd, tmp[res_count-1].value, len + 1);
-
-		ofs = lseek (fd, ofs - (sizeof (len)*2 + sizeof (clock) + len + 1), SEEK_SET);
-		if (ofs == -1)
-			break;
 	}
 
 /* 	release_lock (fd, 0); */
