@@ -512,7 +512,6 @@ include_once "include/page_header.php";
 	}
 ?>
 <?php
-
 	$form = new CForm();
 	$form->SetMethod('get');
 	$form->SetName('hdrform');
@@ -756,6 +755,7 @@ include_once "include/page_header.php";
     
 		$query_history_size = 0;
 		$query_trends_size = 0;
+		$count = 0;
 
 		$db_items = DBselect('select distinct th.host as template_host,th.hostid as template_hostid, h.host, s.name as sitename, i.* '.
 			' from '.implode(',', $from_tables).
@@ -763,6 +763,12 @@ include_once "include/page_header.php";
 			' where '.implode(' and ', $where_case).' order by h.host,i.description,i.key_,i.itemid');
 		while($db_item = DBfetch($db_items))
 		{
+			$count++;
+			if ($count > 300) {
+				show_message(S_TOO_MANY_ITEMS_N.($count-1));
+				break;
+			}
+
 			$description = array();
 
 			$item_description = item_description($db_item["description"],$db_item["key_"]);

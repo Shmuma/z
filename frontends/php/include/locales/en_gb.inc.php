@@ -35,6 +35,7 @@
 	'S_COPY_SELECTED_TO'=>			'Copy selected to ...',
 
 	'S_TOO_MANY_OBJECTS'=>			'You are trying to display too many objects. Please select one of group above.',
+	'S_TOO_MANY_ITEMS_N'=>			'You are trying to view too many items. Shown only first ',
 	
 //	dicoveryconf.php
 	'S_HOST_IP'=>				'Host ip',
