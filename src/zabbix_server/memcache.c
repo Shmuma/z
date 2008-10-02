@@ -173,7 +173,7 @@ void memcache_zbx_unserialize_item(char *str, DB_ITEM *item)
 
 	for (i = 0; i < CHARS_LEN_MAX; i++) {
 		f = ((char **)((char *)(item) + DB_ITEM_OFFSETS[i]));
-		*f = (*p != '\0') ? p : NULL;
+		*f = p;
 		p += item->chars_len[i];
 	}
 }
