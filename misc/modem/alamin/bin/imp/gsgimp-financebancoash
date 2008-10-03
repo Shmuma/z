@@ -1,0 +1,80 @@
+#!/usr/bin/perl -w
+#---------------------------------------------------------------------
+# gsgimp-financebancoash
+#---------------------------------------------------------------------
+# (C) Andrés Seco Hernández, June 2000
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+#---------------------------------------------------------------------
+
+use strict;
+
+my ($arg_client,$arg_command) = @ARGV;
+
+my $debug = 1;
+my $program_name = "gsgimp-financebancoash";
+my $program_version = "v0.0.1 - June 2, 2000";
+my $commandtorun = "gsgc --send $arg_client ";
+my $response = "";
+
+my @tokens = split(/\s+/,$arg_command);
+
+CASE_TOKEN: {
+  if ($tokens[0] =~ /AYUDA/i) {
+    $response = "Banco ASH.\nAYUDA, PRUEBA, SALDO, MOVIMIENTOS, TRANS cantidad cuenta_destino, CHEQUES, NOTIFICACION ABONOS|CARGOS ACT|DES, DENUNCIA numero_tarjeta";
+    last CASE_TOKEN;
+  }
+  if ($tokens[0] =~ /PRUEBA/i) {
+    $response = "Banco ASH.\nPrueba correcta.\nEnvie otros comandos si lo desea.\nGracias por usar Alamin GSM SMS Gateway.";
+    last CASE_TOKEN;
+  }
+  if ($tokens[0] =~ /MOVIMIENTOS/i) {
+    $response = "Banco ASH.\nCuenta 1234.123.123456.7\n05/06/00 SeguroCoche 1500 EU\n06/06/00 Guarderia 223 EU\n07/06/00 Libreria 450 EU\n07/06/00 Comunidad 250 EU\n";
+    last CASE_TOKEN;
+  }
+  if ($tokens[0] =~ /SALDO/i) {
+    $response = "Banco ASH.\nCuenta 1234.123.123456.7\nSu saldo disponible a 05/06/00 es 1500 EU\nSu saldo contable a 05/06/00 es 1500 EU";
+    last CASE_TOKEN;
+  }
+  if ($tokens[0] =~ /TRANS/i) {
+    $response = "Banco ASH.\nCuenta 1234.123.123456.7\nSolicitud transferencia de ".$tokens[1]." Euros a la cuenta ".$tokens[2]." ha sido realizada.";
+    last CASE_TOKEN;
+  }
+  if ($tokens[0] =~ /CHEQUES/i) {
+    $response = "Banco ASH.\nCuenta 1234.123.123456.7\nSu solicitud de talonario de cheques ha sido realizada. Pase por su oficina a recogerlos.";
+    last CASE_TOKEN;
+  }
+  if ($tokens[0] =~ /NOTIFICACION/i) {
+    $response = "Banco ASH.\nCuenta 1234.123.123456.7\nSolicitud de notificacion no valida.";
+    if ($tokens[1] =~ /ABONOS/i || $tokens[1] =~ /CARGOS/i) {
+      if ($tokens[2] =~ /ACT/i) {
+        $response = "Banco ASH.\nCuenta 1234.123.123456.7\nA partir de este momento le seran notificados los ".$tokens[1]." por mensaje SMS.";
+      }
+      if ($tokens[2] =~ /DES/i) {
+        $response = "Banco ASH.\nCuenta 1234.123.123456.7\nA partir de este momento NO le seran notificados los ".$tokens[1].".";
+      }
+    }
+    last CASE_TOKEN;
+  }
+  if ($tokens[0] =~ /DENUNCIA/i) {
+    if ($tokens[1]) {
+      $response = "Banco ASH.\nCuenta 1234.123.123456.7\nSu tarjeta ".$tokens[1]." es denunciada en este momento. Por favor, acuda a su oficina.";
+    } else {
+      $response = "Banco ASH.\nCuenta 1234.123.123456.7\nTodas sus tarjetas son denunciadas en este momento. Por favor, acuda a su oficina lo antes posible.";
+    }
+    last CASE_TOKEN;
+  }
+  $response = "Banco ASH.\nServidor financiero GSM.\nSolicitud no valida.\nIntentelo de nuevo si lo desea o use el comando AYUDA.";
+}
+
+$commandtorun = $commandtorun."\"".$response."\" >/dev/null";
+system($commandtorun);

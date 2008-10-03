@@ -1,0 +1,83 @@
+#---------------------------------------------------------------------
+# Alamin GSM SMS Gateway - DOCUMENTED, PENDING AND CORRECTED BUGS
+#---------------------------------------------------------------------
+#
+# (C) Andrés Seco Hernández, April 2000-May 2001
+#
+
+000001	May 15, 2000
+	DESCRIPTION: Zombie processes appears
+	STATUS: CORRECTED
+	NOTES: Old implementation without signaling support.
+
+000002	June 13, 2000
+	DESCRIPTION: Sometimes, the IMP that tryes to send a message is
+	hang waiting for the socket to be accepted.
+	STATUS: CORRECTED
+	NOTES: Old implementation with some deadlock situations.
+
+000003	June 27, 2000
+	DESCRIPTION: Nokia PremiCell AT+ modem sometimes hungs and
+	requires to be rebooted manually. This is not a GSG bug, just only
+	a misconfigured serial line without hardware flow control (see
+	stty ctrcts).
+	STATUS: CORRECTED
+	NOTES: Be sure that stty is properly configured with your modem
+	defaults.
+
+000004	November 4, 2000
+	DESCRIPTION: gsgimp-* are not fully tested and they can be used to
+	gain root privileges by an attacker.
+	STATUS: PENDING
+	NOTES: gsgimp-* are not fully tested. Some of them can be
+	vulnerable to attacks trying to get root privileges over the
+	gateway system. None of that gsgimp-* files are used by default.
+	Take care to test it as much as you can to ensure security to your
+	system if you are going to use some of them. They are included as
+	examples only.
+
+000005	December 6, 2000
+	DESCRIPTION: clients can connect to the server port and issue
+	commands to be run in the server machine as the user runs the
+	daemon.
+	STATUS: CORRECTED
+	NOTES: system calls have been changed to avoid this simple
+	exploit (from version 0.3.5).
+
+000006	December 19, 2000
+	DESCRIPTION: chat string to send a message in the AT interface
+	when the messages has more than one line is invalid. Chat fails.
+	STATUS: CORRECTED (in 0.3.5a)
+	NOTES: If you only use the gnokii interface, you are not affected.
+
+000007	January 23, 2001
+	DESCRIPTION: chat string to send a message in the AT interface
+	is not correctly constructed. Empty lines are added between real
+	lines.
+	STATUS: CORRECTED (in 0.3.6)
+	NOTES: If you only use the gnokii interface, you are not affected.
+
+000008	January 23, 2001
+PENDING	DESCRIPTION: A client can connect to smsqp port (11201 is the
+	default) and it can do nothing, gsgcmd is then hang until
+	connection is finished. gsgsmtpd is vulnerable too. This can be
+	used to make simple DoS attacks.
+	STATUS: PENDING
+	NOTES: Make sure your smsqp and smtp ports for the gateway are
+	only accesible from trusted networks. Hostile and public networks
+	must be avoided until this bug be fixed. Use the allowip and
+	denyip options.
+
+000009	January 26, 2001
+	DESCRIPTION: When you use gnokii 0.3.0 to access the gsm device,
+	gsgmdd was lossing the first line of the message. This happens
+	since Alamin distinguises gnokii versions 0.3.0 and 0.3.2.
+	STATUS: CORRECTED (in 0.3.6)
+
+000010	May 1, 2001
+	DESCRIPTION: If a queued message can not be sent in its first
+	attempt it is saved with not valid format to be retried later, so
+	that message will be sent never. This error was introduced in
+	0.3.6pre3.
+	STATUS: CORRECTED (in 0.3.6)
+

@@ -1,0 +1,68 @@
+=pod
+
+=head1 NAME
+
+alamin - Alamin GSM SMS Gateway
+
+=head1 SYNOPSIS
+
+alamin {start|stop|restart|reload|force-reload}
+
+=head1 DESCRIPTION
+
+Alamin GSM SMS Gateway is a set of daemons that allows you to use a
+computer as a messaging gateway, where one of the sides uses messages
+generated from ip applications, and the other side uses GSM SMS (GSM Short
+Message Service) messages.
+
+Alamin allows you to start and stop that whole set of daemons
+sinchronously.
+
+The goal is to have an easy to use gateway for passing messages to GSM mobile
+phones from a network of ip clients, and receive SMS messages from mobile
+phones and pass it to a program that process it.
+
+Common uses for this gateway are conversational applications where
+mobile clients ask for some information and receive the answer using SMS
+message for both, ask and answer. Financial transactions, conversational
+games, remote systems administration, alarms notification and a lot of
+other imaginative uses can be implemented over an SMS gateway.
+
+You can expand your applications to the mobile phone keyboard with
+little script programming to wrap your SMS into console commands.
+
+=head1 FILES
+
+/etc/alamin/gsgc.conf, client config file
+/etc/alamin/gsgd.conf, gateway config file
+
+=head1 SEE ALSO
+
+See also gsgc(1), gsgcmd(8), gsgmdd(8) and gsgsmtpd(8)
+
+=head1 BUGS
+
+Send bugs to the author, please. I would like to keep the program without
+bugs.
+
+=head1 LICENSE
+
+Alamin GSM SMS Gateway
+Copyright (C) Andres Seco Hernandez and others.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+=head1 AUTHOR
+
+Andres Seco Hernandez <AndresSH@alamin.org>.
+
+=cut
+

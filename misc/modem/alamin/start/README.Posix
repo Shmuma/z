@@ -1,0 +1,16 @@
+This gateway must run in any unix/linux system with Perl 5.005 or greater
+installed. Perhaps 5.004 is enough.
+
+The gateway uses the following Perl modules:
+
+IO::Socket
+Net::hostent
+Sys::Syslog
+Digest::MD5
+
+Net::hostent and Sys::Syslog are not a requirement, but recomendable.
+Digest::MD5 is needed if you want to authenticate ip clients using a
+user/password validation like CHAP does.
+
+Please, notify me at "AndresSH@alamin.org" if you need any change to run
+it in your unix/linux.

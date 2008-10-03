@@ -1,0 +1,15 @@
+# example.phonelist
+# -----------------
+#
+# This is just an example phone list to be used in conjunction with
+# the fifth parameter of the user.conf file.
+#
+# Entries looks like this:
+# phonenumber comment
+#
+# You can use the plus (+) sign to denote international prefix.
+#
+
++34666123123 Chief phone number
++33777321321 Technical support phone number
+888333222 Our best friend

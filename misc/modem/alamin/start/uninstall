@@ -1,0 +1,51 @@
+#!/bin/sh
+echo Run this script only in a Debian GNU/Linux 2.1 or 2.2 system.
+echo If you have other system, make the changes contained in this file
+echo manually. Please, notify me at \"AndresSH@alamin.org\" with the
+echo commands you have used to UNinstall the gateway in your system.
+echo I will prepare uninstallation script for that type of systems.
+echo Remove the exit statement from this script and run it again if you
+echo really want to uninstall it.
+
+# remove this exit (or comment it) to enable this script to be run.
+exit
+
+echo "Deinstalling Alamin GSM SMS Gateway:"
+/etc/init.d/alamin stop
+update-rc.d -f gsgd remove
+rm /etc/init.d/alamin
+if [ -f syslog_facility_used ];
+then
+  cp /etc/syslog.conf /etc/syslog.conf.gsgd
+  syslog-facility remove `cat syslog_facility_used`
+  echo "Your original /etc/syslog.conf file was renamed as /etc/syslog.conf.gsgd"
+  echo "You may need to restart syslog to reflect changes."
+  echo "Use '/etc/init.d/sysklogd restart' to restart syslog daemons."
+#  /etc/init.d/sysklogd restart;
+else
+  echo "WARNING: Check your /etc/syslog.conf for old local facilities that can not be deleted.";
+fi
+rm /usr/sbin/gsgcmd
+rm /usr/sbin/gsgmdd
+rm /usr/sbin/gsgsmtpd
+rm /usr/bin/gsgc
+rm /etc/cron.weekly/alamin
+rm /usr/share/man/man1/gsgc.1.gz
+rm /usr/share/man/man8/gsgcmd.8.gz
+rm /usr/share/man/man8/gsgmdd.8.gz
+rm /usr/share/man/man8/gsgsmtpd.8.gz
+rm /usr/share/man/man8/alamin.8.gz
+#rm -r /etc/alamin
+#rm -r /usr/lib/alamin
+#rm -r /var/log/alamin
+#rm -r /var/run/alamin
+#rm -r /var/spool/alamin
+rmdir --verbose /etc/alamin
+rmdir --verbose /usr/lib/alamin
+rmdir --verbose /var/log/alamin
+rmdir --verbose /var/run/alamin
+rmdir --verbose /var/spool/alamin
+userdel alamin
+groupdel alamin
+echo "done."
+

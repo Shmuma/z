@@ -1,0 +1,43 @@
+-----------------------------------------------------------
+This gateway is being developed, it is not finished yet. It can have some
+security issues that you do not want. Use it carefully. If you use it in a
+production environment, use the latest version marked as "stable".
+Versions 0.3.5 and later keep security at a priority. Security is now
+one important objetive.
+-----------------------------------------------------------
+
+-----------------------------------------------------------
+This install scripts are only to be used in a Debian GNU/Linux system.
+
+You can find .rpm and .deb packages in the download area of the project
+web site, at http://www.alamin.org
+-----------------------------------------------------------
+
+-----------------------------------------------------------
+This service has been tested in a Debian GNU/Linux 2.1 (slink) and a
+Debian GNU/Linux 2.2 (potato) systems.
+
+The install/uninstall script has been tested in Debian.
+init.d script may require changes in other GNU/Linux distributions.
+You can install this service with the install script.
+You can uninstall this service with the uninstall script.
+Do not update the program. Just uninstall it and reinstall again.
+Use the correct uninstall script for your current version prior to
+install with the new version.
+Save your log and configuration files before uninstall.
+Check the configuration file before starting it.
+
+gsgd startup script must be modified (see comments inside it) to be
+used in Debian GNU/Linux 2.1 (slink).
+
+Sys::Syslog Perl module in Debian GNU/Linux 2.1 (slink) does not exports
+setlogsock function, so, if you want to use syslog you need to export it,
+just locate Syslog.pm and add the following line after the EXPORT array:
+@EXPORT_OK = qw(setlogsock);
+
+WARNING: this service uses local4 facilities in /etc/syslog.conf by
+default. If you uninstalls this service, this facilities will be deleted
+from syslog.conf. You can change the facility name that you want to use in
+the configuration file with the option "syslog". Then, you must modify
+manually your syslog.conf file.
+-----------------------------------------------------------

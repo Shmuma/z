@@ -1,0 +1,1096 @@
+#!/usr/bin/perl -w
+#---------------------------------------------------------------------
+# gsgsmtpd
+# GSM SMS Gateway SMTP interface
+#---------------------------------------------------------------------
+# (C) Andrés Seco Hernández, April 2000-May 2001
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+#---------------------------------------------------------------------
+
+=pod
+
+=head1 NAME
+
+gsgsmtpd - Alamin GSM SMS Gateway SMTP interface
+
+=head1 SYNOPSIS
+
+gsgsmtpd [--version|--help]
+
+gsgsmtpd [--configfile config_file_name] [--debug|--nodebug]
+[--verbose|--noverbose] [--copyright|--nocopyright] [--pidfile pid_file]
+[--accounting accounting_file_name] [--syslog facility|--nosyslog]
+[--spool spool_directory] [--smtpport port_number]
+[--smtptosmsformat "field_list"] [--alias alias_file_name]
+[--maxaliasnestinglevel number]
+[--defallowserv default_allowed_services_list]
+[--usersfile users_file_name]
+
+=head1 DESCRIPTION
+
+gsgsmtpd is the gateway smtp interface. It receives connections from the
+ip network using the simple mail transfer protocol (smtp) and saves
+messages in their queue.
+
+=head1 OPTIONS
+
+=over
+
+=item --configfile <file_name>
+
+(default: /etc/alamin/gsgc.conf) Sets the config file to be used. The configfile option is not valid inside a config file (to redirect into another config file). You can put any number of times an option inside the config file, but only the latest is used. Use only lowercase letters. Options specified in the command line have preference over options listed inside a config file.
+
+=item --debug
+
+=item --nodebug
+
+(default: --debug) You can turn debugging on or off. Just use debug to see all messages in the log.
+
+=item --verbose
+
+=item --noverbose
+
+(default: --verbose) Set this option if you want to see messages about
+usual events in the log.
+
+=item --copyright
+
+=item --nocopyright
+
+(default: --nocopyright) If you set this option, copyright messages will be show every time Alamin starts.
+
+=item --pidfile <pid_file>
+
+(default: /var/run/alamin/gsgsmtpd.pid) File to save the pid of the
+proccess. This option can only be used as a command line option, not
+inside the config file.
+
+=item --accounting <accounting_file_with_complete_path>
+
+(default: /var/log/alamin/gsgd-accounting.log) Accounting file, where
+every attempt to send or receive a message is logged. You can use it to
+generate usage reports per user, computer, phone...
+
+=item --syslog <facility_name>
+
+=item --nosyslog
+
+(default: local4) Syslog facility to log messages, or nosyslog
+to avoid using syslog.
+
+=item --spool <spool_directory>
+
+(default: /var/spool/alamin) Directory structure path where messages
+are waiting to be sent.
+
+=item --smtpport <tcp_port_number|tcp_service_name>
+
+(default: smtp, or 25 if smtp does not exist in /etc/services) Port where
+the gateway server is listening for connections using smtp. If this port
+is less or equal to 1024, you need to run this script as a privileged
+user. This is not recommended. Use a tcp redirector like "redir" if you
+need really the smtp port (25), or use a port greater than 1024 and
+redirects your smtp connections to that port from the computers you send
+messages to the gateway using smtp.
+
+=item --smtptosmsformat <field_list>
+
+(default: "__FROM__#__SUBJECT__#__BODY__") This is the format of the sms
+that will be sent from a smtp mail message. The only message fields used
+are From, Subject and the body of the message. You must use the strings
+"__FROM__", "__SUBJECT__" and "__BODY__" to decide where to put each one.
+
+=item --allowip <list_of_ips_from_where_we_accept_connections>
+
+(default: all) You can set here a list of ip addresses from where you
+accept connections. The special word "all" allows all ips. If the special
+word "all" is used, then you can deny some ips with the "--denyip" option.
+Remote ip is matched from the beginning, so, "192.168." represents the
+range from "192.168.0.0" to "192.168.255.255". The list is space
+separated.
+
+=item --denyip <list_of_ips_from_where_we_not_accept_connec.>
+
+(default: none) You can set here a list of ip addresses from where you
+do not accept connections. The special word "none" denies all ips. This
+option is used only if the "--allowip" option has the value "all".
+Remote ip is matched from the beginning, so, "192.168." represents the
+range from "192.168.0.0" to "192.168.255.255". The list is space
+separated.
+
+=item --alias <alias_file>
+
+(default: /etc/alamin/alias.conf) This is the name of the file that
+has a list of alias to be used for phone numbers. You can send messages to
+"myphonenumber" if an entry exists in the alias file associating
+"myphonenumber" with your real phone number. The alias file is a list of
+lines with words, where the first word is changed by the rest of the words
+at the time gsgcmd queues the message, so a message can be sent to a lot
+of phones at a time, if more than one word follows the first word of a line.
+You can use one or more alias inside other alias. The level of nested alias
+allowed is defined in the "maxaliasnestinglevel" option. See example
+alias.conf file for examples. Alias can be used as groups of phones.
+
+=item --maxaliasnestinglevel <level>
+
+(default: 4) Max number of times an alias can be inside other alias thas
+is inside other alias that is inside other alias that ... You know.
+Increasing this level you increment the time is needed to decide what
+numbers are inside an alias if you use nesting of aliases (groups of
+groups). I think 4 is a good start. Change it to 1 if you do not use alias
+inside other alias (groups of groups).
+
+=item --defallowserv <default_allowed_service_list>
+
+(default: send_all) List of comma separated services from the following
+list: all_services, none, send_all, send_qx (x between 1 and 9),
+system_down, query_queue, retry_all, retry_qx (x between 1 and 9).
+Currently, query and retry options are not implemented. This list applies
+to anonymous connections. When a user is authenticated, he has its own
+allowed services list from the users file.
+
+=item --usersfile <users_file_name>
+
+(default: /etc/alamin/user.conf) This is the users file where Alamin keeps
+information about users names, passwords, email addresses, allowed
+services and so on. Its fields are separated by (:). The list of fileds
+is user:password:email:allowed_services_list:allowed_numbers_list. Email
+field can be blank. allowed_services_list is a comma separated list of the
+services valid to "--defallowserv" option. Allowed_numbers_list is a comma
+separated list of phone numbers that the user is allowed to send message
+to. The special words "all" and "none" can be used. A filename (fullpath
+is needed) can be used to search allowed phone numbers inside a file.
+YOU MUST KEEP THIS FILE WITH READ PRIVILEGE ONLY FOR alamin USER, as it
+contains passwords. See example file for examples. Default users and
+passwords are in the example file (root, operator and user). Users are
+authenticated from the client using a schema similar to CHAP. Passwords
+are not send in clear text over the network.
+
+=back
+
+=head1 RETURN VALUE
+
+=over
+
+=item 0
+
+successful.
+
+=item 1
+
+syntax error, incorrect command line.
+
+=item 2
+
+parameter lost.
+
+=back
+
+=head1 FILES
+
+/etc/alamin/gsgd.conf, gateway config file.
+/var/run/alamin/gsgsmtpd.pid, default pid file.
+/var/log/alamin/gsgd-accounting.log, def. accounting file.
+/var/spool/alamin, default spool directory.
+/etc/alamin/user.conf, default users file.
+
+=head1 SEE ALSO
+
+See also alamin(8), gsgc(1), gsgmdd(8) and gsgcmd(8)
+
+=head1 BUGS
+
+Send bugs to the author, please. I would like to keep the program without
+bugs.
+
+=head1 LICENSE
+
+Alamin GSM SMS Gateway
+Copyright (C) Andres Seco Hernandez and others.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+=head1 AUTHOR
+
+Andres Seco Hernandez <AndresSH@alamin.org>.
+
+=cut
+
+use strict;
+use IO::Socket;
+use Net::hostent;
+use Sys::Syslog qw(:DEFAULT setlogsock);
+
+#--------------------
+# Global vars
+#--------------------
+my $program_name = "gsgsmtpd";
+my $program_version = "v0.3.6 - May 6, 2001";
+
+my $configfile = "/etc/alamin/gsgd.conf";
+
+my $opt_debug = 1;
+my $opt_verbose = 1;
+my $opt_copyright = 0;
+my $opt_pidfile = "/var/run/alamin/".$program_name.".pid";
+
+my $opt_accounting = "/var/log/alamin/gsgd-accounting.log";
+my $opt_syslog = 1;
+my $opt_syslogfacility = "local4";
+my $opt_spool = "/var/spool/alamin";
+my $opt_smtpport = "smtp";
+my $opt_smtpport_number = 25;
+my $opt_smtptosmsformat = "__FROM__#__SUBJECT__#__BODY__";
+my @opt_allowip = ();
+$opt_allowip[0] = "all";
+my @opt_denyip = ();
+$opt_denyip[0] = "none";
+my $opt_alias = "/etc/alamin/alias.conf";
+my $opt_maxaliasnestinglevel = 4;
+my $opt_defallowserv = "send_all";
+my $opt_usersfile = "/etc/alamin/user.conf";
+
+read_config();
+
+# fork to daemon
+if (fork()) {
+  exit(0);
+}
+
+setlogsock "unix";
+openlog($program_name,"pid",$opt_syslogfacility);
+
+$SIG{CHLD} = \&REAPER;
+
+umask 007;
+open (PIDFILE,">".$opt_pidfile);
+print PIDFILE "$$";
+close (PIDFILE);
+logit("info","Starting Alamin GSM SMS Gateway - SMTP interface") if ($opt_verbose);
+
+if ($opt_copyright) {
+  print "$program_name - $program_version\n";
+  display_copyright();
+  print localtime(time())."\n\n";
+}
+
+my $lastitem = 0;
+getlastitem();
+
+my @alias_table = ();
+if (open (ALIASF,"<".$opt_alias)) {
+  while (<ALIASF>) {
+    if (! /^#/) {
+      chomp;
+      my @wordalias = split (/\s+/,$_);
+      if ($wordalias[0] and $wordalias [1]) {
+        push @alias_table, [@wordalias];
+      }
+    }
+  }
+  close (ALIASF);
+} else {
+  logit("err","Can not open alias file: ".$opt_alias);
+}
+
+my @users_table = ();
+if (open (USERSF,"<".$opt_usersfile)) {
+  while (<USERSF>) {
+    if (! /^#/) {
+      chomp;
+      my @wordusers = split (/:/,$_);
+      if ($wordusers[0] and $wordusers [1] and $wordusers[3] and $wordusers[4]) {
+#        logit("debug","Readed usersfile record: ".$wordusers[0]." ".$wordusers[1]." ".$wordusers[2]." ".$wordusers[3]." ".$wordusers[4]) if ($opt_debug);
+        push @users_table, [@wordusers];
+      }
+    }
+  }
+  close (USERSF);
+} else {
+  logit("err","Can not open users file: ".$opt_usersfile);
+}
+
+process_smtp();
+
+closelog;
+
+sub REAPER {
+  my $waitpid = wait;
+  $SIG{CHLD} = \&REAPER;
+  if ($? gt 0) {
+    logit("warning","Child process ".$waitpid." has ended with exitcode ".$?);
+  }
+}
+
+sub logit {
+  my ($log_type, $log_message) = @_;
+  if ($opt_syslog) {
+#    system "logger","-p",$opt_syslogfacility.".".$log_type,"-t",$program_name."[".$$."]",$log_message;
+#    openlog($program_name,"pid",$opt_syslogfacility);
+    syslog($log_type,$log_message);
+#    closelog;
+  }
+}
+
+#---------------------------------------------------------------------
+sub process_smtp {
+  if ($opt_smtpport =~ /\D/) {
+# need to search in services table
+    my $tmp_opt_smtpport_number = getservbyname($opt_smtpport,'tcp');
+    if ($tmp_opt_smtpport_number) {
+      $opt_smtpport_number = $tmp_opt_smtpport_number;
+    } else {
+      logit("warning","Service ".$opt_smtpport." not found. Using ".$opt_smtpport_number." instead.") if ($opt_verbose);
+    }
+  } else {
+# just only a number port
+    $opt_smtpport_number = $opt_smtpport;
+  }
+  my $sock = IO::Socket::INET->new(Proto     => 'tcp',
+                                   LocalPort => $opt_smtpport_number,
+				   Listen    => SOMAXCONN,
+				   Reuse     => 1,
+				   Timeout   => 60);
+  die "Can't setup server: $!\n" unless $sock;
+
+  my $runloop = 1;
+  while ($runloop) {
+    logit("info","Listening the network on port ".$opt_smtpport_number."...") if ($opt_verbose);
+    my $client = $sock->accept();
+    if ($client) {
+      $client->autoflush(1);
+      my $hostinfo = gethostbyaddr($client->peeraddr);
+      my $remotename = $hostinfo->name;
+      my $remoteaddr = inet_ntoa(${$hostinfo->addr_list}[0]);
+      if (!accept_remote_address($remoteaddr)) {
+        logit("info","Connection rejected from ".$remotename." ".$remoteaddr) if ($client->peerhost);
+        close $client;
+	next;
+      }
+      logit("info","Connection accepted from ".$remotename." ".$remoteaddr) if ($client->peerhost);
+      print $client "220 Alamin GSM SMS Gateway ready\r\n";
+# smtpstatus is:
+#  1 - waitforheloorehloorquit -> helo->2 ehlo->2 quit->5
+#  2 - waitformailfromorquit -> mailfrom->3 quit->5
+#  3 - waitforrcpttoordataorquit -> rcptto->3 data->4 quit->5
+#  4 - receivingmessage -> 4 until alonedot->1
+#  5 - exiting
+      my $smtpstatus = 1;
+      my $sendsms_from;
+      my @destinations;
+      my $current_allowed_numbers = "all";
+      my @full_message;
+      while (<$client>) {
+        chomp;
+        if (/\r$/) { chop; }
+        chomp;
+        if (/quit/i) {
+          if ($smtpstatus eq 1 || $smtpstatus eq 2 || $smtpstatus eq 3) {
+  	    $smtpstatus = 5;
+            print $client "221 Bye\r\n";
+	    last;
+  	  }
+        }
+        if ((/^helo/i) or (/^ehlo/i)) {
+          if ($smtpstatus eq 1) {
+            $smtpstatus = 2;
+            print $client "250 Hello\r\n";
+	    next;
+      	  }
+        } 
+        if (/^mail from:/i) {
+          if ($smtpstatus eq 2) {
+	    my @tobeignored;
+	    my $tmp_sendsms_from = substr($_,10,100);
+	    $tmp_sendsms_from =~ s/^ //;
+            ($sendsms_from,@tobeignored) = split(/ /,$tmp_sendsms_from);
+	    $sendsms_from =~ s/<//;
+	    $sendsms_from =~ s/>//;
+	    $sendsms_from =~ s/\r//;
+	    $sendsms_from =~ s/\n//;
+            $current_allowed_numbers = "all";
+# checks if sender is valid. checks for user althoug "send" appears into
+# the default allowed services option (defallowserv), to enable limiting a
+# user to send to all the sites when other anonymous people can.
+	    my $from_ok = 0;
+	    $from_ok = 1 if ($opt_defallowserv =~ /send/);
+	    USERLOOP: foreach (@users_table) {
+	      if ($_->[2] eq $sendsms_from) {
+		$current_allowed_numbers = $_->[4];
+		$from_ok = 1;
+		last USERLOOP;
+	      }
+	    }
+	    logit("debug","mail from: ".$sendsms_from) if ($opt_debug);
+	    if ($from_ok) {
+              print $client "250 Sender OK\r\n";
+	      $smtpstatus = 3;
+	    } else {
+	      logit("err","sender rejected: ".$sendsms_from);
+              print $client "500 Sender rejected\r\n";
+	    }
+	    next;
+	  }
+        } 
+        if (/^rcpt to:/i) {
+          if ($smtpstatus eq 3) {
+	    my @tobeignored;
+	    my $tmp_destinations = substr($_,8,100);
+	    $tmp_destinations =~ s/^ //;
+	    my $tmp_destinations_2;
+	    ($tmp_destinations_2,@tobeignored) = split(/ /,$tmp_destinations);
+	    $tmp_destinations_2 =~ s/<//;
+	    $tmp_destinations_2 =~ s/>//;
+	    $tmp_destinations_2 =~ s/\r//;
+	    $tmp_destinations_2 =~ s/\n//;
+	    my $tmp_destinations_3;
+            ($tmp_destinations_3,@tobeignored) = split(/\@/,$tmp_destinations_2);
+            push @destinations,expand_destination($tmp_destinations_3,1);
+	    logit("debug","rcpt to: ".$tmp_destinations_3) if ($opt_debug);
+            print $client "250 Recipient OK\r\n";
+	    next;
+  	  }
+        } 
+        if (/^data/i) {
+          if ($smtpstatus eq 3) {
+            print $client "354 Enter mail, end data with \<CR\>\<LF\>.\<CR\>\<LF\>\r\n";
+            $smtpstatus = 4;
+	    next;
+	  }
+        } 
+        if ($smtpstatus eq 4) {
+          if (length($_) eq 1 && /\./) {
+	    if ($opt_debug) {
+	      foreach (@destinations) {
+                logit("debug","destination expanded to: ".$_);
+	      }
+	    }
+# end of message
+# prepare message content
+            my $tmp_substitution;
+	    my $sendsms_message = $opt_smtptosmsformat;
+	    $sendsms_message =~ s/__FROM__/$sendsms_from/;
+	    $tmp_substitution = getfrommessage("__SUBJECT__",@full_message);
+	    $sendsms_message =~ s/__SUBJECT__/$tmp_substitution/;
+	    $tmp_substitution = getfrommessage("__BODY__",@full_message);
+	    $sendsms_message =~ s/__BODY__/$tmp_substitution/;
+	    my $counter_ok = 0;
+	    my $counter_nook = 0;
+	    foreach (@destinations) {
+	      my $one_destination = $_;
+	      my $number_allowed = 0;
+	      if (! ($current_allowed_numbers =~ /none/)) {
+	        if ($current_allowed_numbers =~ /all/) {
+	          $number_allowed = 1;
+                } else {
+		  if ($current_allowed_numbers =~ /\//) {
+#                 search inside a file
+                    if (open (ALLOWF,"<".$current_allowed_numbers)) {
+                      logit("debug","Checking for numbers inside file: ".$current_allowed_numbers) if ($opt_debug);
+                      FILELOOP: while (<ALLOWF>) {
+                        if (! /^#/) {
+                          chomp;
+			  if (/\r$/) { chop; }
+                          chomp;
+                          my @phoneandcomments = split (/\s+/,$_);
+                          if ($phoneandcomments[0]) {
+                            if ($phoneandcomments[0] eq $one_destination) {
+                              $number_allowed = 1;
+			      last FILELOOP;
+                            }
+                          }
+                        }
+                      }
+                      close (ALLOWF);
+                    } else {
+                      logit("err","Can not open allowed numbers file: ".$current_allowed_numbers);
+		    }
+		  } else {
+#                 search in the list
+                    LISTLOOP: foreach (split (/,/,$current_allowed_numbers)) {
+		      if (/$one_destination/) {
+		        $number_allowed = 1;
+			last LISTLOOP;
+		      }
+		    }
+		  }
+	        }
+	      }
+	      if (!$number_allowed) {
+                logit("warning","Not allowed to send to ".$one_destination." from ".$remotename."(".$remoteaddr."), user ".$sendsms_from);
+	        $counter_nook++;
+                print $client "500-Not allowed to sent to ".$one_destination."\r\n";
+	      } else {
+	        if (isvalidnumber($one_destination)) {
+  	          if (pre_sendsms(5, $sendsms_from." ".$remotename." ".$remoteaddr , $one_destination, $sendsms_message)) {
+	            $counter_ok++;
+                    print $client "250-Message queued to ".$one_destination."\r\n";
+	          } else {
+	            $counter_nook++;
+                    print $client "500-Can not sent to ".$one_destination."\r\n";
+		  }
+	        } else {
+	          $counter_nook++;
+                  print $client "500-".$one_destination." does not seems to be valid\r\n";
+	        }
+              }
+	    }
+	    if (!$counter_nook) {
+              print $client "250 $counter_ok messages queued\r\n";
+            } else {
+              print $client "500 Error sending $counter_nook message(s). $counter_ok message(s) queued\r\n";
+	    }
+            $smtpstatus = 2;
+            $sendsms_from = "";
+            @destinations = ();
+            $current_allowed_numbers = "all";
+            @full_message = ();
+	    next;
+  	  } else {
+# add received text to full message
+            push @full_message,$_;
+	    logit("debug","data: ".$_) if ($opt_debug);
+	  }
+        }
+      }
+      close $client;
+    }
+  }
+}
+
+#********************
+# FUNCTIONS
+#********************
+
+sub accept_remote_address {
+  my ($addrtocheck) = @_;
+  my $ara_response = 0;
+  if ($opt_allowip[0] eq "all") {
+#check inside denyip
+    $ara_response = 1;
+    foreach (@opt_denyip) {
+      if ($addrtocheck =~ /^$_/) {
+        $ara_response = 0;
+      }
+    }
+  } else {
+#check inside allowip
+    $ara_response = 0;
+    foreach (@opt_allowip) {
+      if ($addrtocheck =~ /^$_/) {
+        $ara_response = 1;
+      }
+    }
+  }
+  return $ara_response;
+}
+
+sub expand_destination {
+  my ($dest_original,$nesting_level) = @_;
+  if ($nesting_level > $opt_maxaliasnestinglevel) {
+    return $dest_original;
+  } else {
+    my @expand_response = ();
+    my @filestosearch = ();
+    my $isalias = 0;
+    foreach (@alias_table) {
+      if ($_->[0] eq $dest_original) {
+        $isalias = 1;
+	if ($_->[1] =~ /^\//) {
+	  push @filestosearch,$_->[1];
+	} else {
+          my $alias_counter = 1;
+          while ($_->[$alias_counter]) {
+            push @expand_response,expand_destination($_->[$alias_counter],$nesting_level+1);
+            $alias_counter++;
+	  }
+        }
+      }
+    }
+    foreach (@filestosearch) {
+      push @expand_response,expand_from_file($_);
+    }
+    if (!$isalias) {
+      push @expand_response,$dest_original;
+    }
+    return @expand_response;
+  }
+}
+
+sub expand_from_file {
+  my ($expandfile) = @_;
+  my @expand_f_response = ();
+  if (open (ALIASR,"<".$expandfile)) {
+    while (<ALIASR>) {
+      if (! /^#/) {
+        chomp;
+	if (/\r$/) { chop; }
+        chomp;
+        my @expandtmp = split (/\s+/);
+        if ($expandtmp[0]) {
+          push @expand_f_response, $expandtmp[0];
+        }
+      }
+    }
+    close (ALIASR);
+    return @expand_f_response;
+  } else {
+    logit("err","Can not open alias file: ".$expandfile);
+  }
+}
+
+sub getfrommessage {
+  my ($whattoget,@allthemessage) = @_;
+  my $answer = "";
+  CASE_GFM: {
+    if ($whattoget eq "__SUBJECT__")
+    {
+      my $header = 1;
+      foreach (@allthemessage) {
+        if ($header) {
+	  if (/^Subject: /i) {
+	    $answer = substr($_,9);
+	  }
+	}
+        if (length($_) < 1) {
+	  $header = 0;
+	}
+      }
+      last CASE_GFM;
+    }
+    if ($whattoget eq "__BODY__")
+    {
+      my $header = 1;
+      foreach (@allthemessage) {
+        if (!$header) {
+	  if (!$answer) {
+	    $answer = $_;
+	  } else {
+            $answer = $answer." ".$_;
+	  }
+	}
+        if (length($_) < 1) {
+	  $header = 0;
+	}
+      }
+      last CASE_GFM;
+    }
+  }
+  $answer =~ s/\r//;
+  $answer =~ s/\n//;
+  return $answer;
+}
+
+sub pre_sendsms {
+  my ($ss_queue,$ss_from,$ss_to,$ss_message) = @_;
+  if ($opt_debug) {
+    logit("debug","queue: ".$ss_queue);
+    logit("debug","from: ".$ss_from);
+    logit("debug","to: ".$ss_to);
+    logit("debug","message: ".$ss_message);
+  }
+  if (length($ss_message) > 160) {
+    $ss_message = substr($ss_message,0,160);
+  }
+  my $result = "OK";
+  if (!sendsms_queue($ss_queue,$ss_from,$ss_to,$ss_message)) {
+    $result = "ERROR";
+  }
+  write_accounting("OUT",$result,$ss_from,$ss_to,$ss_message);
+  if ($result eq "OK") {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+sub write_accounting {
+  my ($direction,$status,$from,$to,$message) = @_;
+  open (ACCF,">>$opt_accounting");
+  print ACCF "$direction,$status,queue,$from,$to,".localtime(time()).",XX $message XX\n" if ($opt_debug);
+  print ACCF "$direction,$status,queue,$from,$to,".localtime(time())."\n" if (! $opt_debug);
+  close (ACCF);
+}
+
+#********************
+# QUEUE INTERFACE
+#********************
+
+sub sendsms_queue {
+  my ($pg_queue,$pg_from,$pg_to,$pg_message) = @_;
+  my $exitcode;
+  my $result;
+  my @parts;
+  my $real_spool = $opt_spool."/q".$pg_queue;
+  $lastitem += 1;
+  my $zerofill = "";
+  my $i;
+  my $currentlength = length($lastitem);
+  my $limit = 8 - $currentlength;
+  for ($i = 0; $i < $limit; $i++) {
+    $zerofill = $zerofill."0";
+  }
+  my $tmp_spool_filename = $opt_spool."/".$$.".sms.txt";
+  my $spool_filename = $real_spool."/".$zerofill.$lastitem."-".$$.".sms.txt";
+  open (SPOOLFILE,">$tmp_spool_filename");
+  print SPOOLFILE "0\n";
+  print SPOOLFILE time()."\n";
+  print SPOOLFILE $pg_from."\n";
+  print SPOOLFILE $pg_to."\n";
+  print SPOOLFILE $pg_message."\n";
+  close (SPOOLFILE);
+  link $tmp_spool_filename,$spool_filename;
+  unlink $tmp_spool_filename;
+  logit("info","OK queuing to ".$pg_to." into queue ".$pg_queue." message ".$zerofill.$lastitem."-".$$.".sms.txt");
+  $exitcode = 1;
+  return $exitcode;
+}
+
+sub change_nonvisible_codes {
+  my ($in_line) = @_;
+  my $out_line = $in_line;
+  $out_line =~ s/\n/\<LF\>/g;
+  $out_line =~ s/\r/\<CR\>/g;
+  $out_line =~ s/\</\\\</g;
+  $out_line =~ s/\>/\\\>/g;
+  $out_line =~ s/\(/\\\(/g;
+  $out_line =~ s/\)/\\\)/g;
+  $out_line =~ s/\"/\<QUOTE\>/g;
+  return $out_line;
+}
+
+sub read_config {
+#--------------------
+# check for --configfile option
+#--------------------
+  my $nextconfigfile = 0;
+  foreach (@ARGV) {
+    /--version/ && do { display_version(); exit; };
+    /--help/ && do { display_usage(); exit; };
+    /--configfile/ && do { $nextconfigfile = 1; next; };
+    if ($nextconfigfile) {
+      $configfile = $_;
+      $nextconfigfile = 0;
+      next;
+    }
+  }
+  if ($nextconfigfile) {
+    print "Lost parameter for --configfile\n";
+    exit 2;
+  }
+
+#--------------------
+# read config file
+#--------------------
+  if (! -f $configfile) {
+    print "WARNING: There is no configuration file: $configfile\n";
+  } else {
+    open (CONFFILE,"<$configfile");
+    while (<CONFFILE>) {
+      if (substr($_,0,1) ne "#") {
+        my @field = split (/\s+/,$_);
+        if ($field[0]) {
+          CASE_CF: {
+            if ($field[0] eq "debug") {
+              $opt_debug = 1; last CASE_CF; }
+            if ($field[0] eq "nodebug") {
+              $opt_debug = 0; last CASE_CF; }
+            if ($field[0] eq "verbose") {
+              $opt_verbose = 1; last CASE_CF; }
+            if ($field[0] eq "noverbose") {
+              $opt_verbose = 0; last CASE_CF; }
+            if ($field[0] eq "copyright") {
+              $opt_copyright = 1; last CASE_CF; }
+            if ($field[0] eq "nocopyright") {
+              $opt_copyright = 0; last CASE_CF; }
+#pidfile option can not be in config file, only in command line.
+            if ($field[0] eq "accounting") {
+              $opt_accounting = $field[1]; last CASE_CF; }
+            if ($field[0] eq "syslog") {
+              $opt_syslog = 1; $opt_syslogfacility = $field[1]; last CASE_CF; }
+            if ($field[0] eq "nosyslog") {
+              $opt_syslog = 0; last CASE_CF; }
+            if ($field[0] eq "spool") {
+              $opt_spool = $field[1]; last CASE_CF; }
+            if ($field[0] eq "smtpport") {
+              $opt_smtpport = $field[1]; last CASE_CF; }
+            if ($field[0] eq "smtptosmsformat") {
+              $opt_smtptosmsformat = substr($_,16); last CASE_CF; }
+            if ($field[0] eq "allowip") {
+	      shift @field;
+	      @opt_allowip = ();
+	      push @opt_allowip,@field;
+	      last CASE_CF; }
+            if ($field[0] eq "denyip") {
+	      shift @field;
+	      @opt_denyip = ();
+	      push @opt_denyip,@field;
+	      last CASE_CF; }
+            if ($field[0] eq "alias") {
+              $opt_alias = $field[1]; last CASE_CF; }
+            if ($field[0] eq "maxaliasnestinglevel") {
+              $opt_maxaliasnestinglevel = $field[1]; last CASE_CF; }
+            if ($field[0] eq "defallowserv") {
+              $opt_defallowserv = $field[1]; last CASE_CF; }
+            if ($field[0] eq "usersfile") {
+              $opt_usersfile = $field[1]; last CASE_CF; }
+
+#	    logit("debug","Not recognised option in config file ignored: ".$field[0]) if ($opt_debug);
+#	    print("Not recognised option in config file ignored: ".$field[0]."\n") if ($opt_debug);
+          }
+        }
+      }
+    }
+    close (CONFFILE);
+  }
+
+#--------------------
+# command-line options
+#--------------------
+  my $nextpidfile = 0;
+  my $nextaccounting = 0;
+  my $nextsyslog = 0;
+  my $nextspool = 0;
+  my $nextsmtpport = 0;
+  my $nextsmtptosmsformat = 0;
+  my $nextalias = 0;
+  my $nextmaxaliasnestinglevel = 0;
+  my $nextdefallowserv = 0;
+  my $nextusersfile = 0;
+  foreach (@ARGV) {
+    /--configfile/ && do { $nextconfigfile = 1; next; };
+    /--debug/ && do { $opt_debug = 1; next; };
+    /--nodebug/ && do { $opt_debug = 0; next; };
+    /--verbose/ && do { $opt_verbose = 1; next; };
+    /--noverbose/ && do { $opt_verbose = 0; next; };
+    /--copyright/ && do { $opt_copyright = 1; next; };
+    /--nocopyright/ && do { $opt_copyright = 0; next; };
+    /--pidfile/ && do { $nextpidfile = 1; next; };
+    /--accounting/ && do { $nextaccounting = 1; next; };
+    /--syslog/ && do { $opt_syslog = 1; $nextsyslog = 1; next; };
+    /--nosyslog/ && do { $opt_syslog = 0; next; };
+    /--spool/ && do { $nextspool = 1; next; };
+    /--smtpport/ && do { $nextsmtpport = 1; next; };
+    /--smtptosmsformat/ && do { $nextsmtptosmsformat = 1; next; };
+#allowip and denyip options can only be in config file.
+    /--alias/ && do { $nextalias = 1; next; };
+    /--maxaliasnestinglevel/ && do { $nextmaxaliasnestinglevel = 1; next; };
+    /--defallowserv/ && do { $nextdefallowserv = 1; next; };
+    /--usersfile/ && do { $nextusersfile = 1; next; };
+    if ($nextconfigfile) {
+      $nextconfigfile = 0;
+      next;
+    }
+    if ($nextpidfile) {
+      $opt_pidfile = $_;
+      $nextpidfile = 0;
+      next;
+    }
+    if ($nextaccounting) {
+      $opt_accounting = $_;
+      $nextaccounting = 0;
+      next;
+    }
+    if ($nextsyslog) {
+      $opt_syslogfacility = $_;
+      $nextsyslog = 0;
+      next;
+    }
+    if ($nextspool) {
+      $opt_spool = $_;
+      $nextspool = 0;
+      next;
+    }
+    if ($nextsmtpport) {
+      $opt_smtpport = $_;
+      $nextsmtpport = 0;
+      next;
+    }
+    if ($nextsmtptosmsformat) {
+      $opt_smtptosmsformat = $_;
+      $nextsmtptosmsformat = 0;
+      next;
+    }
+    if ($nextalias) {
+      $opt_alias = $_;
+      $nextalias = 0;
+      next;
+    }
+    if ($nextmaxaliasnestinglevel) {
+      $opt_maxaliasnestinglevel = $_;
+      $nextmaxaliasnestinglevel = 0;
+      next;
+    }
+    if ($nextdefallowserv) {
+      $opt_defallowserv = $_;
+      $nextdefallowserv = 0;
+      next;
+    }
+    if ($nextusersfile) {
+      $opt_usersfile = $_;
+      $nextusersfile = 0;
+      next;
+    }
+    print "Invalid parameter: $_\n";
+    display_usage();
+    exit 1;
+  }
+
+  if ($nextpidfile) {
+    print "Lost parameter for --pidfile\n";
+    exit 2;
+  }
+  if ($nextaccounting) {
+    print "Lost parameter for --accounting\n";
+    exit 2;
+  } else {
+    if (! -f $opt_accounting) {
+#      logit("warning","Accounting file does not exist: ".$opt_accounting." has been created") if ($opt_verbose);
+      print("Accounting file does not exist: ".$opt_accounting." has been created\n") if ($opt_verbose);
+    }
+  }
+  if ($nextsyslog) {
+    print "Lost parameter for --syslog\n";
+    exit 2;
+  }
+  if ($nextspool) {
+    print "Lost parameter for --spool\n";
+    exit 2;
+  }
+  if ($nextsmtpport) {
+    print "Lost parameter for --smtpport\n";
+    exit 2;
+  }
+  if ($nextsmtptosmsformat) {
+    print "Lost parameter for --smtptosmsformat\n";
+    exit 2;
+  }
+  if ($nextalias) {
+    print "Lost parameter for --alias\n";
+    exit 2;
+  }
+  if ($nextmaxaliasnestinglevel) {
+    print "Lost parameter for --maxaliasnestinglevel\n";
+    exit 2;
+  }
+  if ($nextdefallowserv) {
+    print "Lost parameter for --defallowserv\n";
+    exit 2;
+  }
+  if ($nextusersfile) {
+    print "Lost parameter for --usersfile\n";
+    exit 2;
+  }
+}
+
+sub getlastitem {
+  my $result;
+  my @parts;
+  my $i;
+  my $real_spool;
+  for ($i = 1; $i < 13; $i++) {
+    if ($i == 10) {
+      $real_spool = $opt_spool."/tmp";
+    } else {
+      if ($i == 11) {
+        $real_spool = $opt_spool."/fail";
+      } else {
+        if ($i == 12) {
+          $real_spool = $opt_spool."/success";
+        } else {
+          $real_spool = $opt_spool."/q".$i;
+        }
+      }
+    }
+    opendir (DIRH,$real_spool);
+    while (1) {
+      $result = readdir(DIRH);
+      if ($result) {
+        @parts = split(/-/,$result);
+        if ($parts[0] =~ /^\d/) {
+          if ($lastitem lt $parts[0]) {
+            $lastitem = $parts[0];
+          }
+        }
+      } else {
+        last;
+      }
+    }
+    closedir (DIRH);
+  }
+  logit("debug","Greater spool file counter was ".$lastitem) if ($opt_debug);
+}
+
+sub isvalidnumber {
+  my ($numbertocheck) = @_;
+  my $ivn_response = 1;
+  if ($numbertocheck =~ /([+]?)([\d]+)/) {
+    my $tmp_numbertocheck = $1.$2;
+    if ($numbertocheck ne $tmp_numbertocheck) {
+      $ivn_response = 0;
+    }
+    if (length($tmp_numbertocheck) > 20) {
+      $ivn_response = 0;
+    }
+  } else {
+    $ivn_response = 0;
+  }
+  return $ivn_response;
+}
+
+sub display_copyright {
+  print "Alamin GSM SMS Gateway\n";
+  print "Copyright (C) Andres Seco Hernandez and others.\n\n";
+  print "This program is free software; you can redistribute it and/or\n";
+  print "modify it under the terms of the GNU General Public License\n";
+  print "as published by the Free Software Foundation; either version 2\n";
+  print "of the License, or (at your option) any later version.\n\n";
+  print "This program is distributed in the hope that it will be useful,\n";
+  print "but WITHOUT ANY WARRANTY; without even the implied warranty of\n";
+  print "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n";
+  print "GNU General Public License for more details.\n\n";
+}
+
+sub display_usage {
+  print "Usage: $program_name \[--version\|--help\]\n";
+  print "       $program_name \[--configfile config_file_name\]\n";
+  print "                \[--debug\|--nodebug\]\n";
+  print "                \[--verbose\|--noverbose\]\n";
+  print "                \[--copyright\|--nocopyright\]\n";
+  print "                \[--pidfile pid_file\]\n";
+  print "                \[--accounting accounting_file_name\]\n";
+  print "                \[--syslog facility\|--nosyslog\]\n";
+  print "                \[--spool spool_directory\]\n";
+  print "                \[--smtpport port_number\]\n";
+  print "                \[--smtptosmsformat \"field_list\"\]\n";
+  print "                \[--alias alias_file_name\]\n";
+  print "                \[--maxaliasnestinglevel number\]\n";
+  print "                \[--defallowserv default_allowed_services_list\]\n";
+  print "                \[--usersfile users_file_name\]\n";
+}
+
+sub display_version {
+  print "$program_name - $program_version\n";
+  display_copyright();
+  print "To contact developers, please send mail to \<info\@alamin.org\>.\n";
+  print "To ask for help, please send mail to \<alamin-user\@lists.sourceforge.net\>.\n";
+  print "See the project web site at URL http://www.alamin.org\n";
+}

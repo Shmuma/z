@@ -1,0 +1,37 @@
+#---------------------------------------------------------------------
+# Alamin GSM SMS Gateway - TO DO list
+#---------------------------------------------------------------------
+#
+# (C) Andrés Seco Hernández, April 2000-May 2001
+#
+
+Done
+----
+* Retry to send a message when it fails. Done in 0.3.2.
+* Control the retry time interval. Done in 0.3.2.
+* SMTP interface. Rewrote in 0.3.4.
+* "others read access" removed in message files in the queue. Done in 0.3.4.
+* Improve the logging system. Rewrote in 0.3.5.
+* Define a new user be used by the gateway daemons. Done in 0.3.5.
+* Limit access by ip/masq. Done in 0.3.6pre2.
+* Use groups of phones and alias. Done in 0.3.6pre2.
+* Authenticate clients from the IP network. Done in 0.3.6pre3.
+* Limit access by user/password. Done in 0.3.6pre3.
+
+Pending
+-------
+* Security,.... always pending.
+* Limit client connection time (to avoid simple DoS attacks from hostile networks).
+* Authenticate phones from the GSM network to run IMP commands.
+* Complete the smsqp implementation (queue query, queue delete, device pause, and so on.
+* More than one gsm device per gateway.
+* Fault tolerant and load balancing between gateways.
+* Document as much as possible.
+* Some more real input message processors, not only examples.
+* X-SMSC header record in smtp interface to allow changing smsc.
+* Join gsgcmd and gsgsmtpd to avoid code duplication.
+* Convert smtp interface to allow use it as a filter, messages not to be
+  sent using the gateway must be passed to another smtp MTA.
+* Use password for authentication in the smtp interface (see RFC)
+* Headers and footers in all sms.
+* Integrate patch from José Luis Hernández to use Spanish special characters (iso-8859-1).

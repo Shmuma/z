@@ -1,0 +1,122 @@
+#!/bin/sh
+echo Run this script only in a Debian GNU/Linux 2.1 or 2.2 system.
+echo If you have other system, make the changes contained in this file
+echo manually. Please, notify me at \"AndresSH@alamin.org\" with the
+echo commands you have used to install the gateway in your system.
+echo I will prepare installation script for that type of systems.
+echo Remove the exit statement from this script and run it again if you
+echo really want to use it.
+
+# remove this exit (or comment it) to enable this script to be run.
+exit
+
+echo -n "Creating alamin account and group: "
+adduser --system --home /var/spool/alamin --disabled-password alamin
+addgroup alamin
+echo "done."
+
+echo -n "Adding alamin to alamin and dialout groups: "
+addgroup alamin alamin
+addgroup alamin dialout
+echo "done."
+
+echo -n "Creating directories: "
+mkdir /etc/alamin
+echo -n "/etc/alamin, "
+mkdir /usr/lib/alamin
+echo -n "/usr/lib/alamin, "
+mkdir /var/log/alamin
+echo -n "/var/log/alamin, "
+mkdir /var/run/alamin
+echo -n "/var/run/alamin, "
+mkdir /var/spool/alamin
+mkdir /var/spool/alamin/q1
+mkdir /var/spool/alamin/q2
+mkdir /var/spool/alamin/q3
+mkdir /var/spool/alamin/q4
+mkdir /var/spool/alamin/q5
+mkdir /var/spool/alamin/q6
+mkdir /var/spool/alamin/q7
+mkdir /var/spool/alamin/q8
+mkdir /var/spool/alamin/q9
+mkdir /var/spool/alamin/tmp
+mkdir /var/spool/alamin/fail
+mkdir /var/spool/alamin/success
+echo "/var/spool/alamin tree."
+
+echo -n "Coping files: "
+cp ../bin/gsgcmd /usr/sbin
+cp ../bin/gsgmdd /usr/sbin
+cp ../bin/gsgsmtpd /usr/sbin
+cp ../bin/gsgc /usr/bin
+cp ../bin/imp/* /usr/lib/alamin
+cp ../config/gsgd.conf /etc/alamin
+cp ../config/gsgc.conf /etc/alamin
+cp ../config/alias.conf /etc/alamin
+cp ../config/user.conf /etc/alamin
+cp ../config/example.phonelist /etc/alamin
+cp cron.weekly.alamin /etc/cron.weekly/alamin
+cp alamin /etc/init.d
+update-rc.d alamin defaults 99
+cp ../doc/man/gsgc.1.gz /usr/share/man/man1
+cp ../doc/man/gsgcmd.8.gz /usr/share/man/man8
+cp ../doc/man/gsgmdd.8.gz /usr/share/man/man8
+cp ../doc/man/gsgsmtpd.8.gz /usr/share/man/man8
+cp ../doc/man/alamin.8.gz /usr/share/man/man8
+echo "done."
+
+echo -n "Adding local facility to syslog.conf: "
+FACILITY=`syslog-facility set all -/var/log/alamin/gsgd.log =info -/var/log/alamin/gsgd.info =warn -/var/log/alamin/gsgd.warn =err /var/log/alamin/gsgd.err =debug -/var/log/alamin/gsgd.debug`
+if [ $FACILITY = "none" ];
+then
+  echo "WARNING: no local facility free, you need to manually modify syslog.conf and gsgd.conf if you need logging.";
+else
+  echo -n "$FACILITY "
+  echo "$FACILITY" > syslog_facility_used
+  cp /etc/alamin/gsgd.conf /etc/alamin/gsgd.conf.bak
+  sed -e "s/syslog local4/#syslog local4/" /etc/alamin/gsgd.conf.bak > /etc/alamin/gsgd.conf.tmp
+  sed -e "s/#syslog localX/syslog $FACILITY/" /etc/alamin/gsgd.conf.tmp > /etc/alamin/gsgd.conf
+  rm /etc/alamin/gsgd.conf.tmp
+  cp /etc/alamin/gsgc.conf /etc/alamin/gsgc.conf.bak
+  sed -e "s/syslog local4/#syslog local4/" /etc/alamin/gsgc.conf.bak > /etc/alamin/gsgc.conf.tmp
+  sed -e "s/#syslog localX/syslog $FACILITY/" /etc/alamin/gsgc.conf.tmp > /etc/alamin/gsgc.conf
+  rm /etc/alamin/gsgc.conf.tmp
+  echo "done."
+  echo "You may need to restart syslog to reflect changes."
+  echo "Use '/etc/init.d/sysklogd restart' to restart syslog daemons."
+#  /etc/init.d/sysklogd restart;
+fi
+
+echo "Review the /etc/alamin/gsgd.conf config file."
+echo "Use '/etc/init.d/alamin start' to start the alamin gateway."
+#/etc/init.d/alamin start
+
+echo -n "Setting security: "
+chmod 755 /usr/sbin/gsgcmd
+chmod 755 /usr/sbin/gsgmdd
+chmod 755 /usr/sbin/gsgsmtpd
+chmod 755 /usr/bin/gsgc
+chmod 755 /usr/lib/alamin
+chmod 755 /usr/lib/alamin/*
+chmod 770 /etc/alamin
+chmod 660 /etc/alamin/*
+chmod 664 /etc/alamin/gsgc.conf
+chown -R alamin.alamin /etc/alamin
+chmod 755 /etc/cron.weekly/alamin
+chown root.root /etc/cron.weekly/alamin
+chmod 755 /etc/init.d/alamin
+touch /var/log/alamin/gsgd.info
+touch /var/log/alamin/gsgd.warn
+touch /var/log/alamin/gsgd.err
+touch /var/log/alamin/gsgd.debug
+touch /var/log/alamin/gsgd.log
+touch /var/log/alamin/gsgd-accounting.log
+chmod 770 /var/log/alamin
+chmod 660 /var/log/alamin/*
+chown -R alamin.alamin /var/log/alamin
+chmod 770 /var/run/alamin
+chown -R alamin.alamin /var/run/alamin
+chmod -R 770 /var/spool/alamin
+chown -R alamin.alamin /var/spool/alamin
+echo "done."
+
