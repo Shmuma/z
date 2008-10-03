@@ -1,0 +1,73 @@
+#---------------------------------------------------------------------
+# Alamin GSM SMS Gateway - SECURITY NOTE
+#---------------------------------------------------------------------
+#
+# (C) Andrés Seco Hernández, April 2000-May 2001
+#
+
+As this gateway has been wrote in Perl, it must have the tainted option
+(-T), but, at the present stage of development, this option causes some
+problems, and has beed decided not to use it now.
+
+Security is a prime target, because of that, the gateway has been tested
+under many conditions, and the install script takes care to set it as
+secure as i know.
+
+Calls to the "system" Perl function has been tested with all options that
+i can imagine to be used to get a hole, but i can't get any problem.
+
+Please, if you find any security issue or recomendation, email me at
+AndresSH@alamin.org with details.
+
+Currently, a simple DoS attack can be made as bug 000008 describes. You
+need now to allow ip access only from trusted networks. Use the allowip
+and denyip options. You can avoid this DoS attack using redir to check for
+timeout connections until timeout will be implemented inside the daemons.
+See startup script (gsgd) for example on using redir.
+
+Client that uses smsqp (sms queue protocol) can authenticate itself using
+a CHAP similar method. When it sends the "user" command, the gateway
+answers with a challenge string, that the client must use with the
+password to generate a response string. Both, client and server, make
+use of the "Digest::MD5" perl module.
+
+Please, if you think that any part of the user/password authentication
+process has any mistake, please, notify me. I would like to keep it as
+secure as we can.
+
+I am not sure if the RSA license must be included here because the use of
+the MD5 hash, so, here it is:
+
+	The MD5 algorithm is defined in RFC 1321. The basic C code
+	implementing the algorithm is derived from that in the RFC
+	and is covered by the following copyright:
+
+           Copyright (C) 1991-2, RSA Data Security, Inc. Created
+           1991. All rights reserved.
+
+           License to copy and use this software is granted
+           provided that it is identified as the "RSA Data
+           Security, Inc. MD5 Message-Digest Algorithm" in all
+           material mentioning or referencing this software or
+           this function.
+
+           License is also granted to make and use derivative
+           works provided that such works are identified as
+           "derived from the RSA Data Security, Inc. MD5 Message-
+           Digest Algorithm" in all material mentioning or
+           referencing the derived work.
+
+           RSA Data Security, Inc. makes no representations
+           concerning either the merchantability of this software
+           or the suitability of this software for any particular
+           purpose. It is provided "as is" without express or
+           implied warranty of any kind.
+
+           These notices must be retained in any copies of any
+           part of this documentation and/or software.
+
+
+Thanks.
+
+Andres Seco Hernandez
+<AndresSH@alamin.org>

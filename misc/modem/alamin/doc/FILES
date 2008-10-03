@@ -1,0 +1,16 @@
+gsgcmd		/usr/sbin
+gsgmdd		/usr/sbin
+gsgsmtpd	/usr/sbin
+
+gsgimp-*	/usr/lib/alamin
+gsgc		/usr/bin
+
+		/etc/alamin
+gsgd.conf	/etc/alamin
+gsgc.conf	/etc/alamin
+alias.conf	/etc/alamin
+user.conf	/etc/alamin
+*.phonelist	/etc/alamin
+
+		/var/spool/alamin
+*		/var/spool/alamin

@@ -1,0 +1,46 @@
+Juan C. Carrión
+	He gifts me my first Nokia phone (5110) to use with gnokii.
+Jaime Gil
+	He test some IMPs (Input Message Processors) using the gateway. He
+	was the first tester.
+José Luis Ranz
+	He test some IMPs and makes me some suggestions. He is helping in
+	writing man pages.
+Manolo ??
+	He test some IMPs.
+Caja de Guadalajara
+	The first real system that make use of this service was started in
+	Caja de Guadalajara (Guadalajara-Spain) in the last days of May
+	2000. They give me time and a real installation to test all the
+	versions of the gateway.
+Junjun Gacho
+	He starts using the gateway in another real system. He gives me a
+	reason to continue developing, people is using it to their needs.
+Colin Phipps
+	He suggests some changes to improve security. He is a Debian
+	developer. His "logit patch" is included from version 0.3.5.
+Giuseppe Vacanti
+	Log rotation script to be included in the weekly cron has been
+	copied from diald. Giuseppe makes that script for diald.
+IREDI and RAN Internet at http://www.iredi.com and http://www.ran.es
+	They hosted the web page of the project under the domain
+	http://www.alamin.es.org. Registration and hosting were free of
+	charge.
+SourceForge at http://www.sourceforge.net
+	They have given us a lot of resources to develop and administer
+	open source projects. They currently host the project web page, at
+	http://alamin.sourceforge.net
+Tomas Halgas
+	Patch to check email address and destination phone number in
+	gsgsmtpd.
+Alfredo Martin
+	He has designed project banners.
+José Luis Hernández
+	He has made a patch to send using a different char code
+	(iso-8859-1 and others) over AT interface.
+Collaborations
+	Some volunters offers their time and knowledge to write and
+	translate documentation and package the software for some
+	GNU/Linux distributions. See the PEOPLE file.
+All the people that visits the Alamin GSM SMS Gateway web site
+	All of them make my motivation to grow.

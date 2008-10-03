@@ -1,0 +1,45 @@
+#!/usr/bin/perl -w
+#---------------------------------------------------------------------
+# gsgimp-financedemo
+#---------------------------------------------------------------------
+# (C) Andrés Seco Hernández, April-May 2000
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+#---------------------------------------------------------------------
+
+use strict;
+
+my ($arg_client,$arg_command) = @ARGV;
+
+my $debug = 1;
+my $program_name = "gsgimp-financedemo";
+my $program_version = "v0.0.1 - June 2, 2000";
+my $commandtorun = "gsgc --send $arg_client ";
+my $response = "";
+
+my @tokens = split(/\s+/,$arg_command);
+
+CASE_TOKEN: {
+  if ($tokens[0] =~ /TEST/) {
+    $response = "Finance Demo Savings Bank.\nTEST OK.\nSend other commands if you want.\nThanks for using the Alamin GSM SMS Gateway.";
+    last CASE_TOKEN;
+  }
+  if ($tokens[0] =~ /LASTMOVES/) {
+    $response = "Finance Demo Savings Bank.\nAccount: 3000.010.025289.5:\n05/06/00 CarInssurance 1500 EU\n06/06/00 HelpTax 223 EU\n07/06/00 MovilTax 450 EU";
+    last CASE_TOKEN;
+  }
+  $response = "Finance Demo application.\nCommand not valid.\nRetry again if you want.";
+}
+
+$commandtorun = $commandtorun."\"".$response."\" >/dev/null";
+my $answer = system ($commandtorun);
+exit($answer);

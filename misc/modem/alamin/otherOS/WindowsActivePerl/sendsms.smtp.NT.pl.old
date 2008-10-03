@@ -1,0 +1,271 @@
+#!/usr/bin/perl
+#---------------------------------------------------------------------
+# gsmsmsc
+#---------------------------------------------------------------------
+# SMS messaging native client for Alamin GSM SMS Gateway
+#---------------------------------------------------------------------
+#
+# (C) Andrés Seco Hernández, April 2000
+#
+# 0.1.0 - April 13, 2000
+#		First version.
+# 0.2.0 - April 29, 2000
+#		Adaptation to the v0.2.0 server.
+#		Limited functionality. Only to send messages using
+#		the SMTP interface of the server.
+# 0.2.1 - May 2, 2000
+#		Client can now send a message for multiple recipients.
+#		First parameter must be the message, and next will be
+#		recipients.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+#---------------------------------------------------------------------
+
+########
+# MAIN #
+########
+
+$opt_verbose = 1;
+$program_name = "gsmsmsc";
+$program_version = "v0.2.1 - May 2, 2000";
+
+#--------------------
+# version/copyright message
+#--------------------
+if ($opt_verbose) {
+  print "$program_name - $program_version\n";
+  print "(C) Andres Seco Hernandez. AndresSH\@alamin.org\n\n";
+  print "This program is free software; you can redistribute it and/or\n";
+  print "modify it under the terms of the GNU General Public License\n";
+  print "as published by the Free Software Foundation; either version 2\n";
+  print "of the License, or (at your option) any later version.\n\n";
+  print "This program is distributed in the hope that it will be useful,\n";
+  print "but WITHOUT ANY WARRANTY; without even the implied warranty of\n";
+  print "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n";
+  print "GNU General Public License for more details.\n\n";
+  print localtime(time())."\n\n";
+}
+
+my ($message_text, @to_argv) = @ARGV;
+
+sub readsmtp {
+  $endline="no";
+  $ls_received = "";
+  $ls_code = "";
+  $ls_next = "";
+  $counter = 0;
+  do {
+    $counter += 1;
+    read(SMTPSOCKET,$buffer,1);
+    if ( $buffer eq "\n" ) {
+      $endline = "yes";
+    } else {
+      $ls_received = $ls_received.$buffer;
+      if ( $counter < 4 ) {
+        $ls_code = $ls_code.$buffer;
+      }
+      if ( $counter eq "4" ) {
+        $ls_next = $buffer;
+      }
+    }    
+  } until ( $endline eq "yes" );
+  return $ls_received, $ls_code, $ls_next;
+}
+
+$local_host = qx { uname -n };
+chop ($local_host);
+$remote_host = "localhost";
+$remote_port = 11201;
+$AF_INET = 2;
+$SOCK_STREAM = 1;
+$sockaddr = 'S n a4 x9';
+
+print "getprotobyname(tcp)=";
+($nombre,$alias,$proto) = getprotobyname('tcp');
+print "$nombre:$alias:$proto\n";
+
+print "gethostbyname($remote_host)=";
+($nombre,$alias,$tipod,$long,@smtpdirs) = gethostbyname($remote_host);
+($a,$b,$c,$d) = unpack('C4',$smtpdirs[0]);
+print "$nombre:$alias:$tipod:$long:$a.$b.$c.$d\n";
+
+print "gethostbyname($local_host)=";
+($nombre,$alias,$tipod,$long,@localdirs) = gethostbyname($local_host);
+($a,$b,$c,$d) = unpack('C4',$localdirs[0]);
+print "$nombre:$alias:$tipod:$long:$a.$b.$c.$d\n";
+
+$local_port = 11214;
+
+$reintentar = "si";
+do {
+  $reintentar = "no";
+
+  $here = pack($sockaddr,$AF_INET,$local_port,$localdirs[0]);
+  $there = pack($sockaddr,$AF_INET,$remote_port,$smtpdirs[0]);
+
+  select(SMTPSOCKET);
+  $| = 1;
+  select(stdout);
+
+  socket(SMTPSOCKET,$AF_INET,$SOCK_STREAM,$proto) || die "No puedo abrir $!\n";
+  print "Socket creado\n";
+
+  bind(SMTPSOCKET,$here) || die "No puedo realizar la ligadura\n";
+  print "Ligadura realizada\n";
+
+  $bucle = 0;
+
+  do {
+    $resultado = connect(SMTPSOCKET,$there);
+    if ( $resultado != 1 ) {
+      print "No se ha podido conectar. Espera 1 segundo.\n";
+      sleep(1);
+      $bucle += 1;
+      if ( $bucle eq 4 ) {
+        $resultado = 1;
+        print "4 intentos de conectar sin exito\n";
+      }
+    }
+  } while ( $resultado != 1 );
+  print "Despues de la conexión\n $bucle ";
+
+  if ( $bucle eq 4 ) {
+    $error = "si";
+    print "ERROR por numero de intentos de conexion superados en el puerto $local_port\n";
+    if ( $local_port != 1039 ) {
+      $local_port++;
+      print "Reintento por puerto $local_port\n";
+      $reintentar = "si";
+      $error = "no";
+    }
+  } else {
+    $error = "no";
+  }
+
+} while ( $reintentar ne "no" );
+
+if ( $error eq "no" ) {
+  $next = " ";
+  do {
+    # 220 es correcto
+    ($received, $code, $next) = readsmtp;
+    if ( $code ne "220" ) {
+      $error = "yes";
+      print "ERROR: $code\n";
+    }
+    print "Recibido: $received\n";
+  } while ( $next ne " " );
+}
+
+if ( $error eq "no" ) {
+  print "HELO $local_host\n";
+  print SMTPSOCKET "HELO $local_host\n";
+  $next = " ";
+  do {
+    # 250 es correcto
+    ($received, $code, $next) = readsmtp;
+    if ( $code ne "250" ) {
+      $error = "yes";
+      print "ERROR: $code\n";
+    }
+    print "Recibido: $received\n";
+  } while ( $next ne " " );
+}
+
+if ( $error eq "no" ) {
+  print "MAIL FROM: gsmsmsc\@$local_host\n";
+  print SMTPSOCKET "MAIL FROM: gsmsmsc\@$local_host\n";
+  $next = " ";
+  do {
+    # 250 es correcto
+    ($received, $code, $next) = readsmtp;
+    if ( $code ne "250" ) {
+      $error = "yes";
+      print "ERROR: $code\n";
+    }
+    print "Recibido: $received\n";
+  } while ( $next ne " " );
+}
+
+foreach my $to_argv_one (@to_argv) {
+  if ( $error eq "no" ) {
+    print "RCPT TO: $to_argv_one\@$remote_host\n";
+    print SMTPSOCKET "RCPT TO: $to_argv_one\@$remote_host\n";
+    $next = " ";
+    do {
+      # 250 es correcto
+      ($received, $code, $next) = readsmtp;
+      if ( $code ne "250" ) {
+        $error = "yes";
+        print "ERROR: $code\n";
+      }
+      print "Recibido: $received\n";
+    } while ( $next ne " " );
+  }
+}
+
+if ( $error eq "no" ) {
+  print "DATA\n";
+  print SMTPSOCKET "DATA\n";
+  $next = " ";
+  do {
+    # 354 es correcto
+    ($received, $code, $next) = readsmtp;
+    if ( $code ne "354" ) {
+      $error = "yes";
+      print "ERROR: $code\n";
+    }
+    print "Recibido: $received\n";
+  } while ( $next ne " " );
+}
+
+if ( $error eq "no" ) {
+  print "From: gsmsmsc\@$local_host\n";
+  print SMTPSOCKET "From: gsmsmsc\@$local_host\n";
+  print "To: gsmsmsc\@$remote_host\n";
+  print SMTPSOCKET "To: gsmsmsc\@$remote_host\n";
+  print "Subject: sms\n\n";
+  print SMTPSOCKET "Subject: sms\n\n";
+  print "$message_text\n";
+  print SMTPSOCKET "$message_text\n";
+  print ".\n";
+  print SMTPSOCKET ".\n";
+  $next = " ";
+  do {
+    # 250 es correcto
+    ($received, $code, $next) = readsmtp;
+    if ( $code ne "250" ) {
+      $error = "yes";
+      print "ERROR: $code\n";
+    }
+    print "Recibido: $received\n";
+  } while ( $next ne " " );
+}
+
+if ( $error eq "no" ) {
+  print "QUIT\n";
+  print SMTPSOCKET "QUIT\n";
+  $next = " ";
+  do {
+    # 221 es correcto
+    ($received, $code, $next) = readsmtp;
+    if ( $code ne "221" ) {
+      $error = "yes";
+      print "ERROR: $code\n";
+    }
+    print "Recibido: $received\n";
+  } while ( $next ne " " );
+}
+
+close (SMTPSOCKET);
+print "Socket cerrado\n";
+

@@ -1,0 +1,1391 @@
+#!/usr/bin/perl -w
+#---------------------------------------------------------------------
+# gsgmdd
+# GSM SMS Gateway Message Dispatcher Daemon
+#---------------------------------------------------------------------
+# (C) Andrés Seco Hernández, April 2000-May 2001
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+#---------------------------------------------------------------------
+
+=pod
+
+=head1 NAME
+
+gsgmdd - Alamin GSM SMS Gateway Message Dispatcher
+
+=head1 SYNOPSIS
+
+gsgmmd [--version|--help]
+
+gsgmmd [--configfile config_file_name] [--debug|--nodebug]
+[--verbose|--noverbose] [--copyright|--nocopyright] [--pidfile pid_file]
+[--accounting accounting_file_name]
+[--syslog facility|--nosyslog]
+[--spool spool_directory]
+[--gsmdevice (gnokii 0.3.0|0.3.2)|(at text|pdu) deviceport]
+[--gnokiipath gnokii_binary_with_complete_path]
+[--sttypath stty_binary_with_completa_path]
+[--chatpath chat_binary_with_completa_path]
+[--sttystring serial_port_initialization_string]
+[--keepsuccess|--nokeepsuccess]
+[--keepfail|--nokeepfail]
+[--maxin number_of_messages]
+[--maxout number_of_messages]
+[--imp "command_to_run_when_a_message_is_received"]
+[--smsc short_message_service_center_number]
+[--allowclientsmsc|--noallowclientsmsc]
+
+=head1 DESCRIPTION
+
+gsgmdd is the gateway message dispatcher. It connects to the gsm device
+periodically to check for new incoming messages, runs input message
+proccesor scripts for each input message, and sends queued messages.
+
+=head1 OPTIONS
+
+=over
+
+=item --configfile <file_name>
+
+(default: /etc/alamin/gsgc.conf) Sets the config file to be used. The configfile option is not valid inside a config file (to redirect into another config file). You can put any number of times an option inside the config file, but only the latest is used. Use only lowercase letters. Options specified in the command line have preference over options listed inside a config file.
+
+=item --debug
+
+=item --nodebug
+
+(default: --debug) You can turn debugging on or off. Just use debug to see all messages in the log.
+
+=item --verbose
+
+=item --noverbose
+
+(default: --verbose) Set this option if you want to see messages about
+usual events in the log.
+
+=item --copyright
+
+=item --nocopyright
+
+(default: --nocopyright) If you set this option, copyright messages will be show every time Alamin starts.
+
+=item --pidfile <pid_file>
+
+(default: /var/run/alamin/gsgcmd.pid) File to save the pid of the
+proccess. This option can only be used as a command line option, not
+inside the config file.
+
+=item --accounting <accounting_file_with_complete_path>
+
+(default: /var/log/alamin/gsgd-accounting.log) Accounting file, where
+every attempt to send or receive a message is logged. You can use it to
+generate usage reports per user, computer, phone...
+
+=item --syslog <facility_name>
+
+=item --nosyslog
+
+(default: local4) Syslog facility to log messages, or nosyslog
+to avoid using syslog.
+
+=item --spool <spool_directory>
+
+(default: /var/spool/alamin) Directory structure path where messages
+are waiting to be sent.
+
+=item --gsmdevice <gsmdevice_type> <gsmdevice_mode> <device_serial_port>
+
+(default: "at text /dev/gsm") Currently, only "at" and "gnokii" can be
+used as <gsmdevice_type>. "at" uses the "chat" program to dialogue with
+the gsm device, and "stty" to configure the serial port. <gsmdevice_mode>
+can be "text" or "pdu" to use the text mode or pdu mode in the at
+interface. Currently, only "text" is implemented. "gnokii" uses the
+Gnokii project command line binary. Versions 0.3.0 and 0.3.2 of Gnokii
+have been succesfully tested. <gsmdevice_mode> is the gnokii version you
+use, because the differences in the output format of different versions.
+The <device_serial_port> option is ignored in this case. It will be used
+in the future to support more than one gsm device attached to the same
+computer. You can make /dev/gsm to be a symbolic link to the device
+serial port where you attach the modem or the phone (you can link serial
+device to /dev/gsm "ln -s /dev/ttyS0 /dev/gsm") or use the original
+device name in the gsmdevice option. See config file for examples.
+
+=item --gnokiipath <gnokii_binary_with_complete_path>
+
+(default: /usr/bin/gnokii) Location of gnokii binary.
+
+=item --sttypath <stty_binary_with_complete_path>
+
+(default: /bin/stty) Location of stty binary.
+
+=item --chatpath <chat_binary_with_complete_path>
+
+(default: /usr/sbin/chat) Location of stty binary.
+
+=item --sttystring <serial_port_initialization_string>
+
+(default: nothing, empty string) This option is not used if you select
+"gnokii" in the gsmdevice option. If you have communication problems
+between your computer and the gsm modem, configure the serial port
+using a program like minicom and exit from it without reseting the
+communications port ("Quit with no reset" in minicom). Then, run
+"stty -g </dev/ttyS0" (change ttyS0 with your serial port name).
+The output of that command is what you want to put here as the
+parameter for stty to configure your serial port each time Alamin
+starts. Read your gsm modem manual for your needs. See config file for
+examples.
+
+=item --keepsuccess
+
+=item --nokeepsuccess
+
+(default: --nokeepsuccess) Keep or discard successful sent messages.
+
+=item --keepfail
+
+=item --nokeepfail
+
+(default: --keepfail) Keep or discard failed to send messages.
+
+=item --maxin <maximum_number_input_messages_to_read_together_in_cycle>
+
+(default: 10) Maximum number of incoming messages that will be procesed in
+a cycle of the main loop of gsgmdd. Then, outgoing messages will be sent.
+
+=item --maxout <maximum_number_output_messages_to_sent_together_in_cycle>
+
+(default: 10) Maximum number of queued messages that will be procesed in a
+cycle of the main loop of gsgmdd. Then, incoming messages will be checked.
+
+=item --imp <command_to_run>
+
+(default: /usr/lib/alamin/gsgimp-mailpostmaster) SECURITY NOTE: use this
+option carefully, it can compromise your system. You can run any command,
+writing previously a parser to your command, as gsgimp-mailpostmaster
+does. Sender phone is passed as the first argument to the command,
+and the message as the second argument. Look into /usr/lib/alamin for
+other IMPs.
+
+=item --smsc <short_message_service_center_number>
+
+(default: default) You can use this option to send messages over different
+SMSCs. The special word "default"
+causes not to send the SMSC to the gsm device. Just use the default SMSC
+of your gsm SIM card. You must specify the SMSC in international format,
+that is, plus sign (+), country prefix and phone number (+34123123123).
+
+=item --allowclientsmsc
+
+=item --noallowclientsmsc
+
+(default: --allowclientsmsc) You can allow clients (or not) to select
+other SMSC than the default or the one you have specified in "--smsc"
+option. Some mobile phone operators charges you with big costs if you use
+external SMSCs, so, perhaps, you do not want clients to select
+other SMSCs.
+
+=back
+
+=head1 RETURN VALUE
+
+=over
+
+=item 0
+
+successful.
+
+=item 1
+
+syntax error, incorrect command line.
+
+=item 2
+
+parameter lost.
+
+=item 4
+
+gsm interface not implemented.
+
+=back
+
+=head1 FILES
+
+/etc/alamin/gsgd.conf, gateway config file.
+/var/run/alamin/gsgmdd.pid, default pid file.
+/var/log/alamin/gsgd-accounting.log, def. accounting file.
+/var/spool/alamin, default spool directory.
+/usr/lib/alamin, input message proccesors directory.
+
+=head1 SEE ALSO
+
+See also alamin(8), gsgc(1), gsgcmd(8) and gsgsmtpd(8)
+
+=head1 BUGS
+
+Send bugs to the author, please. I would like to keep the program without
+bugs.
+
+=head1 LICENSE
+
+Alamin GSM SMS Gateway
+Copyright (C) Andres Seco Hernandez and others.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+=head1 AUTHOR
+
+Andres Seco Hernandez <AndresSH@alamin.org>.
+
+=cut
+
+use strict;
+use IO::Socket;
+use Net::hostent;
+use Sys::Syslog qw(:DEFAULT setlogsock);
+
+#--------------------
+# Global vars
+#--------------------
+my $program_name = "gsgmdd";
+my $program_version = "v0.3.6 - May 6, 2001";
+
+my $configfile = "/etc/alamin/gsgd.conf";
+
+my $opt_debug = 1;
+my $opt_verbose = 1;
+my $opt_copyright = 0;
+my $opt_pidfile = "/var/run/alamin/".$program_name.".pid";
+
+my $opt_accounting = "/var/log/alamin/gsgd-accounting.log";
+my $opt_syslog = 1;
+my $opt_syslogfacility = "local4";
+my $opt_spool = "/var/spool/alamin";
+
+my $opt_gsmdevice = "at";
+my $opt_gsmdevicemode = "text";
+my $opt_gsmdeviceport = "/dev/gsm";
+my $opt_gnokiipath = "/usr/bin/gnokii";
+my $opt_sttypath = "/bin/stty";
+my $opt_chatpath = "/usr/sbin/chat";
+my $opt_sttystring = "";
+
+my $opt_keepsuccess = 0;
+my $opt_keepfail = 1;
+
+my $opt_maxin = 10;
+my $opt_maxout = 10;
+
+my $opt_imp = "/usr/lib/alamin/gsgimp-mailpostmaster"; 
+
+my $opt_smsc = "default";
+my $opt_allowclientsmsc = 1;
+
+my @retryqueue;
+$retryqueue[1][0] = 1;
+$retryqueue[1][1] = 5;
+$retryqueue[2][0] = 1;
+$retryqueue[2][1] = 5;
+$retryqueue[3][0] = 1;
+$retryqueue[3][1] = 5;
+$retryqueue[4][0] = 1;
+$retryqueue[4][1] = 5;
+$retryqueue[5][0] = 1;
+$retryqueue[5][1] = 5;
+$retryqueue[6][0] = 1;
+$retryqueue[6][1] = 5;
+$retryqueue[7][0] = 1;
+$retryqueue[7][1] = 5;
+$retryqueue[8][0] = 1;
+$retryqueue[8][1] = 5;
+$retryqueue[9][0] = 1;
+$retryqueue[9][1] = 5;
+
+read_config();
+validate_options();
+
+# fork to daemon
+if (fork()) {
+  exit(0);
+}
+
+setlogsock "unix";
+openlog($program_name,"pid",$opt_syslogfacility);
+
+$SIG{CHLD} = \&REAPER;
+
+umask 007;
+open (PIDFILE,">".$opt_pidfile);
+print PIDFILE "$$";
+close (PIDFILE);
+logit("info","Starting Alamin GSM SMS Gateway - Message Dispatcher") if ($opt_verbose);
+
+if ($opt_copyright) {
+  print "$program_name - $program_version\n";
+  display_copyright();
+  print localtime(time())."\n\n";
+}
+
+process_native_in();
+
+closelog;
+
+sub REAPER {
+  my $waitpid = wait;
+  $SIG{CHLD} = \&REAPER;
+  if ($? gt 0) {
+    logit("warning","Child process ".$waitpid." has ended with exitcode ".$?);
+  }
+}
+
+sub logit {
+  my ($log_type, $log_message) = @_;
+  if ($opt_syslog) {
+#    system "logger","-p",$opt_syslogfacility.".".$log_type,"-t",$program_name."[".$$."]",$log_message;
+#    openlog($program_name,"pid",$opt_syslogfacility);
+    syslog($log_type,$log_message);
+#    closelog;
+  }
+}
+
+#---------------------------------------------------------------------
+sub process_native_in {
+  if ($opt_gsmdevice eq "at") {
+    if ($opt_sttystring) {
+      logit("debug","Setting serial port configuration") if ($opt_debug);
+      my $sttycommand = $opt_sttypath." ".$opt_sttystring." <".$opt_gsmdeviceport;
+      system $sttycommand;
+    }
+  }
+  while (1) {
+    my $mustwait = 1;
+    logit("info","Checking incoming messages...") if ($opt_verbose);
+    my $in_counter = 0;
+    while (1) {
+      my ($inc_from, $inc_smsc, $inc_message) = pre_getsms();
+      if ($inc_from) {
+	$mustwait = 0;
+        $in_counter++;
+	logit("info","OK getting message from ".$inc_from) if ($opt_verbose);
+        write_accounting("IN","OK",$inc_from,"local",$inc_smsc,$inc_message);
+        system $opt_imp,$inc_from,$inc_message;
+	if ($in_counter >= $opt_maxin) {
+	  logit("info","Maximum input counter of ".$opt_maxin." reached. Finishing input cycle.");
+	  last;
+	}
+      } else {
+        last;
+      }
+    }
+    logit("info","Checking queued messages...") if ($opt_verbose);
+    my $out_counter = 0;
+    my $out_counter_msg = 0;
+    my $numqueue;
+    my $current_queue_file;
+    for ($numqueue = 1; $numqueue < 10; $numqueue++) {
+      if ($out_counter >= $opt_maxout) {
+        if (! $out_counter_msg) {
+	  logit("info","Maximum output counter of ".$opt_maxout." reached. Finishing output cycle.");
+	  $out_counter_msg = 1;
+	}
+      } else {
+# processing queue $numqueue
+        logit("debug","Queue ".$numqueue) if ($opt_debug);
+        while (1) {
+          if ($out_counter >= $opt_maxout) {
+            if (! $out_counter_msg) {
+	      logit("info","Maximum output counter of ".$opt_maxout." reached. Finishing output cycle.");
+	      $out_counter_msg = 1;
+	    }
+	    last;
+          } 
+          $current_queue_file = first_queue_file($numqueue);
+          if (! $current_queue_file) {
+	    last;
+          }
+# determine if this file is good to be processed
+# a file is good if
+# - its retry num is 0 (never has been processed) or
+# - its retry num is greater than 0 and less than $retryqueue[$numqueue][0]
+#   and current time is less than
+#   previous time plus $retryqueue[$numqueue][$numretry]*60
+# a file must be delete if
+# - its retry num is greater or equal than $retryqueue[$numqueue][0]
+          my $checkanswer = checktoprocess($numqueue,$current_queue_file);
+# 0 -> ok to process it
+# 1 -> skip, not now
+# 2 -> delete it, it is very old
+          if (! $checkanswer) {
+# process it
+            $out_counter++;
+            $mustwait = 0;
+	    logit("debug","Found file ".$current_queue_file." in queue ".$numqueue) if ($opt_debug);
+            if (!process_queue_file($numqueue,$current_queue_file)) {
+# if process is successful, delete it
+              if ($opt_keepsuccess) {
+                link $opt_spool."/q".$numqueue."/".$current_queue_file,$opt_spool."/success/".$current_queue_file;
+	      }
+              unlink $opt_spool."/q".$numqueue."/".$current_queue_file;
+            } else {
+# if process is not successful, keep it to be retried
+              changetoretry($numqueue,$current_queue_file);
+            }
+          } else {
+	    if ($checkanswer == 2) {
+# delete it, it is very old
+# do not delete, move to the fail directory
+              logit("warning","File ".$current_queue_file." in queue ".$numqueue." will not be retried");
+	      logit("debug","Deleting file ".$current_queue_file." in queue ".$numqueue) if ($opt_debug);
+	      if ($opt_keepfail) {
+                link $opt_spool."/q".$numqueue."/".$current_queue_file,$opt_spool."/fail/".$current_queue_file;
+	      }
+              unlink $opt_spool."/q".$numqueue."/".$current_queue_file;
+            } else {
+	      logit("debug","Skiping file ".$current_queue_file." in queue ".$numqueue) if ($opt_debug);
+              link $opt_spool."/q".$numqueue."/".$current_queue_file,$opt_spool."/tmp/".$current_queue_file;
+              unlink $opt_spool."/q".$numqueue."/".$current_queue_file;
+	    }
+	  }
+        }
+# restoring tmp files to $numqueue
+        restoretmp($numqueue);
+      }
+    }
+    if ($mustwait) {
+      sleep 30;
+    }
+  }
+}
+
+#********************
+# FUNCTIONS
+#********************
+
+sub pre_getsms {
+  my $getsms_ident = "";
+  my $getsms_from = "";
+  my $getsms_smsc = "";
+  my $getsms_message = "";
+  if ($opt_gsmdevice eq "gnokii") {
+    ($getsms_ident,$getsms_from,$getsms_smsc,$getsms_message) = getsms_gnokii();
+  }
+  if ($opt_gsmdevice eq "at") {
+    ($getsms_ident,$getsms_from,$getsms_smsc,$getsms_message) = getsms_at();
+  }
+  if ($getsms_ident) {
+    if ($opt_gsmdevice eq "gnokii") {
+      deletesms_gnokii($getsms_ident);
+    }
+    if ($opt_gsmdevice eq "at") {
+      deletesms_at($getsms_ident);
+    }
+    return $getsms_from,$getsms_smsc,$getsms_message;
+  } else {
+    return;
+  }
+}
+
+sub pre_sendsms {
+  my ($ss_from,$ss_to,$ss_smsc,$ss_message) = @_;
+  my $result = "OK";
+  if ($opt_gsmdevice eq "gnokii") {
+    if (length($ss_message) > 160) {
+      $ss_message = substr($ss_message,0,160);
+    }
+    if (!sendsms_gnokii($ss_to,$ss_smsc,$ss_message)) {
+      $result = "ERROR";
+    }
+  }
+  if ($opt_gsmdevice eq "at") {
+    if (length($ss_message) > 159) {
+      $ss_message = substr($ss_message,0,159);
+    }
+    if (!sendsms_at($ss_to,$ss_smsc,$ss_message)) {
+      $result = "ERROR";
+    }
+  }
+  write_accounting("OUT",$result,$ss_from,$ss_to,$ss_smsc,$ss_message);
+  if ($result eq "OK") {
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
+sub write_accounting {
+  my ($direction,$status,$from,$to,$smsc,$message) = @_;
+  open (ACCF,">>$opt_accounting");
+  print ACCF "$direction,$status,$opt_gsmdevice,$from,$to,$smsc,".localtime(time()).",XX $message XX\n" if ($opt_debug);
+  print ACCF "$direction,$status,$opt_gsmdevice,$from,$to,$smsc,".localtime(time())."\n" if (! $opt_debug);
+  close (ACCF);
+}
+
+#********************
+# QUEUE INTERFACE
+#********************
+
+sub first_queue_file {
+  my ($fqf_queue) = @_;
+  my $answer = 0;
+  my $firstitem = 99999999;
+  my $result;
+  my @parts;
+  my $real_spool = $opt_spool."/q".$fqf_queue;
+  opendir (DIRH,$real_spool);
+  while (1) {
+    $result = readdir(DIRH);
+    if ($result) {
+      @parts = split(/-/,$result);
+      if ($parts[0] =~ /^\d/) {
+        if ($firstitem gt $parts[0]) {
+          $firstitem = $parts[0];
+	  $answer = $result;
+        }
+      }
+    } else {
+      last;
+    }
+  }
+  closedir (DIRH);
+  return $answer;
+}
+
+sub process_queue_file {
+  my ($pqf_queue,$pqf_file) = @_;
+  my $complet_filename = $opt_spool."/q".$pqf_queue."/".$pqf_file;
+  open (SPOOLFILE,"<$complet_filename");
+  my $line_counter = 0;
+  my $pqf_from = "";
+  my $pqf_to = "";
+  my $pqf_smsc = "";
+  my $pqf_message = "";
+  while (<SPOOLFILE>) {
+    chomp;
+    if (/\r$/) { chop; }
+    chomp;
+    $line_counter++;
+    if ($line_counter == 1) {
+      next;
+    }
+    if ($line_counter == 2) {
+      next;
+    }
+    if ($line_counter == 3) {
+      $pqf_from = $_;
+      next;
+    }
+    if ($line_counter == 4) {
+      my @numbers = split (/\s+/,$_);
+      $pqf_to = $numbers[0];
+      if (! $numbers[1]) {
+        $pqf_smsc = $opt_smsc;
+      } else {
+        if (! $opt_allowclientsmsc) {
+	  $pqf_smsc = $opt_smsc;
+	} else {
+	  $pqf_smsc = $numbers[1];
+	}
+      }
+      next;
+    }
+    $pqf_message = $pqf_message.$_."\n";
+  }
+  close (SPOOLFILE);
+  chomp ($pqf_message);
+#  if ( $pqf_message =~ /\r$/) { chop ($pqf_message); }
+#  chomp ($pqf_message);
+  logit("debug","Before pre_sendsms: pqf_from ".$pqf_from) if ($opt_debug);
+  logit("debug","Before pre_sendsms: pqf_to ".$pqf_to) if ($opt_debug);
+  logit("debug","Before pre_sendsms: pqf_smsc ".$pqf_smsc) if ($opt_debug);
+  logit("debug","Before pre_sendsms: pqf_message ".$pqf_message) if ($opt_debug);
+  return pre_sendsms($pqf_from,$pqf_to,$pqf_smsc,$pqf_message);
+}
+
+sub checktoprocess {
+# - its retry num is 0 (never has been processed) or
+# - its retry num is greater than 0 and less than $retryqueue[$numqueue][0]
+#   and current time is less than
+#   previous time plus $retryqueue[$numqueue][$numretry]*60
+# a file must be delete if
+# - its retry num is greater or equal than $retryqueue[$numqueue][0]
+  my ($c_queue,$c_file) = @_;
+  logit("debug","Comming into checktoprocess with ".$c_queue." ".$c_file) if ($opt_debug);
+  my $answer = 0;
+  my $complet_filename = $opt_spool."/q".$c_queue."/".$c_file;
+  open (SPOOLFILE,"<$complet_filename");
+  my $line_counter = 0;
+  my $lastretry = 0;
+  my $lasttime = 0;
+  while (<SPOOLFILE>) {
+    chomp;
+    if (/\r$/) { chop; }
+    chomp;
+    $line_counter++;
+    if ($line_counter == 1) {
+      $lastretry = $_;
+      next;
+    }
+    if ($line_counter == 2) {
+      $lasttime = $_;
+      next;
+    }
+    last;
+  }
+  close (SPOOLFILE);
+  logit("debug","Currently lastretry is ".$lastretry." and lasttime is ".$lasttime) if ($opt_debug);
+  if ($lastretry) {
+    if ($lastretry > $retryqueue[$c_queue][0]) {
+      $answer = 2;
+    } else {
+      my $tmptime = $retryqueue[$c_queue][$lastretry] * 60;
+      $tmptime += $lasttime;
+      if (time() < $tmptime) {
+        $answer = 1;
+      }
+    }
+  }
+  logit("debug","Exiting from checktoprocess with ".$answer) if ($opt_debug);
+  return $answer;
+}
+
+sub changetoretry {
+  my ($c_queue,$c_file) = @_;
+  my $source_filename = $opt_spool."/q".$c_queue."/".$c_file;
+  my $target_filename = $opt_spool."/tmp/".$c_file;
+  open (SOURCEFILE,"<$source_filename");
+  open (TARGETFILE,">$target_filename");
+  my $line_counter = 0;
+  my $pqf_from = "";
+  my $pqf_to = "";
+  my $pqf_message = "";
+  while (<SOURCEFILE>) {
+    chomp;
+    if (/\r$/) { chop; }
+    chomp;
+    $line_counter++;
+    if ($line_counter == 1) {
+      $_++;
+      print TARGETFILE $_."\n";
+      next;
+    }
+    if ($line_counter == 2) {
+      print TARGETFILE time()."\n";
+      next;
+    }
+    print TARGETFILE $_."\n";
+  }
+  close (SOURCEFILE);
+  close (TARGETFILE);
+  unlink $source_filename;
+}
+
+sub restoretmp {
+  my ($r_queue) = @_;
+  my $real_spool = $opt_spool."/tmp";
+  my $result;
+  my @parts;
+  opendir (DIRH,$real_spool);
+  while (1) {
+    $result = readdir(DIRH);
+    if ($result) {
+      @parts = split(/-/,$result);
+      if ($parts[0] =~ /^\d/) {
+        link $real_spool."/".$result, $opt_spool."/q".$r_queue."/".$result;
+        unlink $real_spool."/".$result;
+      }
+    } else {
+      last;
+    }
+  }
+  closedir (DIRH);
+}
+
+#********************
+# GNOKII INTERFACE
+#********************
+
+sub getsms_gnokii {
+  my @answer = qx { ${opt_gnokiipath} --getsms ME 1 14 2>/dev/null };
+  my $counter = 0;
+  my @table;
+  my $input_found = 0;
+  my $text_found = 0;
+  foreach (@answer) {
+    chomp;
+    if (/\r$/) { chop; }
+    chomp;
+    my $record = $_;
+    if ( $record =~ /([0-9]*). Outbox Message/ ) {
+      $text_found = 0;
+      next;
+    }
+    if ( $record =~ /([0-9]*). Delivery Report/ ) {
+      $text_found = 0;
+      next;
+    }
+    if ( $record =~ /([0-9]*). Inbox Message/ ) {
+      $table[$counter][0] = $1;
+      $counter++;
+      $input_found = 1;
+      $text_found = 0;
+      next;
+    }
+    if ( $record =~ /Date\/time: ([0-9\/: GMT+-h]*)/ ) {
+      if ($input_found) {
+        $table[$counter-1][1] = $1;
+	next;
+      }
+    }
+    if ( $record =~ /Sender: ([0-9+]*) Msg Center: ([0-9+]*)/ ) {
+      if ($input_found) {
+        $table[$counter-1][2] = $1;
+        $table[$counter-1][3] = $2;
+	next;
+      }
+    }
+    if ( $record =~ /Text:/ ) {
+      if ($input_found) {
+        if ($opt_gsmdevicemode eq "0.3.0") {
+          $table[$counter-1][4] = substr($record,6);
+	}
+        if ($opt_gsmdevicemode eq "0.3.2") {
+          $table[$counter-1][4] = "";
+	}
+	$input_found = 0;
+	$text_found = 1;
+	next;
+      }
+    }
+    if ($text_found) {
+      if ($opt_gsmdevicemode eq "0.3.0") {
+        $table[$counter-1][4] = $table[$counter-1][4]."\n".$record;
+      }
+      if ($opt_gsmdevicemode eq "0.3.2") {
+        $table[$counter-1][4] = $table[$counter-1][4].$record."\n";
+      }
+    }
+  }
+  my $oldest_index = -1;
+  my $oldest_date = "";
+  if ( $counter == 0 ) {
+    return;
+  } else {
+    my $i;
+    for ($i = 0; $i < $counter; $i++) {
+      if ( $oldest_index == -1 ) {
+        $oldest_index = $i;
+        $oldest_date = $table[$i][1];
+      } else {
+        my $cmp1 = prepare_date($oldest_date);
+        my $cmp2 = prepare_date($table[$i][1]);
+        if ( $cmp1 gt $cmp2 ) {
+          $oldest_index = $i;
+          $oldest_date = $table[$i][1];
+        }
+      }
+    }
+    if ($opt_gsmdevicemode eq "0.3.2") {
+      chomp ($table[$oldest_index][4]);
+      if ($table[$oldest_index][4] =~ /\r$/) { chop($table[$oldest_index][4]); }
+      chomp ($table[$oldest_index][4]);
+    }
+    if ($opt_debug) {
+      logit("debug","MessageID: ".$table[$oldest_index][0]);
+      logit("debug","Date: ".$table[$oldest_index][1]);
+      logit("debug","From: ".$table[$oldest_index][2]);
+      logit("debug","SMSC: ".$table[$oldest_index][3]);
+      logit("debug","Message: ".$table[$oldest_index][4]);
+    }
+    return $table[$oldest_index][0],$table[$oldest_index][2],$table[$oldest_index][3],$table[$oldest_index][4];
+  }
+}
+
+sub deletesms_gnokii {
+  my ($deletesms_ident) = @_;
+  my $answer = qx { ${opt_gnokiipath} --deletesms ME $deletesms_ident $deletesms_ident 2>/dev/null };
+}
+
+sub sendsms_gnokii {
+  my ($pg_to,$pg_smsc,$pg_message) = @_;
+  my $answer = "";
+  if ($pg_smsc eq "default") {
+    $answer = qx { echo "$pg_message" | ${opt_gnokiipath} --sendsms $pg_to 2>&1 };
+  } else {
+    $answer = qx { echo "$pg_message" | ${opt_gnokiipath} --sendsms $pg_to --smsc $pg_smsc 2>&1 };
+  }
+  my $exitcode;
+  if ( $answer =~ /Send succeeded/ ) {
+    logit("info","OK sending to ".$pg_to." using GNOKII");
+    $exitcode = 1;
+  } else {
+    logit("err","ERROR sending to ".$pg_to." using GNOKII");
+    $exitcode = 0;
+  }
+  return $exitcode;
+}
+
+sub prepare_date {
+# Change format of date and time to compare it.
+  my ($input) = @_;
+  my @parts_total = split (/ /,$input);
+  my @parts_date = split (/\//,$parts_total[0]);
+  my @parts_time = split (/:/,$parts_total[1]);
+  my $answer = "";
+  if ( $parts_date[2] gt 50 ) {
+    $answer = "19";
+  } else {
+    $answer = "20";
+  }
+  if ( length($parts_date[2]) == 1 ) {
+    $answer = $answer."0";
+  }
+  $answer = $answer.$parts_date[2];
+  if ( length($parts_date[1]) == 1 ) {
+    $answer = $answer."0";
+  }
+  $answer = $answer.$parts_date[1];
+  if ( length($parts_date[0]) == 1 ) {
+    $answer = $answer."0";
+  }
+  $answer = $answer.$parts_date[0];
+  if ( length($parts_time[0]) == 1 ) {
+    $answer = $answer."0";
+  }
+  $answer = $answer.$parts_time[0];
+  if ( length($parts_time[1]) == 1 ) {
+    $answer = $answer."0";
+  }
+  $answer = $answer.$parts_time[1];
+  if ( length($parts_time[2]) == 1 ) {
+    $answer = $answer."0";
+  }
+  $answer = $answer.$parts_time[2];
+  return $answer;
+}
+
+#********************
+# AT INTERFACE
+#********************
+
+sub getsms_at {
+  my $commandtorun = $opt_chatpath." -v -e TIMEOUT 20 \'\' \'AT+CMGF=1\' OK \'AT+CMGL=\"ALL\"\' OK \'\' 2>/tmp/getsms_at.out \<$opt_gsmdeviceport \>$opt_gsmdeviceport";
+  my $answer = system $commandtorun;
+  my $counter = 0;
+  my @table;
+  my $input_found = 0;
+  open(GETSMSFILE,"</tmp/getsms_at.out");
+  while (<GETSMSFILE>) {
+    chomp;
+    if (/\r$/) { chop; }
+    chomp;
+    my $record = $_;
+    if ( substr($record,0,7) =~ /\+CMGL: / ) {
+      my $tmprecord = substr($record,7);
+      my @fields = split(/,/,$tmprecord);
+      $table[$counter][0] = $fields[0];
+      $fields[4] =~ s/\"//g;
+      $fields[5] =~ s/\"//g;
+      $table[$counter][1] = $fields[4].",".$fields[5];
+      $fields[2] =~ s/\"//g;
+      $table[$counter][2] = $fields[2];
+      $table[$counter][3] = "unknown";
+      $counter++;
+      $input_found = 1;
+      next;
+    }
+    if ($input_found == 1) {
+# WARNING: Only gets the first line.
+      if ($record =~ /\S/) {
+        $table[$counter-1][4] = $record;
+        $input_found = 0;
+      }
+      next;
+    }
+  }
+  close(GETSMSFILE);
+  unlink '/tmp/getsms_at.out';
+  my $oldest_index = -1;
+  my $oldest_date = "";
+  if ( $counter == 0 ) {
+    return;
+  } else {
+    my $i;
+    for ($i = 0; $i < $counter; $i++) {
+      if ( $oldest_index == -1 ) {
+        $oldest_index = $i;
+        $oldest_date = $table[$i][1];
+      } else {
+        if ( $oldest_date gt $table[$i][1] ) {
+          $oldest_index = $i;
+          $oldest_date = $table[$i][1];
+        }
+      }
+    }
+    if ($opt_debug) {
+      logit("debug","MessageID: ".$table[$oldest_index][0]);
+      logit("debug","Date: ".$table[$oldest_index][1]);
+      logit("debug","From: ".$table[$oldest_index][2]);
+      logit("debug","SMSC: ".$table[$oldest_index][3]);
+      logit("debug","Message: ".$table[$oldest_index][4]);
+    }
+    return $table[$oldest_index][0],$table[$oldest_index][2],$table[$oldest_index][3],$table[$oldest_index][4];
+  }
+}
+
+sub deletesms_at {
+  my ($deletesms_ident) = @_;
+  my $commandtorun = $opt_chatpath." -v TIMEOUT 20 \'\' \'AT+CMGD=$deletesms_ident\' OK \'\' \<$opt_gsmdeviceport \>$opt_gsmdeviceport";
+  system $commandtorun;
+}
+
+sub sendsms_at {
+  my ($pg_to,$pg_smsc,$pg_message) = @_;
+  my $tmpfile = "/tmp/sendsms_at.".$$;
+  open (CHATFILE,">$tmpfile");
+  print CHATFILE "TIMEOUT 20\n";
+  print CHATFILE "'' 'AT+CMGF=1'\n";
+# Patch from José Luis Hernández to use special Spanish characters
+# This patch will be fully integrated in next revision,
+# just uncoment next line if you need it.
+#  print CHATFILE "'' 'AT+CSCS=\"8859-1\"'\n";
+  if ($pg_smsc ne "default") {
+    print CHATFILE "OK 'AT+CSCA=\"".$pg_smsc."\",145'\n";
+  }
+  print CHATFILE "OK 'AT+CMGS=\"".$pg_to."\"'\n";
+# 0.3.6 script, new
+  $pg_message =~ s/\n/\\n/g;
+  print CHATFILE "'>' '".$pg_message."'\n";
+# 0.3.5a script, changed in 0.3.6
+#  my @message_array = split(/\n/,$pg_message);
+#  foreach (@message_array) {
+#    if (/\n/) { chop($_); }
+#    if (/\r/) { chop($_); }
+#    print CHATFILE "'>' '".$_."'\n";
+#  }
+#  print CHATFILE "'' ''\n";
+  print CHATFILE "OK ''\n";
+  close (CHATFILE);
+  my $answer = system "$opt_chatpath -v -f $tmpfile \<$opt_gsmdeviceport \>$opt_gsmdeviceport";
+  unlink $tmpfile;
+  my $exitcode;
+  if ($answer) {
+    logit("err","ERROR sending to ".$pg_to." using AT");
+    $exitcode = 0;
+  } else {
+    logit("info","OK sending to ".$pg_to." using AT");
+    $exitcode = 1;
+  }
+  return $exitcode;
+}
+
+sub read_config {
+#--------------------
+# check for --configfile option
+#--------------------
+  my $nextconfigfile = 0;
+  foreach (@ARGV) {
+    /--version/ && do { display_version(); exit; };
+    /--help/ && do { display_usage(); exit; };
+    /--configfile/ && do { $nextconfigfile = 1; next; };
+    if ($nextconfigfile) {
+      $configfile = $_;
+      $nextconfigfile = 0;
+      next;
+    }
+  }
+  if ($nextconfigfile) {
+    print "Lost parameter for --configfile\n";
+    exit 2;
+  }
+
+#--------------------
+# read config file
+#--------------------
+  if (! -f $configfile) {
+    print "WARNING: There is no configuration file: $configfile\n";
+  } else {
+    open (CONFFILE,"<$configfile");
+    while (<CONFFILE>) {
+      if (substr($_,0,1) ne "#") {
+        my @field = split (/\s+/,$_);
+        if ($field[0]) {
+          CASE_CF: {
+            if ($field[0] eq "debug") {
+              $opt_debug = 1; last CASE_CF; }
+            if ($field[0] eq "nodebug") {
+              $opt_debug = 0; last CASE_CF; }
+            if ($field[0] eq "verbose") {
+              $opt_verbose = 1; last CASE_CF; }
+            if ($field[0] eq "noverbose") {
+              $opt_verbose = 0; last CASE_CF; }
+            if ($field[0] eq "copyright") {
+              $opt_copyright = 1; last CASE_CF; }
+            if ($field[0] eq "nocopyright") {
+              $opt_copyright = 0; last CASE_CF; }
+#pidfile option can not be in config file, only in command line.
+            if ($field[0] eq "accounting") {
+              $opt_accounting = $field[1]; last CASE_CF; }
+            if ($field[0] eq "syslog") {
+              $opt_syslog = 1; $opt_syslogfacility = $field[1]; last CASE_CF; }
+            if ($field[0] eq "nosyslog") {
+              $opt_syslog = 0; last CASE_CF; }
+            if ($field[0] eq "spool") {
+              $opt_spool = $field[1]; last CASE_CF; }
+            if ($field[0] eq "gsmdevice") {
+              $opt_gsmdevice = $field[1];
+	      $opt_gsmdevicemode = $field[2];
+              $opt_gsmdeviceport = $field[3]; last CASE_CF; }
+            if ($field[0] eq "gnokiipath") {
+              $opt_gnokiipath = $field[1]; last CASE_CF; }
+            if ($field[0] eq "sttypath") {
+              $opt_sttypath = $field[1]; last CASE_CF; }
+            if ($field[0] eq "chatpath") {
+              $opt_chatpath = $field[1]; last CASE_CF; }
+            if ($field[0] eq "sttystring") {
+              $opt_sttystring = $field[1]; last CASE_CF; }
+            if ($field[0] eq "keepsuccess") {
+              $opt_keepsuccess = 1; last CASE_CF; }
+            if ($field[0] eq "nokeepsuccess") {
+              $opt_keepsuccess = 0; last CASE_CF; }
+            if ($field[0] eq "keepfail") {
+              $opt_keepfail = 1; last CASE_CF; }
+            if ($field[0] eq "nokeepfail") {
+              $opt_keepfail = 0; last CASE_CF; }
+            if ($field[0] eq "maxin") {
+              $opt_maxin = $field[1]; last CASE_CF; }
+            if ($field[0] eq "maxout") {
+              $opt_maxout = $field[1]; last CASE_CF; }
+            if ($field[0] eq "imp") {
+              $opt_imp = $field[1]; last CASE_CF; }
+            if ($field[0] eq "smsc") {
+              $opt_smsc = $field[1]; last CASE_CF; }
+            if ($field[0] eq "allowclientsmsc") {
+              $opt_allowclientsmsc = 1; last CASE_CF; }
+            if ($field[0] eq "noallowclientsmsc") {
+              $opt_allowclientsmsc = 0; last CASE_CF; }
+            if ($field[0] eq "retry") {
+              my $fieldcounter = 0;
+              foreach (@field) {
+                $fieldcounter++;
+                if ($fieldcounter < 3) {
+	          next;
+	        }
+	        if ($field[1] eq "defaults") {
+	          my $i;
+                  for ($i = 1; $i < 10; $i++) {
+		    $retryqueue[$i][$fieldcounter-2] = $_;
+	          }
+	        } else {
+	          $retryqueue[$field[1]][$fieldcounter-2] = $_;
+	        }
+	      }
+	      if ($field[1] eq "defaults") {
+	        my $i;
+                for ($i = 1; $i < 10; $i++) {
+	          $retryqueue[$i][0] = $fieldcounter - 2;
+	        }
+	      } else {
+	        $retryqueue[$field[1]][0] = $fieldcounter - 2;
+	      }
+	      last CASE_CF; }
+#	    logit("debug","Not recognised option in config file ignored: ".$field[0]) if ($opt_debug);
+#	    print("Not recognised option in config file ignored: ".$field[0]."\n") if ($opt_debug);
+          }
+        }
+      }
+    }
+    close (CONFFILE);
+  }
+
+#--------------------
+# command-line options
+#--------------------
+  my $nextpidfile = 0;
+  my $nextaccounting = 0;
+  my $nextsyslog = 0;
+  my $nextspool = 0;
+  my $nextgsmdevice = 0;
+  my $nextgnokiipath = 0;
+  my $nextsttypath = 0;
+  my $nextchatpath = 0;
+  my $nextsttystring = 0;
+  my $nextmaxin = 0;
+  my $nextmaxout = 0;
+  my $nextimp = 0;
+  my $nextsmsc = 0;
+  foreach (@ARGV) {
+    /--configfile/ && do { $nextconfigfile = 1; next; };
+    /--debug/ && do { $opt_debug = 1; next; };
+    /--nodebug/ && do { $opt_debug = 0; next; };
+    /--verbose/ && do { $opt_verbose = 1; next; };
+    /--noverbose/ && do { $opt_verbose = 0; next; };
+    /--copyright/ && do { $opt_copyright = 1; next; };
+    /--nocopyright/ && do { $opt_copyright = 0; next; };
+    /--pidfile/ && do { $nextpidfile = 1; next; };
+    /--accounting/ && do { $nextaccounting = 1; next; };
+    /--syslog/ && do { $opt_syslog = 1; $nextsyslog = 1; next; };
+    /--nosyslog/ && do { $opt_syslog = 0; next; };
+    /--spool/ && do { $nextspool = 1; next; };
+    /--gsmdevice/ && do { $nextgsmdevice = 1; next; };
+    /--gnokiipath/ && do { $nextgnokiipath = 1; next; };
+    /--sttypath/ && do { $nextsttypath = 1; next; };
+    /--chatpath/ && do { $nextchatpath = 1; next; };
+    /--sttystring/ && do { $nextsttystring = 1; next; };
+    /--keepsuccess/ && do { $opt_keepsuccess = 1; next; };
+    /--nokeepsuccess/ && do { $opt_keepsuccess = 0; next; };
+    /--keepfail/ && do { $opt_keepfail = 1; next; };
+    /--nokeepfail/ && do { $opt_keepfail = 0; next; };
+    /--maxin/ && do { $nextmaxin = 1; next; };
+    /--maxout/ && do { $nextmaxout = 1; next; };
+    /--imp/ && do { $nextimp = 1; next; };
+    /--smsc/ && do { $nextsmsc = 1; next; };
+    /--allowclientsmsc/ && do { $opt_allowclientsmsc = 1; next; };
+    /--noallowclientsmsc/ && do { $opt_allowclientsmsc = 0; next; };
+#retry options can only be in config file.
+    if ($nextconfigfile) {
+      $nextconfigfile = 0;
+      next;
+    }
+    if ($nextpidfile) {
+      $opt_pidfile = $_;
+      $nextpidfile = 0;
+      next;
+    }
+    if ($nextaccounting) {
+      $opt_accounting = $_;
+      $nextaccounting = 0;
+      next;
+    }
+    if ($nextsyslog) {
+      $opt_syslogfacility = $_;
+      $nextsyslog = 0;
+      next;
+    }
+    if ($nextspool) {
+      $opt_spool = $_;
+      $nextspool = 0;
+      next;
+    }
+    if ($nextgsmdevice == 1) {
+      $opt_gsmdevice = $_;
+      $nextgsmdevice++;
+      next;
+    }
+    if ($nextgsmdevice == 2) {
+      $opt_gsmdevicemode = $_;
+      $nextgsmdevice++;
+      next;
+    }
+    if ($nextgsmdevice == 3) {
+      $opt_gsmdeviceport = $_;
+      $nextgsmdevice = 0;
+      next;
+    }
+    if ($nextgnokiipath == 1) {
+      $opt_gnokiipath = $_;
+      $nextgnokiipath = 0;
+      next;
+    }
+    if ($nextsttypath == 1) {
+      $opt_sttypath = $_;
+      $nextsttypath = 0;
+      next;
+    }
+    if ($nextchatpath == 1) {
+      $opt_chatpath = $_;
+      $nextchatpath = 0;
+      next;
+    }
+    if ($nextsttystring == 1) {
+      $opt_sttystring = $_;
+      $nextsttystring = 0;
+      next;
+    }
+    if ($nextmaxin) {
+      $opt_maxin = $_;
+      $nextmaxin = 0;
+      next;
+    }
+    if ($nextmaxout) {
+      $opt_maxout = $_;
+      $nextmaxout = 0;
+      next;
+    }
+    if ($nextimp) {
+      $opt_imp = $_;
+      $nextimp = 0;
+      next;
+    }
+    if ($nextsmsc) {
+      $opt_smsc = $_;
+      $nextsmsc = 0;
+      next;
+    }
+    print "Invalid parameter: $_\n";
+    display_usage();
+    exit 1;
+  }
+
+  if ($nextpidfile) {
+    print "Lost parameter for --pidfile\n";
+    exit 2;
+  }
+  if ($nextaccounting) {
+    print "Lost parameter for --accounting\n";
+    exit 2;
+  } else {
+    if (! -f $opt_accounting) {
+#      logit("warning","Accounting file does not exist: ".$opt_accounting." has been created") if ($opt_verbose);
+      print("warning","Accounting file does not exist: ".$opt_accounting." has been created\n") if ($opt_verbose);
+    }
+  }
+  if ($nextsyslog) {
+    print "Lost parameter for --syslog\n";
+    exit 2;
+  }
+  if ($nextspool) {
+    print "Lost parameter for --spool\n";
+    exit 2;
+  }
+  if ($nextgsmdevice) {
+    print "Lost parameter for --gsmdevice\n";
+    exit 2;
+  } else {
+    if ($opt_gsmdevice ne "gnokii" && $opt_gsmdevice ne "at") {
+      print "GSM Interface to device \"$opt_gsmdevice\" not yet implemented.\n";
+      exit 4;
+    }
+    if ($opt_gsmdevicemode ne "0.3.0" && $opt_gsmdevicemode ne "0.3.2" &&
+    $opt_gsmdevicemode ne "text" && $opt_gsmdevicemode ne "pdu") {
+      print "GSM Interface mode \"$opt_gsmdevicemode\" not yet implemented.\n";
+      exit 4;
+    }
+  }
+  if ($nextgnokiipath) {
+    print "Lost parameter for --gnokiipath\n";
+    exit 2;
+  }
+  if ($nextsttypath) {
+    print "Lost parameter for --sttypath\n";
+    exit 2;
+  }
+  if ($nextchatpath) {
+    print "Lost parameter for --chatpath\n";
+    exit 2;
+  }
+  if ($nextsttystring) {
+    print "Lost parameter for --sttystring\n";
+    exit 2;
+  }
+  if ($nextmaxin) {
+    print "Lost parameter for --maxin\n";
+    exit 2;
+  }
+  if ($nextmaxout) {
+    print "Lost parameter for --maxout\n";
+    exit 2;
+  }
+  if ($nextimp) {
+    print "Lost parameter for --imp\n";
+    exit 2;
+  }
+  if ($nextsmsc) {
+    print "Lost parameter for --smsc\n";
+    exit 2;
+  }
+}
+
+sub validate_options {
+  my @vo = ();
+
+  if ($opt_smsc ne "default") {
+    if (! isvalidnumber($opt_smsc)) {
+      push @vo,["smsc","invalid number ".$opt_smsc];
+    }
+  }
+
+  if (@vo) {
+    foreach (@vo) {
+      print "Not valid value. Option: ".$_->[0].". Cause: ".$_->[1]."\n";
+    }
+    exit 3;
+  }
+}
+
+sub isvalidnumber {
+  my ($numbertocheck) = @_;
+  my $ivn_response = 1;
+  if ($numbertocheck =~ /([+]?)([\d]+)/) {
+    my $tmp_numbertocheck = $1.$2;
+    if ($numbertocheck ne $tmp_numbertocheck) {
+      $ivn_response = 0;
+    }
+    if (length($tmp_numbertocheck) > 20) {
+      $ivn_response = 0;
+    }
+  } else {
+    $ivn_response = 0;
+  }
+  return $ivn_response;
+}
+
+sub display_copyright {
+  print "Alamin GSM SMS Gateway\n";
+  print "Copyright (C) Andres Seco Hernandez and others.\n\n";
+  print "This program is free software; you can redistribute it and/or\n";
+  print "modify it under the terms of the GNU General Public License\n";
+  print "as published by the Free Software Foundation; either version 2\n";
+  print "of the License, or (at your option) any later version.\n\n";
+  print "This program is distributed in the hope that it will be useful,\n";
+  print "but WITHOUT ANY WARRANTY; without even the implied warranty of\n";
+  print "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n";
+  print "GNU General Public License for more details.\n\n";
+}
+
+sub display_usage {
+  print "Usage: $program_name \[--version\|--help\]\n";
+  print "       $program_name \[--configfile config_file_name\]\n";
+  print "              \[--debug\|--nodebug\]\n";
+  print "              \[--verbose\|--noverbose\]\n";
+  print "              \[--copyright\|--nocopyright\]\n";
+  print "              \[--pidfile pid_file\]\n";
+  print "              \[--accounting accounting_file_name\]\n";
+  print "              \[--syslog facility\|--nosyslog\]\n";
+  print "              \[--spool spool_directory\]\n";
+  print "              \[--gsmdevice \(gnokii 0.3.0\|0.3.2\)\|\(at text\|pdu\) deviceport\]\n";
+  print "              \[--gnokiipath gnokii_binary_with_complete_path\]\n";
+  print "              \[--sttypath stty_binary_with_completa_path\]\n";
+  print "              \[--chatpath chat_binary_with_completa_path\]\n";
+  print "              \[--sttystring serial_port_initialization_string\]\n";
+  print "              \[--keepsuccess\|--nokeepsuccess\]\n";
+  print "              \[--keepfail\|--nokeepfail\]\n";
+  print "              \[--maxin number_of_messages\]\n";
+  print "              \[--maxout number_of_messages\]\n";
+  print "              \[--imp \"command_to_run_when_a_message_is_received\"\]\n";
+  print "              \[--smsc short_message_service_center_number\]\n";
+  print "              \[--allowclientsmsc\|--noallowclientsmsc\]\n";
+}
+
+sub display_version {
+  print "$program_name - $program_version\n";
+  display_copyright();
+  print "To contact developers, please send mail to \<info\@alamin.org\>.\n";
+  print "To ask for help, please send mail to \<alamin-user\@lists.sourceforge.net\>.\n";
+  print "See the project web site at URL http://www.alamin.org\n";
+}
