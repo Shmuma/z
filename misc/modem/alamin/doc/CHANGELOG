@@ -1,0 +1,158 @@
+#---------------------------------------------------------------------
+# gsgd
+#---------------------------------------------------------------------
+# Alamin GSM SMS Gateway
+# Functions:
+# - SMS messaging server
+#   Native client for distributed SMS sending/receiving and
+#   GSM device remote monitoring.
+# - SMTP-SMS gateway
+#   SMS Message Transfer Agent (SMSMTA).
+# - SMS-POP gateway
+#   to get inside a mail message system.
+#---------------------------------------------------------------------
+#
+# (C) Andrés Seco Hernández, April 2000-May 2001
+#
+# 0.1.0 - April 13, 2000
+#		First version.
+#		Connection accepted using sockets to send message.
+# 0.2.0 - April 18, 2000 to April 29, 2000
+#		Program structure changed. Functionallities and
+#		interfaces designed. GSM interface to Gnokii and SMTP
+#		interface implemented.
+# 0.2.1 - May 2, 2000
+#		Added support to send to multiple phones at a time.
+#		Truncate message if it is greater than 160 characters.
+#		Check for flag file about concurrent use of gnokii.
+#		Client can now send a message for multiple recipients.
+#		First parameter must be the message, and next will be
+#		recipients.
+# 0.2.2 - May 16, 2000
+#		fork deleted. Zombie deletion not implemented. Only
+#		accepts one connection at a time. listen waits for
+#		SOMAXCONN queued connections. Now uses standard libraries
+#		and better error checking. Executable name has changed
+#		from gsmsms* to gsg*.
+# 0.2.3 - May 22, 2000
+#		Partially recoded to use "stricted" Perl. Better error
+#		checking. Client now needs a first argument with the
+#		sender identification, to be saved in the accounting log.
+#		First version of the AT interface has been added.
+# 0.2.4 - May 23, 2000
+#		The SMTP protocol has been rewrited. Error checking in the
+#		AT interface has been added.
+# 0.3.0 - June 6, 2000
+#		First implementation of the gsg native protocol, gsgp.
+#		First implementation of the Incoming Message Dispatcher,
+#		from GNOKII and AT interfaces.
+#		Writes events in the syslog using the local4 facility.
+#		Does not use the Sys::Syslog perl module, instead uses the
+#		"logger" program running it with the "system" function.
+#		Home page of Alamin GSG is now at www.alamin.es.org.
+#		Now gsgd uses fork in some places.
+#		Some demo Input Messages Processors (IMPs)
+#		have been implemented. IMPORTANT BUG: Sometimes, the IMP
+#		that tryes to send a message is hang waiting for the
+#		socket to be accepted. DO NOT USE THIS VERSION UNLESS YOU
+#		NEED IT SERIOSLY FOR SOME REASON. YOU CAN USE IT HACKING
+#		THE CODE.
+# 0.3.1 - June 14, 2000
+#		New structure to avoid the lock bug in 0.3.0. Now it
+#		starts as a daemon and has been included in the init.d
+#		Debian directory. The daemon has been separated in two
+#		parts, gsgcmd (core module) and gsgmdd (message
+#		dispatcher). Install and uninstall scripts have been
+#		prepared. Some options are hardcoded inside the own
+#		program code. They will be moved to the configuration file
+#		in the next version. The AT interface has had some
+#		hunging problems in an old 486/100 computer with (i don't
+#		remember) uart, but runs ok in a 16550A	uart in a Pentium
+#		II 266 computer.
+#		Corrected the bug that hungs the AT device while
+#		concurrent access to the device ocurrs.
+#		The AT interface requires that the ttySx be correctly
+#		configured, that is, be sure that stty reports the correct
+#		settings, crtcts if required, cs8, noparity, etc.
+# 0.3.2 - July 15, 2000
+#		A bug in 0.3.1 when concurrent access to the ttySx device
+#		using AT occurs has been fixed changing to a priority
+#		spool mode. Nine queues exists now to send with different
+#		priorities. All program configuration options
+#		can now be included in the config file or in the command
+#		line. New client for Unix/Linux (gsgc) with configuration
+#		file and command line options, like gsgcmd and gsgmdd.
+#		Retry when fail to send implemented now. You can define
+#		the minutes between one try and another in a per queue
+#		basis. Failed or successfully sent messages can be
+#		archives or discarded. Maximum number of messages to
+#		proccess in each cicle limited with maxin and maxout.
+# 0.3.3 - September 26, 2000
+#		Added new command line options and config file options:
+#		syslog/nosyslog, gnokiipath, chatpath, sttypath and
+#		sttystring. Multiple line incoming messages using gnokii
+#		are now supported. Syslog facility is now configurable
+#		using the syslog option. gsmdevice option has changed its
+#		sintax to accept options for each interface acepted. See
+#		example config file for more information. Added options
+#		imp and imptype to define the command to run when a
+#		message arrives.
+# 0.3.4 - November 4, 2000
+#		Support for different versions of gnokii. Currently, 0.3.0
+#		and 0.3.2 are tested. gsgsmtpd is the daemon that provides
+#		the smtp interface. gsgcmd can receive a message to be
+#		sent to multiple destinations, not only one. gsgc has been
+#		modified to allow a message to be sent to multiple
+#		destinations at the same time. umask modified to allow
+#		only read/write for propietary and group, not others. smtp
+#		interface allows formating of the message to be sent over
+#		GSM. Added --help and --version command line options. A
+#		new example of input message processor is included,
+#		gsgimp-sms2email.
+# 0.3.5 - December 17, 2000
+#		Security improvements. Run as other user than root.
+#		Changed permissions over the spool directory and all other
+#		directories used. System calls have been changed to
+#		avoid commands to be run in the server
+#		from client requests. Service names can now be used
+#		instead of port numbers. Install script now puts programs
+#		in /usr/sbin and /usr/bin directories, instead of
+#		/usr/local. IP address is now logged with the client name
+#		when a connection is received.
+#		Weekly log rotation script has been added and it
+#		is scheduled inside the /etc/cron.weekly directory.
+# 0.3.5a - December 20, 2000
+#		Some light errors in the AT interface and inside the
+#		startup script gsgd to run in Debian slink.
+# 0.3.6 - May 6, 2001
+#		logger is no longer used. Sys::Syslog perl module is used
+#		instead. Warnings reading config file are now displayed
+#		instead of being logged in syslog (most of them are only
+#		debug messages). Facility to log message is now allocated
+#		dinamically, using the syslog-facility script provided by
+#		the syslog package. Uninstall script takes care to remove
+#		the syslog.conf lines added during installation script.
+#		AT interface sending an SMS: Only 159 characters are sent
+#		now, Nokia Premicell only accepts 159 chars, 160th may be
+#		used by the Ctrl-Z at the end, i supose. Chat script to
+#		send a message has been changed to supress empty lines
+#		between all lines. Ctrl-E has been added at the start of
+#		the getsms chat script to cancel pending send request
+#		that may be open due to a communications failure between
+#		the computer and the gsm modem in a previous chat
+#		conversation. Added --pidfile option in gsgcmd, gsgmdd and
+#		gsgsmtpd. aliasfile option allows to use alias words as
+#		destination numbers, and to send messages to groups. The
+#		default file for aliasfile option is alias.conf.
+#		gnokii interface for version 0.3.0 was lossing the first
+#		line of each message, corrected. You can now send using
+#		other smscs. This can be used in a gateway decision or
+#		by the client decision. allowip and denyip options to
+#		decide if an incoming ip connection must be accepted or
+#		not. usersfile option (user.conf) to allow/deny different
+#		users to access the gateway services. It uses a CHAP
+#		similiar scheme to authenticate the client. Destination
+#		control per user using some numbers or a file with a list
+#		of phone numbers. Startup script has changed its name,
+#		from gsgd to alamin. Man pages for gsgc, gsgcmd, gsgmdd,
+#		gsgsmtpd and alamin (startup script).

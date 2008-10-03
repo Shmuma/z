@@ -1,0 +1,149 @@
+#---------------------------------------------------------------------
+# sendsms.pl
+#---------------------------------------------------------------------
+#
+# (C) Andrés Seco Hernández, Mayo de 2000
+#
+# 23 de Mayo de 2000
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+#---------------------------------------------------------------------
+
+my ($to_arg, $message) = @ARGV;
+
+sub readsmtp {
+  $endline="no";
+  $ls_received = "";
+  $counter = 0;
+  do {
+    $counter += 1;
+    read(SMTPSOCKET,$buffer,1);
+    if ( $buffer eq "\n" ) {
+      $endline = "yes";
+    } else {
+      $ls_received = $ls_received.$buffer;
+    }    
+  } until ( $endline eq "yes" );
+  return $ls_received;
+}
+
+$local_host = $ENV{"COMPUTERNAME"};
+$remote_host = "gsm";
+$remote_port = 11201;
+$AF_INET = 2;
+$SOCK_STREAM = 1;
+$sockaddr = 'S n a4 x9';
+
+print "getprotobyname(tcp)=";
+($nombre,$alias,$proto) = getprotobyname('tcp');
+print "$nombre:$alias:$proto\n";
+
+print "gethostbyname($remote_host)=";
+($nombre,$alias,$tipod,$long,@smtpdirs) = gethostbyname($remote_host);
+($a,$b,$c,$d) = unpack('C4',$smtpdirs[0]);
+print "$nombre:$alias:$tipod:$long:$a.$b.$c.$d\n";
+
+print "gethostbyname($local_host)=";
+($nombre,$alias,$tipod,$long,@localdirs) = gethostbyname($local_host);
+($a,$b,$c,$d) = unpack('C4',$localdirs[0]);
+print "$nombre:$alias:$tipod:$long:$a.$b.$c.$d\n";
+
+$local_port = 1020;
+
+$reintentar = "si";
+do {
+  $reintentar = "no";
+
+  $here = pack($sockaddr,$AF_INET,$local_port,$localdirs[0]);
+  $there = pack($sockaddr,$AF_INET,$remote_port,$smtpdirs[0]);
+
+  select(SMTPSOCKET);
+  $| = 1;
+  select(stdout);
+
+  socket(SMTPSOCKET,$AF_INET,$SOCK_STREAM,$proto) || die "No puedo abrir $!\n";
+  print "Socket creado\n";
+
+  bind(SMTPSOCKET,$here) || die "No puedo realizar la ligadura\n";
+  print "Ligadura realizada\n";
+
+  $bucle = 0;
+
+  do {
+    $resultado = connect(SMTPSOCKET,$there);
+    if ( $resultado != 1 ) {
+      print "No se ha podido conectar. Espera 1 segundo.\n";
+      sleep(1);
+      $bucle += 1;
+      if ( $bucle eq 4 ) {
+        $resultado = 1;
+        print "4 intentos de conectar sin exito\n";
+      }
+    }
+  } while ( $resultado != 1 );
+  print "Despues de la conexión\n $bucle ";
+
+  if ( $bucle eq 4 ) {
+    $error = "si";
+    print "ERROR por numero de intentos de conexion superados en el puerto $local_port\n";
+    if ( $local_port != 1039 ) {
+      $local_port++;
+      print "Reintento por puerto $local_port\n";
+      $reintentar = "si";
+      $error = "no";
+    } else {
+      open (ERRORFILE,">>c:\temp\sendmail.error");
+      print ERRORFILE "sendmail: ".localtime(time())." Superado numero de intentos de conexion desde los puertos 1020 a 1039.\n";
+      print ERRORFILE "sendmail: ".localtime(time())." El mensaje que no se pudo enviar es:\n";
+      print ERRORFILE "\n\n";
+      close (ERRORFILE);
+    }
+  } else {
+    $error = "no";
+  }
+
+} while ( $reintentar ne "no" );
+
+while (1) {
+  $received = readsmtp;
+  print "Recibido: $received\n";
+  if (substr($received,0,5) =~ /READY/) {
+    last;
+  }
+}
+
+print "send 1 - - $to_arg\n";
+print SMTPSOCKET "send 1 - - $to_arg\n";
+print "$message<EOM>\n";
+print SMTPSOCKET "$message<EOM>\n";
+
+while (1) {
+  $received = readsmtp;
+  print "Recibido: $received\n";
+  if (substr($received,0,5) =~ /READY/) {
+    last;
+  }
+}
+
+print "close\n";
+print SMTPSOCKET "close\n";
+
+while (1) {
+  $received = readsmtp;
+  print "Recibido: $received\n";
+  if (substr($received,0,3) =~ /BYE/) {
+    last;
+  }
+}
+
+close (SMTPSOCKET);
+print "Socket cerrado\n";

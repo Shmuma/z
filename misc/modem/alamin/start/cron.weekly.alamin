@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# cron script to rotate alamin log files.
+#
+# Written by Andres Seco Hernandez <AndresSH@alamin.org>
+#   based on diald cron script by
+#   Giuseppe Vacanti <Giuseppe.Vacanti@deselby.xs4all.nl>
+#
+/etc/init.d/alamin stop
+LOGDEBUG=/var/log/alamin/gsgd.debug
+if [ -e $LOGDEBUG ]; then
+   savelog -g alamin -m 660 -u alamin -c 7 $LOGDEBUG
+fi
+LOGERR=/var/log/alamin/gsgd.err
+if [ -e $LOGERR ]; then
+   savelog -g alamin -m 660 -u alamin -c 7 $LOGERR
+fi
+LOGINFO=/var/log/alamin/gsgd.info
+if [ -e $LOGINFO ]; then
+   savelog -g alamin -m 660 -u alamin -c 7 $LOGINFO
+fi
+LOGLOG=/var/log/alamin/gsgd.log
+if [ -e $LOGLOG ]; then
+   savelog -g alamin -m 660 -u alamin -c 7 $LOGLOG
+fi
+LOGWARN=/var/log/alamin/gsgd.warn
+if [ -e $LOGWARN ]; then
+   savelog -g alamin -m 660 -u alamin -c 7 $LOGWARN
+fi
+touch /var/log/alamin/gsgd.info
+touch /var/log/alamin/gsgd.warn
+touch /var/log/alamin/gsgd.err
+touch /var/log/alamin/gsgd.debug
+touch /var/log/alamin/gsgd.log
+chmod 770 /var/log/alamin
+chmod 660 /var/log/alamin/*
+chown -R alamin.alamin /var/log/alamin
+/etc/init.d/alamin start

@@ -1,0 +1,20 @@
+gsgcmd and gsgsmtpd exitcodes:
+
+0	sucessful
+1	syntax error, incorrect command line
+2	parameter lost
+
+gsgmdd exitcodes:
+
+0	sucessful
+1	syntax error, incorrect command line
+2	parameter lost
+4	gsm interface not implemented
+
+gsgc exitcodes:
+
+0	OK. Command sucessfully completed.
+1	Can't connect with server.
+2	Protocol error.
+3	Message can't be sent.
+4	User/password not valid.

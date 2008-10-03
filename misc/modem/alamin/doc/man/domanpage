@@ -1,0 +1,13 @@
+#!/bin/bash
+rm *.gz
+pod2man --center="Alamin GSM SMS Gateway" --section=1 --release="version 0.3.6, May 6, 2001" alamin.pod > alamin.8
+gzip alamin.8
+cd ../../bin
+pod2man --center="Alamin GSM SMS Gateway" --section=1 --release="version 0.3.6, May 6, 2001" gsgc > ../doc/man/gsgc.1
+gzip ../doc/man/gsgc.1
+pod2man --center="Alamin GSM SMS Gateway" --section=8 --release="version 0.3.6, May 6, 2001" gsgcmd > ../doc/man/gsgcmd.8
+gzip ../doc/man/gsgcmd.8
+pod2man --center="Alamin GSM SMS Gateway" --section=8 --release="version 0.3.6, May 6, 2001" gsgmdd > ../doc/man/gsgmdd.8
+gzip ../doc/man/gsgmdd.8
+pod2man --center="Alamin GSM SMS Gateway" --section=8 --release="version 0.3.6, May 6, 2001" gsgsmtpd > ../doc/man/gsgsmtpd.8
+gzip ../doc/man/gsgsmtpd.8

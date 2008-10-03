@@ -1,0 +1,39 @@
+#!/usr/bin/perl -w
+#---------------------------------------------------------------------
+# gsgimp-mailpostmaster
+#---------------------------------------------------------------------
+# (C) Andrés Seco Hernández, December 2000
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+#---------------------------------------------------------------------
+
+use strict;
+
+my ($arg_from,$arg_message) = @ARGV;
+
+my $program_name = "gsgimp-mailpostmaster";
+my $program_version = "v0.0.1 - December 17, 2000";
+my $tmpfile = "/tmp/".$program_name.".".$$;
+
+umask 007;
+open (MSGFILE,">$tmpfile");
+print MSGFILE "From: ".$program_name."\n";
+print MSGFILE "To: postmaster\n";
+print MSGFILE "Subject: SMS received from ".$arg_from."\n";
+print MSGFILE "\n";
+print MSGFILE $arg_message."\n";
+close (MSGFILE);
+
+my $commandtorun = "cat ".$tmpfile." | sendmail -t";
+system($commandtorun);
+unlink $tmpfile;
+
