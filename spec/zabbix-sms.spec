@@ -24,14 +24,17 @@ Alamin SMS gateway prepackaged for zabbix server.
 %build
 
 %pre
+exit 0
 
 %post
 /sbin/chkconfig --add zabbix-sms
 
 # make queues
-for n in fail success tmp q{`seq 1 9`}; do
-    mkdir %{_localstatedir}/spool/zabbix-sms/$n
+for n in fail success tmp q{1..9}; do
+    [ ! -d %{_localstatedir}/spool/zabbix-sms/$n ] && mkdir %{_localstatedir}/spool/zabbix-sms/$n
 done
+
+exit 0
 
 %clean
 rm -rf %buildroot
