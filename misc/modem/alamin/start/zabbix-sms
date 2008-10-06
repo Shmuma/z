@@ -1,4 +1,7 @@
 #! /bin/sh
+# chkconfig: 2345 25 75
+# description: zabbix-sms daemon
+
 # gsgd		Startup script for the Alamin GSM SMS Gateway
 #
 #		Written by Andres Seco <AndresSH@alamin.org> using
@@ -31,9 +34,11 @@ PIDB=gsgmdd
 DESC="Alamin GSM SMS Gateway"
 CONF=/etc/zabbix-sms/gsgd.conf
 
+# source function library
+. /etc/rc.d/init.d/functions
+
 test -f $DAEMONA || exit 0
 test -f $DAEMONB || exit 0
-test -f $DAEMONC || exit 0
 test -f $CONF || exit 0
 
 set -e
@@ -46,7 +51,7 @@ case "$1" in
 		--exec $DAEMONA
 	echo -n " $NAMEA"
 	start-stop-daemon --start --quiet \
-		--pidfile /var/run/alamin/$PIDB.pid \
+		--pidfile /var/run/zabbix-sms/$PIDB.pid \
 		--exec $DAEMONB
 	echo -n " $NAMEB"
 	echo "."
@@ -54,10 +59,10 @@ case "$1" in
   stop)
 	echo -n "Stopping $DESC:"
 	start-stop-daemon --stop --quiet --oknodo \
-		--pidfile /var/run/alamin/$PIDA.pid --name $NAMEA
+		--pidfile /var/run/zabbix-sms/$PIDA.pid --name $NAMEA
 	echo -n " $NAMEA"
 	start-stop-daemon --stop --quiet --oknodo \
-		--pidfile /var/run/alamin/$PIDB.pid --name $NAMEB
+		--pidfile /var/run/zabbix-sms/$PIDB.pid --name $NAMEB
 	echo -n " $NAMEB"
 	;;
   reload|force-reload|restart)
