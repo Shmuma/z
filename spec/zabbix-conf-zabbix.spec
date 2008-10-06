@@ -1,11 +1,12 @@
 %define realname	zabbix
+%define extraver	yandex30
 
 Name: zabbix-conf-zabbix
 Version: 0.2
 Release: 1
 Group: System/Configuration/Other
 License: GPL
-Source: %{realname}-1.4.4_yandex20.tar.gz
+Source: %{realname}-1.4.4_%{extraver}.tar.gz
 BuildArch: noarch
 BuildRoot: %{_tmppath}/%{name}-root
 Requires: zabbix-agent, sudo
@@ -18,7 +19,7 @@ Summary: Zabbix extended checks for monitoring servers (pair and top).
 Zabbix extended checks for monitoring servers (pair and top).
 
 %prep
-%setup -q -n %{realname}-1.4.4_yandex20
+%setup -q -n %{realname}-1.4.4_%{extraver}
 
 
 %build
