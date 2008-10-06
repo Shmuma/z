@@ -1,0 +1,75 @@
+#! /bin/sh
+# gsgd		Startup script for the Alamin GSM SMS Gateway
+#
+#		Written by Andres Seco <AndresSH@alamin.org> using
+#		the skeleton provided by Miquel van Smoorenburg and
+#		Ian Murdock in Debian GNU/Linux 2.1 (slink)
+#		modified with paragraphs from diald startup script
+#		in Debian GNU/Linux 2.2 (potato)
+#               As you see it, it is ready for potato. If you need
+#               it in slink, change start-stop-daemon by su in the
+#               start section (see commented lines)
+#
+# Version:	@(#)gsgd  1.2  16-Apr-2001  AndresSH@alamin.org
+#
+# Security note: until connection timeout will be implemented inside
+#               daemons, you can use redir to redirect connections to the
+#               real port where the service is listening anc check for
+#               timeouts. Redir is needed to use ports lower than 1024 to
+#               avoid using suid on daemons. See commented redir lines
+#               for example. You need to change your config file port
+#               options.
+#
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMONA=/usr/sbin/gsgcmd
+DAEMONB=/usr/sbin/gsgmdd
+NAMEA=gsgcmd
+NAMEB=gsgmdd
+PIDA=gsgcmd
+PIDB=gsgmdd
+DESC="Alamin GSM SMS Gateway"
+CONF=/etc/zabbix-sms/gsgd.conf
+
+test -f $DAEMONA || exit 0
+test -f $DAEMONB || exit 0
+test -f $DAEMONC || exit 0
+test -f $CONF || exit 0
+
+set -e
+
+case "$1" in
+  start)
+	echo -n "Starting $DESC:"
+	start-stop-daemon --start --quiet \
+		--pidfile /var/run/zabbix-sms/$PIDA.pid \
+		--exec $DAEMONA
+	echo -n " $NAMEA"
+	start-stop-daemon --start --quiet \
+		--pidfile /var/run/alamin/$PIDB.pid \
+		--exec $DAEMONB
+	echo -n " $NAMEB"
+	echo "."
+	;;
+  stop)
+	echo -n "Stopping $DESC:"
+	start-stop-daemon --stop --quiet --oknodo \
+		--pidfile /var/run/alamin/$PIDA.pid --name $NAMEA
+	echo -n " $NAMEA"
+	start-stop-daemon --stop --quiet --oknodo \
+		--pidfile /var/run/alamin/$PIDB.pid --name $NAMEB
+	echo -n " $NAMEB"
+	;;
+  reload|force-reload|restart)
+	$0 stop
+	sleep 2
+	$0 start
+	;;
+  *)
+	N=/etc/init.d/$NAME
+	echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
+	exit 1
+	;;
+esac
+
+exit 0
