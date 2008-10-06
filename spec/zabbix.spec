@@ -1,11 +1,12 @@
 %define realname	zabbix
+%define extraver	30
 
 Name: zabbix-mysql
 Version: 1.4.4
-Release: yandex_30
+Release: yandex_%{extraver}
 Group: System Environment/Daemons
 License: GPL
-Source: %{realname}-%{version}_yandex30.tar.gz
+Source: %{realname}-%{version}_yandex%{extraver}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
 BuildPrereq: mysql, mysql-devel, net-snmp-devel, setproctitle-devel, iksemel-devel, pkgconfig, libmemcached
 Requires: mysql, net-snmp, setproctitle, iksemel, libmemcached, memcached
@@ -30,7 +31,7 @@ Group: System Environment/Daemons
 the zabbix network monitor agent.
 
 %prep
-%setup -q -n %{realname}-%{version}_yandex30
+%setup -q -n %{realname}-%{version}_yandex%{extraver}
 
 %build
 %configure --enable-server --enable-agent --enable-memcache --with-mysql --with-jabber --with-net-snmp

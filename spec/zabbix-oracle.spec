@@ -1,11 +1,12 @@
 %define realname	zabbix
+%define extraver	30
 
 Name: zabbix-oracle
 Version: 1.4.4
-Release: yandex_30
+Release: yandex_%{extraver}
 Group: System Environment/Daemons
 License: GPL
-Source: %{realname}-%{version}_yandex30.tar.gz
+Source: %{realname}-%{version}_yandex%{extraver}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-root
 BuildPrereq: libsqlora8-devel, net-snmp-devel, setproctitle-devel, iksemel-devel, pkgconfig, php-devel, libmemcached
 Requires: libsqlora8, net-snmp, setproctitle, iksemel, libmemcached, memcached
@@ -30,7 +31,7 @@ Requires: php php-common php-oci8 php-gd php-bcmath php-cli
 A php frontent to zabbix.
 
 %prep
-%setup -q -n %{realname}-%{version}_yandex30
+%setup -q -n %{realname}-%{version}_yandex%{extraver}
 
 %build
 %configure --enable-server --enable-memcache --with-oracle --with-jabber --with-net-snmp
