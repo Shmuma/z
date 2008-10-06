@@ -45,26 +45,27 @@ set -e
 
 case "$1" in
   start)
-	echo -n "Starting $DESC:"
-	start-stop-daemon --start --quiet \
-		--pidfile /var/run/zabbix-sms/$PIDA.pid \
-		--exec $DAEMONA
-	echo -n " $NAMEA"
-	start-stop-daemon --start --quiet \
-		--pidfile /var/run/zabbix-sms/$PIDB.pid \
-		--exec $DAEMONB
-	echo -n " $NAMEB"
-	echo "."
+	echo "Starting $DESC:"
+        echo -n "$NAMEA:"
+	daemon --pidfile /var/run/zabbix-sms/$PIDA.pid $DAEMONA
+	echo
+        echo -n "$NAMEB:"
+	daemon --pidfile /var/run/zabbix-sms/$PIDB.pid $DAEMONB
+        echo
 	;;
   stop)
-	echo -n "Stopping $DESC:"
-	start-stop-daemon --stop --quiet --oknodo \
-		--pidfile /var/run/zabbix-sms/$PIDA.pid --name $NAMEA
-	echo -n " $NAMEA"
-	start-stop-daemon --stop --quiet --oknodo \
-		--pidfile /var/run/zabbix-sms/$PIDB.pid --name $NAMEB
-	echo -n " $NAMEB"
+	echo "Stopping $DESC:"
+        echo -n "$NAMEA:"
+        killproc $NAMEA
+        echo
+	echo -n "$NAMEB"
+        killproc $NAMEB
+        echo
 	;;
+  status)
+        status $NAMEA
+        status $NAMEB
+        ;;
   reload|force-reload|restart)
 	$0 stop
 	sleep 2
@@ -72,7 +73,7 @@ case "$1" in
 	;;
   *)
 	N=/etc/init.d/$NAME
-	echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
+	echo "Usage: $N {start|stop|status|restart|reload|force-reload}" >&2
 	exit 1
 	;;
 esac
