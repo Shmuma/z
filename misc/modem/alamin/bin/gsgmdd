@@ -274,6 +274,7 @@ my $opt_copyright = 0;
 my $opt_pidfile = "/var/run/alamin/".$program_name.".pid";
 
 my $opt_accounting = "/var/log/alamin/gsgd-accounting.log";
+my $opt_quality = "/var/log/alamin/quality.txt";
 my $opt_syslog = 1;
 my $opt_syslogfacility = "local4";
 my $opt_spool = "/var/spool/alamin";
@@ -468,7 +469,8 @@ sub process_native_in {
       }
     }
     if ($mustwait) {
-      sleep 30;
+        update_signal_quality ();
+        sleep 5;
     }
   }
 }
@@ -476,6 +478,13 @@ sub process_native_in {
 #********************
 # FUNCTIONS
 #********************
+sub update_signal_quality {
+  if ($opt_gsmdevice eq "at") {
+    my ($quality, $err_bits) = quality_at();
+    write_accounting_quality($quality,$err_bits);
+  }
+}
+
 
 sub pre_getsms {
   my $getsms_ident = "";
@@ -533,6 +542,13 @@ sub write_accounting {
   open (ACCF,">>$opt_accounting");
   print ACCF "$direction,$status,$opt_gsmdevice,$from,$to,$smsc,".localtime(time()).",XX $message XX\n" if ($opt_debug);
   print ACCF "$direction,$status,$opt_gsmdevice,$from,$to,$smsc,".localtime(time())."\n" if (! $opt_debug);
+  close (ACCF);
+}
+
+sub write_accounting_quality {
+  my ($quality,$err) = @_;
+  open (ACCF,">$opt_quality");
+  print ACCF "$quality,$err,".time()."\n";
   close (ACCF);
 }
 
@@ -882,6 +898,23 @@ sub prepare_date {
 #********************
 # AT INTERFACE
 #********************
+sub quality_at {
+  my $commandtorun = $opt_chatpath." -e -v TIMEOUT 10 \'\' \'AT+CSQ\' OK \'\' 2>\&1 \<$opt_gsmdeviceport \>$opt_gsmdeviceport";
+  my ($quality, $err) = (0, 0);
+
+  open CHAT, "$commandtorun|";
+  while (<CHAT>) {
+      chomp;
+      if (/^\+CSQ:\s(\d+),(\d+)$/) {
+          ($quality,$err) = ($1,$2);
+          last;
+      }
+  }
+  close CHAT;
+
+  return ($quality,$err);
+}
+
 
 sub getsms_at {
   my $commandtorun = $opt_chatpath." -v -e TIMEOUT 20 \'\' \'AT+CMGF=1\' OK \'AT+CMGL=\"ALL\"\' OK \'\' 2>/tmp/getsms_at.out \<$opt_gsmdeviceport \>$opt_gsmdeviceport";
@@ -1041,6 +1074,8 @@ sub read_config {
 #pidfile option can not be in config file, only in command line.
             if ($field[0] eq "accounting") {
               $opt_accounting = $field[1]; last CASE_CF; }
+            if ($field[0] eq "quality_info") {
+              $opt_quality = $field[1]; last CASE_CF; }
             if ($field[0] eq "syslog") {
               $opt_syslog = 1; $opt_syslogfacility = $field[1]; last CASE_CF; }
             if ($field[0] eq "nosyslog") {
