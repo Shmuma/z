@@ -60,11 +60,11 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 /* Request for list of active checks */
 	switch (s[0]) {
 	case 'Z':
-		if(strncmp (s,"ZBX_GET_ACTIVE_CHECKS", 21) == 0)
+		if(strncmp (s,"ZBX_GET_ACTIVE_CHECKS", 20) == 0)
 		{
 			line=strtok(s,"\n");
 			host=strtok(NULL,"\n");
-			if(!host)
+			if(host)
 				ret = send_list_of_active_checks(sock, host);
 		}
 		break;
