@@ -1188,7 +1188,7 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 				if (!tmp_str)
 					replace_to = zbx_dsprintf(replace_to, "%s", row[0]);
 				else {
-					replace_to = (char*)calloc (tmp_str - row[0] + 1);
+					replace_to = (char*)calloc (tmp_str - row[0] + 1, 1);
 					memcpy (replace_to, row[0], tmp_str - row[0]);
 				}
 			}

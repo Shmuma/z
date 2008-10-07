@@ -44,7 +44,7 @@ extern char* CONFIG_HFS_PATH;
 static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 {
 	char	*line,*host;
-	char	*server,*key,*value_string, *error = NULL;
+	char	*server,*key = NULL,*value_string, *error = NULL;
 	char	copy[MAX_STRING_LEN];
 	char	host_dec[MAX_STRING_LEN],key_dec[MAX_STRING_LEN],value_dec[MAX_STRING_LEN],error_dec[MAX_STRING_LEN];
 	char	lastlogsize[MAX_STRING_LEN];
@@ -55,158 +55,68 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 	int	ret=SUCCEED;
 
 	zbx_rtrim(s, " \r\n\0");
-
-	zabbix_log( LOG_LEVEL_DEBUG, "Trapper got [%s] len %d",
-		s,
-		strlen(s));
+	zabbix_log( LOG_LEVEL_DEBUG, "Trapper got [%s] len %d", s, strlen(s));
 
 /* Request for list of active checks */
-	if(strncmp(s,"ZBX_GET_ACTIVE_CHECKS", strlen("ZBX_GET_ACTIVE_CHECKS")) == 0)
-	{
-		if (CONFIG_SERVER_MODE != NULL &&
-		   (strcasecmp(CONFIG_SERVER_MODE, "master") == 0))
-			return ret;
-
-		line=strtok(s,"\n");
-		host=strtok(NULL,"\n");
-		if(host == NULL)
+	switch (s[0]) {
+	case 'Z':
+		if(strncmp (s,"ZBX_GET_ACTIVE_CHECKS", 20) == 0)
 		{
-			zabbix_log( LOG_LEVEL_WARNING, "ZBX_GET_ACTIVE_CHECKS: host is null. Ignoring.");
+			line=strtok(s,"\n");
+			host=strtok(NULL,"\n");
+			if(host)
+				ret = send_list_of_active_checks(sock, host);
 		}
-		else
-		{
-			ret = send_list_of_active_checks(sock, host);
-		}
-	}
-/* Process information sent by zabbix_sender */
-	else
-	{
-		key = NULL;
+		break;
 
-		/* Node data exchange? */
-		if(strncmp(s,"Data",4) == 0)
+	case '<':
+		zabbix_log( LOG_LEVEL_DEBUG, "XML received [%s]", s);
+
+		if (strncmp (s, "<req>", 5) == 0)
 		{
-/*			zabbix_log( LOG_LEVEL_WARNING, "Node data received [len:%d]", strlen(s)); */
-			if(node_sync(s) == SUCCEED)
-			{
-				if( zbx_tcp_send_raw(sock,"OK") != SUCCEED)
+			comms_parse_response(s,host_dec,key_dec,value_dec,error_dec,lastlogsize,timestamp,source,severity,sizeof(host_dec)-1);
+			server=host_dec;
+			value_string=value_dec;
+			error = error_dec;
+			key=key_dec;
+		}
+
+		if (strncmp (s, "<reqs>", 6) == 0)
+		{
+			/* TODO: improve history performance */
+			ret = SUCCEED;
+			value_string = NULL;
+
+			void* token = NULL;
+			void* history_token = NULL;
+
+			if (CONFIG_HFS_PATH) {
+				/* perform ultra-fast history addition */
+				while (comms_parse_multi_response (s,host_dec,key_dec,value_dec,lastlogsize,timestamp,source,severity,
+								   sizeof(host_dec)-1, &token) == SUCCEED)
 				{
-					zabbix_log( LOG_LEVEL_WARNING, "Error sending confirmation to node");
-					zabbix_syslog("Trapper: error sending confirmation to node");
+					append_history (host_dec, key_dec, value_dec, timestamp, &history_token);
 				}
+				flush_history (&history_token);
 			}
-			return ret;
-		}
-		/* Slave node events? */
-		if(strncmp(s,"Events",6) == 0)
-		{
-/*			zabbix_log( LOG_LEVEL_WARNING, "Slave node events received [len:%d]", strlen(s)); */
-			if(node_events(s) == SUCCEED)
-			{
-				if( zbx_tcp_send_raw(sock,"OK") != SUCCEED)
+			else {
+				DBbegin();
+				while (comms_parse_multi_response (s,host_dec,key_dec,value_dec,lastlogsize,timestamp,source,severity,
+								   sizeof(host_dec)-1, &token) == SUCCEED)
 				{
-					zabbix_log( LOG_LEVEL_WARNING, "Error sending confirmation to node");
-					zabbix_syslog("Trapper: error sending confirmation to node");
+					server = host_dec;
+					value_string = value_dec;
+					key = key_dec;
+					/* insert history value. It doesn't support  */
+					ret = process_data(sock,server,key,value_string, NULL, NULL, NULL, NULL, NULL, timestamp);
+					if (ret != SUCCEED)
+						break;
 				}
+				DBcommit();
 			}
-			return ret;
+			key = NULL;
 		}
-		/* Slave node history ? */
-		if(strncmp(s,"History",7) == 0)
-		{
-/*			zabbix_log( LOG_LEVEL_WARNING, "Slave node history received [len:%d]", strlen(s)); */
-			if(node_history(s) == SUCCEED)
-			{
-				if( zbx_tcp_send_raw(sock,"OK") != SUCCEED)
-				{
-					zabbix_log( LOG_LEVEL_WARNING, "Error sending confirmation to node]");
-					zabbix_syslog("Trapper: error sending confirmation to node");
-				}
-			}
-			return ret;
-		}
-		/* New XML protocol? */
-		else if(s[0]=='<')
-		{
-			zabbix_log( LOG_LEVEL_DEBUG, "XML received [%s]", s);
 
-			if (strncmp (s, "<req>", 5) == 0)
-			{
-				comms_parse_response(s,host_dec,key_dec,value_dec,error_dec,lastlogsize,timestamp,source,severity,sizeof(host_dec)-1);
-				server=host_dec;
-				value_string=value_dec;
-				error = error_dec;
-				key=key_dec;
-			}
-
-			if (strncmp (s, "<reqs>", 6) == 0)
-			{
-				/* TODO: improve history performance */
-				ret = SUCCEED;
-				value_string = NULL;
-				
-				void* token = NULL;
-				void* history_token = NULL;
-
-				if (CONFIG_HFS_PATH) {
-					/* perform ultra-fast history addition */
-/* 					sleep (20); */
-					while (comms_parse_multi_response (s,host_dec,key_dec,value_dec,lastlogsize,timestamp,source,severity,
-									   sizeof(host_dec)-1, &token) == SUCCEED)
-					{
-						append_history (host_dec, key_dec, value_dec, timestamp, &history_token);
-					}
-					flush_history (&history_token);
-				}
-				else {
-					DBbegin();
-					while (comms_parse_multi_response (s,host_dec,key_dec,value_dec,lastlogsize,timestamp,source,severity,
-									   sizeof(host_dec)-1, &token) == SUCCEED)
-					{
-						server = host_dec;
-						value_string = value_dec;
-						key = key_dec;
-						/* insert history value. It doesn't support  */
-						ret = process_data(sock,server,key,value_string, NULL, NULL, NULL, NULL, NULL, timestamp);
-						if (ret != SUCCEED)
-							break;
-					}
-					DBcommit();
-				}
-
-				key = NULL;
-			}
-		}
-		else
-		{
-			strscpy(copy,s);
-
-			server=(char *)strtok(s,":");
-			if(NULL == server)
-			{
-				return FAIL;
-			}
-
-			key=(char *)strtok(NULL,":");
-			if(NULL == key)
-			{
-				return FAIL;
-			}
-	
-			value_string=strchr(copy,':');
-			value_string=strchr(value_string+1,':');
-
-			if(NULL == value_string)
-			{
-				return FAIL;
-			}
-			/* It points to ':', so have to increment */
-			value_string++;
-			lastlogsize[0]=0;
-			timestamp[0]=0;
-			source[0]=0;
-			severity[0]=0;
-		}
 		if (value_string)
 			zabbix_log( LOG_LEVEL_DEBUG, "Value [%s]", value_string);
 
@@ -223,7 +133,9 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 			zabbix_syslog("Trapper: error sending result back");
 		}
 		zabbix_log( LOG_LEVEL_DEBUG, "After write()");
-	}	
+
+		break;
+	}
 	return ret;
 }
 
