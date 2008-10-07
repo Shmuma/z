@@ -41,16 +41,16 @@ test -f $DAEMONA || exit 0
 test -f $DAEMONB || exit 0
 test -f $CONF || exit 0
 
-set -e
+#set -e
 
 case "$1" in
   start)
 	echo "Starting $DESC:"
         echo -n "$NAMEA:"
-	daemon --pidfile /var/run/zabbix-sms/$PIDA.pid $DAEMONA
+	daemon --pidfile /var/run/$PIDA.pid $DAEMONA --configfile $CONF
 	echo
         echo -n "$NAMEB:"
-	daemon --pidfile /var/run/zabbix-sms/$PIDB.pid $DAEMONB
+	daemon --pidfile /var/run/$PIDB.pid $DAEMONB --configfile $CONF
         echo
 	;;
   stop)

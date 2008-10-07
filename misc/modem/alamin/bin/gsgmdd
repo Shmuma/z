@@ -331,9 +331,9 @@ openlog($program_name,"pid",$opt_syslogfacility);
 $SIG{CHLD} = \&REAPER;
 
 umask 007;
-open (PIDFILE,">".$opt_pidfile);
-print PIDFILE "$$";
-close (PIDFILE);
+#open (PIDFILE,">".$opt_pidfile);
+#print PIDFILE "$$";
+#close (PIDFILE);
 logit("info","Starting Alamin GSM SMS Gateway - Message Dispatcher") if ($opt_verbose);
 
 if ($opt_copyright) {
