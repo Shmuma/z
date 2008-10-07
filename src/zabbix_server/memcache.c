@@ -148,7 +148,10 @@ void memcache_zbx_serialize_item(DB_ITEM *item, size_t item_len)
 		for (i = 0; i < CHARS_LEN_MAX; i++) {
 			f = ((char **)((char *)(item) + DB_ITEM_OFFSETS[i]));
 
-			memcpy(p, (f[0] ? f[0] : "\0"), item->chars_len[i]);
+			if (f[0])
+				memcpy(p, f[0], item->chars_len[i]);
+			else
+				*p = '\0';
 			if (i >= DYN_DB_ITEM_ELEM && f[0])
 				free(*f);
 			*f = p;
