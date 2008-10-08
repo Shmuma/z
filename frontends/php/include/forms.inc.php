@@ -1481,7 +1481,7 @@
 		$key		= get_request("key"		,"");
 		$host		= get_request("host",		null);
 		$delay		= get_request("delay"		,30);
-		$history	= get_request("history"		,90);
+// 		$history	= get_request("history"		,90);
 		$status		= get_request("status"		,0);
 		$type		= get_request("type"		,0);
 		$snmp_community	= get_request("snmp_community"	,"public");
@@ -1493,7 +1493,7 @@
 		$valuemapid	= get_request("valuemapid"	,0);
 		$multiplier	= get_request("multiplier"	,0);
 		$delta		= get_request("delta"		,0);
-		$trends		= get_request("trends"		,365);
+// 		$trends		= get_request("trends"		,365);
 		$applications	= get_request("applications"	,array());
 		$delay_flex	= get_request("delay_flex"	,array());
 
@@ -1552,10 +1552,10 @@
 			if(!isset($limited) || !isset($_REQUEST["form_refresh"]))
 			{
 				$delay		= $item_data["delay"];
-				$history	= $item_data["history"];
+// 				$history	= $item_data["history"];
 				$status		= $item_data["status"];
 				$delta		= $item_data["delta"];
-				$trends		= $item_data["trends"];
+// 				$trends		= $item_data["trends"];
 				$db_delay_flex	= $item_data["delay_flex"];
 				
 				if(isset($db_delay_flex))
@@ -1772,12 +1772,12 @@
 			$frmItem->AddVar("delay_flex",null);
 		}
 
-		$frmItem->AddRow(S_KEEP_HISTORY_IN_DAYS, array(
-			new CNumericBox("history",$history,8),
-			(!isset($_REQUEST["itemid"])) ? null :
-				new CButtonQMessage("del_history",S_CLEAN_HISTORY,S_HISTORY_CLEANING_CAN_TAKE_A_LONG_TIME_CONTINUE_Q)
-			));
-		$frmItem->AddRow(S_KEEP_TRENDS_IN_DAYS, new CNumericBox("trends",$trends,8));
+// 		$frmItem->AddRow(S_KEEP_HISTORY_IN_DAYS, array(
+// 			new CNumericBox("history",$history,8),
+// 			(!isset($_REQUEST["itemid"])) ? null :
+// 				new CButtonQMessage("del_history",S_CLEAN_HISTORY,S_HISTORY_CLEANING_CAN_TAKE_A_LONG_TIME_CONTINUE_Q)
+// 			));
+// 		$frmItem->AddRow(S_KEEP_TRENDS_IN_DAYS, new CNumericBox("trends",$trends,8));
 
 		$cmbStatus = new CComboBox("status",$status);
 		foreach(array(ITEM_STATUS_ACTIVE,ITEM_STATUS_DISABLED,ITEM_STATUS_NOTSUPPORTED) as $st)
