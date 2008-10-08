@@ -1483,7 +1483,7 @@
 		$delay		= get_request("delay"		,30);
 // 		$history	= get_request("history"		,90);
 		$status		= get_request("status"		,0);
-		$type		= get_request("type"		,0);
+		$type		= get_request("type"		,ITEM_TYPE_ZABBIX_ACTIVE);
 		$snmp_community	= get_request("snmp_community"	,"public");
 		$snmp_oid	= get_request("snmp_oid"	,"interfaces.ifTable.ifEntry.ifInOctets.1");
 		$snmp_port	= get_request("snmp_port"	,161);
