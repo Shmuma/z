@@ -30,7 +30,7 @@ exit 0
 /sbin/chkconfig --add zabbix-sms
 
 # make queues
-for n in fail success tmp q{1..9}; do
+for n in fail success tmp in q{1..9}; do
     [ ! -d %{_localstatedir}/spool/zabbix-sms/$n ] && mkdir %{_localstatedir}/spool/zabbix-sms/$n
 done
 
@@ -54,6 +54,8 @@ install -m 755 misc/modem/alamin/start/zabbix-sms %{buildroot}%{_sysconfdir}/ini
 install -d %{buildroot}%{_localstatedir}/spool/zabbix-sms
 install -d %{buildroot}%{_localstatedir}/log/zabbix-sms
 
+install -d %{buildroot}%{_libdir}/zabbix-sms
+install -m 755 misc/modem/alamin/bin/imp/gsgimp-file %{buildroot}%{_libdir}/zabbix-sms
 
 %files
 %defattr(-,root,root)
@@ -64,5 +66,8 @@ install -d %{buildroot}%{_localstatedir}/log/zabbix-sms
 %attr(0755,root,root)  %{_sbindir}/*
 %{_sysconfdir}/init.d/zabbix-sms
 
-%dir %attr(0700,root,root) %{_localstatedir}/spool/zabbix-sms
+%dir %attr(0711,root,root) %{_localstatedir}/spool/zabbix-sms
 %dir %attr(0755,root,root) %{_localstatedir}/log/zabbix-sms
+
+%dir %attr(0755,root,root) %{_libdir}/zabbix-sms
+%attr(0755,root,root) %{_libdir}/zabbix-sms/gsgimp-file
