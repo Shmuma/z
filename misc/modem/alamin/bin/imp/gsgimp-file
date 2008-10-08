@@ -1,0 +1,12 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+my $queue_dir = "/var/spool/zabbix-sms/in/";
+my $time = time ();
+my ($arg_from,$arg_message) = @ARGV;
+
+open MSG,">$queue_dir/$time.txt";
+print MSG "From: $arg_from\n";
+print MSG "Message: $arg_message\n";
+close MSG;
