@@ -104,7 +104,7 @@ include_once "include/page_header.php";
 	
 	if (isset($_GET['help_button'])) {
 	    $g = get_graph_by_graphid($_REQUEST['graphid']);
-	    if ($g['description'])
+	    if (trim ($g['description']))
 		$graph->AddHelpButton("?");
 	}
 	
