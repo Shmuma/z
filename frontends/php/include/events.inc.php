@@ -103,21 +103,21 @@
 				while (!$done && $num) {
 					$done = 1;
 					$events = array ();
-					foreach ($hosts as $hostid => $obj) {
+					foreach ($hosts as $hhostid => $obj) {
  						if ($obj->stop)
 							continue;
 						$done = 0;
-						$hfs_events = zabbix_hfs_host_events ($obj->site, $hostid, $obj->begin, $page);
+						$hfs_events = zabbix_hfs_host_events ($obj->site, $hhostid, $obj->begin, $page);
 						rsort ($hfs_events);
 						
 						if (is_array ($hfs_events) && count ($hfs_events) > 0) {
 							$events = array_merge ($events, $hfs_events);
-							$hosts[$hostid]->begin += count ($hfs_events);
+							$hosts[$hhostid]->begin += count ($hfs_events);
 							if (count ($hfs_events) < $page)
-								$hosts[$hostid]->stop = 1;
+								$hosts[$hhostid]->stop = 1;
 						}
 						else
-							$hosts[$hostid]->stop = 1;
+							$hosts[$hhostid]->stop = 1;
 					}
 
 					if ($done)
@@ -189,7 +189,6 @@
 		$table = new CTableInfo(S_NO_EVENTS_FOUND); 
 		$table->SetHeader(array(
 				S_TIME,
-				is_show_subnodes() ? S_NODE : null,
 				$hostid == 0 ? S_HOST : null,
 				S_DESCRIPTION,
 				S_VALUE,
@@ -217,7 +216,6 @@
 				
 			$table->AddRow(array(
 				date("Y.M.d H:i:s",$row["clock"]),
-				'',
 				$hostid == 0 ? $row['host'] : null,
 				new CLink(
 					expand_trigger_description_by_data($row, ZBX_FLAG_EVENT),
