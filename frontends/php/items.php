@@ -156,6 +156,9 @@ include_once "include/page_header.php";
 	);
 
 	$_REQUEST["showdisabled"] = get_request("showdisabled", get_profile("web.items.showdisabled", 0));
+	// dirty hack
+	$_REQUEST["history"] = 30;
+	$_REQUEST["trends"] = 90;
 	
 	check_fields($fields);
 
@@ -747,7 +750,7 @@ include_once "include/page_header.php";
 					"CheckAll('".$form->GetName()."','all_items');"),
 				S_DESCRIPTION),
 			S_KEY,nbsp(S_UPDATE_INTERVAL),
-			S_HISTORY,S_TRENDS,S_TYPE,S_STATUS,
+			S_TYPE,S_STATUS,
 			$show_applications ? S_APPLICATIONS : null,
 			S_ERROR."[".S_STDERR."]"));
 
@@ -821,15 +824,15 @@ include_once "include/page_header.php";
 
 			$applications = $show_applications ? implode(', ', get_applications_by_itemid($db_item["itemid"], 'name')) : null;
 
-			$row_history_size = $ROW_SIZE["HISTORY"][$db_item["value_type"]] * $db_item["history"] * 3600 * 24 / $db_item["delay"];
-			$query_history_size = $query_history_size + $row_history_size;
-			$row_trends_size = 0;
+// 			$row_history_size = $ROW_SIZE["HISTORY"][$db_item["value_type"]] * $db_item["history"] * 3600 * 24 / $db_item["delay"];
+// 			$query_history_size = $query_history_size + $row_history_size;
+// 			$row_trends_size = 0;
 
-			if ($db_item["value_type"] == ITEM_VALUE_TYPE_UINT64 || $db_item["value_type"] == ITEM_VALUE_TYPE_FLOAT) 
-			{
-				$row_trends_size = $ROW_SIZE["TRENDS"] * $db_item["trends"] * 3600 * 24 / 3600;
-			}
-			$query_trends_size = $query_trends_size + $row_trends_size;
+// 			if ($db_item["value_type"] == ITEM_VALUE_TYPE_UINT64 || $db_item["value_type"] == ITEM_VALUE_TYPE_FLOAT) 
+// 			{
+// 				$row_trends_size = $ROW_SIZE["TRENDS"] * $db_item["trends"] * 3600 * 24 / 3600;
+// 			}
+// 			$query_trends_size = $query_trends_size + $row_trends_size;
 			
 			$chkBox = new CCheckBox("group_itemid[]",null,null,$db_item["itemid"]);
 			//if($db_item["templateid"] > 0) $chkBox->SetEnabled(false);
@@ -838,8 +841,8 @@ include_once "include/page_header.php";
 				array($chkBox, $description),
 				$db_item["key_"],
 				$db_item["delay"],
-				$db_item["history"] . " (" . mem2str($row_history_size, 0) .")",
-				$db_item["trends"] . " (" . mem2str($row_trends_size, 0) . ")",
+// 				$db_item["history"] . " (" . mem2str($row_history_size, 0) .")",
+// 				$db_item["trends"] . " (" . mem2str($row_trends_size, 0) . ")",
 				item_type2str($db_item['type']),
 				$status,
 				$applications,
@@ -864,10 +867,10 @@ include_once "include/page_header.php";
 
 		$form->AddItem($table);
 
-		$table_sum  = new CTableInfo();
-		$table_sum->AddRow(new CCol("<strong>" . S_APPROX_HISTORY_SIZE . "</strong>: " . mem2str($query_history_size, 0) . " (+/- 10%)", "ccol"));
-		$table_sum->AddRow(new CCol("<strong>" . S_APPROX_TRENDS_SIZE . "</strong>: " . mem2str($query_trends_size, 0) . " (+/- 10%)", "ccol"));
-		$form->AddItem($table_sum);
+// 		$table_sum  = new CTableInfo();
+// 		$table_sum->AddRow(new CCol("<strong>" . S_APPROX_HISTORY_SIZE . "</strong>: " . mem2str($query_history_size, 0) . " (+/- 10%)", "ccol"));
+// 		$table_sum->AddRow(new CCol("<strong>" . S_APPROX_TRENDS_SIZE . "</strong>: " . mem2str($query_trends_size, 0) . " (+/- 10%)", "ccol"));
+// 		$form->AddItem($table_sum);
 
 		$form->Show();
 	}
