@@ -289,7 +289,7 @@ openlog($program_name,"pid",$opt_syslogfacility);
 
 $SIG{CHLD} = \&REAPER;
 
-umask 007;
+umask 022;
 #open (PIDFILE,">".$opt_pidfile);
 #print PIDFILE "$$";
 #close (PIDFILE);
