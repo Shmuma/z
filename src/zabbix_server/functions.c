@@ -901,29 +901,15 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 		}
 	}
 
+	item->prevvalue_null		= item->lastvalue_null;
+	item->lastvalue_null		= 0;
+	item->prevorgvalue_null		= 0;
+
 	if (item->value_type != ITEM_VALUE_TYPE_FLOAT &&
 	    item->value_type != ITEM_VALUE_TYPE_UINT64) {
-		if (!item->chars) {
-			if (item->prevvalue_str)
-				free(item->prevvalue_str);
-
-			if (item->lastvalue_str)
-				free(item->lastvalue_str);
-
-			if (item->prevorgvalue_str)
-				free(item->prevorgvalue_str);
-
-			item->prevvalue_str 		= (item->lastvalue_str) ? strdup(item->lastvalue_str) : NULL;
-			item->lastvalue_str 		= (value->str) ? strdup(value->str) : NULL;
-			item->prevorgvalue_str		= prev_value.str;
-		}
-#ifdef HAVE_MEMCACHE
-		else {
-			memcache_zbx_change_chars(item, 20, item->lastvalue_str);
-			memcache_zbx_change_chars(item, 19, value->str);
-			memcache_zbx_change_chars(item, 18, prev_value.str);
-		}
-#endif
+		dbitem_change_chars(item, 20, item->lastvalue_str);
+		dbitem_change_chars(item, 19, value->str);
+		dbitem_change_chars(item, 18, prev_value.str);
 	}
 	else {
 		item->prevvalue_dbl			= item->lastvalue_dbl;
@@ -935,10 +921,6 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 		item->prevorgvalue_uint64		= prev_value.ui64;
 		item->prevorgvalue_dbl			= prev_value.dbl;
 	}
-
-	item->prevvalue_null		= item->lastvalue_null;
-	item->lastvalue_null		= 0;
-	item->prevorgvalue_null		= 0;
 
 /* Update item status if required */
 	if(item->status == ITEM_STATUS_NOTSUPPORTED)

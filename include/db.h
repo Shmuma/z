@@ -260,10 +260,9 @@ DB_GRAPH_ITEM
 	char	color[GRAPH_ITEM_COLOR_LEN_MAX];
 };
 
-#ifdef HAVE_MEMCACHE
 #define DYN_DB_ITEM_ELEM	18 // prevorgvalue_str, ...
 #define CHARS_LEN_MAX		21
-#endif
+
 DB_ITEM
 {
 	zbx_uint64_t	itemid;
@@ -329,8 +328,8 @@ DB_ITEM
 	char	*prevvalue_str;
 #ifdef HAVE_MEMCACHE
 	hfs_time_t	cache_time;
-	long		chars_len[CHARS_LEN_MAX];
 #endif
+	long		chars_len[CHARS_LEN_MAX];
 	char		*chars;
 };
 
