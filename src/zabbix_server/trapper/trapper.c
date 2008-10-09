@@ -167,7 +167,7 @@ void	process_trapper_child(zbx_sock_t *sock)
 		(double)(tv.tv_usec-msec)/1000000 );*/
 }
 
-void	child_trapper_main(int i, zbx_sock_t *s)
+void	child_trapper_main(int i)
 {
 	zabbix_log( LOG_LEVEL_DEBUG, "In child_trapper_main()");
 
@@ -178,29 +178,16 @@ void	child_trapper_main(int i, zbx_sock_t *s)
 	for(;;)
 	{
 		zbx_setproctitle("waiting for connection");
-		if (zbx_tcp_accept(s) != SUCCEED)
-			zabbix_log(LOG_LEVEL_ERR, "trapper failed to accept connection");
-		else {
-			zbx_setproctitle("processing data");
-			process_trapper_child(s);
+/* 		if (zbx_tcp_accept(s) != SUCCEED) */
+/* 			zabbix_log(LOG_LEVEL_ERR, "trapper failed to accept connection"); */
+/* 		else { */
+/* 			zbx_setproctitle("processing data"); */
+/* 			process_trapper_child(s); */
 
-			zbx_tcp_unaccept(s);
-                }
+/* 			zbx_tcp_unaccept(s); */
+/*                 } */
+		sleep (100);
 	}
 	DBclose();
 }
 
-/*
-pid_t	child_trapper_make(int i,int listenfd, int addrlen)
-{
-	pid_t	pid;
-
-	if((pid = zbx_fork()) >0)
-	{
-		return (pid);
-	}
-
-	child_trapper_main(i, listenfd, addrlen);
-
-	return 0;
-}*/
