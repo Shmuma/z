@@ -55,6 +55,7 @@
 
 #ifdef HAVE_MEMCACHE
 memcached_st *mem_conn = NULL;
+#endif
 
 size_t DB_ITEM_OFFSETS[CHARS_LEN_MAX] = {
 /*  0 */	offsetof(DB_ITEM, siteid),
@@ -79,7 +80,6 @@ size_t DB_ITEM_OFFSETS[CHARS_LEN_MAX] = {
 /* 19 */	offsetof(DB_ITEM, lastvalue_str),
 /* 20 */	offsetof(DB_ITEM, prevvalue_str)
 };
-#endif
 
 zbx_process_type_t process_type = -1;
 
