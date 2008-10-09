@@ -665,6 +665,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now)
 		if (CONFIG_HFS_PATH) {
 		    switch (item->value_type) {
 		    case ITEM_VALUE_TYPE_STR:
+		    case ITEM_VALUE_TYPE_TEXT:
 			HFS_update_item_values_str (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)now, (hfs_time_t)nextcheck,
 						    item->lastvalue_null ? NULL : item->lastvalue_str, value->str, NULL);
 			break;
