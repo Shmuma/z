@@ -53,9 +53,8 @@ int memcache_zbx_getitem(char *key, char *host, DB_ITEM *item)
 	len = strlen(key) + strlen(host) + 5;
 
 	strkey = (char *) zbx_malloc(strkey, len);
-	zbx_snprintf(strkey, len, "%c%c|%s|%s",
-		    (char)process_type, (char)MEMCACHE_VERSION,
-		    key, host);
+	zbx_snprintf(strkey, len, "%d|%d|%s|%s",
+		    process_type, MEMCACHE_VERSION, key, host);
 
 	zabbix_log(LOG_LEVEL_DEBUG, "[memcache] memcache_getitem()"
 		    "[%s|%s]", key, host);
@@ -89,12 +88,11 @@ int memcache_zbx_setitem(DB_ITEM *item)
 	len = strlen(item->key) + strlen(item->host_name) + 5;
 
 	strkey = (char *) zbx_malloc(strkey, len);
-	zbx_snprintf(strkey, len, "%c%c|%s|%s",
-		    (char)process_type, (char)MEMCACHE_VERSION,
-		    item->key, item->host_name);
+	zbx_snprintf(strkey, len, "%d|%d|%s|%s",
+		    process_type, MEMCACHE_VERSION, item->key, item->host_name);
 
 	zabbix_log(LOG_LEVEL_DEBUG, "[memcache] memcache_setitem()"
-		    "[%s]", strkey);
+		    "[%d|%d|%s|%s]", process_type, MEMCACHE_VERSION, item->key, item->host_name);
 
 	item_len = dbitem_size(item, 0);
 	dbitem_serialize(item, item_len);
