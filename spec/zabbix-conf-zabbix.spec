@@ -1,5 +1,5 @@
 %define realname	zabbix
-%define extraver	yandex30
+%define extraver	yandex31
 
 Name: zabbix-conf-zabbix
 Version: 0.2
