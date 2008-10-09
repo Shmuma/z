@@ -21,7 +21,7 @@ static const char* base_path = "/dev/shm/zabbix_server/";
 void metrics_init ()
 {
 	DIR* dir;
-	strict dirent d;
+	struct dirent* d;
 
 	/* checks for directory exists */
 	dir = opendir (base_path);
@@ -29,9 +29,9 @@ void metrics_init ()
 	if (!dir)
 		mkdir (base_path, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 	else {
-		while (readdir (dir, &d, 1))
-			if (strncmp (d.d_name, ".", 2) && strncmp (d.d_name, "..", 3))
-				unlink (d.d_name);
+		while (d = readdir (dir))
+			if (strncmp (d->d_name, ".", 2) && strncmp (d->d_name, "..", 3))
+				unlink (d->d_name);
 		closedir (dir);
 	}
 
@@ -81,7 +81,7 @@ int metric_update (metric_key_t key, zbx_uint64_t val)
 
 	ftruncate (metrics[key].fd, 0);
 	lseek (metrics[key].fd, 0, SEEK_SET);
-	snprintf (buf, sizeof (buf), "%lld", val);
+	snprintf (buf, sizeof (buf), "%lld\n", val);
 	len = strlen (buf);
 	write (metrics[key].fd, buf, len);
 
