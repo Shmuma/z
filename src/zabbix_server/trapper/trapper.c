@@ -29,6 +29,7 @@
 
 #include "../functions.h"
 #include "../expression.h"
+#include "../metrics.h"
 
 #include "nodesync.h"
 #include "nodeevents.h"
@@ -40,6 +41,19 @@
 
 extern char* CONFIG_SERVER_SITE;
 extern char* CONFIG_HFS_PATH;
+
+static zbx_uint64_t mtr_values = 0;
+static metric_key_t key_values;
+
+static zbx_uint64_t mtr_checks = 0;
+static metric_key_t key_checks;
+
+static zbx_uint64_t mtr_history = 0;
+static metric_key_t key_history;
+
+static zbx_uint64_t mtr_reqs = 0;
+static metric_key_t key_reqs;
+
 
 static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 {
@@ -66,6 +80,8 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 			host=strtok(NULL,"\n");
 			if(host)
 				ret = send_list_of_active_checks(sock, host);
+			mtr_checks++;
+			metric_update (key_checks, mtr_checks);
 		}
 		break;
 
@@ -79,6 +95,8 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 			value_string=value_dec;
 			error = error_dec;
 			key=key_dec;
+			mtr_values++;
+			metric_update (key_values, mtr_values);
 		}
 
 		if (strncmp (s, "<reqs>", 6) == 0)
@@ -96,8 +114,10 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 								   sizeof(host_dec)-1, &token) == SUCCEED)
 				{
 					append_history (host_dec, key_dec, value_dec, timestamp, &history_token);
+					mtr_history++;
 				}
 				flush_history (&history_token);
+				metric_update (key_history, mtr_history);
 			}
 			else {
 				DBbegin();
@@ -173,6 +193,11 @@ void	child_trapper_main(int i, zbx_sock_t *s)
 
 	zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Trapper]", i);
 
+	key_values  = metric_register ("trapper_values",  i);
+	key_checks  = metric_register ("trapper_checks",  i);
+	key_history = metric_register ("trapper_history", i);
+	key_reqs    = metric_register ("trapper_reqs", i);
+
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 
 	for(;;)
@@ -182,6 +207,8 @@ void	child_trapper_main(int i, zbx_sock_t *s)
 			zabbix_log(LOG_LEVEL_ERR, "trapper failed to accept connection");
 		else {
 			zbx_setproctitle("processing data");
+			mtr_reqs++;
+			metric_update (key_reqs, mtr_reqs);
 			process_trapper_child(s);
 
 			zbx_tcp_unaccept(s);

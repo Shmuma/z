@@ -27,6 +27,7 @@
 #include "log.h"
 #include "zlog.h"
 #include "zbxgetopt.h"
+#include "metrics.h"
 
 #include "functions.h"
 #include "expression.h"
@@ -1080,6 +1081,8 @@ int MAIN_ZABBIX_ENTRY(void)
 	{
 		zabbix_open_log(LOG_TYPE_FILE,CONFIG_LOG_LEVEL,CONFIG_LOG_FILE);
 	}
+
+	metrics_init ();
 
 /*	zabbix_log( LOG_LEVEL_WARNING, "INFO [%s]", ZBX_SQL_MOD(a,%d)); */
 	zabbix_log( LOG_LEVEL_WARNING, "Starting zabbix_server. ZABBIX %s.", ZABBIX_VERSION);
