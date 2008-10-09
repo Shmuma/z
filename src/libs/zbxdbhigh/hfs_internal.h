@@ -80,8 +80,8 @@ int is_valid_val (void* val, size_t len);
 int obtain_lock (int fd, int write);
 int release_lock (int fd, int write);
 
-void write_str (int fd, const char* str);
-char* read_str (int fd);
+// void write_str (int fd, const char* str);
+// char* read_str (int fd);
 
 void recalculate_trend (hfs_trend_t* new, hfs_trend_t old, item_type_t type);
 

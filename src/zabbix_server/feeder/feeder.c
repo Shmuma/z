@@ -32,6 +32,116 @@ extern char* CONFIG_SERVER_SITE;
 extern char* CONFIG_HFS_PATH;
 
 
+static int	process_id = 0;
+
+
+static char	host_dec[MAX_STRING_LEN],key_dec[MAX_STRING_LEN],value_dec[MAX_STRING_LEN],error_dec[MAX_STRING_LEN];
+static char	lastlogsize[MAX_STRING_LEN];
+static char	timestamp[MAX_STRING_LEN];
+static char	source[MAX_STRING_LEN];
+static char	severity[MAX_STRING_LEN];
+
+/* file which holds 64-bit counter of processed items. Resides in SHM. */
+static int	processed_fd = -1;
+static zbx_uint64_t	processed = 0;
+
+static int	queue_fd = -1;
+
+
+static void	update_processed ()
+{
+	static char name[256];
+	static char buf[100];
+	int len;
+
+	if (processed_fd == -1) {
+		snprintf (name, sizeof (name), "/dev/shm/zbx_feeder_processed.%d", process_id);
+		processed_fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	}
+
+	if (processed_fd == -1)
+		return;
+	
+	ftruncate (processed_fd, 0);
+ 	lseek (processed_fd, 0, SEEK_SET);
+	snprintf (buf, sizeof (buf), "%lld", processed);
+
+	len = strlen (buf);
+
+	if (write (processed_fd, buf, len) != len) {
+		close (processed_fd);
+		processed_fd = -1;
+	}
+}
+
+
+static void    feeder_queue_data (const char* server, const char* key, const char* value, const char* error, 
+				  const char* lastlogsize, const char* timestamp, const char* source, const char* severity)
+{
+	static char name[256];
+	static char dir[256];
+	int len;
+
+	if (queue_fd == -1) {
+		snprintf (name, sizeof (name), "%s/%s/queue/q_feeder.%d", CONFIG_HFS_PATH, CONFIG_SERVER_SITE, process_id);
+		queue_fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+		if (queue_fd == -1)
+			return;
+	}
+
+	write_str (queue_fd, server);
+	write_str (queue_fd, key);
+	write_str (queue_fd, value);
+	write_str (queue_fd, error);
+	write_str (queue_fd, lastlogsize);
+	write_str (queue_fd, timestamp);
+	write_str (queue_fd, source);
+	write_str (queue_fd, severity);
+}
+
+
+void	process_feeder_child(zbx_sock_t *sock)
+{
+	char	*data, *line, *host;
+	char	*server,*key = NULL,*value_string, *error = NULL;
+	int	ret = SUCCEED;
+
+	if(zbx_tcp_recv(sock, &data) != SUCCEED)
+		return;
+
+	zbx_rtrim(data, " \r\n\0");
+
+	switch (data[0]) {
+	case 'Z':
+		if(strncmp (data, "ZBX_GET_ACTIVE_CHECKS", 20) == 0)
+		{
+			line = strtok(data,"\n");
+			host = strtok(NULL,"\n");
+			if(host)
+				ret = send_list_of_active_checks(sock, host);
+		}
+		break;	
+	case '<':
+		if (strncmp (data, "<req>", 5) == 0)
+		{
+			comms_parse_response(data, host_dec, key_dec, value_dec, error_dec, lastlogsize, timestamp, source, severity, sizeof(host_dec)-1);
+			server=host_dec;
+			value_string=value_dec;
+			error = error_dec;
+			key=key_dec;
+			/* append to queue for trapper */
+			feeder_queue_data (host_dec, key_dec, value_dec, error_dec, lastlogsize, timestamp, source, severity);
+		}
+
+		if( zbx_tcp_send_raw(sock, SUCCEED == ret ? "OK" : "NOT OK") != SUCCEED)
+			zabbix_log(LOG_LEVEL_WARNING, "Error sending result back");
+		break;
+	}
+
+	processed++;
+	update_processed ();
+}
+
 
 void	child_feeder_main(int i, zbx_sock_t *s)
 {
@@ -39,19 +149,19 @@ void	child_feeder_main(int i, zbx_sock_t *s)
 
 	zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Feeder]", i);
 
+	process_id = i;
+
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 	for(;;)
 	{
-		zbx_setproctitle("waiting for connection");
-/* 		if (zbx_tcp_accept(s) != SUCCEED) */
-/* 			zabbix_log(LOG_LEVEL_ERR, "trapper failed to accept connection"); */
-/* 		else { */
-/* 			zbx_setproctitle("processing data"); */
-/* 			process_trapper_child(s); */
-
-/* 			zbx_tcp_unaccept(s); */
-/*                 } */
-		sleep (100);
+		zbx_setproctitle("Feeder waiting for connection");
+		if (zbx_tcp_accept(s) != SUCCEED)
+			zabbix_log(LOG_LEVEL_ERR, "feeder failed to accept connection");
+		else {
+			zbx_setproctitle("Feeder processing data");
+			process_feeder_child(s);
+			zbx_tcp_unaccept(s);
+                }
 	}
 	DBclose();
 }

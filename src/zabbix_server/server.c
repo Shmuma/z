@@ -1175,12 +1175,12 @@ int MAIN_ZABBIX_ENTRY(void)
 	else if(server_num <= CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS)
 	{
 		process_type = ZBX_PROCESS_TRAPPERD;
-		child_trapper_main(server_num);
+		child_trapper_main(server_num - CONFIG_POLLER_FORKS);
 	}
 	else if(server_num <= CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS + CONFIG_FEEDER_FORKS)
 	{
 		process_type = ZBX_PROCESS_FEEDER;
-		child_feeder_main(server_num, &listen_sock);
+		child_feeder_main(server_num - (CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS), &listen_sock);
 	}
 	else if(server_num <= CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS + CONFIG_FEEDER_FORKS + CONFIG_PINGER_FORKS)
 	{
