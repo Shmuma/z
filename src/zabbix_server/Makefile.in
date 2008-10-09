@@ -59,8 +59,8 @@ sbinPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(sbin_PROGRAMS)
 am__zabbix_server_SOURCES_DIST = evalfunc.c evalfunc.h expression.c \
 	expression.h actions.c actions.h operations.c operations.h \
-	events.c events.h zlog.c functions.c functions.h server.c \
-	memcache.c memcache.h
+	events.c events.h zlog.c functions.c functions.h metrics.c \
+	metrics.h serialize.c server.c memcache.c memcache.h
 @MEMCACHE_TRUE@am__objects_1 = zabbix_server-memcache.$(OBJEXT)
 am_zabbix_server_OBJECTS = zabbix_server-evalfunc.$(OBJEXT) \
 	zabbix_server-expression.$(OBJEXT) \
@@ -68,6 +68,8 @@ am_zabbix_server_OBJECTS = zabbix_server-evalfunc.$(OBJEXT) \
 	zabbix_server-operations.$(OBJEXT) \
 	zabbix_server-events.$(OBJEXT) zabbix_server-zlog.$(OBJEXT) \
 	zabbix_server-functions.$(OBJEXT) \
+	zabbix_server-metrics.$(OBJEXT) \
+	zabbix_server-serialize.$(OBJEXT) \
 	zabbix_server-server.$(OBJEXT) $(am__objects_1)
 zabbix_server_OBJECTS = $(am_zabbix_server_OBJECTS)
 @JABBER_TRUE@am__DEPENDENCIES_1 =  \
@@ -264,8 +266,8 @@ SUBDIRS = \
 
 zabbix_server_SOURCES = evalfunc.c evalfunc.h expression.c \
 	expression.h actions.c actions.h operations.c operations.h \
-	events.c events.h zlog.c functions.c functions.h server.c \
-	$(am__append_1)
+	events.c events.h zlog.c functions.c functions.h metrics.c \
+	metrics.h serialize.c server.c $(am__append_1)
 @JABBER_TRUE@JABBER_LDADD = $(top_srcdir)/src/libs/zbxjabber/libzbxjabber.a
 zabbix_server_LDADD = \
 	alerter/libzbxalerter.a \
@@ -373,7 +375,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zabbix_server-expression.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zabbix_server-functions.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zabbix_server-memcache.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zabbix_server-metrics.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zabbix_server-operations.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zabbix_server-serialize.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zabbix_server-server.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zabbix_server-zlog.Po@am__quote@
 
@@ -488,6 +492,34 @@ zabbix_server-functions.obj: functions.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='functions.c' object='zabbix_server-functions.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -c -o zabbix_server-functions.obj `if test -f 'functions.c'; then $(CYGPATH_W) 'functions.c'; else $(CYGPATH_W) '$(srcdir)/functions.c'; fi`
+
+zabbix_server-metrics.o: metrics.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -MT zabbix_server-metrics.o -MD -MP -MF "$(DEPDIR)/zabbix_server-metrics.Tpo" -c -o zabbix_server-metrics.o `test -f 'metrics.c' || echo '$(srcdir)/'`metrics.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/zabbix_server-metrics.Tpo" "$(DEPDIR)/zabbix_server-metrics.Po"; else rm -f "$(DEPDIR)/zabbix_server-metrics.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='metrics.c' object='zabbix_server-metrics.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -c -o zabbix_server-metrics.o `test -f 'metrics.c' || echo '$(srcdir)/'`metrics.c
+
+zabbix_server-metrics.obj: metrics.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -MT zabbix_server-metrics.obj -MD -MP -MF "$(DEPDIR)/zabbix_server-metrics.Tpo" -c -o zabbix_server-metrics.obj `if test -f 'metrics.c'; then $(CYGPATH_W) 'metrics.c'; else $(CYGPATH_W) '$(srcdir)/metrics.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/zabbix_server-metrics.Tpo" "$(DEPDIR)/zabbix_server-metrics.Po"; else rm -f "$(DEPDIR)/zabbix_server-metrics.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='metrics.c' object='zabbix_server-metrics.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -c -o zabbix_server-metrics.obj `if test -f 'metrics.c'; then $(CYGPATH_W) 'metrics.c'; else $(CYGPATH_W) '$(srcdir)/metrics.c'; fi`
+
+zabbix_server-serialize.o: serialize.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -MT zabbix_server-serialize.o -MD -MP -MF "$(DEPDIR)/zabbix_server-serialize.Tpo" -c -o zabbix_server-serialize.o `test -f 'serialize.c' || echo '$(srcdir)/'`serialize.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/zabbix_server-serialize.Tpo" "$(DEPDIR)/zabbix_server-serialize.Po"; else rm -f "$(DEPDIR)/zabbix_server-serialize.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='serialize.c' object='zabbix_server-serialize.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -c -o zabbix_server-serialize.o `test -f 'serialize.c' || echo '$(srcdir)/'`serialize.c
+
+zabbix_server-serialize.obj: serialize.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -MT zabbix_server-serialize.obj -MD -MP -MF "$(DEPDIR)/zabbix_server-serialize.Tpo" -c -o zabbix_server-serialize.obj `if test -f 'serialize.c'; then $(CYGPATH_W) 'serialize.c'; else $(CYGPATH_W) '$(srcdir)/serialize.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/zabbix_server-serialize.Tpo" "$(DEPDIR)/zabbix_server-serialize.Po"; else rm -f "$(DEPDIR)/zabbix_server-serialize.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='serialize.c' object='zabbix_server-serialize.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -c -o zabbix_server-serialize.obj `if test -f 'serialize.c'; then $(CYGPATH_W) 'serialize.c'; else $(CYGPATH_W) '$(srcdir)/serialize.c'; fi`
 
 zabbix_server-server.o: server.c
 @am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -MT zabbix_server-server.o -MD -MP -MF "$(DEPDIR)/zabbix_server-server.Tpo" -c -o zabbix_server-server.o `test -f 'server.c' || echo '$(srcdir)/'`server.c; \
