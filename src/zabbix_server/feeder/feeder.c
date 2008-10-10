@@ -45,25 +45,84 @@ static char	severity[MAX_STRING_LEN];
 static metric_key_t	key_reqs = -1;
 static zbx_uint64_t	mtr_reqs = 0;
 
+static int	queue_idx = 0;
 static int	queue_fd = -1;
 
+#define QUEUE_SIZE_LIMIT (1024*1024*1024)
+
+
+
+static const char* feeder_get_queue_fname (int is_index)
+{
+	static char buf[1024];
+
+	if (is_index)
+		snprintf (buf, sizeof (buf), "%s/%s/queue/queue_idx.%d", CONFIG_HFS_PATH, CONFIG_SERVER_SITE, process_id);
+	else
+		snprintf (buf, sizeof (buf), "%s/%s/queue/queue.%d.%d", CONFIG_HFS_PATH, CONFIG_SERVER_SITE, process_id, queue_idx);
+
+	return buf;
+}
+
+
+static void    feeder_initialize_queue ()
+{
+	int fd, len;
+	const char* buf;
+	static char idx_buf[256];
+
+	/* read current index of queue */
+	buf = feeder_get_queue_fname (1);
+	fd = xopen (buf, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+	if (fd < 0)
+		queue_idx = 0;
+	else {
+		if ((len = read (fd, idx_buf, sizeof (idx_buf))) >= 0) {
+			idx_buf[len] = 0;
+			if (!sscanf (idx_buf, "%d", &queue_idx))
+				queue_idx = 0;
+		}
+		close (fd);
+	}
+
+	/* open queue file */
+	buf = feeder_get_queue_fname (0);
+	queue_fd = xopen (buf, O_CREAT | O_APPEND | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+}
+
+
+static void    feeder_switch_queue ()
+{
+	const char* buf;
+	int fd;
+	static char idx_buf[256];
+
+	/* close queue file */
+	close (queue_fd);
+
+	/* update queue index */
+	buf = feeder_get_queue_fname (1);
+	fd = xopen (buf, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	ftruncate (fd, 0);
+	
+	queue_idx++;
+	snprintf (idx_buf, sizeof (idx_buf), "%d\n", queue_idx);
+	write (fd, idx_buf, strlen (idx_buf)-1);
+	close (fd);
+
+	/* reopen queue file */
+	feeder_initialize_queue ();
+}
 
 
 static void    feeder_queue_data (const char* server, const char* key, const char* value, const char* error, 
 				  const char* lastlogsize, const char* timestamp, const char* source, const char* severity)
 {
-	static char name[256];
-	static char dir[256];
 	static char buf[16384];
 	char* buf_p;
 	int len;
-
-	if (queue_fd == -1) {
-		snprintf (name, sizeof (name), "%s/%s/queue/q_feeder.%d", CONFIG_HFS_PATH, CONFIG_SERVER_SITE, process_id);
-		queue_fd = xopen (name, O_CREAT | O_APPEND | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-		if (queue_fd == -1)
-			return;
-	}
+	off_t ofs;
 
 	buf_p = buf;
 	buf_p = buffer_str (buf_p, server);
@@ -77,6 +136,11 @@ static void    feeder_queue_data (const char* server, const char* key, const cha
 	len = buf_p-buf;
 	write (queue_fd, &len, sizeof (len));
 	write (queue_fd, buf, buf_p-buf);
+
+	/* switch queue if current file grown too large */
+	ofs = lseek (queue_fd, 0, SEEK_CUR);
+	if (ofs > QUEUE_SIZE_LIMIT)
+		feeder_switch_queue ();
 }
 
 
@@ -130,6 +194,8 @@ void	child_feeder_main(int i, zbx_sock_t *s)
 
 	process_id = i;
 	key_reqs  = metric_register ("feeder_reqs",  i);
+
+	feeder_initialize_queue ();
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 	for(;;)

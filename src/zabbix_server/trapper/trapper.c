@@ -202,7 +202,8 @@ void	child_trapper_main(int i)
 
 	for(;;)
 	{
-		zbx_setproctitle("waiting for connection");
+		zbx_setproctitle("processing queue");
+
 /* 		if (zbx_tcp_accept(s) != SUCCEED) */
 /* 			zabbix_log(LOG_LEVEL_ERR, "trapper failed to accept connection"); */
 /* 		else { */
