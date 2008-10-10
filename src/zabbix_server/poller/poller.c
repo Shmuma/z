@@ -561,7 +561,7 @@ void main_poller_loop(int type, int num)
 	poller_type = type;
 	poller_num = num;
 
-	key_values = metric_register ("poller_host_updates",  num);
+	key_host_updates = metric_register ("poller_host_updates",  num);
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 
