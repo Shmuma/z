@@ -60,7 +60,7 @@ static void    feeder_queue_data (const char* server, const char* key, const cha
 
 	if (queue_fd == -1) {
 		snprintf (name, sizeof (name), "%s/%s/queue/q_feeder.%d", CONFIG_HFS_PATH, CONFIG_SERVER_SITE, process_id);
-		queue_fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+		queue_fd = xopen (name, O_CREAT | O_APPEND | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 		if (queue_fd == -1)
 			return;
 	}
@@ -74,6 +74,8 @@ static void    feeder_queue_data (const char* server, const char* key, const cha
 	buf_p = buffer_str (buf_p, timestamp);
 	buf_p = buffer_str (buf_p, source);
 	buf_p = buffer_str (buf_p, severity);
+	len = buf_p-buf;
+	write (queue_fd, &len, sizeof (len));
 	write (queue_fd, buf, buf_p-buf);
 }
 

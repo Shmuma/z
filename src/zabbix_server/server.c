@@ -1021,7 +1021,18 @@ int main(int argc, char **argv)
 			break;
 	}
 	
+#if 0
+	{
+		zbx_sock_t	listen_sock;		
+
+		zbx_tcp_listen(&listen_sock, CONFIG_LISTEN_IP, (unsigned short)CONFIG_LISTEN_PORT);
+
+		process_type = ZBX_PROCESS_FEEDER;
+		child_feeder_main(0, &listen_sock);	
+	}
+#else
 	return daemon_start(CONFIG_ALLOW_ROOT, "zabbix");
+#endif
 }
 
 int MAIN_ZABBIX_ENTRY(void)
