@@ -26,6 +26,7 @@
 #include "log.h"
 #include "zlog.h"
 #include "hfs.h"
+#include "../metrics.h"
 
 
 extern char* CONFIG_SERVER_SITE;
@@ -41,38 +42,11 @@ static char	timestamp[MAX_STRING_LEN];
 static char	source[MAX_STRING_LEN];
 static char	severity[MAX_STRING_LEN];
 
-/* file which holds 64-bit counter of processed items. Resides in SHM. */
-static int	processed_fd = -1;
-static zbx_uint64_t	processed = 0;
+static metric_key_t	key_reqs = -1;
+static zbx_uint64_t	mtr_reqs = 0;
 
 static int	queue_fd = -1;
 
-
-static void	update_processed ()
-{
-	static char name[256];
-	static char buf[100];
-	int len;
-
-	if (processed_fd == -1) {
-		snprintf (name, sizeof (name), "/dev/shm/zbx_feeder_processed.%d", process_id);
-		processed_fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-	}
-
-	if (processed_fd == -1)
-		return;
-	
-	ftruncate (processed_fd, 0);
- 	lseek (processed_fd, 0, SEEK_SET);
-	snprintf (buf, sizeof (buf), "%lld", processed);
-
-	len = strlen (buf);
-
-	if (write (processed_fd, buf, len) != len) {
-		close (processed_fd);
-		processed_fd = -1;
-	}
-}
 
 
 static void    feeder_queue_data (const char* server, const char* key, const char* value, const char* error, 
@@ -138,8 +112,7 @@ void	process_feeder_child(zbx_sock_t *sock)
 		break;
 	}
 
-	processed++;
-	update_processed ();
+	metric_update (key_reqs, mtr_reqs++);
 }
 
 
@@ -150,6 +123,7 @@ void	child_feeder_main(int i, zbx_sock_t *s)
 	zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Feeder]", i);
 
 	process_id = i;
+	key_reqs  = metric_register ("feeder_reqs",  i);
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 	for(;;)
