@@ -27,6 +27,7 @@
 #include "log.h"
 #include "zlog.h"
 #include "zbxgetopt.h"
+#include "metrics.h"
 
 #include "functions.h"
 #include "expression.h"
@@ -56,6 +57,7 @@
 
 #ifdef HAVE_MEMCACHE
 memcached_st *mem_conn = NULL;
+#endif
 
 size_t DB_ITEM_OFFSETS[CHARS_LEN_MAX] = {
 /*  0 */	offsetof(DB_ITEM, siteid),
@@ -80,7 +82,6 @@ size_t DB_ITEM_OFFSETS[CHARS_LEN_MAX] = {
 /* 19 */	offsetof(DB_ITEM, lastvalue_str),
 /* 20 */	offsetof(DB_ITEM, prevvalue_str)
 };
-#endif
 
 zbx_process_type_t process_type = -1;
 
@@ -1048,6 +1049,8 @@ int MAIN_ZABBIX_ENTRY(void)
 	{
 		zabbix_open_log(LOG_TYPE_FILE,CONFIG_LOG_LEVEL,CONFIG_LOG_FILE);
 	}
+
+	metrics_init ();
 
 /*	zabbix_log( LOG_LEVEL_WARNING, "INFO [%s]", ZBX_SQL_MOD(a,%d)); */
 	zabbix_log( LOG_LEVEL_WARNING, "Starting zabbix_server. ZABBIX %s.", ZABBIX_VERSION);

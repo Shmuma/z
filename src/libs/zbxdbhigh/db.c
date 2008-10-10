@@ -39,6 +39,7 @@
 #include "dbsync.h"
 #include "hfs.h"
 
+#include "serialize.h"
 #ifdef HAVE_MEMCACHE
 #include "memcache.h"
 #endif
@@ -1619,6 +1620,10 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 				item->prevvalue_dbl = 0.0;
 				item->lastvalue_dbl = 0.0;
 				item->prevorgvalue_dbl = 0.0;
+
+				item->prevvalue_null    = 1;
+				item->lastvalue_null    = 1;
+				item->prevorgvalue_null = 1;
 			}
 			break;
 		case ITEM_VALUE_TYPE_UINT64:
@@ -1631,6 +1636,10 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 				item->prevvalue_uint64 = 0;
 				item->lastvalue_uint64 = 0;
 				item->prevorgvalue_uint64 = 0;
+
+				item->prevvalue_null    = 1;
+				item->lastvalue_null    = 1;
+				item->prevorgvalue_null = 1;
 			}
 			break;
 		default:
@@ -1647,16 +1656,10 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 			break;
 	}
 
-	if (!rc) {
-		item->lastclock 	= 0;
-		item->nextcheck		= 0;
-		item->prevvalue_null    = 1;
-		item->lastvalue_null    = 1;
-		item->prevorgvalue_null = 1;
-	} else {
-		item->lastclock = lastclock;
-		item->nextcheck = nextcheck;
-	}
+	item->lastclock = (rc) ? lastclock : 0;
+	item->nextcheck = (rc) ? nextcheck : 0;
+
+	dbitem_serialize(item, 0);
 
 #ifdef HAVE_MEMCACHE
 	if (process_type == ZBX_PROCESS_TRAPPERD) {

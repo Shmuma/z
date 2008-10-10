@@ -54,7 +54,8 @@ include_once "include/page_header.php";
 	validate_group(PERM_READ_ONLY,array("allow_all_hosts","monitored_hosts","with_monitored_items"));
 ?>
 <?php
-	$_REQUEST["type"] = get_request("type",SHOW_TRIGGERS);
+// 	$_REQUEST["type"] = get_request("type",SHOW_TRIGGERS);
+	$_REQUEST["type"] = SHOW_TRIGGERS;
 ?>
 <?php
 	$form = new CForm();

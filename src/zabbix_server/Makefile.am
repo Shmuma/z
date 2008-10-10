@@ -24,6 +24,8 @@ zabbix_server_SOURCES = \
 	events.c events.h \
 	zlog.c \
 	functions.c functions.h \
+	metrics.c metrics.h \
+	serialize.c \
 	server.c
 
 if MEMCACHE
