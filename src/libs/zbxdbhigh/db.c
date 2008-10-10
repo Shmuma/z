@@ -1555,7 +1555,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	item->lastcheck = 0;
 
 #ifdef HAVE_MEMCACHE
-	item->cache_time = 0;
+	item->cache_time = time(NULL);
 #endif
 	item->chars = NULL;
 
@@ -1660,13 +1660,15 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	item->nextcheck = (rc) ? nextcheck : 0;
 
 	dbitem_serialize(item, 0);
-
+/*
 #ifdef HAVE_MEMCACHE
-	if (process_type == ZBX_PROCESS_TRAPPERD) {
-		item->cache_time = time(NULL);
+//	Trapper call DBget_item_from_db only for update_item.
+//	update_item call memcache_zbx_setitem.
+
+	if (process_type == ZBX_PROCESS_TRAPPERD)
 		memcache_zbx_setitem(item);
-	}
 #endif
+*/
 }
 
 void DBfree_item(DB_ITEM *item)
