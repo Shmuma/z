@@ -422,6 +422,21 @@ void write_str (int fd, const char* str)
 }
 
 
+char* buffer_str (char* buf, const char* str)
+{
+	int len = str ? strlen (str) : 0;
+
+	*(int*)buf = len;
+	buf += sizeof (len);
+	if (len) {
+		memcpy (buf, str, len+1);
+		return buf + len + 1;
+	}
+	else
+		return buf;
+}
+
+
 char* read_str (int fd)
 {
 	int len;
@@ -431,9 +446,29 @@ char* read_str (int fd)
 		return NULL;
 
 	if (len) {
-		res = (char*)calloc (len+1, 1);
+		res = (char*)malloc (len+1);
 		if (res)
 			read (fd, res, len+1);
+	}
+
+	return res;
+}
+
+
+char* unbuffer_str (char **buf)
+{
+	char* b = *buf;
+	int len = *(int*)b;
+	char* res = NULL;
+
+	b += sizeof (len);
+	*buf = b;
+
+	if (len) {
+		res = (char*)malloc (len+1);
+		memcpy (res, b, len+1);
+		b += len+1;
+		*buf = b;
 	}
 
 	return res;

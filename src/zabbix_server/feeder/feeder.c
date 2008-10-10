@@ -54,6 +54,8 @@ static void    feeder_queue_data (const char* server, const char* key, const cha
 {
 	static char name[256];
 	static char dir[256];
+	static char buf[16384];
+	char* buf_p;
 	int len;
 
 	if (queue_fd == -1) {
@@ -63,14 +65,16 @@ static void    feeder_queue_data (const char* server, const char* key, const cha
 			return;
 	}
 
-	write_str (queue_fd, server);
-	write_str (queue_fd, key);
-	write_str (queue_fd, value);
-	write_str (queue_fd, error);
-	write_str (queue_fd, lastlogsize);
-	write_str (queue_fd, timestamp);
-	write_str (queue_fd, source);
-	write_str (queue_fd, severity);
+	buf_p = buf;
+	buf_p = buffer_str (buf_p, server);
+	buf_p = buffer_str (buf_p, key);
+	buf_p = buffer_str (buf_p, value);
+	buf_p = buffer_str (buf_p, error);
+	buf_p = buffer_str (buf_p, lastlogsize);
+	buf_p = buffer_str (buf_p, timestamp);
+	buf_p = buffer_str (buf_p, source);
+	buf_p = buffer_str (buf_p, severity);
+	write (queue_fd, buf, buf_p-buf);
 }
 
 
