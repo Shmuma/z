@@ -1607,12 +1607,8 @@ void HFS_update_host_availability (const char* hfs_base_dir, const char* siteid,
 	char* name = get_name (hfs_base_dir, siteid, hostid, NK_HostState);
 	int fd;
 
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_host_availability entered");
-
 	if (!name)
 		return;
-
-	zabbix_log(LOG_LEVEL_DEBUG, "got name %s", name);
 
 	/* open file for writing */
 	fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
@@ -1624,14 +1620,12 @@ void HFS_update_host_availability (const char* hfs_base_dir, const char* siteid,
 	}
 	xfree (name);
 
-	/* lock obtained, write data at needed position */
 	lseek (fd, (sizeof (available) + sizeof (clock))*hostid, SEEK_SET);
 	if (write (fd, &available, sizeof (available)) == -1 ||
 	    write (fd, &clock, sizeof (clock)) == -1)
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_host_availability: write(): %s",  strerror(errno));
 
 	close (fd);
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_host_availability leave");
 }
 
 
