@@ -25,6 +25,7 @@ zabbix_server_SOURCES = \
 	zlog.c \
 	functions.c functions.h \
 	metrics.c metrics.h \
+	queue.c queue.h \
 	serialize.c \
 	server.c
 

@@ -27,6 +27,7 @@
 #include "zlog.h"
 #include "hfs.h"
 #include "../metrics.h"
+#include "../queue.h"
 
 
 extern char* CONFIG_SERVER_SITE;
@@ -48,21 +49,6 @@ static zbx_uint64_t	mtr_reqs = 0;
 static int	queue_idx = 0;
 static int	queue_fd = -1;
 
-#define QUEUE_SIZE_LIMIT (1024*1024*1024)
-
-
-
-static const char* feeder_get_queue_fname (int is_index)
-{
-	static char buf[1024];
-
-	if (is_index)
-		snprintf (buf, sizeof (buf), "%s/%s/queue/queue_idx.%d", CONFIG_HFS_PATH, CONFIG_SERVER_SITE, process_id);
-	else
-		snprintf (buf, sizeof (buf), "%s/%s/queue/queue.%d.%d", CONFIG_HFS_PATH, CONFIG_SERVER_SITE, process_id, queue_idx);
-
-	return buf;
-}
 
 
 static void    feeder_initialize_queue ()
@@ -72,7 +58,7 @@ static void    feeder_initialize_queue ()
 	static char idx_buf[256];
 
 	/* read current index of queue */
-	buf = feeder_get_queue_fname (1);
+	buf = queue_get_name (QNK_Index, process_id, 0);
 	fd = xopen (buf, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	if (fd < 0)
@@ -87,7 +73,7 @@ static void    feeder_initialize_queue ()
 	}
 
 	/* open queue file */
-	buf = feeder_get_queue_fname (0);
+	buf = queue_get_name (QNK_File, process_id, queue_idx);
 	queue_fd = xopen (buf, O_CREAT | O_APPEND | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 }
 
@@ -102,7 +88,7 @@ static void    feeder_switch_queue ()
 	close (queue_fd);
 
 	/* update queue index */
-	buf = feeder_get_queue_fname (1);
+	buf = queue_get_name (QNK_Index, process_id, 0);
 	fd = xopen (buf, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	ftruncate (fd, 0);
 	
