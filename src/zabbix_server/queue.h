@@ -7,8 +7,20 @@
 typedef enum {
 	QNK_File = 0,
 	QNK_Index,
-	QNK_Offset,
+	QNK_Position,
 } queue_name_kind_t;
+
+
+typedef struct {
+	char *server;
+	char *key;
+	char *value;
+	char *error;
+	char *lastlogsize;
+	char *timestamp;
+	char *source;
+	char *severity;
+} queue_entry_t;
 
 
 const char* queue_get_name (queue_name_kind_t kind, int process_id, int index);

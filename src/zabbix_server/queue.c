@@ -19,8 +19,8 @@ const char* queue_get_name (queue_name_kind_t kind, int process_id, int index)
 	case QNK_Index:
 		snprintf (buf, sizeof (buf), "%s/%s/queue/queue_idx.%d", CONFIG_HFS_PATH, CONFIG_SERVER_SITE, process_id);
 		break;
-	case QNK_Offset:
-		snprintf (buf, sizeof (buf), "%s/%s/queue/queue_ofs.%d", CONFIG_HFS_PATH, CONFIG_SERVER_SITE, process_id);
+	case QNK_Position:
+		snprintf (buf, sizeof (buf), "%s/%s/queue/queue_pos.%d", CONFIG_HFS_PATH, CONFIG_SERVER_SITE, process_id);
 		break;
 	}
 

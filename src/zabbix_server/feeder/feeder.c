@@ -102,8 +102,7 @@ static void    feeder_switch_queue ()
 }
 
 
-static void    feeder_queue_data (const char* server, const char* key, const char* value, const char* error, 
-				  const char* lastlogsize, const char* timestamp, const char* source, const char* severity)
+static void    feeder_queue_data (queue_entry_t *entry)
 {
 	static char buf[16384];
 	char* buf_p;
@@ -111,14 +110,14 @@ static void    feeder_queue_data (const char* server, const char* key, const cha
 	off_t ofs;
 
 	buf_p = buf;
-	buf_p = buffer_str (buf_p, server);
-	buf_p = buffer_str (buf_p, key);
-	buf_p = buffer_str (buf_p, value);
-	buf_p = buffer_str (buf_p, error);
-	buf_p = buffer_str (buf_p, lastlogsize);
-	buf_p = buffer_str (buf_p, timestamp);
-	buf_p = buffer_str (buf_p, source);
-	buf_p = buffer_str (buf_p, severity);
+	buf_p = buffer_str (buf_p, entry->server);
+	buf_p = buffer_str (buf_p, entry->key);
+	buf_p = buffer_str (buf_p, entry->value);
+	buf_p = buffer_str (buf_p, entry->error);
+	buf_p = buffer_str (buf_p, entry->lastlogsize);
+	buf_p = buffer_str (buf_p, entry->timestamp);
+	buf_p = buffer_str (buf_p, entry->source);
+	buf_p = buffer_str (buf_p, entry->severity);
 	len = buf_p-buf;
 	write (queue_fd, &len, sizeof (len));
 	write (queue_fd, buf, buf_p-buf);
@@ -135,6 +134,7 @@ void	process_feeder_child(zbx_sock_t *sock)
 	char	*data, *line, *host;
 	char	*server,*key = NULL,*value_string, *error = NULL;
 	int	ret = SUCCEED;
+	queue_entry_t entry;
 
 	if(zbx_tcp_recv(sock, &data) != SUCCEED)
 		return;
@@ -155,12 +155,17 @@ void	process_feeder_child(zbx_sock_t *sock)
 		if (strncmp (data, "<req>", 5) == 0)
 		{
 			comms_parse_response(data, host_dec, key_dec, value_dec, error_dec, lastlogsize, timestamp, source, severity, sizeof(host_dec)-1);
-			server=host_dec;
-			value_string=value_dec;
-			error = error_dec;
-			key=key_dec;
+			entry->server = host_dec;
+			entry->value = value_dec;
+			entry->error = error_dec;
+			entry->key = key_dec;
+			entry->lastlogsize = lastlogsize;
+			entry->timestamp = timestamp;
+			entry->source = source;
+			entry->severty = severity;
+
 			/* append to queue for trapper */
-			feeder_queue_data (host_dec, key_dec, value_dec, error_dec, lastlogsize, timestamp, source, severity);
+			feeder_queue_data (&entry);
 		}
 
 		if( zbx_tcp_send_raw(sock, SUCCEED == ret ? "OK" : "NOT OK") != SUCCEED)

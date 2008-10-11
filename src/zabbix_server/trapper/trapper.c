@@ -30,6 +30,7 @@
 #include "../functions.h"
 #include "../expression.h"
 #include "../metrics.h"
+#include "../queue.h"
 
 #include "nodesync.h"
 #include "nodeevents.h"
@@ -53,6 +54,72 @@ static metric_key_t key_history;
 
 static zbx_uint64_t mtr_reqs = 0;
 static metric_key_t key_reqs;
+
+static zbx_uint64_t mtr_idle = 0;
+static metric_key_t key_idle;
+
+/* queue index (part of file name) */
+static int 		queue_idx = 0;
+
+/* queue offset */
+static hfs_off_t	queue_ofs = 0;
+
+/* queue file descriptor */
+static int		queue_fd = -1;
+
+
+#define QUEUE_CHUNK 10
+
+static queue_entry_t req_buf[QUEUE_CHUNK];
+
+
+static void trapper_initialize_queue (int process_id)
+{
+	const char* name;
+	static char buf[256];
+	int fd;
+
+	/* obtain trapper queue index and position */
+	name = queue_get_name (QNK_Position, process_id, 0);
+
+	fd = open (name, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	if (fd >= 0) {
+		read (fd, buf, sizeof (buf));
+		if (sscanf (buf, "%d %lld", &queue_idx, &queue_ofs) != 2) {
+			queue_idx = 0;
+			queue_ofs = 0;
+		}
+	}
+}
+
+
+/* Here we dequeue predefined amount of requests from queue file. If file is not open so far or
+   suddenly finished, we trying to reopen next file according to index. */
+static int	trapper_dequeue_requests (queue_entry_t** entries)
+{
+	static int buf[1024];
+	static int buf_pos = 0, buf_size = 0;
+
+	int count = 0;
+
+	*entries = req_buf;
+
+	while (count < QUEUE_CHUNK) {
+		/* if we have data in buffer, use it first */
+		if (buf_pos < buf_size) {
+
+		}
+
+		if (fd < 0) {
+			/* if queue cannot be opened or found, sleep for some time */
+			if (!trapper_open_queue ())
+				return count;
+		}
+
+
+	}
+}
+
 
 
 static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
@@ -189,6 +256,9 @@ void	process_trapper_child(zbx_sock_t *sock)
 
 void	child_trapper_main(int i)
 {
+	int count, i;
+	queue_entry_t* entries;
+
 	zabbix_log( LOG_LEVEL_DEBUG, "In child_trapper_main()");
 
 	zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Trapper]", i);
@@ -197,12 +267,28 @@ void	child_trapper_main(int i)
 	key_checks  = metric_register ("trapper_checks",  i);
 	key_history = metric_register ("trapper_history", i);
 	key_reqs    = metric_register ("trapper_reqs", i);
+	key_idle    = metric_register ("trapper_idle", i);
+
+	/* initialize queue */
+	trapper_initialize_queue (i);
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 
 	for(;;)
 	{
-		zbx_setproctitle("processing queue");
+		zbx_setproctitle("Trapper waiting for new queue data");
+
+		/* dequeue data block to process */
+		if ((count = trapper_dequeue_requests (&entries)) > 0) {
+			/* handle data block */
+			zbx_setproctitle("processing queue data block");
+		}
+		else {
+			metric_update (key_idle, ++mtr_idle);
+			zbx_setproctitle("Trapper sleeping for 1 second, waiting for queue to appear");
+			sleep (1);
+		}
+
 
 /* 		if (zbx_tcp_accept(s) != SUCCEED) */
 /* 			zabbix_log(LOG_LEVEL_ERR, "trapper failed to accept connection"); */
