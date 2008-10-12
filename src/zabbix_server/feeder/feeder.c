@@ -59,7 +59,7 @@ static void    feeder_initialize_queue ()
 
 	/* read current index of queue */
 	buf = queue_get_name (QNK_Index, process_id, 0);
-	fd = xopen (buf, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	fd = open (buf, O_RDONLY);
 
 	if (fd < 0)
 		queue_idx = 0;
@@ -109,15 +109,14 @@ static void    feeder_queue_data (queue_entry_t *entry)
 	int len;
 	off_t ofs;
 
-	buf_p = buf;
-	buf_p = buffer_str (buf_p, entry->server);
-	buf_p = buffer_str (buf_p, entry->key);
-	buf_p = buffer_str (buf_p, entry->value);
-	buf_p = buffer_str (buf_p, entry->error);
-	buf_p = buffer_str (buf_p, entry->lastlogsize);
-	buf_p = buffer_str (buf_p, entry->timestamp);
-	buf_p = buffer_str (buf_p, entry->source);
-	buf_p = buffer_str (buf_p, entry->severity);
+	buf_p = queue_encode_entry (entry, buf, sizeof (buf));
+
+	/* request is too large, discard it */
+	if (!buf_p) {
+		zabbix_log(LOG_LEVEL_ERR, "feeder_queue_data: Request is too large and won't fit in %d bytes buffer", sizeof (buf));
+		return;
+	}
+
 	len = buf_p-buf;
 	write (queue_fd, &len, sizeof (len));
 	write (queue_fd, buf, buf_p-buf);
@@ -155,14 +154,14 @@ void	process_feeder_child(zbx_sock_t *sock)
 		if (strncmp (data, "<req>", 5) == 0)
 		{
 			comms_parse_response(data, host_dec, key_dec, value_dec, error_dec, lastlogsize, timestamp, source, severity, sizeof(host_dec)-1);
-			entry->server = host_dec;
-			entry->value = value_dec;
-			entry->error = error_dec;
-			entry->key = key_dec;
-			entry->lastlogsize = lastlogsize;
-			entry->timestamp = timestamp;
-			entry->source = source;
-			entry->severty = severity;
+			entry.server = host_dec;
+			entry.value = value_dec;
+			entry.error = error_dec;
+			entry.key = key_dec;
+			entry.lastlogsize = lastlogsize;
+			entry.timestamp = timestamp;
+			entry.source = source;
+			entry.severity = severity;
 
 			/* append to queue for trapper */
 			feeder_queue_data (&entry);

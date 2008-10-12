@@ -25,5 +25,8 @@ typedef struct {
 
 const char* queue_get_name (queue_name_kind_t kind, int process_id, int index);
 
+char* queue_encode_entry (queue_entry_t* entry, char* buf, int size);
+char* queue_decode_entry (queue_entry_t* entry, char* buf, int size);
+
 
 #endif

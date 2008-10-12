@@ -58,12 +58,12 @@ static metric_key_t key_reqs;
 static zbx_uint64_t mtr_idle = 0;
 static metric_key_t key_idle;
 
+static int 		process_id = 0;
+
 /* queue index (part of file name) */
 static int 		queue_idx = 0;
-
 /* queue offset */
 static hfs_off_t	queue_ofs = 0;
-
 /* queue file descriptor */
 static int		queue_fd = -1;
 
@@ -73,7 +73,7 @@ static int		queue_fd = -1;
 static queue_entry_t req_buf[QUEUE_CHUNK];
 
 
-static void trapper_initialize_queue (int process_id)
+static void trapper_initialize_queue ()
 {
 	const char* name;
 	static char buf[256];
@@ -82,14 +82,65 @@ static void trapper_initialize_queue (int process_id)
 	/* obtain trapper queue index and position */
 	name = queue_get_name (QNK_Position, process_id, 0);
 
-	fd = open (name, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	fd = open (name, O_RDONLY);
 	if (fd >= 0) {
 		read (fd, buf, sizeof (buf));
 		if (sscanf (buf, "%d %lld", &queue_idx, &queue_ofs) != 2) {
 			queue_idx = 0;
 			queue_ofs = 0;
 		}
+		close (fd);
 	}
+}
+
+
+static void trapper_update_ofs ()
+{
+	const char* name;
+	static char buf[256];
+	int fd;
+
+	/* obtain trapper queue index and position */
+	name = queue_get_name (QNK_Position, process_id, 0);
+
+	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	if (fd >= 0) {
+		snprintf (buf, sizeof (buf), "%d %lld\n", queue_idx, queue_ofs);
+		write (fd, buf, strlen (buf));
+		close (fd);
+	}
+}
+
+
+/* Trying to open queue file according to current index. If filed, try with next index until correct file not found. */
+static int trapper_open_queue ()
+{
+	const char* name;
+	int attempts = 0;
+
+	while (attempts < 1000) {
+		name = queue_get_name (QNK_File, process_id, queue_idx);
+		queue_fd = open (name, O_RDONLY);
+		attempts++;
+		if (queue_fd >= 0)
+			break;
+		queue_idx++;
+	}
+
+	return queue_fd >= 0;
+}
+
+
+/* unlink old queue file (if opened) and open queue file with next index */
+static int trapper_open_next_queue ()
+{
+	const char* name;
+
+	close (queue_fd);
+	name = queue_get_name (QNK_File, process_id, queue_idx);
+	unlink (name);
+	queue_idx++;
+	return trapper_open_queue ();
 }
 
 
@@ -97,27 +148,53 @@ static void trapper_initialize_queue (int process_id)
    suddenly finished, we trying to reopen next file according to index. */
 static int	trapper_dequeue_requests (queue_entry_t** entries)
 {
-	static int buf[1024];
-	static int buf_pos = 0, buf_size = 0;
-
+	static int buf[16384];
+	int req_len, len;
+	fd_set rfds;
 	int count = 0;
 
 	*entries = req_buf;
 
-	while (count < QUEUE_CHUNK) {
-		/* if we have data in buffer, use it first */
-		if (buf_pos < buf_size) {
-
-		}
-
-		if (fd < 0) {
-			/* if queue cannot be opened or found, sleep for some time */
-			if (!trapper_open_queue ())
-				return count;
-		}
-
-
+	if (queue_fd < 0) {
+		/* if queue cannot be opened or found, sleep for some time */
+		if (!trapper_open_queue ())
+			return count;
 	}
+
+	while (count < QUEUE_CHUNK) {
+		/* wait for data to appear on descriptor */
+		FD_ZERO (&rfds);
+		FD_SET (queue_fd, &rfds);
+
+		if (select (queue_fd+1, &rfds, NULL, NULL, NULL) != 1) {
+			/* something strange happen to our file, rotate it */
+		}
+
+		/* get request length */
+		read (queue_fd, &req_len, sizeof (req_len));
+		len = 0;
+		while (len < req_len) {
+			len += read (queue_fd, buf+len, req_len - len);
+			if (len < req_len) {
+				FD_ZERO (&rfds);
+				FD_SET (queue_fd, &rfds);
+				select (queue_fd+1, &rfds, NULL, NULL, NULL);
+			}
+		}
+
+		queue_ofs += sizeof (req_len) + req_len;
+
+		/* decode request data */
+		queue_decode_entry (req_buf+count, buf, req_len);
+		count++;
+
+		if (queue_ofs > QUEUE_SIZE_LIMIT)
+			if (!trapper_open_next_queue ())
+				return count;
+	}
+
+	/* update queue_ofs */
+	trapper_update_ofs ();
 }
 
 
@@ -256,7 +333,7 @@ void	process_trapper_child(zbx_sock_t *sock)
 
 void	child_trapper_main(int i)
 {
-	int count, i;
+	int count;
 	queue_entry_t* entries;
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In child_trapper_main()");
@@ -269,8 +346,10 @@ void	child_trapper_main(int i)
 	key_reqs    = metric_register ("trapper_reqs", i);
 	key_idle    = metric_register ("trapper_idle", i);
 
+	process_id = i;
+
 	/* initialize queue */
-	trapper_initialize_queue (i);
+	trapper_initialize_queue ();
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 
