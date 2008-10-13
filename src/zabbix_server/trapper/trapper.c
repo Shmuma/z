@@ -150,6 +150,7 @@ static int trapper_open_next_queue ()
 	inotify_rm_watch (queue_inotify_fd, queue_inotify_wd);
 	unlink (name);
 	queue_idx++;
+	queue_ofs = 0;
 	return trapper_open_queue ();
 }
 
@@ -173,8 +174,12 @@ static int	trapper_dequeue_requests (queue_entry_t** entries)
 
 	while (count < QUEUE_CHUNK) {
 		/* get request length */
-		while (!read (queue_fd, &req_len, sizeof (req_len)))
+		while (!read (queue_fd, &req_len, sizeof (req_len))) {
+			if (queue_ofs > QUEUE_SIZE_LIMIT)
+				if (!trapper_open_next_queue ())
+					return count;
 			read (queue_inotify_fd, &ie, sizeof (ie));
+		}
 		len = 0;
 		while (len < req_len) {
 			len += read (queue_fd, buf+len, req_len - len);
