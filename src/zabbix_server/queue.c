@@ -31,6 +31,10 @@ const char* queue_get_name (queue_name_kind_t kind, int process_id, int index)
 char* queue_encode_entry (queue_entry_t* entry, char* buf, int size)
 {
 	char* buf_p = buf;
+
+	*(hfs_time_t*)buf_p = entry->ts;
+	buf_p += sizeof (hfs_time_t);
+
 	if ((buf_p = buffer_str (buf_p, entry->server, size)) == NULL)
 		return NULL;
 	if ((buf_p = buffer_str (buf_p, entry->key, size-(buf_p-buf))) == NULL)
@@ -54,15 +58,22 @@ char* queue_encode_entry (queue_entry_t* entry, char* buf, int size)
 
 char* queue_decode_entry (queue_entry_t* entry, char* buf, int size)
 {
-	char* buf_p = buf;
+	char* buf_p;
 	char** ptrs[] = { &entry->server, &entry->key, &entry->value, &entry->error, &entry->lastlogsize, 
 			  &entry->timestamp, &entry->source, &entry->severity };
 	int len, i;
 
+	entry->buf = (char*)malloc (size);
+	memcpy (entry->buf, buf, size);
+	buf_p = entry->buf;
+
+	entry->ts = *(hfs_time_t*)buf_p;
+	buf_p += sizeof (hfs_time_t);
+
 	for (i = 0; i < sizeof (ptrs) / sizeof (ptrs[0]); i++) {
 		len = *(int*)buf_p;
 		buf_p += sizeof (len);
-		if (buf_p - buf > size)
+		if (buf_p - entry->buf > size)
 			return NULL;
 		if (len) {
 			*ptrs[i] = buf_p;

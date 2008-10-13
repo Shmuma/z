@@ -40,6 +40,8 @@
 
 #include "daemon.h"
 
+#include <sys/inotify.h>
+
 extern char* CONFIG_SERVER_SITE;
 extern char* CONFIG_HFS_PATH;
 
@@ -67,6 +69,8 @@ static hfs_off_t	queue_ofs = 0;
 /* queue file descriptor */
 static int		queue_fd = -1;
 
+static int		queue_inotify_fd = -1;
+static int		queue_inotify_wd = -1;
 
 #define QUEUE_CHUNK 10
 
@@ -91,6 +95,9 @@ static void trapper_initialize_queue ()
 		}
 		close (fd);
 	}
+
+	/* initialize inotify instance */
+	queue_inotify_fd = inotify_init ();
 }
 
 
@@ -119,12 +126,14 @@ static int trapper_open_queue ()
 	int attempts = 0;
 
 	while (attempts < 1000) {
-		name = queue_get_name (QNK_File, process_id, queue_idx);
+		name = queue_get_name (QNK_File, process_id, queue_idx + attempts);
 		queue_fd = open (name, O_RDONLY);
 		attempts++;
-		if (queue_fd >= 0)
+		if (queue_fd >= 0) {
+			lseek (queue_fd, queue_ofs, SEEK_SET);
+			queue_inotify_wd = inotify_add_watch (queue_inotify_fd, name, IN_MODIFY);
 			break;
-		queue_idx++;
+		}
 	}
 
 	return queue_fd >= 0;
@@ -138,6 +147,7 @@ static int trapper_open_next_queue ()
 
 	close (queue_fd);
 	name = queue_get_name (QNK_File, process_id, queue_idx);
+	inotify_rm_watch (queue_inotify_fd, queue_inotify_wd);
 	unlink (name);
 	queue_idx++;
 	return trapper_open_queue ();
@@ -150,8 +160,8 @@ static int	trapper_dequeue_requests (queue_entry_t** entries)
 {
 	static int buf[16384];
 	int req_len, len;
-	fd_set rfds;
 	int count = 0;
+	struct inotify_event ie;
 
 	*entries = req_buf;
 
@@ -162,24 +172,14 @@ static int	trapper_dequeue_requests (queue_entry_t** entries)
 	}
 
 	while (count < QUEUE_CHUNK) {
-		/* wait for data to appear on descriptor */
-		FD_ZERO (&rfds);
-		FD_SET (queue_fd, &rfds);
-
-		if (select (queue_fd+1, &rfds, NULL, NULL, NULL) != 1) {
-			/* something strange happen to our file, rotate it */
-		}
-
 		/* get request length */
-		read (queue_fd, &req_len, sizeof (req_len));
+		while (!read (queue_fd, &req_len, sizeof (req_len)))
+			read (queue_inotify_fd, &ie, sizeof (ie));
 		len = 0;
 		while (len < req_len) {
 			len += read (queue_fd, buf+len, req_len - len);
-			if (len < req_len) {
-				FD_ZERO (&rfds);
-				FD_SET (queue_fd, &rfds);
-				select (queue_fd+1, &rfds, NULL, NULL, NULL);
-			}
+			if (len < req_len)
+				read (queue_inotify_fd, &ie, sizeof (ie));
 		}
 
 		queue_ofs += sizeof (req_len) + req_len;
@@ -195,6 +195,8 @@ static int	trapper_dequeue_requests (queue_entry_t** entries)
 
 	/* update queue_ofs */
 	trapper_update_ofs ();
+
+	return count;
 }
 
 
@@ -272,7 +274,7 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 					value_string = value_dec;
 					key = key_dec;
 					/* insert history value. It doesn't support  */
-					ret = process_data(sock,server,key,value_string, NULL, NULL, NULL, NULL, NULL, timestamp);
+/* 					ret = process_data(sock,server,key,value_string, NULL, NULL, NULL, NULL, NULL, timestamp); */
 					if (ret != SUCCEED)
 						break;
 				}
@@ -287,7 +289,7 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 		if (key)
 		{
 			DBbegin();
-			ret=process_data(sock,server,key,value_string,error,lastlogsize,timestamp,source,severity, NULL);
+/* 			ret=process_data(sock,server,key,value_string,error,lastlogsize,timestamp,source,severity, NULL); */
 			DBcommit();
 		}
 		
@@ -303,38 +305,12 @@ static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
 	return ret;
 }
 
-void	process_trapper_child(zbx_sock_t *sock)
-{
-	char	*data;
-
-/* suseconds_t is not defined under HP-UX */
-/*	struct timeval tv;
-	suseconds_t    msec;
-	gettimeofday(&tv, NULL);
-	msec = tv.tv_usec;*/
-
-/*	alarm(CONFIG_TIMEOUT);*/
-
-	if(zbx_tcp_recv(sock, &data) != SUCCEED)
-	{
-            zabbix_log (LOG_LEVEL_DEBUG, "zbx_tcp_recv faield. Error: %s (%s), code %d", 
-                        zbx_tcp_strerror (), strerror_from_system(zbx_sock_last_error ()), zbx_sock_last_error ());
-/*		alarm(0);*/
-		return;
-	}
-
-	process_trap(sock, data, sizeof(data));
-/*	alarm(0);*/
-
-/*	gettimeofday(&tv, NULL);
-	zabbix_log( LOG_LEVEL_DEBUG, "Trap processed in " ZBX_FS_DBL " seconds",
-		(double)(tv.tv_usec-msec)/1000000 );*/
-}
 
 void	child_trapper_main(int i)
 {
 	int count;
 	queue_entry_t* entries;
+	hfs_time_t now;
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In child_trapper_main()");
 
@@ -345,6 +321,8 @@ void	child_trapper_main(int i)
 	key_history = metric_register ("trapper_history", i);
 	key_reqs    = metric_register ("trapper_reqs", i);
 	key_idle    = metric_register ("trapper_idle", i);
+
+/*  	sleep (120);  */
 
 	process_id = i;
 
@@ -359,27 +337,22 @@ void	child_trapper_main(int i)
 
 		/* dequeue data block to process */
 		if ((count = trapper_dequeue_requests (&entries)) > 0) {
+			now = time (NULL);
+
 			/* handle data block */
 			zbx_setproctitle("processing queue data block");
+			for (i = 0; i < count; i++) {
+				process_data (entries[i].ts, entries[i].server, entries[i].key, entries[i].value, 
+					      entries[i].error, entries[i].lastlogsize, entries[i].timestamp, 
+					      entries[i].source, entries[i].severity);
+				free (entries[i].buf);
+			}
 		}
 		else {
 			metric_update (key_idle, ++mtr_idle);
 			zbx_setproctitle("Trapper sleeping for 1 second, waiting for queue to appear");
 			sleep (1);
 		}
-
-
-/* 		if (zbx_tcp_accept(s) != SUCCEED) */
-/* 			zabbix_log(LOG_LEVEL_ERR, "trapper failed to accept connection"); */
-/* 		else { */
-/* 			zbx_setproctitle("processing data"); */
-/* 			mtr_reqs++; */
-/* 			metric_update (key_reqs, mtr_reqs); */
-/* 			process_trapper_child(s); */
-
-/* 			zbx_tcp_unaccept(s); */
-/*                 } */
-		sleep (100);
 	}
 	DBclose();
 }

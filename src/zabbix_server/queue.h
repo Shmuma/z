@@ -1,8 +1,10 @@
 #ifndef __QUEUE_H__
 #define __QUEUE_H__
 
+#include "common.h"
+#include "hfs.h"
 
-#define QUEUE_SIZE_LIMIT (1024*1024*1024)
+#define QUEUE_SIZE_LIMIT (1024*1024)
 
 typedef enum {
 	QNK_File = 0,
@@ -12,6 +14,8 @@ typedef enum {
 
 
 typedef struct {
+	char *buf;
+	hfs_time_t ts;
 	char *server;
 	char *key;
 	char *value;
