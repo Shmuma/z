@@ -195,7 +195,7 @@ static int	check_action_condition(DB_EVENT *event, DB_CONDITION *condition)
 			   we must check that objectid is derived from
 			   template and check for template's version of
 			   trigger */
-			result = DBselect("select distinct t.triggerid from triggers t where t.templateid=" ZBX_FS_UI64, event->objectid);
+			result = DBselect("select distinct t.templateid from triggers t where t.triggerid=" ZBX_FS_UI64, event->objectid);
 			row = DBfetch (result);
 			if (row) {
 				ZBX_STR2UINT64 (triggerid, row[0]);
