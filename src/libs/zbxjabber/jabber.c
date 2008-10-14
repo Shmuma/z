@@ -462,8 +462,14 @@ int	send_jabber(char *username, char *passwd, char *sendto, char *message, char 
 		{
 			jsess->status = JABBER_ERROR;
 
-			zbx_snprintf(error, max_error_len, "JABBER: Cannot send message [%i][%s]", iks_error, strerror_from_system(errno));
-			zabbix_log(LOG_LEVEL_WARNING, "%s", error);
+			/* socket timeout occured, trying to reconnect to jabber server and send once again */
+			if (errno == EPIPE)
+				ret = send_jabber (username, passwd, sendto, message, error, max_error_len);
+			else {
+
+				zbx_snprintf(error, max_error_len, "JABBER: Cannot send message [%i][%s]", iks_error, strerror_from_system(errno));
+				zabbix_log(LOG_LEVEL_WARNING, "%s", error);
+			}
 		}
 		iks_delete (x);
 	}
