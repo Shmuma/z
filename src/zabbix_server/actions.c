@@ -73,6 +73,7 @@ static int	check_action_condition(DB_EVENT *event, DB_CONDITION *condition)
 	zbx_uint64_t	groupid;
 	zbx_uint64_t	hostid;
 	zbx_uint64_t	condition_value;
+	zbx_uint64_t	triggerid;
 	int		value_int;
 	int		now;
 	int		tmp_int;
@@ -187,6 +188,28 @@ static int	check_action_condition(DB_EVENT *event, DB_CONDITION *condition)
 			zabbix_log( LOG_LEVEL_ERR, "Unsupported operator [%d] for condition id [%d]",
 				condition->operator,
 				condition->conditionid);
+		}
+
+		if (ret != SUCCEED) {
+			/* event can be caused by trigger from template. Here
+			   we must check that objectid is derived from
+			   template and check for template's version of
+			   trigger */
+			result = DBselect("select distinct t.triggerid from triggers t where t.templateid=" ZBX_FS_UI64, event->objectid);
+			row = DBfetch (result);
+			if (row) {
+				ZBX_STR2UINT64 (triggerid, row[0]);
+				if (triggerid != 0) {
+					if(condition->operator == CONDITION_OPERATOR_EQUAL) {
+						if(triggerid == condition_value)
+							ret = SUCCEED;
+					}
+					else if(condition->operator == CONDITION_OPERATOR_NOT_EQUAL)
+						if(triggerid != condition_value)
+							ret = SUCCEED;
+				}
+			}
+			DBfree_result (result);
 		}
 	}
 	else if(event->source == EVENT_SOURCE_TRIGGERS && condition->conditiontype == CONDITION_TYPE_TRIGGER_NAME)
