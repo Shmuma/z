@@ -176,12 +176,12 @@ int	WEB_PAGE_ISREGEXP(const char *cmd, const char *param, unsigned flags, AGENT_
 {
 	int res = WEB_PAGE_REGEXP (cmd, param, flags, result);
 
-	if (ret == SYSINFO_RET_OK) {
+	if (res == SYSINFO_RET_OK) {
 		if (ISSET_STR (result)) {
 			char* str = result->str;
 			int res = strncmp (str, "EOF", 3);
 			UNSET_STR_RESULT (result);
-			SET_UI64_RESULT (result, res == 0 ? 1 : 0);
+			SET_UI64_RESULT (result, res == 0 ? 0 : 1);
 		}
 	}
 
