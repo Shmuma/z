@@ -931,9 +931,6 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 			item->host_name);
 		item->status = ITEM_STATUS_ACTIVE;
 
-#ifdef HAVE_MEMCACHE
-		if (process_type != ZBX_PROCESS_TRAPPERD)
-#endif
 		DBexecute("update items set status=%d,error='' where itemid=" ZBX_FS_UI64,
 			ITEM_STATUS_ACTIVE,
 			item->itemid);
