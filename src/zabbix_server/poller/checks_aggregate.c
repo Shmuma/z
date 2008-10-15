@@ -94,6 +94,7 @@ static double* aggr_gather_last (aggregate_item_info_t* items, int items_count, 
 	hfs_time_t lastclock, nextcheck;
 	double prev, prevorg;
 	zbx_uint64_t i_prev, i_last, i_prevorg;
+	char* stderr = NULL;
 
 	if (!res)
 		return res;
@@ -101,19 +102,23 @@ static double* aggr_gather_last (aggregate_item_info_t* items, int items_count, 
 	for (i = 0; i < items_count; i++) {
 		switch (items[i].value_type) {
 		case ITEM_VALUE_TYPE_FLOAT:
-			if (!HFS_get_item_values_dbl (CONFIG_HFS_PATH, items[i].site, items[i].itemid, &lastclock, &nextcheck, &prev, res+i, &prevorg))
+			if (!HFS_get_item_values_dbl (CONFIG_HFS_PATH, items[i].site, items[i].itemid, &lastclock, &nextcheck, 
+						      &prev, res+i, &prevorg, &stderr))
 				res[i] = 0;
 			break;
 
 		case ITEM_VALUE_TYPE_UINT64:
 			if (!HFS_get_item_values_int (CONFIG_HFS_PATH, items[i].site, items[i].itemid, &lastclock, &nextcheck,
-						      &i_prev, &i_last, &i_prevorg))
+						      &i_prev, &i_last, &i_prevorg, &stderr))
 				res[i] = 0;
 			else
 				res[i] = i_last;
 			break;
 		}
 	}
+
+	if (stderr)
+		free (stderr);
 
 	return res;
 }
