@@ -183,25 +183,18 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 	zabbix_log( LOG_LEVEL_DEBUG, "In evaluate_COUNT(param:%s)",
 		parameter);
 
+	hfs_mode = CONFIG_HFS_PATH != NULL;
 
-	switch(item->value_type)
-	{
-		case ITEM_VALUE_TYPE_FLOAT:
-			if (!CONFIG_HFS_PATH)
-				table = table_float;
-			else
-				hfs_mode = 1;
-			break;
-		case ITEM_VALUE_TYPE_UINT64:
-			if (!CONFIG_HFS_PATH)
-				table = table_ui64;
-			else
-				hfs_mode = 1;
-			break;
+	if (!hfs_mode) {
+		switch(item->value_type)
+		{
+		case ITEM_VALUE_TYPE_FLOAT:	table = table_float;	break;
+		case ITEM_VALUE_TYPE_UINT64:	table = table_ui64;	break;
 		case ITEM_VALUE_TYPE_LOG:	table = table_log;	break;
 		case ITEM_VALUE_TYPE_STR:	table = table_str;	break;
 		default:
 			return FAIL;
+		}
 	}
 
 	now=time(NULL);
@@ -366,17 +359,23 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 		}
 		else if(item->value_type == ITEM_VALUE_TYPE_LOG)
 		{
-			result = DBselect("select count(value) from history_log where clock>%d and value like '%s' and itemid=" ZBX_FS_UI64,
-				now-atoi(period),
-				cmp_esc,
-				item->itemid);
+			if (hfs_mode)
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, 0);
+			else
+				result = DBselect("select count(value) from history_log where clock>%d and value like '%s' and itemid=" ZBX_FS_UI64,
+						  now-atoi(period),
+						  cmp_esc,
+						  item->itemid);
 		}
 		else
 		{
-			result = DBselect("select count(value) from history_str where clock>%d and value like '%s' and itemid=" ZBX_FS_UI64,
-				now-atoi(period),
-				cmp_esc,
-				item->itemid);
+			if (hfs_mode)
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, 0);
+			else
+				result = DBselect("select count(value) from history_str where clock>%d and value like '%s' and itemid=" ZBX_FS_UI64,
+						  now-atoi(period),
+						  cmp_esc,
+						  item->itemid);
 		}
 	}
 
