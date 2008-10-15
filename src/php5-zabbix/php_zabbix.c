@@ -624,7 +624,7 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 	add_assoc_long (return_value, "lastclock", lastclock);
 	if (s_stderr) {
 		add_assoc_string (return_value, "stderr", s_stderr, 1);
-		free (stderr);
+		free (s_stderr);
 	}
 	else
 		add_assoc_string (return_value, "stderr", "", 1);
