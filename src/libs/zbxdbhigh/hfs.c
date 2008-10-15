@@ -431,7 +431,7 @@ char* read_str (int fd)
 		return NULL;
 
 	if (len) {
-		res = (char*)malloc (len+1, 1);
+		res = (char*)malloc (len+1);
 		if (res) {
 			res[0] = 0;
 			read (fd, res, len+1);
