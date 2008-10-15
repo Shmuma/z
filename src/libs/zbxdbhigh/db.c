@@ -1543,6 +1543,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 {
 	int	rc = 0;
 	hfs_time_t lastclock, nextcheck;
+	char* stderr = NULL;
 
 	/* Zabbix developers is morons. Some DB_ITEM pointers is not
 	   initialized after DBget_item_from_db(). */
@@ -1612,10 +1613,11 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	switch(item->value_type) {
 		case ITEM_VALUE_TYPE_FLOAT:
 			rc = HFS_get_item_values_dbl(CONFIG_HFS_PATH, item->siteid, item->itemid,
-						    &lastclock, &nextcheck,
-						    &item->prevvalue_dbl,
-						    &item->lastvalue_dbl,
-						    &item->prevorgvalue_dbl);
+						     &lastclock, &nextcheck,
+						     &item->prevvalue_dbl,
+						     &item->lastvalue_dbl,
+						     &item->prevorgvalue_dbl,
+						     &stderr);
 			if (!rc) {
 				item->prevvalue_dbl = 0.0;
 				item->lastvalue_dbl = 0.0;
@@ -1628,10 +1630,11 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 			break;
 		case ITEM_VALUE_TYPE_UINT64:
 			rc = HFS_get_item_values_int(CONFIG_HFS_PATH, item->siteid, item->itemid,
-						    &lastclock, &nextcheck,
-						    &item->prevvalue_uint64,
-						    &item->lastvalue_uint64,
-						    &item->prevorgvalue_uint64);
+						     &lastclock, &nextcheck,
+						     &item->prevvalue_uint64,
+						     &item->lastvalue_uint64,
+						     &item->prevorgvalue_uint64,
+						     &stderr);
 			if (!rc) {
 				item->prevvalue_uint64 = 0;
 				item->lastvalue_uint64 = 0;
@@ -1644,10 +1647,11 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 			break;
 		default:
 			rc = HFS_get_item_values_str(CONFIG_HFS_PATH, item->siteid, item->itemid,
-						    &lastclock, &nextcheck,
-						    &item->prevvalue_str,
-						    &item->lastvalue_str,
-						    &item->prevorgvalue_str);
+						     &lastclock, &nextcheck,
+						     &item->prevvalue_str,
+						     &item->lastvalue_str,
+						     &item->prevorgvalue_str,
+						     &stderr);
 			if (!rc) {
 				item->prevvalue_str = NULL;
 				item->lastvalue_str = NULL;
@@ -1655,6 +1659,12 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 			}
 			break;
 	}
+
+	/* TODO: We need to integrate stderr value into DB_ITEM
+	   structure as well as it's memcache handling. At the moment we just
+	   throw away obtained value. */
+	if (stderr)
+		free (stderr);
 
 	item->lastclock = (rc) ? lastclock : 0;
 	item->nextcheck = (rc) ? nextcheck : 0;

@@ -27,7 +27,6 @@ typedef enum {
 	NK_HostState,
 	NK_ItemValues,
 	NK_ItemStatus,
-	NK_ItemStderr,
 	NK_ItemString,
 	NK_TriggerStatus,
 	NK_Alert,

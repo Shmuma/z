@@ -24,7 +24,6 @@ static zend_function_entry php_zabbix_functions[] = {
 	PHP_FE(zabbix_hfs_hosts_availability, NULL)
 	PHP_FE(zabbix_hfs_update_item_status, NULL)
 	PHP_FE(zabbix_hfs_item_status, NULL)
-	PHP_FE(zabbix_hfs_item_stderr, NULL)
 	PHP_FE(zabbix_hfs_item_values, NULL)
 	PHP_FE(zabbix_hfs_triggers_values, NULL)
 	PHP_FE(zabbix_hfs_trigger_value, NULL)
@@ -556,43 +555,8 @@ PHP_FUNCTION(zabbix_hfs_item_status)
 /* }}} */
 
 
-/* {{{ proto object zabbix_hfs_item_stderr(char *site, int itemid) */
-PHP_FUNCTION(zabbix_hfs_item_stderr)
-{
-	long long itemid = 0;
-	char *site = NULL;
-	int site_len = 0;
-	char* error = NULL;
-	zval* zerror;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl", &site, &site_len, &itemid) == FAILURE)
-		RETURN_FALSE;
-
-	if (!HFS_get_item_stderr (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, &error))
-		RETURN_FALSE;
-
-        if (object_init(return_value) == FAILURE)
-		RETURN_FALSE;
-
-	MAKE_STD_ZVAL (zerror);
-
-	if (error) {
-		ZVAL_STRING (zerror, error, 1);
-	}
-	else {
-		ZVAL_EMPTY_STRING (zerror);
-	}
-
-	add_property_zval (return_value, "stderr", zerror);
-
-	if (error)
-		free (error);
-}
-/* }}} */
-
-
-
-/* returns array with fields 'lastclock', 'prevvalue' and 'lastvalue' */
+/* returns array with fields 'lastclock', 'prevvalue', 'lastvalue' and 'stderr' */
 /* {{{ proto array zabbix_hfs_item_values(char *site, int itemid, int type) */
 PHP_FUNCTION(zabbix_hfs_item_values)
 {
@@ -604,7 +568,7 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 
 	double d_prev, d_last, d_prevorg;
 	unsigned long long i_prev, i_last, i_prevorg;
-	char *s_prev, *s_last, *s_prevorg;
+	char *s_prev, *s_last, *s_prevorg, *s_stderr;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll", &site, &site_len, &itemid, &type) == FAILURE)
 		RETURN_FALSE;
@@ -614,7 +578,7 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 
 	switch (type) {
 	case ITEM_VALUE_TYPE_FLOAT:
-		if (!HFS_get_item_values_dbl (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, &lastclock, &nextcheck, &d_prev, &d_last, &d_prevorg))
+		if (!HFS_get_item_values_dbl (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, &lastclock, &nextcheck, &d_prev, &d_last, &d_prevorg, &s_stderr))
 			RETURN_FALSE;
 		add_assoc_double (return_value, "prevvalue", d_prev);
 		add_assoc_double (return_value, "lastvalue", d_last);
@@ -622,7 +586,7 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 
 	case ITEM_VALUE_TYPE_TEXT:
 	case ITEM_VALUE_TYPE_STR:
-		if (!HFS_get_item_values_str (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, &lastclock, &nextcheck, &s_prev, &s_last, &s_prevorg))
+		if (!HFS_get_item_values_str (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, &lastclock, &nextcheck, &s_prev, &s_last, &s_prevorg, &s_stderr))
 			RETURN_FALSE;
 		if (s_prev) {
 			add_assoc_string (return_value, "prevvalue", s_prev, 1);
@@ -641,7 +605,7 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 		break;
 
 	case ITEM_VALUE_TYPE_UINT64:
-		if (!HFS_get_item_values_int (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, &lastclock, &nextcheck, &i_prev, &i_last, &i_prevorg))
+		if (!HFS_get_item_values_int (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, &lastclock, &nextcheck, &i_prev, &i_last, &i_prevorg, &s_stderr))
 			RETURN_FALSE;
 
 		asprintf(&buf, "%lld", i_prev);
@@ -658,6 +622,12 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 	}
 
 	add_assoc_long (return_value, "lastclock", lastclock);
+	if (s_stderr) {
+		add_assoc_string (return_value, "stderr", s_stderr, 1);
+		free (stderr);
+	}
+	else
+		add_assoc_string (return_value, "stderr", "", 1);
 }
 /* }}} */
 
