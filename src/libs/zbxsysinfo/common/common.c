@@ -52,6 +52,7 @@ ZBX_METRIC	parameters_common[]=
 	{"web.page.get",	CF_USEUPARAM,	WEB_PAGE_GET,	 	0,	"localhost,,80"},
 	{"web.page.perf",	CF_USEUPARAM,	WEB_PAGE_PERF,	 	0,	"localhost,,80"},
 	{"web.page.regexp",	CF_USEUPARAM,	WEB_PAGE_REGEXP,	0,	"localhost,,80,OK"},
+	{"web.page.isregexp",	CF_USEUPARAM,	WEB_PAGE_ISREGEXP,	0,	"localhost,,80,200"},
 
 	{"vfs.file.exists",	CF_USEUPARAM,	VFS_FILE_EXISTS,	0,	VFS_TEST_FILE},
 	{"vfs.file.time",       CF_USEUPARAM,   VFS_FILE_TIME,          0,      VFS_TEST_FILE ",modify"},

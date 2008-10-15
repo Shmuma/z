@@ -171,6 +171,24 @@ int	WEB_PAGE_PERF(const char *cmd, const char *param, unsigned flags, AGENT_RESU
 	return SYSINFO_RET_OK;
 }
 
+
+int	WEB_PAGE_ISREGEXP(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
+{
+	int res = WEB_PAGE_REGEXP (cmd, param, flags, result);
+
+	if (ret == SYSINFO_RET_OK) {
+		if (ISSET_STR (result)) {
+			char* str = result->str;
+			int res = strncmp (str, "EOF", 3);
+			UNSET_STR_RESULT (result);
+			SET_UI64_RESULT (result, res == 0 ? 1 : 0);
+		}
+	}
+
+	return res;
+}
+
+
 int	WEB_PAGE_REGEXP(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
 {
 	char	hostname[MAX_STRING_LEN];
