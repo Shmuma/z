@@ -1245,8 +1245,8 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 			else
 			{
 				ZBX_STR2UINT64(itemid, row[0]);
-				result1 = DBselect("select %s where h.hostid=i.hostid and i.itemid=" ZBX_FS_UI64,
-						  ZBX_SQL_ITEM_SELECT, itemid);
+				result1 = DBselect("select %s where h.hostid=i.hostid and i.itemid=" ZBX_FS_UI64 " and " ZBX_COND_SITE,
+						   ZBX_SQL_ITEM_SELECT, itemid, getSiteCondition ());
 				row1 = DBfetch(result1);
 
 				if(row1) {
