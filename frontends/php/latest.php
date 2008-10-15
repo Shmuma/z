@@ -211,11 +211,8 @@ include_once "include/page_header.php";
 					$db_item["lastclock"] = $hfs_data["lastclock"];
 					$db_item["lastvalue"] = $hfs_data["lastvalue"];
 					$db_item["prevvalue"] = $hfs_data["prevvalue"];
+					$db_item["stderr"]    = $hfs_data["stderr"];
 				}
-
-				$hfs_stderr = zabbix_hfs_item_stderr ($db_item["sitename"], $db_item["itemid"]);
-				if (is_object ($hfs_stderr))
-					$db_item["stderr"] = $hfs_stderr->stderr;
 			}
 
 			if(isset($db_item["lastclock"]))
@@ -331,11 +328,8 @@ include_once "include/page_header.php";
 					$db_item["lastclock"] = $hfs_data["lastclock"];
 					$db_item["lastvalue"] = $hfs_data["lastvalue"];
 					$db_item["prevvalue"] = $hfs_data["prevvalue"];
+					$db_item["stderr"]    = $hfs_data["stderr"];
 				}
-
-				$hfs_stderr = zabbix_hfs_item_stderr ($db_item["sitename"], $db_item["itemid"]);
-				if (is_object ($hfs_stderr))
-					$db_item["stderr"] = $hfs_stderr->stderr;
 			}
 			
 			$description = item_description($db_item["description"],$db_item["key_"]);

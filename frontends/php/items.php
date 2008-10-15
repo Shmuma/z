@@ -800,13 +800,7 @@ include_once "include/page_header.php";
 					$db_item["status"] = ITEM_STATUS_NOTSUPPORTED;
 					$db_item["error"] = $hfs_status->error;
 				}
-
-				$hfs_stderr = zabbix_hfs_item_stderr ($db_item["sitename"], $db_item["itemid"]);
-				if (is_object ($hfs_stderr))
-					$db_item["stderr"] = $hfs_stderr->stderr;
 			}
-			if (trim($db_item["stderr"]) != "")
-				$db_item["error"] = ($db_item["error"] ? $db_item["error"] : "") . "[" . $db_item["stderr"] . "]";
 
 			$status=new CCol(new CLink(item_status2str($db_item["status"]),
 				"?group_itemid%5B%5D=".$db_item["itemid"].
