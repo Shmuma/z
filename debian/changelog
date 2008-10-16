@@ -3,7 +3,7 @@ zabbix (1:1.4.4-yandex-foo9) unstable; urgency=low
   * new item web.page.isregexp item
   * possibility to use regexp instead of interface name in net.if.XXX items.
 
- -- Max Lapan <max.lapan@gmail.com>  Thu, 16 Oct 2008 15:34:20 +0400
+ -- Max Lapan <lapan@yandex-team.ru>  Thu, 16 Oct 2008 15:34:20 +0400
 
 zabbix (1:1.4.4-yandex-foo8) unstable; urgency=low
 
