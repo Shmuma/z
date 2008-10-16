@@ -36,7 +36,6 @@
 #include "nodeevents.h"
 #include "nodehistory.h"
 #include "trapper.h"
-#include "active.h"
 
 #include "daemon.h"
 
@@ -63,56 +62,56 @@ static metric_key_t key_idle;
 static int 		process_id = 0;
 
 /* queue index (part of file name) */
-static int 		queue_idx = 0;
+static int 		queue_idx[2] = { 0, 0 };
 /* queue offset */
-static hfs_off_t	queue_ofs = 0;
+static hfs_off_t	queue_ofs[2] = { 0, 0 };
 /* queue file descriptor */
-static int		queue_fd = -1;
+static int		queue_fd[2] =  { -1, -1 };
 
-static int		queue_inotify_fd = -1;
-static int		queue_inotify_wd = -1;
+static int		queue_inotify_fd[2] = { -1, -1 };
+static int		queue_inotify_wd[2] = { -1, -1 };
 
 #define QUEUE_CHUNK 10
 
 static queue_entry_t req_buf[QUEUE_CHUNK];
 
 
-static void trapper_initialize_queue ()
+static void trapper_initialize_queue (int index)
 {
 	const char* name;
 	static char buf[256];
 	int fd;
 
 	/* obtain trapper queue index and position */
-	name = queue_get_name (QNK_Position, process_id, 0);
+	name = queue_get_name (QNK_Position, index, process_id, 0);
 
 	fd = open (name, O_RDONLY);
 	if (fd >= 0) {
 		read (fd, buf, sizeof (buf));
 		if (sscanf (buf, "%d %lld", &queue_idx, &queue_ofs) != 2) {
-			queue_idx = 0;
-			queue_ofs = 0;
+			queue_idx[index] = 0;
+			queue_ofs[index] = 0;
 		}
 		close (fd);
 	}
 
 	/* initialize inotify instance */
-	queue_inotify_fd = inotify_init ();
+	queue_inotify_fd[index] = inotify_init ();
 }
 
 
-static void trapper_update_ofs ()
+static void trapper_update_ofs (int index)
 {
 	const char* name;
 	static char buf[256];
 	int fd;
 
 	/* obtain trapper queue index and position */
-	name = queue_get_name (QNK_Position, process_id, 0);
+	name = queue_get_name (QNK_Position, index, process_id, 0);
 
 	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	if (fd >= 0) {
-		snprintf (buf, sizeof (buf), "%d %lld\n", queue_idx, queue_ofs);
+		snprintf (buf, sizeof (buf), "%d %lld\n", queue_idx[index], queue_ofs[index]);
 		write (fd, buf, strlen (buf));
 		close (fd);
 	}
@@ -120,44 +119,44 @@ static void trapper_update_ofs ()
 
 
 /* Trying to open queue file according to current index. If filed, try with next index until correct file not found. */
-static int trapper_open_queue ()
+static int trapper_open_queue (int index)
 {
 	const char* name;
 	int attempts = 0;
 
 	while (attempts < 1000) {
-		name = queue_get_name (QNK_File, process_id, queue_idx + attempts);
-		queue_fd = open (name, O_RDONLY);
+		name = queue_get_name (QNK_File, index, process_id, queue_idx + attempts);
+		queue_fd[index] = open (name, O_RDONLY);
 		attempts++;
-		if (queue_fd >= 0) {
-			lseek (queue_fd, queue_ofs, SEEK_SET);
-			queue_inotify_wd = inotify_add_watch (queue_inotify_fd, name, IN_MODIFY);
+		if (queue_fd[index] >= 0) {
+			lseek (queue_fd[index], queue_ofs, SEEK_SET);
+			queue_inotify_wd[index] = inotify_add_watch (queue_inotify_fd[index], name, IN_MODIFY);
 			break;
 		}
 	}
 
-	return queue_fd >= 0;
+	return queue_fd[index] >= 0;
 }
 
 
 /* unlink old queue file (if opened) and open queue file with next index */
-static int trapper_open_next_queue ()
+static int trapper_open_next_queue (int index)
 {
 	const char* name;
 
 	close (queue_fd);
-	name = queue_get_name (QNK_File, process_id, queue_idx);
-	inotify_rm_watch (queue_inotify_fd, queue_inotify_wd);
+	name = queue_get_name (QNK_File, index, process_id, queue_idx);
+	inotify_rm_watch (queue_inotify_fd[index], queue_inotify_wd[index]);
 	unlink (name);
-	queue_idx++;
-	queue_ofs = 0;
-	return trapper_open_queue ();
+	queue_idx[index]++;
+	queue_ofs[index] = 0;
+	return trapper_open_queue (index);
 }
 
 
 /* Here we dequeue predefined amount of requests from queue file. If file is not open so far or
    suddenly finished, we trying to reopen next file according to index. */
-static int	trapper_dequeue_requests (queue_entry_t** entries)
+static int	trapper_dequeue_requests (queue_entry_t** entries, int index)
 {
 	static int buf[16384];
 	int req_len, len;
@@ -166,149 +165,44 @@ static int	trapper_dequeue_requests (queue_entry_t** entries)
 
 	*entries = req_buf;
 
-	if (queue_fd < 0) {
+	if (queue_fd[index] < 0) {
 		/* if queue cannot be opened or found, sleep for some time */
-		if (!trapper_open_queue ())
+		if (!trapper_open_queue (index))
 			return count;
 	}
 
 	while (count < QUEUE_CHUNK) {
 		/* get request length */
-		while (!read (queue_fd, &req_len, sizeof (req_len))) {
-			if (queue_ofs > QUEUE_SIZE_LIMIT)
-				if (!trapper_open_next_queue ())
+		while (!read (queue_fd[index], &req_len, sizeof (req_len))) {
+			if (queue_ofs[index] > QUEUE_SIZE_LIMIT)
+				if (!trapper_open_next_queue (index))
 					return count;
-			read (queue_inotify_fd, &ie, sizeof (ie));
+			read (queue_inotify_fd[index], &ie, sizeof (ie));
 		}
 		len = 0;
 		while (len < req_len) {
-			len += read (queue_fd, buf+len, req_len - len);
+			len += read (queue_fd[index], buf+len, req_len - len);
 			if (len < req_len)
-				read (queue_inotify_fd, &ie, sizeof (ie));
+				read (queue_inotify_fd[index], &ie, sizeof (ie));
 		}
 
-		queue_ofs += sizeof (req_len) + req_len;
+		queue_ofs[index] += sizeof (req_len) + req_len;
 
 		/* decode request data */
 		queue_decode_entry (req_buf+count, buf, req_len);
 		count++;
 
-		if (queue_ofs > QUEUE_SIZE_LIMIT)
-			if (!trapper_open_next_queue ())
+		if (queue_ofs[index] > QUEUE_SIZE_LIMIT)
+			if (!trapper_open_next_queue (index))
 				return count;
 	}
 
 	/* update queue_ofs */
-	trapper_update_ofs ();
+	trapper_update_ofs (index);
 
 	return count;
 }
 
-
-
-static int	process_trap(zbx_sock_t	*sock,char *s, int max_len)
-{
-	char	*line,*host;
-	char	*server,*key = NULL,*value_string, *error = NULL;
-	char	copy[MAX_STRING_LEN];
-	char	host_dec[MAX_STRING_LEN],key_dec[MAX_STRING_LEN],value_dec[MAX_STRING_LEN],error_dec[MAX_STRING_LEN];
-	char	lastlogsize[MAX_STRING_LEN];
-	char	timestamp[MAX_STRING_LEN];
-	char	source[MAX_STRING_LEN];
-	char	severity[MAX_STRING_LEN];
-
-	int	ret=SUCCEED;
-
-	zbx_rtrim(s, " \r\n\0");
-	zabbix_log( LOG_LEVEL_DEBUG, "Trapper got [%s] len %d", s, strlen(s));
-
-/* Request for list of active checks */
-	switch (s[0]) {
-	case 'Z':
-		if(strncmp (s,"ZBX_GET_ACTIVE_CHECKS", 20) == 0)
-		{
-			line=strtok(s,"\n");
-			host=strtok(NULL,"\n");
-			if(host)
-				ret = send_list_of_active_checks(sock, host);
-			mtr_checks++;
-			metric_update (key_checks, mtr_checks);
-		}
-		break;
-
-	case '<':
-		zabbix_log( LOG_LEVEL_DEBUG, "XML received [%s]", s);
-
-		if (strncmp (s, "<req>", 5) == 0)
-		{
-			comms_parse_response(s,host_dec,key_dec,value_dec,error_dec,lastlogsize,timestamp,source,severity,sizeof(host_dec)-1);
-			server=host_dec;
-			value_string=value_dec;
-			error = error_dec;
-			key=key_dec;
-			mtr_values++;
-			metric_update (key_values, mtr_values);
-		}
-
-		if (strncmp (s, "<reqs>", 6) == 0)
-		{
-			/* TODO: improve history performance */
-			ret = SUCCEED;
-			value_string = NULL;
-
-			void* token = NULL;
-			void* history_token = NULL;
-
-			if (CONFIG_HFS_PATH) {
-				/* perform ultra-fast history addition */
-				while (comms_parse_multi_response (s,host_dec,key_dec,value_dec,lastlogsize,timestamp,source,severity,
-								   sizeof(host_dec)-1, &token) == SUCCEED)
-				{
-					append_history (host_dec, key_dec, value_dec, timestamp, &history_token);
-					mtr_history++;
-				}
-				flush_history (&history_token);
-				metric_update (key_history, mtr_history);
-			}
-			else {
-				DBbegin();
-				while (comms_parse_multi_response (s,host_dec,key_dec,value_dec,lastlogsize,timestamp,source,severity,
-								   sizeof(host_dec)-1, &token) == SUCCEED)
-				{
-					server = host_dec;
-					value_string = value_dec;
-					key = key_dec;
-					/* insert history value. It doesn't support  */
-/* 					ret = process_data(sock,server,key,value_string, NULL, NULL, NULL, NULL, NULL, timestamp); */
-					if (ret != SUCCEED)
-						break;
-				}
-				DBcommit();
-			}
-			key = NULL;
-		}
-
-		if (value_string)
-			zabbix_log( LOG_LEVEL_DEBUG, "Value [%s]", value_string);
-
-		if (key)
-		{
-			DBbegin();
-/* 			ret=process_data(sock,server,key,value_string,error,lastlogsize,timestamp,source,severity, NULL); */
-			DBcommit();
-		}
-		
-		if( zbx_tcp_send_raw(sock, SUCCEED == ret ? "OK" : "NOT OK") != SUCCEED)
-		{
-			zabbix_log( LOG_LEVEL_WARNING, "Error sending result back");
-			zabbix_syslog("Trapper: error sending result back");
-		}
-		zabbix_log( LOG_LEVEL_DEBUG, "After write()");
-
-		break;
-	}
-	return ret;
-}
 
 
 void	child_trapper_main(int i)
@@ -332,7 +226,8 @@ void	child_trapper_main(int i)
 	process_id = i;
 
 	/* initialize queue */
-	trapper_initialize_queue ();
+	trapper_initialize_queue (0);
+	trapper_initialize_queue (1);
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 
@@ -341,7 +236,7 @@ void	child_trapper_main(int i)
 		zbx_setproctitle("Trapper waiting for new queue data");
 
 		/* dequeue data block to process */
-		if ((count = trapper_dequeue_requests (&entries)) > 0) {
+		if ((count = trapper_dequeue_requests (&entries, 0)) > 0) {
 			now = time (NULL);
 
 			/* handle data block */
