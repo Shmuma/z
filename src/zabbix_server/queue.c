@@ -6,6 +6,8 @@
 extern char* CONFIG_SERVER_SITE;
 extern char* CONFIG_HFS_PATH;
 
+static char* empty_string = "";
+
 
 
 const char* queue_get_name (queue_name_kind_t kind, int q_num, int process_id, int index)
@@ -83,7 +85,7 @@ char* queue_decode_entry (queue_entry_t* entry, char* buf, int size)
 			buf_p += len+1;
 		}
 		else
-			*ptrs[i] = NULL;
+			*ptrs[i] = empty_string;
 	}
 
 	return buf_p;
