@@ -376,15 +376,15 @@ int main(int argc, char **argv)
 
 	init_config();
 
-#if 0
+#if 1
 	{
-/* 		zbx_sock_t	listen_sock;		 */
+		zbx_sock_t	listen_sock;
 
-/* 		zbx_tcp_listen(&listen_sock, CONFIG_LISTEN_IP, (unsigned short)CONFIG_LISTEN_PORT); */
+		zbx_tcp_listen(&listen_sock, CONFIG_LISTEN_IP, (unsigned short)CONFIG_LISTEN_PORT);
 		memcache_zbx_connect();
-		process_type = ZBX_PROCESS_TRAPPERD;
-		child_trapper_main (1);
-/* 		child_feeder_main(0, &listen_sock);	 */
+		process_type = ZBX_PROCESS_FEEDER;
+/* 		child_trapper_main (1); */
+		child_feeder_main(0, &listen_sock);
 	}
 #else
 	return daemon_start(CONFIG_ALLOW_ROOT, "zabbix");
