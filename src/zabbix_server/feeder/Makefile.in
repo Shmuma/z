@@ -36,7 +36,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = src/zabbix_server/trapper
+subdir = src/zabbix_server/feeder
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_lib_mysql.m4 \
@@ -53,11 +53,10 @@ CONFIG_CLEAN_FILES =
 LIBRARIES = $(noinst_LIBRARIES)
 AR = ar
 ARFLAGS = cru
-libzbxtrapper_a_AR = $(AR) $(ARFLAGS)
-libzbxtrapper_a_LIBADD =
-am_libzbxtrapper_a_OBJECTS = trapper.$(OBJEXT) nodesync.$(OBJEXT) \
-	nodeevents.$(OBJEXT) nodehistory.$(OBJEXT)
-libzbxtrapper_a_OBJECTS = $(am_libzbxtrapper_a_OBJECTS)
+libzbxfeeder_a_AR = $(AR) $(ARFLAGS)
+libzbxfeeder_a_LIBADD =
+am_libzbxfeeder_a_OBJECTS = active.$(OBJEXT) feeder.$(OBJEXT)
+libzbxfeeder_a_OBJECTS = $(am_libzbxfeeder_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -65,8 +64,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(libzbxtrapper_a_SOURCES)
-DIST_SOURCES = $(libzbxtrapper_a_SOURCES)
+SOURCES = $(libzbxfeeder_a_SOURCES)
+DIST_SOURCES = $(libzbxfeeder_a_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -206,12 +205,10 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-noinst_LIBRARIES = libzbxtrapper.a
-libzbxtrapper_a_SOURCES = \
-	trapper.c trapper.h \
-	nodesync.c nodesync.h \
-	nodeevents.c nodeevents.h \
-	nodehistory.c nodehistory.h
+noinst_LIBRARIES = libzbxfeeder.a
+libzbxfeeder_a_SOURCES = \
+	active.c active.h \
+	feeder.h feeder.c
 
 all: all-am
 
@@ -226,9 +223,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  src/zabbix_server/trapper/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  src/zabbix_server/feeder/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  src/zabbix_server/trapper/Makefile
+	  $(AUTOMAKE) --gnu  src/zabbix_server/feeder/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -249,10 +246,10 @@ $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
-libzbxtrapper.a: $(libzbxtrapper_a_OBJECTS) $(libzbxtrapper_a_DEPENDENCIES) 
-	-rm -f libzbxtrapper.a
-	$(libzbxtrapper_a_AR) libzbxtrapper.a $(libzbxtrapper_a_OBJECTS) $(libzbxtrapper_a_LIBADD)
-	$(RANLIB) libzbxtrapper.a
+libzbxfeeder.a: $(libzbxfeeder_a_OBJECTS) $(libzbxfeeder_a_DEPENDENCIES) 
+	-rm -f libzbxfeeder.a
+	$(libzbxfeeder_a_AR) libzbxfeeder.a $(libzbxfeeder_a_OBJECTS) $(libzbxfeeder_a_LIBADD)
+	$(RANLIB) libzbxfeeder.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -260,10 +257,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nodeevents.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nodehistory.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nodesync.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/trapper.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/active.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/feeder.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
