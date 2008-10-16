@@ -88,7 +88,7 @@ static void trapper_initialize_queue (int index)
 	fd = open (name, O_RDONLY);
 	if (fd >= 0) {
 		read (fd, buf, sizeof (buf));
-		if (sscanf (buf, "%d %lld", &queue_idx, &queue_ofs) != 2) {
+		if (sscanf (buf, "%d %lld", &(queue_idx[index]), &(queue_ofs[index])) != 2) {
 			queue_idx[index] = 0;
 			queue_ofs[index] = 0;
 		}
@@ -125,11 +125,11 @@ static int trapper_open_queue (int index)
 	int attempts = 0;
 
 	while (attempts < 1000) {
-		name = queue_get_name (QNK_File, index, process_id, queue_idx + attempts);
+		name = queue_get_name (QNK_File, index, process_id, queue_idx[index] + attempts);
 		queue_fd[index] = open (name, O_RDONLY);
 		attempts++;
 		if (queue_fd[index] >= 0) {
-			lseek (queue_fd[index], queue_ofs, SEEK_SET);
+			lseek (queue_fd[index], queue_ofs[index], SEEK_SET);
 			queue_inotify_wd[index] = inotify_add_watch (queue_inotify_fd[index], name, IN_MODIFY);
 			break;
 		}
@@ -145,7 +145,7 @@ static int trapper_open_next_queue (int index)
 	const char* name;
 
 	close (queue_fd);
-	name = queue_get_name (QNK_File, index, process_id, queue_idx);
+	name = queue_get_name (QNK_File, index, process_id, queue_idx[index]);
 	inotify_rm_watch (queue_inotify_fd[index], queue_inotify_wd[index]);
 	unlink (name);
 	queue_idx[index]++;
@@ -156,7 +156,7 @@ static int trapper_open_next_queue (int index)
 
 /* Here we dequeue predefined amount of requests from queue file. If file is not open so far or
    suddenly finished, we trying to reopen next file according to index. */
-static int	trapper_dequeue_requests (queue_entry_t** entries, int index)
+static int	trapper_dequeue_requests (queue_entry_t** entries, int index, int not_wait)
 {
 	static int buf[16384];
 	int req_len, len;
@@ -177,7 +177,13 @@ static int	trapper_dequeue_requests (queue_entry_t** entries, int index)
 			if (queue_ofs[index] > QUEUE_SIZE_LIMIT)
 				if (!trapper_open_next_queue (index))
 					return count;
-			read (queue_inotify_fd[index], &ie, sizeof (ie));
+			if (not_wait) {
+				if (count > 0)
+					trapper_update_ofs (index);
+				return count;
+			}
+			else
+				read (queue_inotify_fd[index], &ie, sizeof (ie));
 		}
 		len = 0;
 		while (len < req_len) {
@@ -207,7 +213,7 @@ static int	trapper_dequeue_requests (queue_entry_t** entries, int index)
 
 void	child_trapper_main(int i)
 {
-	int count;
+	int count, flag;
 	queue_entry_t* entries;
 	hfs_time_t now;
 
@@ -230,13 +236,14 @@ void	child_trapper_main(int i)
 	trapper_initialize_queue (1);
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
+	flag = 0;
 
 	for(;;)
 	{
 		zbx_setproctitle("Trapper waiting for new queue data");
 
 		/* dequeue data block to process */
-		if ((count = trapper_dequeue_requests (&entries, 0)) > 0) {
+		if ((count = trapper_dequeue_requests (&entries, flag % 2, flag % 2)) > 0) {
 			now = time (NULL);
 
 			/* handle data block */
@@ -249,10 +256,15 @@ void	child_trapper_main(int i)
 			}
 		}
 		else {
-			metric_update (key_idle, ++mtr_idle);
-			zbx_setproctitle("Trapper sleeping for 1 second, waiting for queue to appear");
-			sleep (1);
+			if (!flag) {
+				metric_update (key_idle, ++mtr_idle);
+				zbx_setproctitle("Trapper sleeping for 1 second, waiting for queue to appear");
+				sleep (1);
+			}
 		}
+
+		flag++;
+		flag %= 2;
 	}
 	DBclose();
 }

@@ -376,7 +376,7 @@ int main(int argc, char **argv)
 
 	init_config();
 
-#if 1
+#if 0
 	{
 		zbx_sock_t	listen_sock;
 

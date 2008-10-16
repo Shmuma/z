@@ -66,14 +66,14 @@ static void    feeder_initialize_queue (int queue)
 	else {
 		if ((len = read (fd, idx_buf, sizeof (idx_buf))) >= 0) {
 			idx_buf[len] = 0;
-			if (!sscanf (idx_buf, "%d", &queue_idx))
+			if (!sscanf (idx_buf, "%d", &(queue_idx[queue])))
 				queue_idx[queue] = 0;
 		}
 		close (fd);
 	}
 
 	/* open queue file */
-	buf = queue_get_name (QNK_File, queue, process_id, queue_idx);
+	buf = queue_get_name (QNK_File, queue, process_id, queue_idx[queue]);
 	queue_fd[queue] = xopen (buf, O_CREAT | O_APPEND | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 }
 
@@ -93,7 +93,7 @@ static void    feeder_switch_queue (int queue)
 	ftruncate (fd, 0);
 	
 	queue_idx[queue]++;
-	snprintf (idx_buf, sizeof (idx_buf), "%d\n", queue_idx);
+	snprintf (idx_buf, sizeof (idx_buf), "%d\n", queue_idx[queue]);
 	write (fd, idx_buf, strlen (idx_buf)-1);
 	close (fd);
 
@@ -166,6 +166,29 @@ void	process_feeder_child(zbx_sock_t *sock)
 
 			/* append to queue for trapper */
 			feeder_queue_data (&entry, 0);
+		}
+		else if (strncmp (data, "<reqs>", 6) == 0) {
+                        void* token = NULL;
+                        void* history_token = NULL;
+
+                        value_string = NULL;
+
+			while (comms_parse_multi_response (data,host_dec,key_dec,value_dec,lastlogsize,timestamp,source,severity,
+							   sizeof(host_dec)-1, &token) == SUCCEED)
+                        {
+				entry.ts = time (NULL);
+				entry.server = host_dec;
+				entry.value = value_dec;
+				entry.error = error_dec;
+				entry.key = key_dec;
+				entry.lastlogsize = lastlogsize;
+				entry.timestamp = timestamp;
+				entry.source = source;
+				entry.severity = severity;
+
+				/* append to history queue for trapper */
+				feeder_queue_data (&entry, 1);
+                        }
 		}
 
 		if( zbx_tcp_send_raw(sock, SUCCEED == ret ? "OK" : "NOT OK") != SUCCEED)
