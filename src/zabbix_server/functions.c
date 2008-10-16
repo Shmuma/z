@@ -384,16 +384,8 @@ int	process_data(hfs_time_t ts, char *server,char *key,char *value, char* error,
 
 		if(set_result_type(&agent, item.value_type, value) == SUCCEED)
 		{
-<<<<<<< HEAD:src/zabbix_server/functions.c
-			process_new_value (&item,&agent, ts);
+			process_new_value (&item,&agent, ts, error);
 			update_triggers(item.itemid);
-=======
-			process_new_value(&item,&agent, ts, error);
-
-			/* if we inserting historical value, don't update triggers */
-			if (!ts)
-				update_triggers(item.itemid);
->>>>>>> master:src/zabbix_server/functions.c
 		}
 		else
 		{
@@ -1002,15 +994,8 @@ void	process_new_value(DB_ITEM *item, AGENT_RESULT *value, time_t timestamp, con
 	}
 
 	add_history(item, value, now);
-<<<<<<< HEAD:src/zabbix_server/functions.c
-	update_item(item, value, now);
+	update_item(item, value, now, stderr);
 	update_functions( item );
-=======
-	if (!timestamp) {
-		update_item(item, value, now, stderr);
-		update_functions( item );
-	}
->>>>>>> master:src/zabbix_server/functions.c
 }
 
 /*
