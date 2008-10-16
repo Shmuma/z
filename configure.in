@@ -951,6 +951,7 @@ AC_OUTPUT([
 	src/zabbix_server/poller/Makefile
 	src/zabbix_server/timer/Makefile
 	src/zabbix_server/trapper/Makefile
+	src/zabbix_server/feeder/Makefile
 	src/zabbix_server/utils/Makefile
 	src/zabbix_server/watchdog/Makefile
 	src/utils/Makefile
