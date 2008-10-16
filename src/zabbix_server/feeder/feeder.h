@@ -17,17 +17,9 @@
 ** Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 **/
 
-#ifndef ZABBIX_TRAPPER_H
-#define ZABBIX_TRAPPER_H
+#ifndef ZABBIX_FEEDER_H
+#define ZABBIX_FEEDER_H
 
-extern  char	*CONFIG_SERVER_MODE;
-
-extern	int	server_num;
-
-extern	int	CONFIG_TIMEOUT;
-
-extern	void	signal_handler( int sig );
-
-void	child_trapper_main(int i);
+void child_feeder_main (int i, zbx_sock_t *s);
 
 #endif

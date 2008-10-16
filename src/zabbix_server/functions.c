@@ -272,15 +272,14 @@ void	calc_timestamp(char *line,int *timestamp, char *format)
  * Comments: for trapper server process                                       *
  *                                                                            *
  ******************************************************************************/
-int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* error, char *lastlogsize, char *timestamp,
-		char *source, char *severity, char* when)
+int	process_data(hfs_time_t ts, char *server,char *key,char *value, char* error, char *lastlogsize, char *timestamp,
+		char *source, char *severity)
 {
 	AGENT_RESULT	agent;
 
 	DB_RESULT       result;
 	DB_ROW	row;
 	DB_ITEM	item;
-	time_t ts = 0;
 
 #ifdef HAVE_MEMCACHE
 	int	in_cache = 0;
@@ -288,15 +287,11 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 	char	server_esc[MAX_STRING_LEN];
 	char	key_esc[MAX_STRING_LEN];
 
-	if (when)
-		ts = atoi (when);
-
-	zabbix_log( LOG_LEVEL_DEBUG, "In process_data([%s],[%s],[%s],[%s],[%s],[%s])",
+	zabbix_log( LOG_LEVEL_DEBUG, "In process_data([%s],[%s],[%s],[%s],[%s])",
 		server,
 		key,
 		value,
 		lastlogsize,
-		when,
 		error);
 
 	init_result(&agent);
@@ -345,18 +340,11 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 	}
 #endif
 
-	if( (item.type==ITEM_TYPE_ZABBIX_ACTIVE) && (zbx_tcp_check_security(sock,item.trapper_hosts,1) == FAIL))
-	{
-		DBfree_result(result);
-		DBfree_item(&item);
-		return  FAIL;
-	}
-
 	zabbix_log( LOG_LEVEL_DEBUG, "Processing [%s]",
 		value);
 
 	/* update stderr only for latest data, not for history */
-	if (!ts) {
+	if (ts - time (NULL) < 10) {
 		if (!CONFIG_HFS_PATH)
 			DBupdate_item_stderr (item.itemid, error);
         }
@@ -396,11 +384,8 @@ int	process_data(zbx_sock_t *sock,char *server,char *key,char *value, char* erro
 
 		if(set_result_type(&agent, item.value_type, value) == SUCCEED)
 		{
-			process_new_value(&item,&agent, ts, error);
-
-			/* if we inserting historical value, don't update triggers */
-			if (!ts)
-				update_triggers(item.itemid);
+			process_new_value (&item,&agent, ts, error);
+			update_triggers(item.itemid);
 		}
 		else
 		{
@@ -1009,10 +994,8 @@ void	process_new_value(DB_ITEM *item, AGENT_RESULT *value, time_t timestamp, con
 	}
 
 	add_history(item, value, now);
-	if (!timestamp) {
-		update_item(item, value, now, stderr);
-		update_functions( item );
-	}
+	update_item(item, value, now, stderr);
+	update_functions( item );
 }
 
 /*

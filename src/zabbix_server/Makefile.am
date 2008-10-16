@@ -11,7 +11,8 @@ SUBDIRS = \
 	trapper \
 	nodewatcher \
 	watchdog \
-	utils
+	utils \
+	feeder
 
 sbin_PROGRAMS = zabbix_server
 
@@ -24,6 +25,7 @@ zabbix_server_SOURCES = \
 	zlog.c \
 	functions.c functions.h \
 	metrics.c metrics.h \
+	queue.c queue.h \
 	serialize.c \
 	server.c
 
@@ -44,6 +46,7 @@ zabbix_server_LDADD = \
 	housekeeper/libzbxhousekeeper.a \
 	timer/libzbxtimer.a \
 	trapper/libzbxtrapper.a \
+	feeder/libzbxfeeder.a \
 	nodewatcher/libzbxnodewatcher.a \
 	utils/libzbxutils.a \
 	httppoller/libzbxhttppoller.a \
