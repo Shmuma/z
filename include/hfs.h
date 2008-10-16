@@ -143,23 +143,23 @@ int		HFS_get_hosts_statuses (const char* hfs_base_dir, const char* siteid, hfs_h
 
 
 void		HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t lastclock,
-					hfs_time_t nextcheck, double prevvalue, double lastvalue, double prevorgvalue);
+					    hfs_time_t nextcheck, double prevvalue, double lastvalue, double prevorgvalue, const char* stderr);
 void		HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t lastclock,
-					hfs_time_t nextcheck, zbx_uint64_t prevvalue, zbx_uint64_t lastvalue, zbx_uint64_t prevorgvalue);
+					    hfs_time_t nextcheck, zbx_uint64_t prevvalue, zbx_uint64_t lastvalue, zbx_uint64_t prevorgvalue,
+					    const char* stderr);
 void		HFS_update_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t lastclock,
-					hfs_time_t nextcheck, const char* prevvalue, const char* lastvalue, const char* prevorgvalue);
+					    hfs_time_t nextcheck, const char* prevvalue, const char* lastvalue, const char* prevorgvalue,
+					    const char* stderr);
 int		HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t* lastclock,
-					 hfs_time_t* nextcheck, double* prevvalue, double* lastvalue, double* prevorgvalue);
+					 hfs_time_t* nextcheck, double* prevvalue, double* lastvalue, double* prevorgvalue, char** stderr);
 int		HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t* lastclock,
-					 hfs_time_t* nextcheck, zbx_uint64_t* prevvalue, zbx_uint64_t* lastvalue, zbx_uint64_t* prevorgvalue);
+					 hfs_time_t* nextcheck, zbx_uint64_t* prevvalue, zbx_uint64_t* lastvalue, zbx_uint64_t* prevorgvalue,
+					 char** stderr);
 int		HFS_get_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t* lastclock,
-					 hfs_time_t* nextcheck, char** prevvalue, char** lastvalue, char** prevorgvalue);
+					 hfs_time_t* nextcheck, char** prevvalue, char** lastvalue, char** prevorgvalue, char** stderr);
 
 void		HFS_update_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int status, const char* error);
-void		HFS_update_item_stderr (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, const char* stderr);
-
 int		HFS_get_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int* status, char** error);
-int		HFS_get_item_stderr (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, char** stderr);
 
 /* trigger statuses */
 typedef struct {

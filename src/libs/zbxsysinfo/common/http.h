@@ -24,5 +24,6 @@
 int	WEB_PAGE_GET(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result);
 int	WEB_PAGE_PERF(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result);
 int	WEB_PAGE_REGEXP(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result);
+int	WEB_PAGE_ISREGEXP(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result);
 
 #endif /* SYSINFO_COMMON_HTTP_H_INCLUDED */

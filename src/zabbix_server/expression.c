@@ -1245,14 +1245,24 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 			else
 			{
 				ZBX_STR2UINT64(itemid, row[0]);
-				result1 = DBselect("select %s where h.hostid=i.hostid and i.itemid=" ZBX_FS_UI64,
-						  ZBX_SQL_ITEM_SELECT, itemid);
+				result1 = DBselect("select %s where h.hostid=i.hostid and i.itemid=" ZBX_FS_UI64 " and " ZBX_COND_SITE,
+						   ZBX_SQL_ITEM_SELECT, itemid, getSiteCondition ());
 				row1 = DBfetch(result1);
 
 				if(row1) {
 					DBget_item_from_db(&item, row1);
 
-					strscpy(tmp, item.lastvalue_str);
+					switch(item.value_type) {
+						case ITEM_VALUE_TYPE_FLOAT:
+							zbx_snprintf(tmp, MAX_STRING_LEN, "%lf", item.lastvalue_dbl);
+							break;
+						case ITEM_VALUE_TYPE_UINT64:
+							zbx_snprintf(tmp, MAX_STRING_LEN, "%lld", item.lastvalue_uint64);
+							break;
+						default:
+							strscpy(tmp, item.lastvalue_str);
+					}
+
 					add_value_suffix(tmp, sizeof(tmp), item.units, item.value_type);
 					replace_to = zbx_dsprintf(replace_to, "%s", tmp);
 

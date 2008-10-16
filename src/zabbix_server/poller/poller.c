@@ -23,6 +23,7 @@
 
 #include "../functions.h"
 #include "../expression.h"
+#include "../metrics.h"
 #include "poller.h"
 
 #include "checks_agent.h"
@@ -42,6 +43,10 @@ AGENT_RESULT    result;
 
 int	poller_type;
 int	poller_num;
+
+static zbx_uint64_t mtr_host_updates = 0;
+static metric_key_t key_host_updates;
+
 
 int	get_value(DB_ITEM *item, AGENT_RESULT *result)
 {
@@ -219,7 +224,7 @@ static void update_key_status(zbx_uint64_t hostid,int host_status)
 		{
 			init_result(&agent);
 			SET_UI64_RESULT(&agent, host_status);
-			process_new_value(&item,&agent, 0);
+			process_new_value(&item,&agent, 0, NULL);
 			free_result(&agent);
 
 			update_triggers(item.itemid);
@@ -370,7 +375,7 @@ int get_values(void)
 		if(res == SUCCEED )
 		{
 
-			process_new_value(&item,&agent, 0);
+			process_new_value(&item,&agent, 0, NULL);
 
 /*			if(HOST_STATUS_UNREACHABLE == item.host_status)*/
 			if(HOST_AVAILABLE_TRUE != item.host_available)
@@ -388,8 +393,10 @@ int get_values(void)
 
 				stop=1;
 			}
-			if (CONFIG_HFS_PATH)
+			if (CONFIG_HFS_PATH) {
+				metric_update (key_host_updates, ++mtr_host_updates);
 				HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid, HOST_AVAILABLE_TRUE, now, agent.msg);
+			}
 			if(item.host_errors_from!=0)
 			{
 				DBexecute("update hosts set errors_from=0 where hostid=" ZBX_FS_UI64,
@@ -438,9 +445,11 @@ int get_values(void)
 
 					stop=1;
 				}
-				if (CONFIG_HFS_PATH)
+				if (CONFIG_HFS_PATH) {
+					metric_update (key_host_updates, ++mtr_host_updates);
 					HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid,
 								      HOST_AVAILABLE_TRUE, now, agent.msg);
+				}
 			}
 		}
 		else if(res == NETWORK_ERROR)
@@ -484,9 +493,11 @@ int get_values(void)
 						CONFIG_UNAVAILABLE_DELAY);
 
 					DBupdate_host_availability(item.hostid,HOST_AVAILABLE_FALSE,now,agent.msg);
-					if (CONFIG_HFS_PATH)
+					if (CONFIG_HFS_PATH) {
+						metric_update (key_host_updates, ++mtr_host_updates);
 						HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid,
 									      HOST_AVAILABLE_FALSE, now, agent.msg);
+					}
 					update_key_status(item.hostid,HOST_AVAILABLE_FALSE); /* 2 */
 					item.host_available=HOST_AVAILABLE_FALSE;
 
@@ -549,6 +560,8 @@ void main_poller_loop(int type, int num)
 
 	poller_type = type;
 	poller_num = num;
+
+	key_host_updates = metric_register ("poller_host_updates",  num);
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 
