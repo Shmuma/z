@@ -330,7 +330,7 @@ insert into help_items values (5,'zabbix[queue]','Number of items in the queue')
 insert into help_items values (5,'zabbix[trends]','Number of values stored in table TRENDS');
 insert into help_items values (5,'zabbix[triggers]','Number of triggers in ZABBIX database');
 
-insert into help_items values (8,'grpfunc(&lt;Group&gt;,&lt;Key&gt;,&lt;func&gt;,&lt;param&gt;)','Aggregate checks do not require any agent running on a host being monitored. ZABBIX server collects aggregate information by doing direct database queries. See ZABBIX Manual.');
+insert into help_items values (8,'grpfunc[&lt;Group&gt;,&lt;Key&gt;,&lt;func&gt;,&lt;param&gt;]','Aggregate checks do not require any agent running on a host being monitored. ZABBIX server collects aggregate information by doing direct database queries. See ZABBIX Manual.');
 
 insert into help_items values(0,'agent.ping','Check the agent usability. Always return 1. Can be used as a TCP ping.');
 insert into help_items values(0,'agent.version','Version of zabbix_agent(d) running on monitored host. String value. Example of returned value: 1.1');
@@ -366,13 +366,19 @@ insert into help_items values(0,'vfs.dev.write[device &lt;,type&gt; &lt;,mode&gt
 insert into help_items values(0,'vfs.file.cksum[file]','Calculate check sum of a given file. Check sum of the file calculate by standard algorithm used by UNIX utility cksum.	Example: vfs.file.cksum[/etc/passwd]');
 insert into help_items values(0,'vfs.file.exists[file]','Check file existance. 0 - file does not exists, 1 - file exists');
 insert into help_items values(0,'vfs.file.md5sum[file]','Calculate MD5 check sum of a given file. String MD5 hash of the file. Can be used for files less than 64MB, unsupported otherwise. Example: vfs.file.md5sum[/etc/zabbix/zabbix_agentd.conf]');
-insert into help_items values(0,'vfs.file.regexp[file, user]','');
-insert into help_items values(0,'vfs.file.regmatch[file, user]','');
+insert into help_items values(0,'vfs.file.regexp[file, user]','Returns string matched against regexp.');
+insert into help_items values(0,'vfs.file.regmatch[file, user]','Return 1 if regexp is found in file, 0 otherwise.');
 insert into help_items values(0,'vfs.file.size[file]','Size of a given file. Size in bytes. File must have read permissions for user zabbix. Example: vfs.file.size[/var/log/syslog]');
 insert into help_items values(0,'vfs.file.time[file&lt;, mode&gt;]','File time information. Number of seconds.	The mode is optional. If mode is missing modify is used.');
 insert into help_items values(0,'vfs.fs.inode[fs &lt;,mode&gt;]','Number of inodes for a given volume. If mode is missing total is used.');
 insert into help_items values(0,'vfs.fs.size[fs &lt;,mode&gt;]','Calculate disk space for a given volume. Disk space in KB. If mode is missing total is used.  In case of mounted volume, unused disk space for local file system is returned. Example: vfs.fs.size[/tmp,free].');
 insert into help_items values(0,'vm.memory.size[&lt;mode&gt;]','Amount of memory size in bytes. If mode is missing total is used.');
+
+insert into help_items values(0,'web.page.get[server,&lt;path&gt;,&lt;port&gt;]','Returns web page source as text. EOF returned if transfer failed.');
+insert into help_items values(0,'web.page.perf[server,&lt;path&gt;,&lt;port&gt;]','Returns time in seconds took to transfer page.');
+insert into help_items values(0,'web.page.regexp[server,&lt;path&gt;,&lt;port&gt;,&lt;regexp&gt;,&lt;length&gt;]','Returns string matched by regexp. If length is specified, this amount of character returned.');
+insert into help_items values(0,'web.page.isregexp[server,&lt;path&gt;,&lt;port&gt;,&lt;regexp&gt;]','Returns 1 if regexp matched against web page contents (including headers). If not matched, 0 returned.');
+
 
 --
 -- Dumping data for table items

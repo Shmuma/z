@@ -39,15 +39,17 @@ static int get_net_stat(const char *if_name, struct net_stat_s *result)
 
 	char name[MAX_STRING_LEN];
 	zbx_uint64_t tmp = 0;
+	struct net_stat_s res;
 	
 	FILE *f;
 	char	*p;
 
 	assert(result);
 
+	memset (result, 0, sizeof (struct net_stat_s));
+
 	if(NULL != (f = fopen("/proc/net/dev","r") ))
 	{
-		
 		while(fgets(line,MAX_STRING_LEN,f) != NULL)
 		{
 
@@ -59,37 +61,44 @@ static int get_net_stat(const char *if_name, struct net_stat_s *result)
 					" ZBX_FS_UI64 "\t" ZBX_FS_UI64 "\t" ZBX_FS_UI64 "\t" ZBX_FS_UI64 "\t" ZBX_FS_UI64 "\t" 
 					ZBX_FS_UI64 "\t" ZBX_FS_UI64 "\t" ZBX_FS_UI64 "\n",
 				name, 
-				&(result->ibytes), 	/* bytes */
-				&(result->ipackets),	/* packets */
-				&(result->ierr), 	/* errs */
-				&(result->idrop),	/* drop */
+				&(res.ibytes), 		/* bytes */
+				&(res.ipackets),	/* packets */
+				&(res.ierr), 		/* errs */
+				&(res.idrop),		/* drop */
 			        &(tmp), 		/* fifo */
 				&(tmp),			/* frame */
 				&(tmp), 		/* compressed */
 				&(tmp),			/* multicast */
-				&(result->obytes), 	/* bytes */
-				&(result->opackets),	/* packets*/
-				&(result->oerr),	/* errs */
-				&(result->odrop),	/* drop */
+				&(res.obytes), 		/* bytes */
+				&(res.opackets),	/* packets*/
+				&(res.oerr),		/* errs */
+				&(res.odrop),		/* drop */
 			        &(tmp), 		/* fifo */
-				&(result->colls),	/* icolls */
+				&(res.colls),		/* icolls */
 			        &(tmp), 		/* carrier */
 			        &(tmp)	 		/* compressed */
 				) == 17)
 			{
-				if(strncmp(name, if_name, MAX_STRING_LEN) == 0)
-				{
+				int len;
+
+				/* if_name is regexp which checked against interface name */
+				if (zbx_regexp_match (name, if_name, &len)) {
 					ret = SYSINFO_RET_OK;
-					break;
+
+					/* sum obtained data to result */
+					result->ibytes += res.ibytes;
+					result->ipackets += res.ipackets;
+					result->ierr += res.ierr;
+					result->idrop += res.idrop;
+					result->obytes += res.obytes;
+					result->opackets += res.opackets;
+					result->oerr += res.oerr;
+					result->odrop += res.odrop;
+					result->colls += res.colls;
 				}
 			}
 		}
 		zbx_fclose(f);
-	}
-
-	if(ret != SYSINFO_RET_OK)
-	{
-		memset(result, 0, sizeof(struct net_stat_s));
 	}
 	
 	return ret;
