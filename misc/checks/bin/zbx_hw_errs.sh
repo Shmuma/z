@@ -49,7 +49,6 @@ ERR_LINES_DELTA=$(($ERR_LINES_AFTER - $ERR_LINES_BEFORE))
 awk -v p=$(($TSTAMP-$WATCH_LAST)) '$1>=p {print}' $TMP/$me.msg.prev > $TMP/$me.msg.cur
 mv $TMP/$me.dmesg.cur $TMP/$me.dmesg.prev
 mv $TMP/$me.msg.cur $TMP/$me.msg.prev
-[ -s $TMP/$me.msg.prev ] || die 0 Ok
 
 c_err=`grep -i -E "$CRIT_PAT" < $TMP/$me.msg.prev | tail -n 1 | sed -e 's/^[0-9]* //'`
 err=`tail -n 1 $TMP/$me.msg.prev | sed -e 's/^[0-9]* //'`
