@@ -58,5 +58,5 @@ echo $ERR_LINES_DELTA
 echo "$c_err" 1>&2
 
 # send amount of warning data using zabbix_sender
-zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k linux.kernel.warning.count -o $WARN_LINES_DELTA > /dev/null
-zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k linux.kernel.warning.messages -o "$err" > /dev/null
+zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k unix.kernel.warning.count -o $WARN_LINES_DELTA > /dev/null
+zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k unix.kernel.warning.messages -o "$err" > /dev/null
