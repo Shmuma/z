@@ -229,8 +229,6 @@ void	child_trapper_main(int i)
 	key_reqs    = metric_register ("trapper_reqs", i);
 	key_idle    = metric_register ("trapper_idle", i);
 
-/*  	sleep (120);  */
-
 	process_id = i;
 
 	/* initialize queue */
