@@ -3,9 +3,6 @@
 #include "hfs.h"
 
 
-extern char* CONFIG_SERVER_SITE;
-extern char* CONFIG_HFS_PATH;
-
 static char* empty_string = "";
 
 
@@ -16,15 +13,15 @@ const char* queue_get_name (queue_name_kind_t kind, int q_num, int process_id, i
 
 	switch (kind) {
 	case QNK_File:
-		snprintf (buf, sizeof (buf), "%s/%s/queue/queue_%d.%d.%d", CONFIG_HFS_PATH, CONFIG_SERVER_SITE,
+		snprintf (buf, sizeof (buf), "/dev/shm/zabbix_queue/queue_%d.%d.%d", CONFIG_HFS_PATH, CONFIG_SERVER_SITE,
 			  q_num, process_id, index);
 		break;
 	case QNK_Index:
-		snprintf (buf, sizeof (buf), "%s/%s/queue/queue_%d_idx.%d", CONFIG_HFS_PATH, CONFIG_SERVER_SITE,
+		snprintf (buf, sizeof (buf), "/dev/shm/zabbix_queue/queue_%d_idx.%d", CONFIG_HFS_PATH, CONFIG_SERVER_SITE,
 			  q_num, process_id);
 		break;
 	case QNK_Position:
-		snprintf (buf, sizeof (buf), "%s/%s/queue/queue_%d_pos.%d", CONFIG_HFS_PATH, CONFIG_SERVER_SITE,
+		snprintf (buf, sizeof (buf), "/dev/shm/zabbix_queue/queue_%d_pos.%d", CONFIG_HFS_PATH, CONFIG_SERVER_SITE,
 			  q_num, process_id);
 		break;
 	}
