@@ -144,7 +144,7 @@ static int trapper_open_next_queue (int index)
 {
 	const char* name;
 
-	close (queue_fd);
+	close (queue_fd[index]);
 	name = queue_get_name (QNK_File, index, process_id, queue_idx[index]);
 	inotify_rm_watch (queue_inotify_fd[index], queue_inotify_wd[index]);
 	unlink (name);
@@ -158,8 +158,8 @@ static int trapper_open_next_queue (int index)
    suddenly finished, we trying to reopen next file according to index. */
 static int	trapper_dequeue_requests (queue_entry_t** entries, int index, int not_wait)
 {
-	static int buf[16384];
-	int req_len, len;
+	static char buf[16384];
+	int req_len, len, res;
 	int count = 0;
 	struct inotify_event ie;
 
@@ -173,7 +173,7 @@ static int	trapper_dequeue_requests (queue_entry_t** entries, int index, int not
 
 	while (count < QUEUE_CHUNK) {
 		/* get request length */
-		while (!read (queue_fd[index], &req_len, sizeof (req_len))) {
+		while (read (queue_fd[index], &req_len, sizeof (req_len)) <= 0) {
 			if (queue_ofs[index] > QUEUE_SIZE_LIMIT)
 				if (!trapper_open_next_queue (index))
 					return count;
@@ -187,7 +187,9 @@ static int	trapper_dequeue_requests (queue_entry_t** entries, int index, int not
 		}
 		len = 0;
 		while (len < req_len) {
-			len += read (queue_fd[index], buf+len, req_len - len);
+			res = read (queue_fd[index], buf+len, req_len - len);
+			if (res > 0)
+				len += res;
 			if (len < req_len)
 				read (queue_inotify_fd[index], &ie, sizeof (ie));
 		}
@@ -249,8 +251,8 @@ void	child_trapper_main(int i)
 			/* handle data block */
 			zbx_setproctitle("processing queue data block");
 			for (i = 0; i < count; i++) {
-				process_data (entries[i].ts, entries[i].server, entries[i].key, entries[i].value, 
-					      entries[i].error, entries[i].lastlogsize, entries[i].timestamp, 
+				process_data (entries[i].ts, entries[i].server, entries[i].key, entries[i].value,
+					      entries[i].error, entries[i].lastlogsize, entries[i].timestamp,
 					      entries[i].source, entries[i].severity);
 				free (entries[i].buf);
 			}
