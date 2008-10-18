@@ -176,7 +176,7 @@ void	process_feeder_child(zbx_sock_t *sock)
 			while (comms_parse_multi_response (data,host_dec,key_dec,value_dec,lastlogsize,timestamp,source,severity,
 							   sizeof(host_dec)-1, &token) == SUCCEED)
                         {
-				entry.ts = time (NULL);
+				entry.ts = atoi (timestamp);
 				entry.server = host_dec;
 				entry.value = value_dec;
 				entry.error = error_dec;
