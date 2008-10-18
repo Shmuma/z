@@ -72,14 +72,21 @@ char* queue_decode_entry (queue_entry_t* entry, char* buf, int size)
 	for (i = 0; i < sizeof (ptrs) / sizeof (ptrs[0]); i++) {
 		len = *(int*)buf_p;
 		buf_p += sizeof (len);
-		if (buf_p - entry->buf > size)
+
+		if (buf_p - entry->buf > size) {
+			free (entry->buf);
 			return NULL;
+		}
 		if (len) {
 			*ptrs[i] = buf_p;
 			buf_p += len+1;
 		}
 		else
 			*ptrs[i] = empty_string;
+		if (buf_p - entry->buf > size) {
+			free (entry->buf);
+			return NULL;
+		}
 	}
 
 	return buf_p;
