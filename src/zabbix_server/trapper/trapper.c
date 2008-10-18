@@ -73,7 +73,7 @@ static int		queue_inotify_wd[2] = { -1, -1 };
 
 #define QUEUE_CHUNK 10
 
-static queue_entry_t req_buf[QUEUE_CHUNK];
+static queue_entry_t req_buf[QUEUE_CHUNK*10];
 
 
 static void trapper_initialize_queue (int index)
@@ -156,7 +156,7 @@ static int trapper_open_next_queue (int index)
 
 /* Here we dequeue predefined amount of requests from queue file. If file is not open so far or
    suddenly finished, we trying to reopen next file according to index. */
-static int	trapper_dequeue_requests (queue_entry_t** entries, int index, int not_wait)
+static int	trapper_dequeue_requests (int how_many, queue_entry_t** entries, int index, int not_wait)
 {
 	static char buf[16384];
 	int req_len, len, res;
@@ -171,7 +171,9 @@ static int	trapper_dequeue_requests (queue_entry_t** entries, int index, int not
 			return count;
 	}
 
-	while (count < QUEUE_CHUNK) {
+	how_many = how_many > QUEUE_CHUNK ? QUEUE_CHUNK : how_many;
+
+	while (count < how_many) {
 		/* get request length */
 		while (read (queue_fd[index], &req_len, sizeof (req_len)) <= 0) {
 			if (queue_ofs[index] > QUEUE_SIZE_LIMIT)
@@ -244,15 +246,15 @@ void	child_trapper_main(int i)
 		history = 0;
 
 		/* First we try to get data from primary queue without waiting */
-		count = trapper_dequeue_requests (&entries, 0, 1);
+		count = trapper_dequeue_requests (QUEUE_CHUNK, &entries, 0, 1);
 
 		if (!count) {
 			/* try to fetch data from history queue */
-			count = trapper_dequeue_requests (&entries, 1, 1);
+			count = trapper_dequeue_requests (QUEUE_CHUNK*10, &entries, 1, 1);
 
 			/* if there is no history data, wait on main queue */
 			if (!count)
-				count = trapper_dequeue_requests (&entries, 0, 0);
+				count = trapper_dequeue_requests (QUEUE_CHUNK, &entries, 0, 0);
 			else
 				history = 1;
 		}
