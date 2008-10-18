@@ -224,7 +224,7 @@ static void update_key_status(zbx_uint64_t hostid,int host_status)
 		{
 			init_result(&agent);
 			SET_UI64_RESULT(&agent, host_status);
-			process_new_value(&item,&agent, 0, NULL);
+			process_new_value(0, &item,&agent, 0, NULL);
 			free_result(&agent);
 
 			update_triggers(item.itemid);
@@ -375,7 +375,7 @@ int get_values(void)
 		if(res == SUCCEED )
 		{
 
-			process_new_value(&item,&agent, 0, NULL);
+			process_new_value(0, &item,&agent, 0, NULL);
 
 /*			if(HOST_STATUS_UNREACHABLE == item.host_status)*/
 			if(HOST_AVAILABLE_TRUE != item.host_available)
