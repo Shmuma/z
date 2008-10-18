@@ -197,8 +197,8 @@ static int	trapper_dequeue_requests (queue_entry_t** entries, int index, int not
 		queue_ofs[index] += sizeof (req_len) + req_len;
 
 		/* decode request data */
-		queue_decode_entry (req_buf+count, buf, req_len);
-		count++;
+		if (queue_decode_entry (req_buf+count, buf, req_len))
+			count++;
 
 		if (queue_ofs[index] > QUEUE_SIZE_LIMIT)
 			if (!trapper_open_next_queue (index))
@@ -234,7 +234,6 @@ void	child_trapper_main(int i)
 	/* initialize queue */
 	trapper_initialize_queue (0);
 	trapper_initialize_queue (1);
-	sleep (20);
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 
