@@ -259,9 +259,12 @@ void	child_trapper_main(int i)
 
 		/* dequeue data block to process */
 		if (count) {
+			now = time (NULL);
 			/* handle data block */
 			zbx_setproctitle("processing queue data block");
 			for (i = 0; i < count; i++) {
+				if (!history)
+					history = (now - entries[i].ts) > 60;
 				process_data (history, entries[i].ts, entries[i].server, entries[i].key, entries[i].value,
 					      entries[i].error, entries[i].lastlogsize, entries[i].timestamp,
 					      entries[i].source, entries[i].severity);
