@@ -83,7 +83,7 @@ void __zbx_zabbix_syslog(const char *fmt, ...)
 
 		init_result(&agent);
 		SET_STR_RESULT(&agent, strdup(value_str));
-		process_new_value(&item,&agent, 0, NULL);
+		process_new_value(0, &item,&agent, 0, NULL);
 		free_result(&agent);
 
 		update_triggers(item.itemid);

@@ -215,7 +215,7 @@ static int	trapper_dequeue_requests (queue_entry_t** entries, int index, int not
 
 void	child_trapper_main(int i)
 {
-	int count, flag;
+	int count, history;
 	queue_entry_t* entries;
 	hfs_time_t now;
 
@@ -234,37 +234,46 @@ void	child_trapper_main(int i)
 	/* initialize queue */
 	trapper_initialize_queue (0);
 	trapper_initialize_queue (1);
+	sleep (20);
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
-	flag = 0;
 
 	for(;;)
 	{
 		zbx_setproctitle("Trapper waiting for new queue data");
 
-		/* dequeue data block to process */
-		if ((count = trapper_dequeue_requests (&entries, flag % 2, flag % 2)) > 0) {
-			now = time (NULL);
+		history = 0;
 
+		/* First we try to get data from primary queue without waiting */
+		count = trapper_dequeue_requests (&entries, 0, 1);
+
+		if (!count) {
+			/* try to fetch data from history queue */
+			count = trapper_dequeue_requests (&entries, 1, 1);
+
+			/* if there is no history data, wait on main queue */
+			if (!count)
+				count = trapper_dequeue_requests (&entries, 0, 0);
+			else
+				history = 1;
+		}
+
+		/* dequeue data block to process */
+		if (count) {
 			/* handle data block */
 			zbx_setproctitle("processing queue data block");
 			for (i = 0; i < count; i++) {
-				process_data (entries[i].ts, entries[i].server, entries[i].key, entries[i].value,
+				process_data (history, entries[i].ts, entries[i].server, entries[i].key, entries[i].value,
 					      entries[i].error, entries[i].lastlogsize, entries[i].timestamp,
 					      entries[i].source, entries[i].severity);
 				free (entries[i].buf);
 			}
 		}
 		else {
-			if (!flag) {
-				metric_update (key_idle, ++mtr_idle);
-				zbx_setproctitle("Trapper sleeping for 1 second, waiting for queue to appear");
-				sleep (1);
-			}
+			metric_update (key_idle, ++mtr_idle);
+			zbx_setproctitle("Trapper sleeping for 1 second, waiting for queue to appear");
+			sleep (1);
 		}
-
-		flag++;
-		flag %= 2;
 	}
 	DBclose();
 }
