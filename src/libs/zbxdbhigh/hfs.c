@@ -422,11 +422,20 @@ void write_str (int fd, const char* str)
 }
 
 
+int str_buffer_length (char* str)
+{
+	int len = str ? strlen (str) : 0;
+	if (len)
+		len += 1;
+	return len + sizeof (int);
+}
+
+
 char* buffer_str (char* buf, const char* str, int buf_size)
 {
 	int len = str ? strlen (str) : 0;
 
-	if (buf_size < sizeof (len) + len + len ? 1 : 0)
+	if (buf_size < sizeof (len) + len + (len ? 1 : 0))
 		return NULL;
 
 	*(int*)buf = len;

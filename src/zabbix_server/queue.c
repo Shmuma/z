@@ -91,3 +91,176 @@ char* queue_decode_entry (queue_entry_t* entry, char* buf, int size)
 
 	return buf_p;
 }
+
+
+int queue_encode_history_header (queue_history_entry_t* entry, const char* server, const char* key)
+{
+	int len = 0;
+	char* res_p;
+
+	memset (entry, 0, sizeof (queue_history_entry_t));
+
+	len += sizeof (int);
+	if (server)
+		len += strlen (server) + 1;
+	len += sizeof (int);
+	if (key)
+		len += strlen (key) + 1;
+	len += sizeof (int);
+
+	entry->buf = (char*)malloc (len);
+	entry->buf_size = len;
+
+	/* reserve space for items count */
+	res_p = entry->buf;
+	res_p += sizeof (int);
+	
+	/* server and key strings */
+	res_p = buffer_str (res_p, server, len);
+	if (!res_p)
+		goto error;
+	res_p = buffer_str (res_p, key, len-(res_p-entry->buf));
+	if (!res_p)
+		goto error;
+
+	return 1;
+	
+ error:
+	if (entry->buf)
+		free (entry->buf);
+	return 0;
+}
+
+
+
+int queue_encode_history_item (queue_history_entry_t* entry, hfs_time_t ts, const char* value, const char* lastlogsize, 
+			       const char* timestamp, const char* source, const char* severity)
+{
+	int len = entry->buf_size, l;
+	char* res_p, *p;
+
+	len += sizeof (ts);
+	len += str_buffer_length (value);
+	len += str_buffer_length (lastlogsize);
+	len += str_buffer_length (timestamp);
+	len += str_buffer_length (source);
+	len += str_buffer_length (severity);
+	
+	res_p = entry->buf = (char*)realloc (entry->buf, len);
+	if (!res_p)
+		goto error;
+	res_p += entry->buf_size;
+	l = entry->buf_size;
+	entry->buf_size = len;
+	len -= l;
+
+	*((hfs_time_t*)res_p) = ts;
+	res_p += sizeof (ts);
+	len -= sizeof (ts);
+
+	p = res_p;
+	res_p = buffer_str (res_p, value, len);
+	if (!res_p)
+		goto error;
+	len -= res_p - p;
+
+	p = res_p;
+	res_p = buffer_str (res_p, lastlogsize, len);
+	if (!res_p)
+		goto error;
+	len -= res_p - p;
+
+	p = res_p;
+	res_p = buffer_str (res_p, timestamp, len);
+	if (!res_p)
+		goto error;
+	len -= res_p - p;
+
+	p = res_p;
+	res_p = buffer_str (res_p, source, len);
+	if (!res_p)
+		goto error;
+	len -= res_p - p;
+
+	p = res_p;
+	res_p = buffer_str (res_p, severity, len);
+	if (!res_p)
+		goto error;
+	len -= res_p - p;
+
+	return 1;
+
+ error:
+	if (entry->buf)
+		free (entry->buf);
+	return 0;
+}
+
+
+static char* decode_string (char* buf, int* size, char** res)
+{
+	int len = *(int*)buf;
+	char* b = buf;
+
+	buf += sizeof (len);
+	if (len) {
+		*res = buf;
+		buf += len+1;
+	}
+	else
+		*res = empty_string;
+
+	if (buf-b > *size)
+		return NULL;
+	*size -= buf-b;
+
+	return buf;
+}
+
+
+int queue_decode_history (queue_history_entry_t* entry, char* buf, int size)
+{
+	int i;
+
+	entry->items = NULL;
+	entry->buf = buf;
+	entry->buf_size = size;
+
+	entry->count = *(int*)buf;
+	size -= sizeof (entry->count);
+	buf  += sizeof (entry->count);
+
+	/* server */
+	if ((buf = decode_string (buf, &size, &entry->server)) == NULL)
+		return 0;
+	/* key */
+	if ((buf = decode_string (buf, &size, &entry->key)) == NULL)
+		return 0;
+
+	entry->items = (queue_history_item_t*)malloc (sizeof (queue_history_item_t) * entry->count);
+
+	for (i = 0; i < entry->count; i++) {
+		entry->items[i].ts = *(hfs_time_t*)buf;
+		buf  += sizeof (hfs_time_t);
+		size -= sizeof (hfs_time_t);
+
+		if ((buf = decode_string (buf, &size, &entry->items[i].value)) == NULL)
+			goto error;
+		if ((buf = decode_string (buf, &size, &entry->items[i].lastlogsize)) == NULL)
+			goto error;
+		if ((buf = decode_string (buf, &size, &entry->items[i].timestamp)) == NULL)
+			goto error;
+		if ((buf = decode_string (buf, &size, &entry->items[i].source)) == NULL)
+			goto error;
+		if ((buf = decode_string (buf, &size, &entry->items[i].severity)) == NULL)
+			goto error;
+	}
+
+	return 1;
+
+ error:
+	if (entry->items)
+		free (entry->items);
+	return 0;
+}
+
