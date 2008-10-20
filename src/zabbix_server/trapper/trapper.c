@@ -162,6 +162,8 @@ static int	trapper_dequeue_requests (int how_many, queue_entry_t** entries, int 
 	int req_len, len, res;
 	int count = 0;
 	struct inotify_event ie;
+	fd_set fds;
+	struct timeval tv;
 
 	*entries = req_buf;
 
@@ -184,8 +186,21 @@ static int	trapper_dequeue_requests (int how_many, queue_entry_t** entries, int 
 					trapper_update_ofs (index);
 				return count;
 			}
-			else
-				read (queue_inotify_fd[index], &ie, sizeof (ie));
+			else {
+				/* wait for new data but not more than 5 second */
+				FD_ZERO (&fds);
+				FD_SET (queue_inotify_fd[index], &fds);
+				tv.tv_sec = 5;
+				tv.tv_usec = 0;
+
+				if (select (queue_inotify_fd[index]+1, &fds, NULL, NULL, &tv) > 0)
+					read (queue_inotify_fd[index], &ie, sizeof (ie));
+				else {
+					if (count > 0)
+						trapper_update_ofs (index);
+					return count;
+				}
+			}
 		}
 		len = 0;
 		while (len < req_len) {
@@ -273,11 +288,8 @@ void	child_trapper_main(int i)
 				free (entries[i].buf);
 			}
 		}
-		else {
+		else
 			metric_update (key_idle, ++mtr_idle);
-			zbx_setproctitle("Trapper sleeping for 1 second, waiting for queue to appear");
-			sleep (1);
-		}
 	}
 	DBclose();
 }
