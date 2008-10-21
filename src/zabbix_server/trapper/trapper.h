@@ -29,5 +29,6 @@ extern	int	CONFIG_TIMEOUT;
 extern	void	signal_handler( int sig );
 
 void	child_trapper_main(int i);
+void	child_hist_trapper_main(int i);
 
 #endif

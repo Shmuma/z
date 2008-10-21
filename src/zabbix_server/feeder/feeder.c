@@ -128,6 +128,25 @@ static void    feeder_queue_data (queue_entry_t *entry, int queue)
 }
 
 
+
+static void    feeder_queue_history_data (queue_history_entry_t *entry)
+{
+	off_t ofs;
+
+	/* update items count in entry buffer */
+	*(int*)entry->buf = entry->count;
+
+	write (queue_fd[1], &entry->buf_size, sizeof (entry->buf_size));
+	write (queue_fd[1], entry->buf, entry->buf_size);
+
+	/* switch queue if current file grown too large */
+	ofs = lseek (queue_fd[1], 0, SEEK_CUR);
+	if (ofs > QUEUE_SIZE_LIMIT)
+		feeder_switch_queue (1);
+}
+
+
+
 void	process_feeder_child(zbx_sock_t *sock)
 {
 	char	*data, *line, *host;
@@ -169,26 +188,36 @@ void	process_feeder_child(zbx_sock_t *sock)
 		}
 		else if (strncmp (data, "<reqs>", 6) == 0) {
                         void* token = NULL;
-                        void* history_token = NULL;
+			queue_history_entry_t h_entry;
+			int entry_init = 0, count = 0;
 
                         value_string = NULL;
 
 			while (comms_parse_multi_response (data,host_dec,key_dec,value_dec,lastlogsize,timestamp,source,severity,
 							   sizeof(host_dec)-1, &token) == SUCCEED)
                         {
-				entry.ts = time (NULL);
-				entry.server = host_dec;
-				entry.value = value_dec;
-				entry.error = error_dec;
-				entry.key = key_dec;
-				entry.lastlogsize = lastlogsize;
-				entry.timestamp = timestamp;
-				entry.source = source;
-				entry.severity = severity;
+				if (!entry_init)
+					if (!queue_encode_history_header (&h_entry, host_dec, key_dec)) {
+						ret = FAIL;
+						break;
+					}
+					else
+						entry_init = 1;
 
-				/* append to history queue for trapper */
-				feeder_queue_data (&entry, 1);
+				if (!queue_encode_history_item (&h_entry, atoi (timestamp), value_dec, lastlogsize, timestamp, source, severity)) {
+					ret = FAIL;
+					break;
+				}
+				count++;
                         }
+
+			if (ret == SUCCEED) {
+				h_entry.count = count;
+				feeder_queue_history_data (&h_entry);
+				free (h_entry.buf);
+			}
+			else
+				printf ("FAILED!\n");
 		}
 
 		if( zbx_tcp_send_raw(sock, SUCCEED == ret ? "OK" : "NOT OK") != SUCCEED)

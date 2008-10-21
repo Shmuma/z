@@ -272,7 +272,7 @@ void	calc_timestamp(char *line,int *timestamp, char *format)
  * Comments: for trapper server process                                       *
  *                                                                            *
  ******************************************************************************/
-int	process_data(hfs_time_t ts, char *server,char *key,char *value, char* error, char *lastlogsize, char *timestamp,
+int	process_data(int history, hfs_time_t ts, char *server,char *key,char *value, char* error, char *lastlogsize, char *timestamp,
 		char *source, char *severity)
 {
 	AGENT_RESULT	agent;
@@ -344,7 +344,7 @@ int	process_data(hfs_time_t ts, char *server,char *key,char *value, char* error,
 		value);
 
 	/* update stderr only for latest data, not for history */
-	if (ts - time (NULL) < 10) {
+	if (!history) {
 		if (!CONFIG_HFS_PATH)
 			DBupdate_item_stderr (item.itemid, error);
         }
@@ -358,10 +358,12 @@ int	process_data(hfs_time_t ts, char *server,char *key,char *value, char* error,
 				item.key,
 				item.host_name);
 
-			DBupdate_item_status_to_notsupported(item.itemid, "Not supported by ZABBIX agent");
-			if (CONFIG_HFS_PATH)
-				HFS_update_item_status (CONFIG_HFS_PATH, item.siteid, item.itemid,
-							ITEM_STATUS_NOTSUPPORTED, "Not supported by ZABBIX agent");
+			if (!history) {
+				DBupdate_item_status_to_notsupported(item.itemid, "Not supported by ZABBIX agent");
+				if (CONFIG_HFS_PATH)
+					HFS_update_item_status (CONFIG_HFS_PATH, item.siteid, item.itemid,
+								ITEM_STATUS_NOTSUPPORTED, "Not supported by ZABBIX agent");
+			}
 	}
 	else
 	{
@@ -384,8 +386,9 @@ int	process_data(hfs_time_t ts, char *server,char *key,char *value, char* error,
 
 		if(set_result_type(&agent, item.value_type, value) == SUCCEED)
 		{
-			process_new_value (&item,&agent, ts, error);
-			update_triggers(item.itemid);
+			process_new_value (history, &item, &agent, ts, error);
+			if (!history)
+				update_triggers(item.itemid);
 		}
 		else
 		{
@@ -954,7 +957,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
  * Comments: for trapper poller process                                       *
  *                                                                            *
  ******************************************************************************/
-void	process_new_value(DB_ITEM *item, AGENT_RESULT *value, time_t timestamp, const char* stderr)
+void	process_new_value(int history, DB_ITEM *item, AGENT_RESULT *value, time_t timestamp, const char* stderr)
 {
 	time_t 	now;
 
@@ -994,8 +997,10 @@ void	process_new_value(DB_ITEM *item, AGENT_RESULT *value, time_t timestamp, con
 	}
 
 	add_history(item, value, now);
-	update_item(item, value, now, stderr);
-	update_functions( item );
+	if (!history) {
+		update_item(item, value, now, stderr);
+		update_functions( item );
+	}
 }
 
 /*
@@ -1054,10 +1059,9 @@ typedef struct {
    routine calls flush_history when key or server changed. You must
    also call flush_history when all items are read and added.
    */
-void	append_history (char* server, char* key, char* value, char* clock, void** token)
+void	append_history (char* server, char* key, char* value, hfs_time_t ts, void** token)
 {
 	history_state_t* state = (history_state_t*)*token;
-	hfs_time_t ts;
 	item_value_u val, val_res;
 
 	/* check that server and key are still the same */
@@ -1103,7 +1107,7 @@ void	append_history (char* server, char* key, char* value, char* clock, void** t
 		state->server = strdup (server);
 		state->key = strdup (key);
 
-		sscanf (clock, "%lld", &state->start_ts);
+		state->start_ts = ts;
 		state->prev_ts = state->start_ts;
 
 		if (state->item.value_type == ITEM_VALUE_TYPE_FLOAT)
@@ -1117,8 +1121,6 @@ void	append_history (char* server, char* key, char* value, char* clock, void** t
 
 		*token = state;
 	}
-
-	sscanf (clock, "%lld", &ts);
 
 	/* zero time occured sometimes, ignore it */
 	if (!ts)

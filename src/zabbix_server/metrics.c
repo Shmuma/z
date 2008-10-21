@@ -79,6 +79,9 @@ int metric_update (metric_key_t key, zbx_uint64_t val)
 	static char buf[256];
 	int len;
 
+	if (key < 0)
+		return 0;
+
 	ftruncate (metrics[key].fd, 0);
 	lseek (metrics[key].fd, 0, SEEK_SET);
 	snprintf (buf, sizeof (buf), "%lld\n", val);
