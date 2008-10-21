@@ -154,7 +154,7 @@ int	CONFIG_POLLER_FORKS		= 5;
 int	CONFIG_HTTPPOLLER_FORKS		= 5;
 int	CONFIG_TIMER_FORKS		= 1;
 int	CONFIG_TRAPPERD_FORKS		= 5;
-int	CONFIG_FEEDER_FORKS		= CONFIG_TRAPPERD_FORKS;
+int	CONFIG_FEEDER_FORKS		= 5;
 int	CONFIG_UNREACHABLE_POLLER_FORKS	= 1;
 
 char	*CONFIG_SERVER_MODE		= NULL;
@@ -548,9 +548,9 @@ int MAIN_ZABBIX_ENTRY(void)
 	{
 		process_type = ZBX_PROCESS_TRAPPERD;
 		if ((server_num - CONFIG_POLLER_FORKS) % 2)
-			child_hist_trapper_main((server_num - CONFIG_POLLER_FORKS) >> 1);
+			child_hist_trapper_main((server_num - CONFIG_POLLER_FORKS + 1) >> 1);
 		else
-			child_trapper_main((server_num - CONFIG_POLLER_FORKS) >> 1);
+			child_trapper_main((server_num - CONFIG_POLLER_FORKS + 1) >> 1);
 	}
 	else if(server_num <= CONFIG_POLLER_FORKS + CONFIG_TRAPPERD_FORKS*2 + CONFIG_FEEDER_FORKS)
 	{
