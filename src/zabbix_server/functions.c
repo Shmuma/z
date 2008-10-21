@@ -1059,10 +1059,9 @@ typedef struct {
    routine calls flush_history when key or server changed. You must
    also call flush_history when all items are read and added.
    */
-void	append_history (char* server, char* key, char* value, char* clock, void** token)
+void	append_history (char* server, char* key, char* value, hfs_time_t ts, void** token)
 {
 	history_state_t* state = (history_state_t*)*token;
-	hfs_time_t ts;
 	item_value_u val, val_res;
 
 	/* check that server and key are still the same */
@@ -1108,7 +1107,7 @@ void	append_history (char* server, char* key, char* value, char* clock, void** t
 		state->server = strdup (server);
 		state->key = strdup (key);
 
-		sscanf (clock, "%lld", &state->start_ts);
+		state->start_ts = ts;
 		state->prev_ts = state->start_ts;
 
 		if (state->item.value_type == ITEM_VALUE_TYPE_FLOAT)
@@ -1122,8 +1121,6 @@ void	append_history (char* server, char* key, char* value, char* clock, void** t
 
 		*token = state;
 	}
-
-	sscanf (clock, "%lld", &ts);
 
 	/* zero time occured sometimes, ignore it */
 	if (!ts)

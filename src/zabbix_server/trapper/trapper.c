@@ -317,6 +317,7 @@ void	child_hist_trapper_main (int i)
 {
 	int count;
 	queue_history_entry_t entry;
+	void* history_token;
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In child_trapper_main()");
 	zabbix_log( LOG_LEVEL_WARNING, "server #%d started [HistTrapper]", i);
@@ -334,23 +335,16 @@ void	child_hist_trapper_main (int i)
 
 		/* First we try to get data from primary queue */
  		count = trapper_dequeue_history (&entry);
-		free (entry.buf);
-		free (entry.items);
 
-		/* dequeue data block to process */
-/* 		if (count) { */
-/* 			/\* handle data block *\/ */
-/* 			zbx_setproctitle("processing history data block"); */
-/* 			for (i = 0; i < count; i++) { */
-/* 				process_data (1, entries[i].ts, entries[i].server, entries[i].key, entries[i].value, */
-/* 					      entries[i].error, entries[i].lastlogsize, entries[i].timestamp, */
-/* 					      entries[i].source, entries[i].severity); */
-/* 				free (entries[i].buf); */
-/* 			} */
-/* 		} */
-/* 		else */
-/* 			metric_update (key_idle, ++mtr_idle); */
-		
+		if (count) {
+			history_token = NULL;
+
+			for (i = 0; i < entry.count; i++)
+				append_history (entry.server, entry.key, entry.items[i].value, entry.items[i].ts, &history_token);
+			flush_history (&history_token);
+			free (entry.buf);
+			free (entry.items);
+		}
 	}
 
 	DBclose();

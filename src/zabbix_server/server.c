@@ -389,6 +389,7 @@ int main(int argc, char **argv)
 		else {
 			memcache_zbx_connect();
 			process_type = ZBX_PROCESS_TRAPPERD;
+/* 			child_trapper_main (0); */
 			child_hist_trapper_main (0);
 		}
 	}

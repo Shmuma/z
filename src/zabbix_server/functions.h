@@ -24,6 +24,7 @@
 #include "comms.h"
 #include "db.h"
 #include "sysinfo.h"
+#include "hfs.h"
 
 #ifdef HAVE_MEMCACHE
 #include "memcache.h"
@@ -41,7 +42,7 @@ int	process_data(int history, hfs_time_t ts, char *server,char *key, char *value
 		     char *lastlogsize,char *timestamp, char *source, char *severity);
 void	process_new_value(int history, DB_ITEM *item, AGENT_RESULT *value, time_t timestamp, const char* stderr);
 
-void	append_history (char* server, char* key, char* value, char* clock, void** token);
+void	append_history (char* server, char* key, char* value, hfs_time_t ts, void** token);
 void	flush_history (void** token);
 
 
