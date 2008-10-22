@@ -171,11 +171,18 @@ rm -fr %buildroot
 # create directory structure
 install -d %{buildroot}%{zabbix_confdir}
 install -d %{buildroot}%{zabbix_confdir}/conf.d
+install -d %{buildroot}%{zabbix_confdir}/bin
 install -d %{buildroot}%{_sysconfdir}/init.d
 
 # copy conf files
 install -m 755 misc/conf/*.conf %{buildroot}%{zabbix_confdir}
 install -m 711 misc/zabbix-rebase-server %{buildroot}%{zabbix_bindir}/zabbix-rebase-server
+
+# copy metrics config
+install -m 755 misc/pair/conf.d/*.conf %{buildroot}%{zabbix_confdir}/conf.d
+
+# copy scripts files
+install -m 755 misc/pair/bin/*.sh %{buildroot}%{zabbix_confdir}/bin/
 
 # redhat install scripts
 install -m 755 misc/init.d/redhat/zabbix_agentd %{buildroot}%{_sysconfdir}/init.d/
@@ -202,6 +209,8 @@ install -m 755 misc/init.d/redhat/zabbix_server %{buildroot}%{_sysconfdir}/init.
 %attr(0644,root,root) %{zabbix_confdir}/zabbix_agentd.conf
 %attr(0644,root,root) %{zabbix_confdir}/zabbix_trapper.conf
 %attr(0644,root,root) %{zabbix_confdir}/server.conf
+%attr(0644,root,root) %{zabbix_confdir}/conf.d/*.conf
+%attr(0755,root,root) %{zabbix_confdir}/bin/*.sh
 %{_sysconfdir}/init.d/zabbix_agentd
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_agent
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_agentd
