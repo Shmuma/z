@@ -207,10 +207,8 @@ static int	trapper_dequeue_requests (queue_entry_t** entries)
 			if (select (queue_inotify_fd + 1, &fds, NULL, NULL, &tv) > 0)
 				read (queue_inotify_fd, &ie, sizeof (ie));
 			else {
-				if (count > 0) {
-					trapper_update_ofs ();
+				if (count > 0)
 					return count;
-				}
 			}
 		}
 		len = 0;
