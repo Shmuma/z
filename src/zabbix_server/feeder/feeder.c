@@ -231,6 +231,8 @@ void	process_feeder_child(zbx_sock_t *sock)
 
 void	child_feeder_main(int i, zbx_sock_t *s)
 {
+	struct timeval tv;
+
 	zabbix_log( LOG_LEVEL_DEBUG, "In child_feeder_main()");
 
 	zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Feeder]", i);
@@ -240,6 +242,11 @@ void	child_feeder_main(int i, zbx_sock_t *s)
 
 	feeder_initialize_queue (0);
 	feeder_initialize_queue (1);
+
+	/* Set max recv timeout for socket to 90 seconds. This will prevent stall of data handling process. */
+	tv.tv_sec = 90;
+	tv.tv_usec = 0;
+	setsockopt (s->socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof (tv));
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 	for(;;)
