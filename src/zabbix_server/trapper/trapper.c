@@ -123,6 +123,7 @@ static void trapper_update_ofs ()
 
 	fd = open (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	if (fd >= 0) {
+		ftruncate (fd, 0);
 		snprintf (buf, sizeof (buf), "%d %lld\n", queue_idx, queue_ofs);
 		write (fd, buf, strlen (buf));
 		close (fd);
@@ -174,6 +175,8 @@ static int	trapper_dequeue_requests (queue_entry_t** entries)
 	int req_len, len, res;
 	int count = 0;
 	struct inotify_event ie;
+	fd_set fds;
+	struct timeval tv;
 
 	*entries = req_buf;
 
@@ -190,7 +193,24 @@ static int	trapper_dequeue_requests (queue_entry_t** entries)
 				if (!trapper_open_next_queue ())
 					return count;
 
-			read (queue_inotify_fd, &ie, sizeof (ie));
+			/* Wait for new data portion to appear, not
+			   more than 5 seconds. This is needed to
+			   prevent situation when some agent send data
+			   too slow until socket timeout occured. If
+			   this happened, we'll wait for data and
+			   already read entries remain unprocessed
+			   until timeout expired.*/
+			FD_ZERO (&fds);
+			tv.tv_sec = 5;
+			tv.tv_usec = 0;
+			if (select (queue_inotify_fd + 1, &fds, NULL, NULL, &tv) > 0)
+				read (queue_inotify_fd, &ie, sizeof (ie));
+			else {
+				if (count > 0) {
+					trapper_update_ofs ();
+					return count;
+				}
+			}
 		}
 		len = 0;
 		while (len < req_len) {
