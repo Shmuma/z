@@ -201,6 +201,7 @@ static int	trapper_dequeue_requests (queue_entry_t** entries)
 			   already read entries remain unprocessed
 			   until timeout expired.*/
 			FD_ZERO (&fds);
+			FD_SET (queue_inotify_fd, &fds);
 			tv.tv_sec = 5;
 			tv.tv_usec = 0;
 			if (select (queue_inotify_fd + 1, &fds, NULL, NULL, &tv) > 0)
