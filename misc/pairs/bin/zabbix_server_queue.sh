@@ -36,6 +36,8 @@ function get_q_size ()
 }
 
 
+exec 2> /dev/null
+
 
 case $1 in
     max_age)
