@@ -39,10 +39,10 @@ function get_q_size ()
 
 case $1 in
     max_age)
-        stat -c %Y $q_path/queue_$hist.*.* | while read n; do echo $(($ts-$n)); done | sort -nr | head -n 1
+        val=$(stat -c %Y $q_path/queue_$hist.*.* | while read n; do echo $(($ts-$n)); done | sort -nr | head -n 1)
         ;;
     max_gap)
-        (ls -1 $q_path/queue_${hist}_pos.* | sed 's/\./ /g' | 
+        val=$(ls -1 $q_path/queue_${hist}_pos.* | sed 's/\./ /g' | 
             while read n proc; do 
                 nn=`echo $n | sed 's/_pos//'`;
                 s=`get_q_size $nn $proc`
@@ -51,15 +51,17 @@ case $1 in
             done | sort -nr | head -n 1)
         ;;
     max_idx)
-        ls -1 $q_path/queue_$hist.*.* | sed 's/.*\.//g' | sort -nr | head -n 1
+        val=$(ls -1 $q_path/queue_$hist.*.* | sed 's/.*\.//g' | sort -nr | head -n 1)
         ;;
     min_idx)
-        ls -1 $q_path/queue_$hist.*.* | sed 's/.*\.//g' | sort -n | head -n 1
+        val=$(ls -1 $q_path/queue_$hist.*.* | sed 's/.*\.//g' | sort -n | head -n 1)
         ;;
     size)
-        get_q_size $q_path/queue_$hist \*
+        val=$(get_q_size $q_path/queue_$hist \*)
         ;;
     *)
         echo $0: first argument error
         exit 1
 esac
+
+[ -z $val ] && echo 0 || echo $val
