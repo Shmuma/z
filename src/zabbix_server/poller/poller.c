@@ -47,6 +47,11 @@ int	poller_num;
 static zbx_uint64_t mtr_host_updates = 0;
 static metric_key_t key_host_updates;
 
+static zbx_uint64_t mtr_get_values = 0;
+static metric_key_t key_get_values;
+
+static metric_key_t key_items_count;
+
 
 int	get_value(DB_ITEM *item, AGENT_RESULT *result)
 {
@@ -268,11 +273,13 @@ int get_values(void)
 	DB_ITEM		item;
 	AGENT_RESULT	agent;
 	int	stop=0;
+	zbx_uint64_t	mtr_items_count = 0;
 
 	char		*unreachable_hosts = NULL;
 	char		tmp[MAX_STRING_LEN];
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In get_values()");
+	metric_update (key_get_values, ++mtr_get_values);
 
 	now = time(NULL);
 
@@ -335,6 +342,7 @@ int get_values(void)
 		/* This code is just to avoid compilation warining about use of uninitialized result2 */
 		result2 = result;
 		/* */
+		mtr_items_count++;
 
 		/* Poller for unreachable hosts */
 		if(poller_type == ZBX_POLLER_TYPE_UNREACHABLE)
@@ -544,6 +552,8 @@ int get_values(void)
 
 	zbx_free(unreachable_hosts);
 
+	metric_update (key_items_count, mtr_items_count);
+
 	DBfree_result(result);
 	zabbix_log( LOG_LEVEL_DEBUG, "End get_values()");
 	return SUCCEED;
@@ -562,6 +572,8 @@ void main_poller_loop(int type, int num)
 	poller_num = num;
 
 	key_host_updates = metric_register ("poller_host_updates",  num);
+	key_get_values = metric_register ("poller_get_values",  num);
+	key_items_count = metric_register ("poller_items_count",  num);
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 
