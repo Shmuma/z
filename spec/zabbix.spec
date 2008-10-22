@@ -209,8 +209,12 @@ install -m 755 misc/init.d/redhat/zabbix_server %{buildroot}%{_sysconfdir}/init.
 %attr(0644,root,root) %{zabbix_confdir}/zabbix_agentd.conf
 %attr(0644,root,root) %{zabbix_confdir}/zabbix_trapper.conf
 %attr(0644,root,root) %{zabbix_confdir}/server.conf
-%attr(0644,root,root) %{zabbix_confdir}/conf.d/*.conf
-%attr(0755,root,root) %{zabbix_confdir}/bin/*.sh
+
+%attr(0644,root,root) %{zabbix_confdir}/conf.d/zabbix.conf
+%attr(0644,root,root) %{zabbix_confdir}/conf.d/modem.conf
+%attr(0644,root,root) %{zabbix_confdir}/conf.d/memcache.conf
+%attr(0755,root,root) %{zabbix_confdir}/bin/zabbix_server_queue.sh
+
 %{_sysconfdir}/init.d/zabbix_agentd
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_agent
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_agentd
