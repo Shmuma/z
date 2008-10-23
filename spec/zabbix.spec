@@ -185,7 +185,7 @@ install -m 755 misc/pairs/conf.d/*.conf %{buildroot}%{zabbix_confdir}/conf.d
 install -m 755 misc/checks/conf.d/*.conf %{buildroot}%{zabbix_confdir}/conf.d
 
 # copy scripts files
-install -m 755 misc/pairs/bin/*.{sh,awk,pl} %{buildroot}%{zabbix_confdir}/bin/
+install -m 755 misc/pairs/bin/*.sh %{buildroot}%{zabbix_confdir}/bin/
 install -m 755 misc/checks/bin/*.{sh,awk,pl} %{buildroot}%{zabbix_confdir}/bin/
 
 # redhat install scripts
