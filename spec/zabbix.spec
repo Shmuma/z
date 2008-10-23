@@ -215,7 +215,9 @@ install -m 755 misc/init.d/redhat/zabbix_server %{buildroot}%{_sysconfdir}/init.
 %attr(0644,root,root) %{zabbix_confdir}/server.conf
 
 %attr(0644,root,root) %{zabbix_confdir}/conf.d/*.conf
-%attr(0755,root,root) %{zabbix_confdir}/bin/*.{sh,awk,pl}
+%attr(0755,root,root) %{zabbix_confdir}/bin/*.sh
+%attr(0755,root,root) %{zabbix_confdir}/bin/*.awk
+%attr(0755,root,root) %{zabbix_confdir}/bin/*.pl
 
 %{_sysconfdir}/init.d/zabbix_agentd
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_agent
