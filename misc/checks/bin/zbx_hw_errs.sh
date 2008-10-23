@@ -7,6 +7,7 @@
 me=zbx_hw_errs     # strip path
 TMP=/tmp/zabbix/
 CONF=/etc/zabbix/checks/$me.conf
+CONF_NAGIOS=$HOME/agents/etc/hw_errs.conf
 PREV=$TMP/$me.prev
 
 #set -x
@@ -23,6 +24,7 @@ IGNORE_PAT='thr_sleep|arplookup|page\ allocation\ failure|nfs\ send\ error\ 32\ 
 CRIT_PAT='REJECT|I/O|medium|defect|mechanical|retrying|broken|degraded|offline|failed|unconfigured_bad|domain_links.*segfault'
 
 [ -s $CONF ] && . $CONF
+[ -s $CONF_NAGIOS ] && . $CONF_NAGIOS
 
 [ -d $TMP ] || mkdir -p $TMP
 [ -s $TMP/$me.dmesg.prev ] || touch $TMP/$me.dmesg.prev
