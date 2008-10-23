@@ -268,8 +268,8 @@ my $program_version = "v0.3.6 - May 6, 2001";
 
 my $configfile = "/etc/alamin/gsgd.conf";
 
-my $opt_debug = 1;
-my $opt_verbose = 1;
+my $opt_debug = 0;
+my $opt_verbose = 0;
 my $opt_copyright = 0;
 my $opt_pidfile = "/var/run/alamin/".$program_name.".pid";
 

@@ -1,5 +1,5 @@
 %define realname	zabbix
-%define extraver	34
+%define extraver	35
 
 Name: zabbix-mysql
 Version: 1.4.4
@@ -128,6 +128,8 @@ ipcs -s | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 2 | while read key; do i
 # shared memory segments
 ipcs -m | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 2 | while read key; do ipcrm -m $key; done
 
+sleep 1
+
 # start agent after installation
 /sbin/service zabbix_agentd start >/dev/null 2>&1 || :
 exit 0
@@ -178,11 +180,13 @@ install -d %{buildroot}%{_sysconfdir}/init.d
 install -m 755 misc/conf/*.conf %{buildroot}%{zabbix_confdir}
 install -m 711 misc/zabbix-rebase-server %{buildroot}%{zabbix_bindir}/zabbix-rebase-server
 
-# copy metrics config
+# copy config files
 install -m 755 misc/pairs/conf.d/*.conf %{buildroot}%{zabbix_confdir}/conf.d
+install -m 755 misc/checks/conf.d/*.conf %{buildroot}%{zabbix_confdir}/conf.d
 
 # copy scripts files
-install -m 755 misc/pairs/bin/*.sh %{buildroot}%{zabbix_confdir}/bin/
+install -m 755 misc/pairs/bin/*.{sh,awk,pl} %{buildroot}%{zabbix_confdir}/bin/
+install -m 755 misc/checks/bin/*.{sh,awk,pl} %{buildroot}%{zabbix_confdir}/bin/
 
 # redhat install scripts
 install -m 755 misc/init.d/redhat/zabbix_agentd %{buildroot}%{_sysconfdir}/init.d/
@@ -211,7 +215,7 @@ install -m 755 misc/init.d/redhat/zabbix_server %{buildroot}%{_sysconfdir}/init.
 %attr(0644,root,root) %{zabbix_confdir}/server.conf
 
 %attr(0644,root,root) %{zabbix_confdir}/conf.d/*.conf
-%attr(0755,root,root) %{zabbix_confdir}/bin/*.sh
+%attr(0755,root,root) %{zabbix_confdir}/bin/*.{sh,awk,pl}
 
 %{_sysconfdir}/init.d/zabbix_agentd
 %attr(0755,root,root) %{zabbix_bindir}/zabbix_agent
