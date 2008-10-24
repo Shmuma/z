@@ -50,6 +50,7 @@ static metric_key_t key_host_updates;
 static zbx_uint64_t mtr_get_values = 0;
 static metric_key_t key_get_values;
 
+static zbx_uint64_t mtr_items_count = 0;
 static metric_key_t key_items_count;
 
 
@@ -273,7 +274,6 @@ int get_values(void)
 	DB_ITEM		item;
 	AGENT_RESULT	agent;
 	int	stop=0;
-	zbx_uint64_t	mtr_items_count = 0;
 
 	char		*unreachable_hosts = NULL;
 	char		tmp[MAX_STRING_LEN];
@@ -571,9 +571,16 @@ void main_poller_loop(int type, int num)
 	poller_type = type;
 	poller_num = num;
 
-	key_host_updates = metric_register ("poller_host_updates",  num);
-	key_get_values = metric_register ("poller_get_values",  num);
-	key_items_count = metric_register ("poller_items_count",  num);
+	if (poller_type == ZBX_POLLER_TYPE_UNREACHABLE) {
+		key_host_updates = metric_register ("poller_unr_host_updates",  num);
+		key_get_values = metric_register ("poller_unr_get_values",  num);
+		key_items_count = metric_register ("poller_unr_items_count",  num);
+	}
+	else {
+		key_host_updates = metric_register ("poller_host_updates",  num);
+		key_get_values = metric_register ("poller_get_values",  num);
+		key_items_count = metric_register ("poller_items_count",  num);
+	}
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 
