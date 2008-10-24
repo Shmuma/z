@@ -376,7 +376,7 @@ sub process_native_in {
   }
   while (1) {
     my $mustwait = 1;
-    logit("info","Checking incoming messages...") if ($opt_verbose);
+#    logit("info","Checking incoming messages...") if ($opt_verbose);
     my $in_counter = 0;
     while (1) {
       my ($inc_from, $inc_smsc, $inc_message) = pre_getsms();
@@ -394,7 +394,7 @@ sub process_native_in {
         last;
       }
     }
-    logit("info","Checking queued messages...") if ($opt_verbose);
+#    logit("info","Checking queued messages...") if ($opt_verbose);
     my $out_counter = 0;
     my $out_counter_msg = 0;
     my $numqueue;
@@ -407,7 +407,7 @@ sub process_native_in {
 	}
       } else {
 # processing queue $numqueue
-        logit("debug","Queue ".$numqueue) if ($opt_debug);
+#        logit("debug","Queue ".$numqueue) if ($opt_debug);
         while (1) {
           if ($out_counter >= $opt_maxout) {
             if (! $out_counter_msg) {
@@ -899,7 +899,7 @@ sub prepare_date {
 # AT INTERFACE
 #********************
 sub quality_at {
-  my $commandtorun = $opt_chatpath." -e -v TIMEOUT 10 \'\' \'AT+CSQ\' OK \'\' 2>\&1 \<$opt_gsmdeviceport \>$opt_gsmdeviceport";
+  my $commandtorun = $opt_chatpath." -S -e -v TIMEOUT 10 \'\' \'AT+CSQ\' OK \'\' 2>\&1 \<$opt_gsmdeviceport \>$opt_gsmdeviceport";
   my ($quality, $err) = (0, 0);
 
   open CHAT, "$commandtorun|";
@@ -917,7 +917,7 @@ sub quality_at {
 
 
 sub getsms_at {
-  my $commandtorun = $opt_chatpath." -v -e TIMEOUT 20 \'\' \'AT+CMGF=1\' OK \'AT+CMGL=\"ALL\"\' OK \'\' 2>/tmp/getsms_at.out \<$opt_gsmdeviceport \>$opt_gsmdeviceport";
+  my $commandtorun = $opt_chatpath." -S -v -e TIMEOUT 20 \'\' \'AT+CMGF=1\' OK \'AT+CMGL=\"ALL\"\' OK \'\' 2>/tmp/getsms_at.out \<$opt_gsmdeviceport \>$opt_gsmdeviceport";
   my $answer = system $commandtorun;
   my $counter = 0;
   my @table;
@@ -983,7 +983,7 @@ sub getsms_at {
 
 sub deletesms_at {
   my ($deletesms_ident) = @_;
-  my $commandtorun = $opt_chatpath." -v TIMEOUT 20 \'\' \'AT+CMGD=$deletesms_ident\' OK \'\' \<$opt_gsmdeviceport \>$opt_gsmdeviceport";
+  my $commandtorun = $opt_chatpath." -S -v TIMEOUT 20 \'\' \'AT+CMGD=$deletesms_ident\' OK \'\' \<$opt_gsmdeviceport \>$opt_gsmdeviceport";
   system $commandtorun;
 }
 
@@ -1014,7 +1014,7 @@ sub sendsms_at {
 #  print CHATFILE "'' ''\n";
   print CHATFILE "OK ''\n";
   close (CHATFILE);
-  my $answer = system "$opt_chatpath -v -f $tmpfile \<$opt_gsmdeviceport \>$opt_gsmdeviceport";
+  my $answer = system "$opt_chatpath -S -v -f $tmpfile \<$opt_gsmdeviceport \>$opt_gsmdeviceport";
   unlink $tmpfile;
   my $exitcode;
   if ($answer) {
