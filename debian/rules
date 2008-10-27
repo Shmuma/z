@@ -157,7 +157,7 @@ install-agent-stamp: build-agent
 
 # generic checks
 	$(INSTALL_FILE) misc/checks/conf.d/*.conf $(TMP_CLIENT)/etc/zabbix/conf.d/
-	$(INSTALL_SCRIPT) misc/checks/bin/* $(TMP)/etc/zabbix/bin/
+	$(INSTALL_SCRIPT) misc/checks/bin/* $(TMP_CLIENT)/etc/zabbix/bin/
 
 
 # Build architecture-independent files here.
