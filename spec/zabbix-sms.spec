@@ -2,7 +2,7 @@
 %define extraver	35
 
 Name: zabbix-sms
-Version: 0.2
+Version: 0.3
 Release: 1
 Group: System Environment/Daemons
 License: GPL
