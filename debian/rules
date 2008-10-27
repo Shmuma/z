@@ -128,11 +128,11 @@ install-indep:
 	cp -a frontends/php/* $(TMP_FRONTEND)/usr/share/zabbix/
 	rm -f $(TMP_FRONTEND)/usr/share/zabbix/conf/COPYING
 
-	# disable installation frontend for now.
+# disable installation frontend for now.
 	chmod 000 $(TMP_FRONTEND)/usr/share/zabbix/setup.php
 	chmod a-x $(TMP_FRONTEND)/usr/share/zabbix/images/general/tick.png
 
-	# link config file to /etc/zabbix/..
+# link config file to /etc/zabbix/..
 	dh_link -pzabbix-frontend-php etc/zabbix/dbconfig.php usr/share/zabbix/conf/zabbix.conf.php
 
 	$(INSTALL_FILE) debian/templates/dbconfig.php.in $(TMP_FRONTEND)/usr/share/doc/zabbix-frontend-php/dbconfig.php
@@ -147,6 +147,8 @@ install-agent-stamp: build-agent
 	$(INSTALL_DIR) $(TMP_CLIENT)/usr/bin
 	$(INSTALL_DIR) $(TMP_CLIENT)/usr/sbin
 	$(INSTALL_DIR) $(TMP_CLIENT)/etc/zabbix/
+	$(INSTALL_DIR) $(TMP_CLIENT)/etc/zabbix/bin/
+	$(INSTALL_DIR) $(TMP_CLIENT)/etc/zabbix/checks/
 	$(INSTALL_DIR) $(TMP_CLIENT)/etc/zabbix/conf.d/
 	$(INSTALL_DIR) $(TMP_CLIENT)/etc/logrotate.d/
 	$(INSTALL_DIR) $(TMP_CLIENT)/var/spool/zabbix/
@@ -165,6 +167,10 @@ install-agent-stamp: build-agent
 	$(INSTALL_FILE) debian/templates/zabbix_agent.conf.in $(TMP_CLIENT)/usr/share/zabbix-agent/zabbix_agent.conf
 	$(INSTALL_FILE) debian/templates/zabbix_agentd.conf.in $(TMP_CLIENT)/usr/share/zabbix-agent/zabbix_agentd.conf
 	$(INSTALL_FILE) debian/zabbix-agent.logrotate $(TMP_CLIENT)/etc/logrotate.d/zabbix-agent
+
+# generic checks
+	$(INSTALL_FILE) misc/checks/conf.d/*.conf $(TMP_CLIENT)/etc/zabbix/conf.d/
+	$(INSTALL_SCRIPT) misc/checks/bin/* $(TMP)/etc/zabbix/bin/
 
 
 install-mysql: install-mysql-stamp
@@ -196,12 +202,12 @@ install-mysql-stamp: build-mysql
 	$(INSTALL_FILE) debian/templates/zabbix_server.conf.in $(TMP_SERVER_MYSQL)/usr/share/doc/zabbix-server-mysql/zabbix_server.conf
 
 
-	#install schema + data sql files for dbc_config
+#install schema + data sql files for dbc_config
 	$(INSTALL_FILE) create/schema/mysql.sql $(TMP_SERVER_MYSQL)/usr/share/dbconfig-common/data/$(PKG_SERVER_MYSQL)/install/mysql
 	cat create/data/data.sql >> $(TMP_SERVER_MYSQL)/usr/share/dbconfig-common/data/$(PKG_SERVER_MYSQL)/install/mysql
 	cat create/data/images_mysql.sql >> $(TMP_SERVER_MYSQL)/usr/share/dbconfig-common/data/$(PKG_SERVER_MYSQL)/install/mysql
 
-	# install upgrade patch from 1.1.x to 1.4.1
+# install upgrade patch from 1.1.x to 1.4.1
 #	$(INSTALL_FILE) upgrades/dbpatches/1.4/mysql/patch.sql $(TMP_SERVER_MYSQL)/usr/share/dbconfig-common/data/$(PKG_SERVER_MYSQL)/upgrade/mysql/1:1.4.1
 
 	dh_installinit -p $(PKG_SERVER_MYSQL) --name zabbix-server
