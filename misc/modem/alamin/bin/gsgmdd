@@ -326,6 +326,11 @@ if (fork()) {
   exit(0);
 }
 
+# double-fork for get rid of tty locking
+if (fork()) {
+  exit(0);
+}
+
 setlogsock "unix";
 openlog($program_name,"pid",$opt_syslogfacility);
 
