@@ -1,5 +1,5 @@
 %define realname	zabbix
-%define extraver	35
+%define extraver	36
 
 Name: zabbix-sms
 Version: 0.3
