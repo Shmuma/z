@@ -47,10 +47,12 @@ case "$1" in
   start)
 	echo "Starting $DESC:"
         echo -n "$NAMEA:"
-	daemon --pidfile /var/run/$PIDA.pid $DAEMONA --configfile $CONF
+	daemon --pidfile /var/run/$PIDA.pid $DAEMONA --configfile $CONF &
+        disown
 	echo
         echo -n "$NAMEB:"
-	daemon --pidfile /var/run/$PIDB.pid $DAEMONB --configfile $CONF
+	daemon --pidfile /var/run/$PIDB.pid $DAEMONB --configfile $CONF &
+        disown
         echo
 	;;
   stop)
