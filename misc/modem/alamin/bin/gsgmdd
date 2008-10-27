@@ -259,6 +259,7 @@ use strict;
 use IO::Socket;
 use Net::hostent;
 use Sys::Syslog qw(:DEFAULT setlogsock);
+use POSIX;
 
 #--------------------
 # Global vars
@@ -326,10 +327,7 @@ if (fork()) {
   exit(0);
 }
 
-# double-fork for get rid of tty locking
-if (fork()) {
-  exit(0);
-}
+POSIX::setsid();
 
 setlogsock "unix";
 openlog($program_name,"pid",$opt_syslogfacility);
