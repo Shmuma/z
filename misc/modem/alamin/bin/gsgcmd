@@ -287,6 +287,10 @@ if (fork()) {
 
 POSIX::setsid();
 
+close STDIN;
+close STDOUT;
+close STDERR;
+
 setlogsock "unix";
 openlog($program_name,"pid",$opt_syslogfacility);
 
