@@ -540,8 +540,8 @@ sub pre_sendsms {
 sub write_accounting {
   my ($direction,$status,$from,$to,$smsc,$message) = @_;
   open (ACCF,">>$opt_accounting");
-  print ACCF time()."$direction,$status,$opt_gsmdevice,$from,$to,$smsc,".localtime(time()).",XX $message XX\n" if ($opt_debug);
-  print ACCF time()."$direction,$status,$opt_gsmdevice,$from,$to,$smsc,".localtime(time())."\n" if (! $opt_debug);
+  print ACCF time().",$direction,$status,$opt_gsmdevice,$from,$to,$smsc,".localtime(time()).",XX $message XX\n" if ($opt_debug);
+  print ACCF time().",$direction,$status,$opt_gsmdevice,$from,$to,$smsc,".localtime(time())."\n" if (! $opt_debug);
   close (ACCF);
 }
 
