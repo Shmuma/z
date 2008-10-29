@@ -258,7 +258,7 @@ int MAIN_ZABBIX_ENTRY(void)
 	threads[i=0] = zbx_thread_start(collector_thread, NULL);
 
 	/* start listeners */
-	for(i++; i < CONFIG_ZABBIX_FORKS - ((0 == CONFIG_DISABLE_ACTIVE) ? 1 : 0); i++)
+	for(i++; i < CONFIG_ZABBIX_FORKS - ((0 == CONFIG_DISABLE_ACTIVE) ? 0 : 1); i++)
 	{
 		threads[i] = zbx_thread_start(listener_thread, &listen_sock);
 	}
@@ -276,7 +276,7 @@ int MAIN_ZABBIX_ENTRY(void)
 	init_main_process();
 
 	/* wait for all threads exiting */
-	for(i = 0; i < CONFIG_ZABBIX_FORKS; i++)
+	for(i = 0; i < CONFIG_DISABLE_ACTIVE; i++)
 	{
 		if(threads && threads[i])
 		{
