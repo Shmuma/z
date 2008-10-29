@@ -240,10 +240,13 @@ int MAIN_ZABBIX_ENTRY(void)
 
 	zabbix_log(LOG_LEVEL_INFORMATION, "zabbix_agentd started. ZABBIX %s.", ZABBIX_VERSION);
 
-	if( FAIL == zbx_tcp_listen(&listen_sock, CONFIG_LISTEN_IP, (unsigned short)CONFIG_LISTEN_PORT) )
-	{
-		zabbix_log(LOG_LEVEL_CRIT, "Listener failed with error: %s.", zbx_tcp_strerror());
-		exit(1);
+	while (1) {
+		if( FAIL == zbx_tcp_listen(&listen_sock, CONFIG_LISTEN_IP, (unsigned short)CONFIG_LISTEN_PORT) ) {
+			zabbix_log(LOG_LEVEL_CRIT, "Listener failed with error, sleep for 1 second: %s.", zbx_tcp_strerror());
+			sleep (1);
+		}
+		else
+			break;
 	}
 
 	init_collector_data();
