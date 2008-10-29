@@ -90,7 +90,6 @@ COpt::profiling_start("page");
 	$ZBX_MENU = array(
 		"view"=>array(
 				"label"			=> S_MONITORING,
-				"node_perm"		=> PERM_READ_LIST,
 				"default_page_id"	=> 0,
 				"pages"=>array(
 					array("url"=>"overview.php"	,"label"=>S_OVERVIEW	),
@@ -124,7 +123,6 @@ COpt::profiling_start("page");
 				),
 		"cm"=>array(
 				"label"			=> S_INVENTORY,
-				"node_perm"		=> PERM_READ_LIST,
 				"default_page_id"	=> 0,
 				"pages"=>array(
 					array("url"=>"hostprofiles.php"	,"label"=>S_HOSTS	)
@@ -132,7 +130,6 @@ COpt::profiling_start("page");
 				),
 		"reports"=>array(
 				"label"			=> S_REPORTS,
-				"node_perm"		=> PERM_READ_LIST,
 				"default_page_id"	=> 0,
 				"pages"=>array(
 					array("url"=>"report1.php",	"label"=>S_STATUS_OF_ZABBIX	),
@@ -143,7 +140,6 @@ COpt::profiling_start("page");
 		"config"=>array(
 				"label"			=> S_CONFIGURATION,
 				"user_type"		=> USER_TYPE_ZABBIX_ADMIN,
-				"node_perm"		=> PERM_READ_LIST,
 				"default_page_id"	=> 0,
 				"forse_disable_subnodes"=> true,
 				"pages"=>array(
@@ -182,7 +178,6 @@ COpt::profiling_start("page");
 		"admin"=>array(
 				"label"			=> S_ADMINISTRATION,
 				"user_type"		=> USER_TYPE_SUPER_ADMIN,
-				"node_perm"		=> PERM_READ_WRITE,
 				"default_page_id"	=> 1,
 				"forse_disable_subnodes"=> true,
 				"pages"=>array(
@@ -225,14 +220,6 @@ COpt::profiling_start("page");
 					$deny = true;
 			}
 
-			if(isset($sub['node_perm']))
-			{
-				if ( 0 == count(get_accessible_nodes_by_user(
-					$USER_DETAILS,$sub['node_perm'],null,
-					PERM_RES_IDS_ARRAY,get_current_nodeid(false))))
-						$deny = true;
-			}
-
 			if($label=='login')
 			{
 				unset($deny);
@@ -249,17 +236,6 @@ COpt::profiling_start("page");
 				if(isset($sub_pages['user_type']))
 				{
 					if($USER_DETAILS['type'] < $sub_pages['user_type'])
-					{
-						unset($sub['pages'][$id]);
-						continue;
-					}
-				}
-
-				if(isset($sub_pages['node_perm']))
-				{
-					if ( 0 == count(get_accessible_nodes_by_user(
-						$USER_DETAILS,$sub_pages['node_perm'],null,
-						PERM_RES_IDS_ARRAY,get_current_nodeid(false))))
 					{
 						unset($sub['pages'][$id]);
 						continue;
