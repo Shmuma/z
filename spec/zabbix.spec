@@ -1,5 +1,5 @@
 %define realname	zabbix
-%define extraver	39
+%define extraver	38
 
 Name: zabbix-mysql
 Version: 1.4.4
@@ -101,13 +101,13 @@ exit 0
 chown -R monitor:monitor %{zabbix_confdir}/conf.d/
 
 if [ -z "`grep zabbix_agent etc/services`" ]; then
-  cat >>etc/services <<EOF
+  cat >>/etc/services <<EOF
 zabbix_agent	10050/tcp
 EOF
 fi
 
 if [ -z "`grep zabbix_trap etc/services`" ]; then
-  cat >>etc/services <<EOF
+  cat >>/etc/services <<EOF
 zabbix_trap	10051/tcp
 EOF
 fi
@@ -145,8 +145,6 @@ fi
 exit 0
 
 %preun -n zabbix-agent
-# stop agent
-/etc/init.d/zabbix_agentd stop
 
 # move old config files
 #mv -f %{zabbix_confdir}/zabbix_agent.conf %{zabbix_confdir}/zabbix_agent.conf.old
@@ -156,6 +154,8 @@ exit 0
 
 if [ "$1" = 0 ]
 then
+  # stop agent
+  /etc/init.d/zabbix_agentd stop
   /sbin/chkconfig --del zabbix_agentd
   [ -d %zabbix_spool ] && rm -rf %zabbix_spool
 fi
