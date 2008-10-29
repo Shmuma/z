@@ -32,6 +32,8 @@
 	
 include_once "include/page_header.php";
 
+	if($USER_DETAILS["alias"]=="guest")
+		access_deny();
 ?>
 <?php
 //		VAR			TYPE	OPTIONAL FLAGS	VALIDATION	EXCEPTION
