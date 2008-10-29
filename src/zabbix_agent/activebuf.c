@@ -206,6 +206,11 @@ static int read_initial_buffer ()
 
     buffer.entries = (buffer_check_entry_t*)calloc (buffer.size, sizeof (buffer_check_entry_t));
 
+    if (!buffer.entries) {
+	    buffer.size = 0;
+	    return 1;
+    }
+
     for (i = 0; i < buffer.size; i++) {
         buffer.entries[i].key = NULL;
         len = 0;
