@@ -133,7 +133,7 @@
 
 	# Update User Profile
 
-	function	update_user_profile($userid,$passwd, $url,$autologout,$lang,$refresh)
+	function	update_user_profile($userid,$passwd, $url,$autologout,$lang,$refresh, $user_medias)
 	{
 		global $USER_DETAILS;
 
@@ -142,9 +142,23 @@
 			access_deny();
 		}
 
-		return DBexecute("update users set url=".zbx_dbstr($url).",autologout=$autologout,lang=".zbx_dbstr($lang).
+		$result = DBexecute("update users set url=".zbx_dbstr($url).",autologout=$autologout,lang=".zbx_dbstr($lang).
 				(isset($passwd) ? (',passwd='.zbx_dbstr(md5($passwd))) : '').
 				",refresh=$refresh where userid=$userid");
+		if ($result) {
+			DBexecute('delete from media where userid='.$userid);
+			foreach($user_medias as $mediaid => $media_data)
+			{
+				$mediaid = get_dbid("media","mediaid");
+				$result = DBexecute('insert into media (mediaid,userid,mediatypeid,sendto,active,severity,period)'.
+						' values ('.$mediaid.','.$userid.','.$media_data['mediatypeid'].','.
+					zbx_dbstr($media_data['sendto']).','.$media_data['active'].','.$media_data['severity'].','.
+					zbx_dbstr($media_data['period']).')');
+
+				if($result == false) break;
+			}
+		}
+		return $result;
 	}
 
 	# Delete User definition

@@ -20,6 +20,7 @@
 ?>
 <?php
 	require_once "include/config.inc.php";
+	require_once "include/media.inc.php";
 	require_once "include/users.inc.php";
 	require_once "include/forms.inc.php";
 
@@ -45,6 +46,14 @@ include_once "include/page_header.php";
 		"url"=>		array(T_ZBX_STR, O_OPT,	null,	null,		'isset({save})'),
 		"refresh"=>	array(T_ZBX_INT, O_OPT,	null,	BETWEEN(0,3600),'isset({save})'),
 		"change_password"=>	array(T_ZBX_STR, O_OPT,	null,	null,	null),
+
+		"user_medias"=>	array(T_ZBX_STR, O_OPT,	null,	NOT_EMPTY,	null),
+		"user_medias_to_del"=>	array(T_ZBX_STR, O_OPT,	null,	DB_ID,	null),
+		"del_user_media"=>	array(T_ZBX_STR, O_OPT, P_SYS|P_ACT,	null, null),
+		"new_media"=>	array(T_ZBX_STR, O_OPT,	null,	null,	null),
+		"enable_media"=>array(T_ZBX_INT, O_OPT,	null,	null,		null),
+		"disable_media"=>array(T_ZBX_INT, O_OPT,null,	null,		null),
+
 /* actions */
 		"save"=>	array(T_ZBX_STR, O_OPT, P_SYS|P_ACT,	null,	null),
 		"cancel"=>	array(T_ZBX_STR, O_OPT, P_SYS,	null,	null),
@@ -61,8 +70,38 @@ include_once "include/page_header.php";
 	{
 		Redirect('index.php');
 	}
+	elseif(isset($_REQUEST["new_media"]))
+	{
+		$_REQUEST["user_medias"] = get_request('user_medias', array());
+		array_push($_REQUEST["user_medias"], $_REQUEST["new_media"]);
+	}
+	elseif(isset($_REQUEST["user_medias"]) && isset($_REQUEST["enable_media"]))
+	{
+		if(isset($_REQUEST["user_medias"][$_REQUEST["enable_media"]]))
+		{
+			$_REQUEST["user_medias"][$_REQUEST["enable_media"]]['active'] = 0;
+		}
+	}
+	elseif(isset($_REQUEST["user_medias"]) && isset($_REQUEST["disable_media"]))
+	{
+		if(isset($_REQUEST["user_medias"][$_REQUEST["disable_media"]]))
+		{
+			$_REQUEST["user_medias"][$_REQUEST["disable_media"]]['active'] = 1;
+		}
+	}
+	elseif(isset($_REQUEST["del_user_media"]))
+	{
+		$user_medias_to_del = get_request('user_medias_to_del', array());
+		foreach($user_medias_to_del as $mediaid)
+		{
+			if(isset($_REQUEST['user_medias'][$mediaid]))
+				unset($_REQUEST['user_medias'][$mediaid]);
+		}
+	}
 	elseif(isset($_REQUEST["save"]))
 	{
+		$user_medias = get_request('user_medias', array());
+
 		$_REQUEST["password1"] = get_request("password1", null);
 		$_REQUEST["password2"] = get_request("password2", null);
 
@@ -72,7 +111,7 @@ include_once "include/page_header.php";
 		}
 		elseif($_REQUEST["password1"]==$_REQUEST["password2"])
 		{
-			$result=update_user_profile($USER_DETAILS["userid"],$_REQUEST["password1"],$_REQUEST["url"],$_REQUEST["autologout"],$_REQUEST["lang"],$_REQUEST["refresh"]);
+			$result=update_user_profile($USER_DETAILS["userid"],$_REQUEST["password1"],$_REQUEST["url"],$_REQUEST["autologout"],$_REQUEST["lang"],$_REQUEST["refresh"], $user_medias);
 			show_messages($result, S_USER_UPDATED, S_CANNOT_UPDATE_USER);
 			if($result)
 				add_audit(AUDIT_ACTION_UPDATE,AUDIT_RESOURCE_USER,

@@ -831,7 +831,9 @@
 					SPACE,
 					(count($user_groups) > 0) ? new CButton('del_user_group',S_DELETE_SELECTED) : null
 				));
+		}
 
+		{
 			$frmUser->AddVar('user_medias', $user_medias);
 
 			$media_table = new CTable(S_NO_MEDIA_DEFINED);

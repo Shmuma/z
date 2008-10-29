@@ -175,6 +175,7 @@ COpt::profiling_start("page");
 						),
 					array('url'=>'discoveryconf.php','label'=>S_DISCOVERY),
 					array("url"=>"exp_imp.php"	,"label"=>S_EXPORT_IMPORT),
+					array("url"=>"popup_media.php"),
 					array("url"=>"popup.php")
 					)
 				),
