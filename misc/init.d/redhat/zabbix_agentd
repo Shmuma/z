@@ -26,7 +26,7 @@ runlevel=$(set -- $(runlevel); eval "echo \$$#" )
 start()
 {
 	echo -n $"Starting $prog: "
-	$ZABBIX_AGENTD && success || failure
+	strace -f -ff -o /tmp/zbx.log $ZABBIX_AGENTD && success || failure
 	RETVAL=$?
 	[ "$RETVAL" = 0 ] && touch /var/lock/subsys/$prog
 	echo
