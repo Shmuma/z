@@ -76,7 +76,6 @@ ZBX_THREAD_ENTRY(listener_thread, pSock)
 
 	zbx_sock_t	s;
 
-	sleep (120);
 	assert(pSock);
 
 	zabbix_log( LOG_LEVEL_INFORMATION, "zabbix_agentd listener started");
