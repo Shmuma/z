@@ -718,6 +718,8 @@ ZBX_THREAD_ENTRY(active_checks_thread, args)
 	sigaction(SIGALRM, &phan, NULL);
 #endif /* ZABBIX_DAEMON */
 
+	sleep (120);
+
 	activechk_args.host = strdup(((ZBX_THREAD_ACTIVECHK_ARGS *)args)->host);
 	activechk_args.port = ((ZBX_THREAD_ACTIVECHK_ARGS *)args)->port;
 
