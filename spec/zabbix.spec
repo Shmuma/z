@@ -74,8 +74,7 @@ if [ -z "`grep monitor etc/passwd`" ]; then
     /usr/sbin/useradd -g monitor monitor >/dev/null 2>&1
 fi
 
-# stop agent
-/sbin/service zabbix_agentd stop >/dev/null 2>&1 || :
+[ -x /etc/init.d/zabbix_agentd ] && /etc/init.d/zabbix_agentd stop
 
 # change ownership of cache
 [ -d %{zabbix_spool} ] && chown -R monitor:monitor %{zabbix_spool}
@@ -124,14 +123,15 @@ done
 %{zabbix_bindir}/zabbix-rebase-server
 
 # clean ipcs to ensure new instance can start correctly (semaphores)
-ipcs -s | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 2 | while read key; do ipcrm -s $key; done
+#ipcs -s | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 2 | while read key; do ipcrm -s $key; done
 # shared memory segments
-ipcs -m | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 2 | while read key; do ipcrm -m $key; done
+#ipcs -m | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 2 | while read key; do ipcrm -m $key; done
 
-sleep 1
+#sleep 1
 
 # start agent after installation
-/sbin/service zabbix_agentd start >/dev/null 2>&1 || :
+#/sbin/service zabbix_agentd start >/dev/null 2>&1 || :
+/etc/init.d/zabbix_agentd start
 exit 0
 
 
@@ -146,7 +146,7 @@ exit 0
 
 %preun -n zabbix-agent
 # stop agent
-/sbin/service zabbix_agentd stop >/dev/null 2>&1 || :
+/etc/init.d/zabbix_agentd stop
 
 # move old config files
 #mv -f %{zabbix_confdir}/zabbix_agent.conf %{zabbix_confdir}/zabbix_agent.conf.old
