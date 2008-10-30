@@ -37,8 +37,7 @@ if [ "$1" = "configure" ]; then
 
     if ! getent passwd $UNAME > /dev/null 2>&1 ; then
     adduser --quiet \
-        --system --disabled-login --ingroup $GNAME \
-        --home /var/run/zabbix-agent/ --no-create-home \
+        --ingroup $GNAME \
         $UNAME
     fi
     chown $UNAME:$GNAME /var/log/zabbix-agent -R
