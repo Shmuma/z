@@ -68,7 +68,7 @@ raid_linux ()
 
     done
 
-    [ "$ERR_MES" ] || ERR_MES=Ok
+    [ "$ERR_MES" ] || ERR_MES=""
     die $err_c "$ERR_MES"
 }
 
@@ -171,7 +171,7 @@ raid_bsd ()
     C=$EXT
     MESS="$err_str $err_str2"
     [ $EXT2 -gt $C ] && C=$EXT2
-    [ $C -eq 0 ] && MESS="Ok"
+    [ $C -eq 0 ] && MESS=""
 
     die $C "$MESS"
 }
