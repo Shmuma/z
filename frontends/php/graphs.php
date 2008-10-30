@@ -85,8 +85,8 @@ include_once "include/page_header.php";
 	$_REQUEST['items'] = get_request('items', array());
 	$_REQUEST['group_gid'] = get_request('group_gid', array());
 	
-	$availiable_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY, null, null, get_current_nodeid());
-	$denyed_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT);
+	$availiable_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_WRITE, null, null, get_current_nodeid());
+	$denyed_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_WRITE, PERM_MODE_LT);
 
 	if(isset($_REQUEST["clone"]) && isset($_REQUEST["graphid"]))
 	{
