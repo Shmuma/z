@@ -31,6 +31,7 @@
 
 	define("GRAPH_ITEM_SIMPLE" , 	0);
 	define("GRAPH_ITEM_AGGREGATED",	1);
+	define("GRAPH_ITEM_CONSTANT",	2);
 
 	define("GRAPH_TYPE_NORMAL",	0);
 	define("GRAPH_TYPE_STACKED",	1);
@@ -268,11 +269,20 @@
 			if($this->type == GRAPH_TYPE_STACKED /* stacked graph */)
 				$drawtype = GRAPH_ITEM_DRAWTYPE_FILLED_REGION;
 
-			$this->items[$this->num] = get_item_by_itemid($itemid);
-			$this->items[$this->num]["description"]=item_description($this->items[$this->num]["description"],$this->items[$this->num]["key_"]);
-			$host=get_host_by_hostid($this->items[$this->num]["hostid"]);
+			if (is_null ($type))
+				$type = GRAPH_ITEM_SIMPLE;
+			if ($type == GRAPH_ITEM_CONSTANT) {
+				$this->items[$this->num]["description"] = S_CONSTANT_VALUE." ".$itemid;
+				$this->items[$this->num]["const_val"] = $itemid;
+			}
+			else {
+				$this->items[$this->num] = get_item_by_itemid($itemid);
+				$this->items[$this->num]["description"]=
+					item_description($this->items[$this->num]["description"],$this->items[$this->num]["key_"]);
+				$host=get_host_by_hostid($this->items[$this->num]["hostid"]);
 
-			$this->items[$this->num]["host"] = $host["host"];
+				$this->items[$this->num]["host"] = $host["host"];
+			}
 			$this->items[$this->num]["color"] = is_null($color) ? "Dark Green" : $color;
 			$this->items[$this->num]["drawtype"] = is_null($drawtype) ? GRAPH_ITEM_DRAWTYPE_LINE : $drawtype;
 			$this->items[$this->num]["axisside"] = is_null($axis) ? GRAPH_YAXIS_SIDE_RIGHT : $axis;
@@ -637,6 +647,13 @@
 					$this->sizeX+$this->shiftXleft,
 					$trigger['y'],
 					$this->GetColor($trigger['color']));
+				DashedLine(
+					$this->im,
+					$this->shiftXleft,
+					$trigger['y']+1,
+					$this->sizeX+$this->shiftXleft,
+					$trigger['y']+1,
+					$this->GetColor($trigger['color']));
 			}
 			
 		}
@@ -702,21 +719,26 @@
 				}
 
 				$data = &$this->data[$this->items[$i]["itemid"]][$this->items[$i]["calc_type"]];
-				if(isset($data)&&isset($data->min))
-				{
-					$str=sprintf("%s: %s [%s] [min:%s max:%s last:%s]",
-						str_pad($this->items[$i]["host"],$max_host_len," "),
-						str_pad($this->items[$i]["description"],$max_desc_len," "),
-						$fnc_name,
-						convert_units(min($data->min),$this->items[$i]["units"]),
-						convert_units(max($data->max),$this->items[$i]["units"]),
-						convert_units($this->getLastValue($i),$this->items[$i]["units"]));
+				if ($this->items[$i]["calc_type"] == GRAPH_ITEM_CONSTANT) {
+					$str = sprintf ("%s", $this->items[$i]["description"]);
 				}
-				else
-				{
-					$str=sprintf("%s: %s [ no data ]",
-						str_pad($this->items[$i]["host"],$max_host_len," "),
-						str_pad($this->items[$i]["description"],$max_desc_len," "));
+				else {
+					if(isset($data)&&isset($data->min))
+					{
+						$str=sprintf("%s: %s [%s] [min:%s max:%s last:%s]",
+							     str_pad($this->items[$i]["host"],$max_host_len," "),
+							     str_pad($this->items[$i]["description"],$max_desc_len," "),
+							     $fnc_name,
+							     convert_units(min($data->min),$this->items[$i]["units"]),
+							     convert_units(max($data->max),$this->items[$i]["units"]),
+							     convert_units($this->getLastValue($i),$this->items[$i]["units"]));
+					}
+					else
+					{
+						$str=sprintf("%s: %s [ no data ]",
+							     str_pad($this->items[$i]["host"],$max_host_len," "),
+							     str_pad($this->items[$i]["description"],$max_desc_len," "));
+					}
 				}
 	
 				ImageFilledRectangle($this->im,$this->shiftXleft,$this->sizeY+$this->shiftY+$delta+12*$i,$this->shiftXleft+5,$this->sizeY+$this->shiftY+5+$delta+12*$i,$color);
@@ -1329,6 +1351,41 @@
 			$this->help_button_text = $text;
 		}
 
+
+		function DrawConstant ($value, $drawtype, $color)
+		{
+			$minY = $this->m_minY[$this->items[0]["axisside"]];
+			$maxY = $this->m_maxY[$this->items[0]["axisside"]];
+
+			$y = $this->sizeY - (($value-$minY) / ($maxY-$minY)) * $this->sizeY + $this->shiftY;
+			$x1 = $this->shiftXleft;
+			$x2 = $this->sizeX+$this->shiftXleft;
+			$col = $this->GetColor ($color);
+
+			switch ($drawtype)  {
+			case GRAPH_ITEM_DRAWTYPE_BOLD_LINE:
+				ImageLine ($this->im, $x1, $y+1, $x2, $y+1, $col);
+				// no break
+			case GRAPH_ITEM_DRAWTYPE_LINE:
+				ImageLine ($this->im, $x1, $y, $x2, $y, $col);
+				break;
+			case GRAPH_ITEM_DRAWTYPE_DOT:
+				ImageFilledRectangle($this->im, $x1-1,$y-1,$x1+1,$y+1,$col);
+				ImageFilledRectangle($this->im, $x2-1,$y-1,$x2+1,$y+1,$col);
+				break;
+			case GRAPH_ITEM_DRAWTYPE_DASHED_LINE:
+				if( function_exists('imagesetstyle') ) { /* Use ImageSetStyle+ImageLIne instead of bugged ImageDashedLine */
+					$style = array($col, $col, IMG_COLOR_TRANSPARENT, IMG_COLOR_TRANSPARENT);
+					ImageSetStyle($this->im, $style);
+					ImageLine($this->im,$x1,$y,$x2,$y,IMG_COLOR_STYLED);
+				}
+				else {
+					ImageDashedLine($this->im,$x1,$y,$x2,$y,$col);
+				}
+				break;
+			}
+		}
+
 		function Draw()
 		{
 			$start_time=getmicrotime();
@@ -1391,6 +1448,13 @@
 			{
 				$minY = $this->m_minY[$this->items[$item]["axisside"]];
 				$maxY = $this->m_maxY[$this->items[$item]["axisside"]];
+
+				if ($this->items[$item]["calc_type"] == GRAPH_ITEM_CONSTANT) {
+					$this->DrawConstant ($this->items[$item]["const_val"],
+							     $this->items[$item]["drawtype"],
+							     $this->items[$item]["color"]);
+					continue;
+				}
 
 				$data = &$this->data[$this->items[$item]["itemid"]][$this->items[$item]["calc_type"]];
 

@@ -48,7 +48,7 @@ include_once "include/page_header.php";
 		"sortorder"=>	array(T_ZBX_INT, O_OPT,  null,	BETWEEN(0,65535),	'isset({save})'),
 		"yaxisside"=>	array(T_ZBX_INT, O_OPT,  null,	IN("0,1"),		'isset({save})'),
 		"calc_fnc"=>	array(T_ZBX_INT, O_OPT,	 null,	IN("1,2,4,7"),		'isset({save})'),
-		"type"=>	array(T_ZBX_INT, O_OPT,	 null,	IN("0,1"),		'isset({save})'),
+		"type"=>	array(T_ZBX_INT, O_OPT,	 null,	IN("0,1,2"),		'isset({save})'),
 		"periods_cnt"=>	array(T_ZBX_INT, O_OPT,	 null,	BETWEEN(0,360),		'isset({save})'),
 		"graphtype"=>	array(T_ZBX_INT, O_OPT,	 null,	IN("0,1"),		'isset({save})'),
 

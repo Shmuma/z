@@ -516,7 +516,9 @@
 	'S_STACKED'=>				'Stacked',
 	'S_NORMAL'=>				'Normal',
 	'S_AGGREGATED'=>			'Aggregated',
+	'S_CONSTANT'=>				'Constant',
 	'S_AGGREGATED_PERIODS_COUNT'=>			'Aggregated periods count',
+	'S_CONSTANT_VALUE'=>			'Constant value',
 
 //	graphs.php
 	'S_CONFIGURATION_OF_GRAPHS'=>		'Configuration of graphs',

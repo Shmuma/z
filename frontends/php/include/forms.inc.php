@@ -2490,11 +2490,13 @@
 			{
 				if($graphtype == GRAPH_TYPE_STACKED && $gitem['type'] == GRAPH_ITEM_AGGREGATED) continue;
 
-				$host = get_host_by_itemid($gitem['itemid']);
-				$item = get_item_by_itemid($gitem['itemid']);
+				if ($gitem["type"] != GRAPH_ITEM_CONSTANT) {
+					$host = get_host_by_itemid($gitem['itemid']);
+					$item = get_item_by_itemid($gitem['itemid']);
 
-				if($host['status'] == HOST_STATUS_TEMPLATE) $only_hostid = $host['hostid'];
-				else $monitored_hosts = 1;
+					if($host['status'] == HOST_STATUS_TEMPLATE) $only_hostid = $host['hostid'];
+					else $monitored_hosts = 1;
+				}
 
 				if($gitem["type"] == GRAPH_ITEM_AGGREGATED)
 					$color = "-";
@@ -2507,8 +2509,9 @@
 				$do_down = new CLink(S_DOWN,'#','action');
 				$do_down->OnClick("return create_var('".$frmGraph->GetName()."','move_down',".$gid.", true);");
 
-				$description = new CLink($host['host'].': '.item_description($item["description"],$item["key_"]),'#','action');
-				$description->OnClick(
+				if ($gitem["type"] == GRAPH_ITEM_CONSTANT) {
+					$description = new CLink(S_CONSTANT_VALUE." ".$gitem["itemid"],'#','action');
+					$description->OnClick(
 						'return PopUp("popup_gitem.php?list_name=items&dstfrm='.$frmGraph->GetName().
 						url_param($only_hostid, false, 'only_hostid').
 						url_param($monitored_hosts, false, 'monitored_hosts').
@@ -2516,7 +2519,19 @@
 						url_param($gitem, false).
 						url_param($gid,false,'gid').
 						'",550,400,"graph_item_form");');
-				
+				}
+				else {
+					$description = new CLink($host['host'].': '.item_description($item["description"],$item["key_"]),'#','action');
+					$description->OnClick(
+						'return PopUp("popup_gitem.php?list_name=items&dstfrm='.$frmGraph->GetName().
+						url_param($only_hostid, false, 'only_hostid').
+						url_param($monitored_hosts, false, 'monitored_hosts').
+						url_param($graphtype, false, 'graphtype').
+						url_param($gitem, false).
+						url_param($gid,false,'gid').
+						'",550,400,"graph_item_form");');
+				}
+
 				$items_table->AddRow(array(
 						new CCheckBox('group_gid['.$gid.']',isset($group_gid[$gid])),
 						$gitem['sortorder'],
@@ -2595,41 +2610,47 @@
 		
 		$frmGItem->AddVar('gid',$gid);
 		$frmGItem->AddVar('list_name',$list_name);
-		$frmGItem->AddVar('itemid',$itemid);
+		if ($type != GRAPH_ITEM_CONSTANT)
+			$frmGItem->AddVar('itemid',$itemid);
+		else {
+			if ($itemid == 0)
+				$itemid = 100500;
+			if ($sortorder == 0)
+				$sortorder = 1000;
+		}
 		$frmGItem->AddVar('graphtype',$graphtype);
 		$frmGItem->AddVar('only_hostid',$only_hostid);
 
-		$txtCondVal = new CTextBox('description',$description,50,'yes');
+		if ($type != GRAPH_ITEM_CONSTANT) {
+			$txtCondVal = new CTextBox('description',$description,50,'yes');
 
-		$host_condition = "";
-		if(isset($only_hostid))
-		{// graph for template must use only one host
-			$host_condition = "&only_hostid=".$only_hostid;
+			$host_condition = "";
+			if(isset($only_hostid))
+			{// graph for template must use only one host
+				$host_condition = "&only_hostid=".$only_hostid;
+			}
+			else if(isset($monitored_hosts))
+			{
+				$host_condition = "&monitored_hosts=1";
+			}
+
+			$btnSelect = new CButton('btn1',S_SELECT,
+						 "return PopUp('popup.php?dstfrm=".$frmGItem->GetName().
+						 "&dstfld1=itemid&dstfld2=description&".
+						 "srctbl=items&srcfld1=itemid&srcfld2=description".$host_condition."');",
+						 'T');
+
+			$frmGItem->AddRow(S_PARAMETER ,array($txtCondVal,$btnSelect));
 		}
-		else if(isset($monitored_hosts))
-		{
-			$host_condition = "&monitored_hosts=1";
-		}
 
-		$btnSelect = new CButton('btn1',S_SELECT,
-				"return PopUp('popup.php?dstfrm=".$frmGItem->GetName().
-				"&dstfld1=itemid&dstfld2=description&".
-				"srctbl=items&srcfld1=itemid&srcfld2=description".$host_condition."');",
-				'T');
-		
-		$frmGItem->AddRow(S_PARAMETER ,array($txtCondVal,$btnSelect));
-
+		$cmbType = new CComboBox("type",$type,"submit()");
+		$cmbType->AddItem(GRAPH_ITEM_SIMPLE, S_SIMPLE);
 		if($graphtype == GRAPH_TYPE_NORMAL)
 		{
-			$cmbType = new CComboBox("type",$type,"submit()");
-			$cmbType->AddItem(GRAPH_ITEM_SIMPLE, S_SIMPLE);
 			$cmbType->AddItem(GRAPH_ITEM_AGGREGATED, S_AGGREGATED);
-			$frmGItem->AddRow(S_TYPE, $cmbType);
 		}
-		else
-		{
-			$frmGItem->AddVar("type",GRAPH_ITEM_SIMPLE);
-		}
+		$cmbType->AddItem(GRAPH_ITEM_CONSTANT, S_CONSTANT);
+		$frmGItem->AddRow(S_TYPE, $cmbType);
 
 		if($type == GRAPH_ITEM_AGGREGATED)
 		{
@@ -2638,6 +2659,21 @@
 			$frmGItem->AddVar("calc_fnc",$calc_fnc);
 			$frmGItem->AddVar("drawtype",$drawtype);
 			$frmGItem->AddVar("color",$color);
+		}
+		else if ($type == GRAPH_ITEM_CONSTANT)
+		{
+			$frmGItem->AddRow(S_CONSTANT_VALUE,	new CTextBox("itemid",$itemid,15));
+			$frmGItem->AddVar("calc_fnc",$calc_fnc);
+
+			$cmbType = new CComboBox("drawtype",$drawtype);
+			foreach( graph_item_drawtypes() as $i )
+			{
+				$cmbType->AddItem($i,graph_item_drawtype2str($i));
+			}
+			$frmGItem->AddRow(S_DRAW_STYLE, $cmbType);
+
+			$frmGItem->AddRow(S_COLOR, new CColor('color',$color));
+			$frmGItem->AddVar("periods_cnt",$periods_cnt);
 		}
 		else
 		{

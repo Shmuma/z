@@ -34,6 +34,7 @@
 		switch($type)
 		{
 			case GRAPH_ITEM_AGGREGATED:	$type = S_AGGREGATED.(isset($count) ? '('.$count.')' : '');	break;
+			case GRAPH_ITEM_CONSTANT:	$type = S_CONSTANT;	break;
 			case GRAPH_ITEM_SIMPLE:
 			default:			$type = S_SIMPLE;	break;
 		}
@@ -99,7 +100,7 @@
          */
 	function	graph_item_calc_fnc2str($calc_fnc, $type=null)
 	{
-		if($type == GRAPH_ITEM_AGGREGATED) return '-';
+		if($type == GRAPH_ITEM_AGGREGATED || $type == GRAPH_ITEM_CONSTANT) return '-';
 		
 		switch($calc_fnc)
 		{
@@ -400,7 +401,8 @@
 			$itemid = array(0);
 
 			foreach($gitems as $gitem)
-				$itemid[] = $gitem['itemid'];
+				if ($gitem['type'] != GRAPH_ITEM_CONSTANT)
+					$itemid[] = $gitem['itemid'];
 
 			$db_item_hosts = DBselect('select distinct hostid from items where itemid in ('.implode(',', $itemid).')');
 			while($db_item = DBfetch($db_item_hosts))

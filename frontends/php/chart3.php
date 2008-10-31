@@ -59,6 +59,8 @@ include_once "include/page_header.php";
 
 	foreach($items as $gitem)
 	{
+		if ($gitem["type"] == GRAPH_ITEM_CONSTANT)
+			continue;
 		if( !($host = DBfetch(DBselect('select h.* from hosts h,hosts_groups hg, items i where h.hostid=i.hostid and h.hostid=hg.hostid and hg.groupid not in ('.$denyed_groups.') and i.itemid='.$gitem['itemid']))) )
 		{
 			fatal_error(S_NO_ITEM_DEFINED);
