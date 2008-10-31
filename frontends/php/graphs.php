@@ -98,6 +98,8 @@ include_once "include/page_header.php";
 		$items = get_request('items', array());
 		foreach($items as $gitem)
 		{
+			if ($gitem['type'] == GRAPH_ITEM_CONSTANT)
+				continue;
 			if(!DBfetch(DBselect('select h.* from hosts h,hosts_groups hg,items i where h.hostid=i.hostid and hg.hostid=h.hostid and i.itemid='.$gitem['itemid']."and hg.groupid not in (".$denyed_groups.")")))
 			{
 				access_deny();
