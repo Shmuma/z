@@ -117,6 +117,7 @@ include_once "include/page_header.php";
 		"groupid"=>	array(T_ZBX_INT, O_OPT,	null,	DB_ID,		null),
 		"hostid"=>	array(T_ZBX_INT, O_OPT,	null,	DB_ID,		null),
 		"templates"=>	array(T_ZBX_STR, O_OPT,	null,	NOT_EMPTY,	null),
+		"params"=>	array(T_ZBX_STR, O_OPT,	null,	NULL,	null),
 		"host_templates"=>	array(T_ZBX_STR, O_OPT,	null,	NOT_EMPTY,	null),
 		"existed_templates"=>	array(T_ZBX_STR, O_OPT,	null,	NOT_EMPTY,	null),
 		"only_hostid"=>	array(T_ZBX_INT, O_OPT,	null,	DB_ID,		null),
@@ -224,7 +225,7 @@ include_once "include/page_header.php";
 				" g.groupid=hg.groupid and hg.groupid in (".$accessible_groups.") ".
 				" and hg.hostid = h.hostid ".
 				($monitored_hosts ? " and h.status=".HOST_STATUS_MONITORED : "").
-				($real_hosts ? " and h.status<>".HOST_STATUS_TEMPLATE : "").
+				($real_hosts ? " and h.status<>".HOST_STATUS_TEMPLATE." and h.status<>".HOST_STATUS_TEMPLATE_PARAM : "").
 				" order by name");
 			while($group = DBfetch($db_groups))
 			{
@@ -257,7 +258,7 @@ include_once "include/page_header.php";
 
 			$sql .= " hg.groupid in (".$accessible_groups.")".
 				($monitored_hosts ? " and h.status=".HOST_STATUS_MONITORED : "").
-				($real_hosts ? ' and h.status<>'.HOST_STATUS_TEMPLATE : '').
+				($real_hosts ? ' and h.status<>'.HOST_STATUS_TEMPLATE.' and h.status<>'.HOST_STATUS_TEMPLATE_PARAM : '').
 				' order by host,h.hostid';
 
 // 			$cmbHosts->AddItem(0,S_ALL_SMALL);
@@ -299,7 +300,7 @@ include_once "include/page_header.php";
 
 		$sql .= " hg.groupid in (".$accessible_groups.") ".
 			($monitored_hosts ? " and h.status=".HOST_STATUS_MONITORED : "").
-			($real_hosts ? " and h.status<>".HOST_STATUS_TEMPLATE : "").
+			($real_hosts ? " and h.status<>".HOST_STATUS_TEMPLATE." and h.status<>".HOST_STATUS_TEMPLATE_PARAM : "").
 			" order by h.host,h.hostid";
 
 		// obtain hash of all hosts with their statuses
@@ -326,12 +327,14 @@ include_once "include/page_header.php";
 				$status=new CSpan(S_NOT_MONITORED,"on");
 			else if($host["status"] == HOST_STATUS_TEMPLATE)
 				$status=new CSpan(S_TEMPLATE,"unknown");
+			else if($host["status"] == HOST_STATUS_TEMPLATE_PARAM)
+				$status=new CSpan(S_TEMPLATE_PARAM,"unknown");
 			else if($host["status"] == HOST_STATUS_DELETED)
 				$status=new CSpan(S_DELETED,"unknown");
 			else
 				$status=S_UNKNOWN;
 
-			if($host["status"] == HOST_STATUS_TEMPLATE)
+			if($host["status"] == HOST_STATUS_TEMPLATE || $host["status"] == HOST_STATUS_TEMPLATE_PARAM)
 			{
 				$dns = $ip = $port = $available = '-';
 			}
@@ -382,12 +385,13 @@ include_once "include/page_header.php";
 		$existed_templates = get_request('existed_templates', array());
 		$templates = get_request('templates', array());
 		$templates = $templates + $existed_templates;
+		$params = get_request ('params', array());
 
-		if(!validate_templates(array_keys($templates)))
-		{
-			show_error_message('Conflict between selected templates');
-		}
-		elseif(isset($_REQUEST['select']))
+// 		if(!validate_templates(array_keys($templates)))
+// 		{
+// 			show_error_message('Conflict between selected templates');
+// 		}
+		if(isset($_REQUEST['select']))
 		{
 			if (isset($_REQUEST['extra_key'])) {
 ?>
@@ -405,6 +409,8 @@ include_once "include/page_header.php";
 			{
 				foreach($new_templates as $id => $name)
 				{
+					if (isset ($params[$id]))
+						$name=$name."[".$params[$id]."]";
 ?>
 
 <script language="JavaScript" type="text/javascript">
@@ -431,32 +437,69 @@ include_once "include/page_header.php";
 		}
 		
 		$table = new CTableInfo(S_NO_TEMPLATES_DEFINED);
-		$table->SetHeader(array(S_NAME));
+		$table->SetHeader(array(S_NAME,S_PARAMS));
 
 		$sql = "select distinct h.* from hosts h";
 		$sql .= ",hosts_groups hg where hg.groupid=".$groupid.
 			" and h.hostid=hg.hostid and ";
 
 		$sql .= " hg.groupid in (".$accessible_groups.") ".
-			" and h.status=".HOST_STATUS_TEMPLATE.
+			" and h.status in (".HOST_STATUS_TEMPLATE.",".HOST_STATUS_TEMPLATE_PARAM.")".
 			" order by h.host,h.hostid";
 
 		$db_hosts = DBselect($sql);
+
+		// prepare params array
+		foreach ($templates as $id => $name) {
+			if (ereg ("\[(.*)\]", $name, $regs)) {
+				$params[$id] = $regs[1];
+			}
+		}
+		
 		while($host = DBfetch($db_hosts))
 		{
-			$chk = new CCheckBox('templates['.$host["hostid"].']',isset($templates[$host["hostid"]]),
-					null,$host["host"]);
-			$chk->SetEnabled(!isset($existed_templates[$host["hostid"]]));
+			if ($host["status"] == HOST_STATUS_TEMPLATE_PARAM) {
+				// check for multiple template occurence
+				$id = 0;
+				$key = $host["hostid"]."_".$id;
+				do {
+					$exists = isset ($params[$key]);
+					$chk = new CCheckBox('templates['.$key.']',
+							     isset($templates[$key]),
+							     null,$host["host"]);
+					$chk->SetEnabled(!isset($existed_templates[$key]));
+					if (isset ($existed_templates[$key]))
+						$param_box = $params[$key];
+					else
+						$param_box = new CTextBox ("params[".$key.']', isset ($params[$key]) ? $params[$key] : "");
+					
+					$id++;
+					$key = $host["hostid"]."_".$id;
 
-			$table->AddRow(array(
-				array(
-					$chk,
-					$host["host"])
-				));
+					$table->AddRow(array(
+							     array($chk, $host["host"]),
+							     $param_box
+							     ));
+				}
+				while ($exists);
+			}
+			else {
+				$chk = new CCheckBox('templates['.$host["hostid"].']',
+						     isset($templates[$host["hostid"]]),
+						     null,$host["host"]);
+				$chk->SetEnabled(!isset($existed_templates[$host["hostid"]]));
+
+				$table->AddRow(array(
+					array(
+						$chk,
+						$host["host"]),
+					""
+					));
+			}
 
 			unset($host);
 		}
-		$table->SetFooter(new CButton('select',S_SELECT));
+		$table->SetFooter(new CCol (new CButton('select',S_SELECT)));
 		$form = new CForm();
 		$form->AddVar('existed_templates',$existed_templates);
 		
@@ -507,7 +550,7 @@ include_once "include/page_header.php";
 		$sql .= ',hosts_groups hg where hg.groupid='.$groupid.
 			' and h.hostid=hg.hostid and ';
 
-		$sql .= ' status='.HOST_STATUS_TEMPLATE.
+		$sql .= ' status in ('.HOST_STATUS_TEMPLATE.",".HOST_STATUS_TEMPLATE_PARAM.")".
 			' and hg.groupid in ('.$accessible_groups.') '.
 			' order by h.host,h.hostid';
 		$db_hosts = DBselect($sql);
@@ -602,7 +645,7 @@ include_once "include/page_header.php";
 			" where f.itemid=i.itemid and h.hostid=i.hostid and t.triggerid=f.triggerid".
 			" and hg.hostid=h.hostid and hg.groupid not in (".$denyed_groups.")".
 			($monitored_hosts ? " and h.status=".HOST_STATUS_MONITORED : "").
-			($real_hosts ? " and h.status<>".HOST_STATUS_TEMPLATE : "");
+			($real_hosts ? " and h.status not in (".HOST_STATUS_TEMPLATE.",".HOST_STATUS_TEMPLATE_PARAM.")" : "");
 
 		if(isset($hostid)) 
 			$sql .= " and h.hostid=$hostid";
@@ -700,7 +743,7 @@ function add_item_variable(s_formname,x_value)
 			(isset($hostid) ? " and ".$hostid."=i.hostid " : "").
 			" and hg.groupid in (".$accessible_groups.")".
 			($monitored_hosts ? " and h.status=".HOST_STATUS_MONITORED : "").
-			($real_hosts ? " and h.status<>".HOST_STATUS_TEMPLATE : "").
+			($real_hosts ? " and h.status not in (".HOST_STATUS_TEMPLATE.",".HOST_STATUS_TEMPLATE_PARAM.")" : "").
 			" order by h.host,i.description, i.key_, i.itemid");
 
 		while($db_item = DBfetch($db_items))
@@ -742,7 +785,7 @@ function add_item_variable(s_formname,x_value)
 			' where h.hostid=i.hostid and hg.hostid = h.hostid '.
 			" and hg.groupid not in (".$denyed_groups.")".
 			($monitored_hosts ? " and h.status=".HOST_STATUS_MONITORED : '').
-			($real_hosts ? " and h.status<>".HOST_STATUS_TEMPLATE : '');
+			($real_hosts ? " and h.status not in (".HOST_STATUS_TEMPLATE.",".HOST_STATUS_TEMPLATE_PARAM.")" : '');
 
 		if(isset($hostid)) 
 			$sql .= " and h.hostid=$hostid";
@@ -784,7 +827,7 @@ function add_item_variable(s_formname,x_value)
 			' where h.hostid=a.hostid and hg.hostid=h.hostid '.
 			" and hg.groupid not in (".$denyed_groups.")".
 			($monitored_hosts ? " and h.status=".HOST_STATUS_MONITORED : "").
-			($real_hosts ? " and h.status<>".HOST_STATUS_TEMPLATE : "");
+			($real_hosts ? " and h.status not in (".HOST_STATUS_TEMPLATE.",".HOST_STATUS_TEMPLATE_PARAM.")" : "");
 
 		if(isset($hostid)) 
 			$sql .= " and h.hostid=$hostid";

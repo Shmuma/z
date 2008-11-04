@@ -720,9 +720,9 @@ include_once "include/page_header.php";
 		{
 			insert_host_form($show_only_tmp);
 		} else {
-			$status_filter = " and h.status not in (".HOST_STATUS_DELETED.",".HOST_STATUS_TEMPLATE.") ";
+			$status_filter = " and h.status not in (".HOST_STATUS_DELETED.",".HOST_STATUS_TEMPLATE.",".HOST_STATUS_TEMPLATE_PARAM.") ";
 			if($show_only_tmp==1)
-				$status_filter = " and h.status in (".HOST_STATUS_TEMPLATE.") ";
+				$status_filter = " and h.status in (".HOST_STATUS_TEMPLATE.",".HOST_STATUS_TEMPLATE_PARAM.") ";
 				
 			$cmbGroups = new CComboBox("groupid",get_request("groupid",0),"submit()");
 			$result=DBselect("select distinct g.groupid,g.name from groups g,hosts_groups hg,hosts h".
@@ -771,7 +771,7 @@ include_once "include/page_header.php";
 				$show_only_tmp ? NULL : S_PORT,
 				$show_only_tmp ? NULL : S_SITE,
 				S_TEMPLATES,
-				$show_only_tmp ? NULL : S_STATUS,
+				$show_only_tmp ? S_TEMPLATE_KIND : S_STATUS,
 				$show_only_tmp ? NULL : S_AVAILABILITY,
 				$show_only_tmp ? NULL : S_ERROR,
 				S_ACTIONS
@@ -804,14 +804,18 @@ include_once "include/page_header.php";
 					new CLink($row["host"],"hosts.php?form=update&hostid=".
 						$row["hostid"].url_param("groupid").url_param("config"), 'action')
 					));
-		
-				
+
+				$status = S_UNKNOWN;
+				if ($row["status"] == HOST_STATUS_TEMPLATE)
+					$status = new CCol (S_TEMPLATE);
+				else if ($row["status"] == HOST_STATUS_TEMPLATE_PARAM)
+					$status = new CCol (S_TEMPLATE_PARAM);
+
 				if($show_only_tmp)
 				{
 					$dns = NULL;
 					$ip = NULL;
 					$port = NULL;
-					$status = NULL;
 					$available = NULL;
 					$error = NULL;
 					$site = NULL;
@@ -835,12 +839,8 @@ include_once "include/page_header.php";
 						$status=new CLink(S_NOT_MONITORED,"hosts.php?hosts%5B%5D=".$row["hostid"].
 							"&activate=1".url_param("config").url_param("groupid"),
 							"on");
-					} else if($row["status"] == HOST_STATUS_TEMPLATE)
-						$status=new CCol(S_TEMPLATE,"unknown");
-					else if($row["status"] == HOST_STATUS_DELETED)
+					} else if($row["status"] == HOST_STATUS_DELETED)
 						$status=new CCol(S_DELETED,"unknown");
-					else
-						$status=S_UNKNOWN;
 
 					if (is_array ($hfs_statuses)) {
 						if (array_key_exists ($row["hostid"], $hfs_statuses))
@@ -985,7 +985,7 @@ include_once "include/page_header.php";
 		$table = new CTableInfo(S_NO_LINKAGES);
 		$table->SetHeader(array(S_TEMPLATES,S_HOSTS));
 
-		$templates = DBSelect("select distinct h.* from hosts h, hosts_groups hg where h.status=".HOST_STATUS_TEMPLATE.
+		$templates = DBSelect("select distinct h.* from hosts h, hosts_groups hg where h.status in (".HOST_STATUS_TEMPLATE.",".HOST_STATUS_TEMPLATE_PARAM.")".
 				      " and hg.groupid in (".$available_groups.")".
 				      " and hg.hostid = h.hostid ".
 				      " order by host");
@@ -993,7 +993,7 @@ include_once "include/page_header.php";
 		{
 			$hosts = DBSelect("select distinct h.* from hosts h, hosts_templates ht, hosts_groups hg where ht.templateid=".$template["hostid"].
 				" and ht.hostid=h.hostid ".
-				" and h.status not in (".HOST_STATUS_TEMPLATE.")".
+				" and h.status not in (".HOST_STATUS_TEMPLATE.",".HOST_STATUS_TEMPLATE_PARAM.")".
 				" and hg.hostid = h.hostid ".
  				" and hg.groupid in (".$available_groups.")".
 				" order by host");

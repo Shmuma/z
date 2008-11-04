@@ -103,7 +103,7 @@ INSERT INTO hosts VALUES (10024,'Template_Dell_PowerEdge','',0,'0.0.0.0',10050,3
 -- Dumping data for table `hosts_templates`
 --
 
-insert into hosts_templates values (1,10017,10001);
+insert into hosts_templates values (1,10017,10001,'');
 
 --
 -- Dumping data for table `applications`

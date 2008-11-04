@@ -3980,7 +3980,7 @@ include_once 'include/discovery.inc.php';
 
 		$host 	= get_request("host",	"");
 		$port 	= get_request("port",	get_profile("HOST_PORT",10050));
-		$status	= get_request("status",	HOST_STATUS_MONITORED);
+		$status	= get_request("status",	$show_only_tmp ? HOST_STATUS_TEMPLATE : HOST_STATUS_MONITORED);
 		$useip	= get_request("useip",	0);
 		$dns	= get_request("dns",	"");
 		$ip	= get_request("ip",	"0.0.0.0");
@@ -4129,12 +4129,15 @@ include_once 'include/discovery.inc.php';
 		if($show_only_tmp)
 		{
 			$port = "10050";
-			$status = HOST_STATUS_TEMPLATE;
 			$siteid = "0";
 
 			$frmHost->AddVar("port",$port);
-			$frmHost->AddVar("status",$status);
 			$frmHost->AddVar("siteid",$siteid);
+
+			$cmbStatus = new CComboBox("status",$status);
+			$cmbStatus->AddItem(HOST_STATUS_TEMPLATE,	S_TEMPLATE);
+			$cmbStatus->AddItem(HOST_STATUS_TEMPLATE_PARAM,	S_TEMPLATE_PARAM);
+			$frmHost->AddRow(S_TEMPLATE_KIND,$cmbStatus);	
 		}
 		else
 		{
@@ -4158,9 +4161,27 @@ include_once 'include/discovery.inc.php';
 		$template_table->SetCellPadding(0);
 		$template_table->SetCellSpacing(0);
 
+		$cur_id = 0;
+		$cur_sub = 0;
+
+		$new_templates = array ();
 		foreach($templates as $id => $temp_name)
 		{
+			// perform subtemplates renumbering to keep order
+			if (ereg ("([0-9]+)_([0-9]+)", $id, $reg)) {
+				if ($cur_id != $reg[1]) {
+					$cur_id = $reg[1];
+					$cur_sub = 0;
+				}
+				else
+					$cur_sub++;
+				$old_id = $id;
+				$id = $cur_id."_".$cur_sub;
+				$new_templates[$id] = $templates[$old_id];
+			}
+
 			$frmHost->AddVar('templates['.$id.']',$temp_name);
+
 			$template_table->AddRow(array(
 					$temp_name,
 					new CButton('unlink['.$id.']',S_UNLINK),
@@ -4168,6 +4189,8 @@ include_once 'include/discovery.inc.php';
 					)
 				);
 		}
+
+		$templates = $new_templates;
 
 		$frmHost->AddRow(S_LINK_WITH_TEMPLATE, array($template_table,
 				new CButton('add_template',S_ADD,

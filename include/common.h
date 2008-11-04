@@ -349,6 +349,7 @@ typedef enum
 /*#define HOST_STATUS_UNREACHABLE	2*/
 #define HOST_STATUS_TEMPLATE	3
 #define HOST_STATUS_DELETED	4
+#define HOST_STATUS_TEMPLATE_PARAM	5
 
 /* Host availability */
 #define HOST_AVAILABLE_UNKNOWN	0

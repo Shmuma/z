@@ -642,7 +642,9 @@
 	'S_NOT_MONITORED'=>			'Not monitored',
 	'S_UNREACHABLE'=>			'Unreachable',
 	'S_TEMPLATE'=>				'Template',
+	'S_TEMPLATE_PARAM'=>			'Parametrized template',
 	'S_TEMPLATE_SMALL'=>			'template',
+	'S_TEMPLATE_KIND'=>			'Kind',
 	'S_DELETED'=>				'Deleted',
 	'S_UNKNOWN'=>				'Unknown',
 	'S_GROUPS'=>				'Groups',
@@ -1335,6 +1337,7 @@
 	'S_EMPTY'=>				'Empty',
 	'S_STANDARD_ITEMS_BIG'=>		'STANDARD ITEMS',
 	'S_NO_ITEMS'=>				'No items',
+	'S_PARAMS'=>				'Params',
 
 //	Menu
 
