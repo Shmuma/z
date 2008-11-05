@@ -441,6 +441,8 @@ include_once "include/page_header.php";
 			else
 				show_error_message (S_HGROUP_MUST_BELONG_TO_UGROUP);
 		}
+		$available_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_WRITE,null, PERM_RES_IDS_ARRAY,NULL);
+		$available_groups = implode(',', $available_groups);
 		unset($_REQUEST["save"]);
 	}
 	if($_REQUEST["config"]==1&&isset($_REQUEST["delete"]))
@@ -482,6 +484,8 @@ include_once "include/page_header.php";
 			}
 			show_messages($result, S_GROUP_DELETED, NULL);
 		}
+		$available_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_WRITE,null, PERM_RES_IDS_ARRAY,NULL);
+		$available_groups = implode(',', $available_groups);
 		unset($_REQUEST["delete"]);
 	}
 
