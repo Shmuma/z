@@ -4098,8 +4098,6 @@ include_once 'include/discovery.inc.php';
 		}
 		$frmHost->AddRow(S_GROUPS,$frm_row);
 
-		$frmHost->AddRow(S_NEW_GROUP,new CTextBox("newgroup",$newgroup),'new');
-
 // onChange does not work on some browsers: MacOS, KDE browser
 		if($show_only_tmp)
 		{
@@ -4301,6 +4299,17 @@ include_once 'include/discovery.inc.php';
 					);
 		}
 		$frmHostG->AddRow(S_HOSTS,$cmbHosts);
+
+		if (!$name) {
+			$db_groups = DBselect("select g.usrgrpid, g.name from usrgrp g, users_groups ug".
+					      " where g.usrgrpid=ug.usrgrpid and ug.userid=".$USER_DETAILS['userid']);
+
+			$cmbUGroups = new CComboBox("ugroup",NULL,1);
+			while($db_group = DBfetch($db_groups))
+				$cmbUGroups->AddItem($db_group['usrgrpid'], $db_group['name']);
+
+			$frmHostG->AddRow(S_USER_GROUP_NAME,$cmbUGroups);
+		}
 
 		$frmHostG->AddItemToBottomRow(new CButton("save",S_SAVE));
 		if(isset($_REQUEST["groupid"]))
