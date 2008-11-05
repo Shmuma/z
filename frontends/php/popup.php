@@ -303,11 +303,8 @@ include_once "include/page_header.php";
 			" order by h.host,h.hostid";
 
 		// obtain hash of all hosts with their statuses
-		if (zbx_hfs_available ()) {
-			$hfs_statuses = array ();
-			foreach (zbx_hfs_sites ($groupid, 0) as $site)
-				$hfs_statuses += zabbix_hfs_hosts_availability ($site);
-		}
+		if (zbx_hfs_available ())
+			$hfs_statuses = zbx_hfs_hosts_availability ($groupid);
 		else
 			$hfs_statuses = 0;
 

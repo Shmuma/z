@@ -869,11 +869,8 @@ COpt::profiling_start('prepare data');
 		unset($items);
 		unset($hosts);
 
-		if (zbx_hfs_available ()) {
-			$hfs_triggers = array ();
-			foreach (zbx_hfs_sites ($groupid, 0) as $site)
-				$hfs_triggers += zabbix_hfs_triggers_values ($site);
-		}
+		if (zbx_hfs_available ())
+			$hfs_triggers = zbx_hfs_triggers ($groupid, 0);
                 else
 			$hfs_triggers = 0;
 

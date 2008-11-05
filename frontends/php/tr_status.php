@@ -327,11 +327,8 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 		$cond.=($show_unknown == 0)?' AND t.value<>2 ':'';
 	}
 
-	if (zbx_hfs_available ()) {
-		$hfs_triggers = array ();
-		foreach (zbx_hfs_sites ($_REQUEST['groupid'], $_REQUEST['hostid']) as $site)
-			$hfs_triggers += zabbix_hfs_triggers_values ($site);
-	}
+	if (zbx_hfs_available ())
+		$hfs_triggers = zbx_hfs_triggers ($_REQUEST['groupid'], $_REQUEST['hostid']);
 	else
 		$hfs_triggers = 0;
 
