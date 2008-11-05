@@ -101,6 +101,7 @@ include_once "include/page_header.php";
 /* group */
 		"groupid"=>	array(T_ZBX_INT, O_OPT,	P_SYS,	DB_ID,		'(isset({config})&&({config}==1))&&(isset({form})&&({form}=="update"))'),
 		"gname"=>	array(T_ZBX_STR, O_OPT,	NULL,	NOT_EMPTY,	'(isset({config})&&({config}==1))&&isset({save})'),
+		"ugroup"=>	array(T_ZBX_INT, O_OPT,	NULL,	NULL,		NULL),
 
 /* application */
 		"applicationid"=>array(T_ZBX_INT,O_OPT,	P_SYS,	DB_ID,		'(isset({config})&&({config}==4))&&(isset({form})&&({form}=="update"))'),
@@ -405,6 +406,7 @@ include_once "include/page_header.php";
 	elseif($_REQUEST["config"]==1&&isset($_REQUEST["save"]))
 	{
 		$hosts = get_request("hosts",array());
+
 		if(isset($_REQUEST["groupid"]))
 		{
 			$result = update_host_group($_REQUEST["groupid"], $_REQUEST["gname"], $hosts);
@@ -413,19 +415,31 @@ include_once "include/page_header.php";
 			$msg_fail	= S_CANNOT_UPDATE_GROUP;
 			$groupid = $_REQUEST["groupid"];
 		} else {
-			if(count(get_accessible_nodes_by_user($USER_DETAILS,PERM_READ_WRITE,PERM_MODE_LT,PERM_RES_IDS_ARRAY,get_current_nodeid())))
-				access_deny();
+			$usrgrpid = get_request("ugroup", -1);
+			if ($usrgrpid != -1) {
+				if(count(get_accessible_nodes_by_user($USER_DETAILS,PERM_READ_WRITE,PERM_MODE_LT,PERM_RES_IDS_ARRAY,get_current_nodeid())))
+					access_deny();
 
-			$groupid = add_host_group($_REQUEST["gname"], $hosts);
-			$action 	= AUDIT_ACTION_ADD;
-			$msg_ok		= S_GROUP_ADDED;
-			$msg_fail	= S_CANNOT_ADD_GROUP;
-			$result = $groupid;
-		}
-		show_messages($result, $msg_ok, $msg_fail);
-		if($result){
-			add_audit($action,AUDIT_RESOURCE_HOST_GROUP,S_HOST_GROUP." [".$_REQUEST["gname"]." ] [".$groupid."]");
-			unset($_REQUEST["form"]);
+				$groupid = add_host_group($_REQUEST["gname"], $hosts);
+				$action 	= AUDIT_ACTION_ADD;
+				$msg_ok		= S_GROUP_ADDED;
+				$msg_fail	= S_CANNOT_ADD_GROUP;
+				$result		= $groupid;
+
+				if ($result) {
+					$id = get_dbid('rights','rightid');
+					$result = DBexecute('insert into rights '.
+							    '(rightid,groupid,type,permission,id) values '.
+							    '('.$id.','.$usrgrpid.','.RESOURCE_TYPE_GROUP.','.PERM_READ_WRITE.','.$groupid.')');
+				}
+				show_messages($result, $msg_ok, $msg_fail);
+				if($result){
+					add_audit($action,AUDIT_RESOURCE_HOST_GROUP,S_HOST_GROUP." [".$_REQUEST["gname"]." ] [".$groupid."]");
+					unset($_REQUEST["form"]);
+				}
+			}
+			else
+				show_error_message (S_HGROUP_MUST_BELONG_TO_UGROUP);
 		}
 		unset($_REQUEST["save"]);
 	}
