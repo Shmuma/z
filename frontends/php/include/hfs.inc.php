@@ -8,6 +8,7 @@ function zbx_hfs_available ()
 	return function_exists ("zabbix_hfs_read_history");
 }
 
+
 function zbx_hfs_sites ($groupid, $hostid)
 {
 	if ($groupid == 0 && $hostid == 0)
@@ -27,5 +28,48 @@ function zbx_hfs_sites ($groupid, $hostid)
 
 	return $res;
 }
+
+
+function zbx_hfs_hosts_availability ($groupid)
+{
+	$hfs_statuses = array ();
+
+	foreach (zbx_hfs_sites ($groupid, 0) as $site) {
+		$res = zabbix_hfs_hosts_availability ($site);
+
+		foreach ($res as $id => $val) {
+			if (array_key_exists ($id, $hfs_statuses)) {
+				if ($hfs_statuses[$id]->last < $val->last)
+					$hfs_statuses[$id] = $val;
+			}
+			else
+				$hfs_statuses[$id] = $val;
+		}
+	}
+
+	return $hfs_statuses;
+}
+
+
+function zbx_hfs_triggers ($groupid, $hostid)
+{
+	$hfs_triggers = array ();
+
+	foreach (zbx_hfs_sites ($groupid, 0) as $site) {
+		$res = zabbix_hfs_triggers_values ($site);
+
+		foreach ($res as $id => $val) {
+			if (array_key_exists ($id, $hfs_triggers)) {
+				if ($hfs_triggers[$id]->when < $val->when)
+					$hfs_triggers[$id] = $val;
+			}
+			else
+				$hfs_triggers[$id] = $val;
+		}
+	}
+
+	return $hfs_triggers;
+}
+
 
 ?>
