@@ -211,6 +211,24 @@ require_once "include/items.inc.php";
 		return $result;
 	}
 
+
+	function get_template_id ($id)
+	{
+		if (ereg ("([0-9]+)_([0-9]+)", $id, $reg))
+			return $reg[1];
+		else
+			return $id;
+	}
+
+
+	function get_template_params ($name)
+	{
+		if (ereg (".+\[(.*)\]", $name, $reg))
+			return $reg[1];
+		else
+			return $name;
+	}
+
 	/*
 	 * Function: check_circle_host_link
 	 *
@@ -230,7 +248,7 @@ require_once "include/items.inc.php";
 		if(count($templates) == 0)	return false;
 		if(isset($templates[$hostid]))	return true;
 		foreach($templates as $id => $name)
-			if(check_circle_host_link($hostid, get_templates_by_hostid($id)))
+			if(check_circle_host_link($hostid, get_templates_by_hostid(get_template_id ($id))))
 				return true;
 			
 		return false;
@@ -310,7 +328,8 @@ require_once "include/items.inc.php";
 		foreach($templates as $id => $name)
 		{
 			$hosttemplateid = get_dbid('hosts_templates', 'hosttemplateid');
-			if(!($result = DBexecute('insert into hosts_templates values ('.$hosttemplateid.','.$hostid.','.$id.')')))
+			if(!($result = DBexecute('insert into hosts_templates values ('.$hosttemplateid.','.
+						 $hostid.','.get_template_id ($id).','.zbx_dbstr (get_template_params ($name)).')')))
 				break;
 		}
 
@@ -366,6 +385,9 @@ require_once "include/items.inc.php";
 	 */
 	function	update_host($hostid,$host,$port,$status,$useip,$dns,$ip,$siteid,$templates,$newgroup,$groups)
 	{
+		// filter parametrized templates from $templates array
+		
+
 		$old_templates = get_templates_by_hostid($hostid);
 		$unlinked_templates = array_diff($old_templates, $templates);
 		foreach($unlinked_templates as $id => $name)

@@ -226,6 +226,10 @@ include_once "include/page_header.php";
 			}
 			$templates = get_request('templates', array());
 
+			print "<pre>";
+			print_r ($templates);
+			print "</pre>";
+
 			if(isset($_REQUEST["hostid"]))
 			{
 				if(isset($_REQUEST['clear_templates']))

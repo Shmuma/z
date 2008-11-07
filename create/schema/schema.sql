@@ -425,7 +425,7 @@ FIELD		|hosttemplateid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|hostid		|t_id		|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|templateid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|params		|t_varchar(256)	|''	|NOT NULL	|ZBX_SYNC
-UNIQUE		|1		|hostid,templateid
+UNIQUE		|1		|hostid,templateid,params
 
 TABLE|housekeeper|housekeeperid|0
 FIELD		|housekeeperid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC
