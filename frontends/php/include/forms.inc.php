@@ -866,7 +866,7 @@
 				(count($user_medias) > 0) ? new CButton('del_user_media',S_DELETE_SELECTED) : null
 				));
 		}
-
+/* XXXlegion: translation horrible!
 		$cmbLang = new CComboBox('lang',$lang);
 		$cmbLang->AddItem("en_gb",S_ENGLISH_GB);
 		$cmbLang->AddItem("cn_zh",S_CHINESE_CN);
@@ -883,7 +883,7 @@
 		$cmbLang->AddItem("hu_hu",S_HUNGARY_HU);
 
 		$frmUser->AddRow(S_LANGUAGE, $cmbLang);
-
+*/
 		$frmUser->AddRow(S_AUTO_LOGOUT_IN_SEC,	new CNumericBox("autologout",$autologout,4));
 		$frmUser->AddRow(S_URL_AFTER_LOGIN,	new CTextBox("url",$url,50));
 		$frmUser->AddRow(S_SCREEN_REFRESH,	new CNumericBox("refresh",$refresh,4));
