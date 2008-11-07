@@ -30,7 +30,11 @@
 #include "db.h"
 #include "log.h"
 #include "zlog.h"
+#include "hfs.h"
 
+
+extern char* CONFIG_SERVER_SITE;
+extern char* CONFIG_HFS_PATH;
 
 
 /******************************************************************************
@@ -1283,28 +1287,44 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 		{
 			var_len = strlen(MVAR_ITEM_STDERR);
 
-			result = DBselect("select distinct i.stderr from triggers t, functions f,items i, hosts h"
-				" where t.triggerid=" ZBX_FS_UI64 " and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid"
-				" order by i.description",
+			if (CONFIG_HFS_PATH) {
+				result = DBselect("select %s where h.hostid=i.hostid and i.itemid=" ZBX_FS_UI64 " and " ZBX_COND_SITE,
+						   ZBX_SQL_ITEM_SELECT, itemid, getSiteCondition ());
+				row = DBfetch(result);
+
+				if(row) {
+					DBget_item_from_db(&item, row);
+					replace_to = zbx_dsprintf (replace_to, "%s", item->stderr);
+					DBfree_item (&item);
+					DBfree_result (result);
+				}
+				else
+					replace_to = zbx_dsprintf(replace_to, "%s", STR_UNKNOWN_VARIABLE);
+			}
+			else {
+				result = DBselect("select distinct i.stderr from triggers t, functions f,items i, hosts h"
+						  " where t.triggerid=" ZBX_FS_UI64 " and f.triggerid=t.triggerid and f.itemid=i.itemid "
+						  " and h.hostid=i.hostid order by i.description",
 				event->objectid);
 
-			row=DBfetch(result);
+				row=DBfetch(result);
 
-			if(!row || DBis_null(row[0])==SUCCEED)
-			{
-				zabbix_log( LOG_LEVEL_DEBUG, "No ITEM.STDERR in substitute_simple_macros. Triggerid [" ZBX_FS_UI64 "]",
-					event->objectid);
+				if(!row || DBis_null(row[0])==SUCCEED)
+				{
+					zabbix_log( LOG_LEVEL_DEBUG, "No ITEM.STDERR in substitute_simple_macros. Triggerid [" ZBX_FS_UI64 "]",
+						event->objectid);
 
-				replace_to = zbx_dsprintf(replace_to, "%s",
-					STR_UNKNOWN_VARIABLE);
+					replace_to = zbx_dsprintf(replace_to, "%s",
+						STR_UNKNOWN_VARIABLE);
+				}
+				else
+				{
+					replace_to = zbx_dsprintf(replace_to, "%s",
+						row[0]);
+				}
+
+				DBfree_result(result);
 			}
-			else
-			{
-				replace_to = zbx_dsprintf(replace_to, "%s",
-					row[0]);
-			}
-
-			DBfree_result(result);
 		}
 		else if(macro_type & (MACRO_TYPE_MESSAGE_SUBJECT | MACRO_TYPE_MESSAGE_BODY) &&
 			strncmp(pr, MVAR_TRIGGER_KEY, strlen(MVAR_TRIGGER_KEY)) == 0)
