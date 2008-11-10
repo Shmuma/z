@@ -547,7 +547,7 @@ include_once "include/page_header.php";
 		$table = new CTableInfo(S_NO_USERS_DEFINED);
 		$table->SetHeader(array(S_NAME));
 
-		$result = DBselect('select * from users where '.DBin_node('userid').' order by name');
+		$result = DBselect('select * from users where '.DBin_node('userid').' order by alias');
 		while($row = DBfetch($result))
 		{
 			$name = new CLink(
