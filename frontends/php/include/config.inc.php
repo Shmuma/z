@@ -29,7 +29,10 @@ function TODO($msg) { echo "TODO: ".$msg.BR; }  // DEBUG INFO!!!
 	require_once	"include/copt.lib.php";
 
 // GLOBALS
-	global $USER_DETAILS, $USER_RIGHTS;
+	global $USER_DETAILS, $USER_RIGHTS, $USER_OPTIONS;
+
+	$USER_OPTIONS = array(
+			    "hide_ro_host_groups"    => array("bit" => 1, "descr" => "Hide read-only host groups"));
 
 	$USER_DETAILS	= array();
 	$USER_RIGHTS	= array();
@@ -159,9 +162,10 @@ require_once('include/classes/ctree.inc.php');
 			"userid"=>0,
 			"lang"  =>"en_gb",
 			"type"  =>"0",
-			"node"  =>array(
-				"name"  =>'- unknown -',
-				"nodeid"=>0));
+			"options_bits"=>"0",
+			"node"   =>array(
+				 "name"  =>'- unknown -',
+				 "nodeid"=>0));
 	}
 
 // 	if(isset($show_setup))

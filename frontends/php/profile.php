@@ -62,6 +62,9 @@ include_once "include/page_header.php";
 		"form_refresh"=>array(T_ZBX_STR, O_OPT, null,	null,	null)
 	);
 
+	foreach ($USER_OPTIONS as $param => $dummy)
+		$fields[$param] = array(T_ZBX_INT, O_OPT, null, null, null);
+	$_REQUEST["lang"] = "en_gb";
 
 	check_fields($fields);
 ?>
@@ -118,6 +121,8 @@ include_once "include/page_header.php";
 					"User alias [".$USER_DETAILS["alias"].
 					"] name [".$USER_DETAILS["name"]."] surname [".
 					$USER_DETAILS["surname"]."] profile id [".$USER_DETAILS["userid"]."]");
+			update_user_options($USER_DETAILS["userid"]);
+			Redirect($page["file"]);
 		}
 		else
 		{
