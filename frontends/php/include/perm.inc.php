@@ -294,7 +294,7 @@ COpt::counter_up('perm');
 				case USER_TYPE_ZABBIX_USER:
 					$group_data['permission'] = PERM_DENY; break;
 				case USER_TYPE_ZABBIX_ADMIN:
-					$group_data['permission'] = PERM_READ_ONLY; break;
+					$group_data['permission'] = $USER_DETAILS["options"]["hide_ro_host_groups"] ? PERM_DENY : PERM_READ_ONLY; break;
 				case USER_TYPE_SUPER_ADMIN:
 					$group_data['permission'] = PERM_READ_WRITE; break;
 				}

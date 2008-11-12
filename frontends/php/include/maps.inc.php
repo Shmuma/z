@@ -454,17 +454,19 @@
 							$trigger["value"] = $hfs_trigger->value;
 					}
 
-					$type	=& $trigger['value'];
+					if ($trigger['priority'] > TRIGGER_SEVERITY_INFORMATION) {
+						$type	=& $trigger['value'];
 
-					if(!isset($tr_info[$type]))
-						$tr_info[$type] = array('count' => 0);
+						if(!isset($tr_info[$type]))
+							$tr_info[$type] = array('count' => 0);
 
-					$tr_info[$type]['count']++;
-					if(!isset($tr_info[$type]['priority']) || $tr_info[$type]['priority'] < $trigger["priority"])
-					{
-						$tr_info[$type]['priority']	= $trigger["priority"];
-						if($el_type != SYSMAP_ELEMENT_TYPE_TRIGGER && $type!=TRIGGER_VALUE_UNKNOWN)
-							$tr_info[$type]['info']		= expand_trigger_description_by_data($trigger);
+						$tr_info[$type]['count']++;
+						if(!isset($tr_info[$type]['priority']) || $tr_info[$type]['priority'] < $trigger["priority"])
+						{
+							$tr_info[$type]['priority']	= $trigger["priority"];
+							if($el_type != SYSMAP_ELEMENT_TYPE_TRIGGER && $type!=TRIGGER_VALUE_UNKNOWN)
+								$tr_info[$type]['info']		= expand_trigger_description_by_data($trigger);
+						}
 					}
 				} while ($trigger = DBfetch($db_triggers));
 			}
