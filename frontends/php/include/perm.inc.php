@@ -234,7 +234,7 @@ COpt::counter_up('perm');
 
 	function	get_accessible_groups_by_user($user_data,$perm,$perm_mode=null,$perm_res=null,$nodeid=null)
 	{
-		global $ZBX_LOCALNODEID;
+		global $USER_DETAILS, $ZBX_LOCALNODEID;
 
 		if(is_null($perm_mode))		$perm_mode	= PERM_MODE_GE;
 		if(is_null($perm_res))		$perm_res	= PERM_RES_STRING_LINE;
@@ -249,6 +249,12 @@ COpt::counter_up('perm');
 		{
 			case PERM_RES_DATA_ARRAY:	$resdata = '$group_data'; break;
 			default:			$resdata = '$group_data["groupid"]'; break;
+		}
+
+		if ($USER_DETAILS["options"]["hide_ro_host_groups"]) {
+			if (($perm < PERM_READ_ONLY     || $perm == PERM_READ_LIST) &&
+			    ($perm_mode == PERM_MODE_GE || $perm_mode == PERM_MODE_GT))
+				$perm = PERM_READ_WRITE;
 		}
 
 COpt::counter_up('perm_group['.$userid.','.$perm.','.$perm_mode.','.$perm_res.','.$nodeid.']');
