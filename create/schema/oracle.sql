@@ -728,6 +728,7 @@ CREATE TABLE users (
 	lang		varchar2(5)		DEFAULT 'en_gb'	,
 	refresh		number(10)		DEFAULT '30'	NOT NULL,
 	type		number(10)		DEFAULT '0'	NOT NULL,
+	options_bits		number(10)		DEFAULT '0'	NOT NULL,
 	PRIMARY KEY (userid)
 );
 CREATE INDEX users_1 on users (alias);

@@ -2540,11 +2540,11 @@ Replicate2MySQL.RunSQL
 end;
 /
 show errors
-create or replace function zabbix.ins_users (userid in number,alias in varchar2,name in varchar2,surname in varchar2,passwd in varchar2,url in varchar2,autologout in number,lang in varchar2,refresh in number,type in number) return varchar2
+create or replace function zabbix.ins_users (userid in number,alias in varchar2,name in varchar2,surname in varchar2,passwd in varchar2,url in varchar2,autologout in number,lang in varchar2,refresh in number,type in number,options_bits in number) return varchar2
 is
 begin
 return
-'insert into users (userid,alias,name,surname,passwd,url,autologout,lang,refresh,type) values ('
+'insert into users (userid,alias,name,surname,passwd,url,autologout,lang,refresh,type,options_bits) values ('
 ||Nvl(To_Char(userid),'null')||','
 ||''''||Replace(alias,'''','''''')||''''||','
 ||''''||Replace(name,'''','''''')||''''||','
@@ -2554,7 +2554,8 @@ return
 ||Nvl(To_Char(autologout),'null')||','
 ||''''||Replace(lang,'''','''''')||''''||','
 ||Nvl(To_Char(refresh),'null')||','
-||Nvl(To_Char(type),'null')
+||Nvl(To_Char(type),'null')||','
+||Nvl(To_Char(options_bits),'null')
 ||')';
 end;
 /
@@ -2563,7 +2564,7 @@ create or replace trigger zabbix.trai_users after insert on zabbix.users for eac
 begin
 Replicate2MySQL.RunSQL
 (
-zabbix.ins_users (:new.userid,:new.alias,:new.name,:new.surname,:new.passwd,:new.url,:new.autologout,:new.lang,:new.refresh,:new.type)
+zabbix.ins_users (:new.userid,:new.alias,:new.name,:new.surname,:new.passwd,:new.url,:new.autologout,:new.lang,:new.refresh,:new.type,:new.options_bits)
 );
 end;
 /
@@ -2582,7 +2583,8 @@ Replicate2MySQL.RunSQL
 ||' autologout='||Nvl(To_Char(:new.autologout),'null')||','
 ||' lang='''||Replace(:new.lang,'''','''''')||''''||','
 ||' refresh='||Nvl(To_Char(:new.refresh),'null')||','
-||' type='||Nvl(To_Char(:new.type),'null') || ' where  userid='||:old.userid );
+||' type='||Nvl(To_Char(:new.type),'null')||','
+||' options_bits='||Nvl(To_Char(:new.options_bits),'null') || ' where  userid='||:old.userid );
 end;
 /
 show errors

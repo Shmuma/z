@@ -773,6 +773,7 @@ static	ZBX_TABLE	tables[]={
 		{"lang",	ZBX_TYPE_CHAR,	ZBX_SYNC},
 		{"refresh",	ZBX_TYPE_INT,	ZBX_SYNC},
 		{"type",	ZBX_TYPE_INT,	ZBX_SYNC},
+		{"options_bits",	ZBX_TYPE_INT,	ZBX_SYNC},
 		{0}
 		}
 	},
