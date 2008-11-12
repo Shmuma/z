@@ -280,7 +280,7 @@ void	child_trapper_main(int i)
 	trapper_initialize_queue ();
 
 	/* initialize metrics */
-	key_values = metric_register ("trapper_data_values",  num);
+	key_values = metric_register ("trapper_data_values",  i);
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 
@@ -325,7 +325,7 @@ void	child_hist_trapper_main (int i)
 
 	trapper_initialize_queue ();
 
-	key_values = metric_register ("trapper_history_values",  num);
+	key_values = metric_register ("trapper_history_values",  i);
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 
