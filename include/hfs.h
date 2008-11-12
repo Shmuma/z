@@ -162,6 +162,11 @@ int		HFS_get_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_
 void		HFS_update_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int status, const char* error);
 int		HFS_get_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int* status, char** error);
 
+
+double		HFS_get_item_last_dbl (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid);
+zbx_uint64_t	HFS_get_item_last_int (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid);
+
+
 /* trigger statuses */
 typedef struct {
 	zbx_uint64_t triggerid;

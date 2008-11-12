@@ -2623,3 +2623,57 @@ void HFS_clear_item_history (const char* hfs_path, const char* siteid, zbx_uint6
 		free (f_name);
 	}
 }
+
+
+
+/* optimized routines which get latest values */
+double		HFS_get_item_last_dbl (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid)
+{
+    char *p_data;
+    int fd;
+    hfs_off_t ofs;
+    double res;
+
+    p_data = get_name (hfs_base_dir, siteid, itemid, NK_ItemData);
+    if ((fd = open (p_data, O_RDONLY)) == -1) {
+	free (p_data);
+	return 0.0;
+    }
+    free (p_data);
+
+    ofs = lseek (fd, 0, SEEK_END);
+    ofs -= sizeof (res);
+    lseek (fd, ofs, SEEK_SET);
+
+    if (read (fd, &res, sizeof (res)) != sizeof (res))
+	    res = 0.0;
+    close (fd);
+
+    return res;
+}
+
+
+zbx_uint64_t	HFS_get_item_last_int (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid)
+{
+    char *p_data;
+    int fd;
+    hfs_off_t ofs;
+    zbx_uint64_t res;
+
+    p_data = get_name (hfs_base_dir, siteid, itemid, NK_ItemData);
+    if ((fd = open (p_data, O_RDONLY)) == -1) {
+	free (p_data);
+	return 0;
+    }
+    free (p_data);
+
+    ofs = lseek (fd, 0, SEEK_END);
+    ofs -= sizeof (res);
+    lseek (fd, ofs, SEEK_SET);
+
+    if (read (fd, &res, sizeof (res)) != sizeof (res))
+	    res = 0;
+    close (fd);
+
+    return res;
+}
