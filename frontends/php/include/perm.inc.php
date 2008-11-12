@@ -36,6 +36,16 @@
 /*****************************************
 	CHECK USER AUTHORISATION
 *****************************************/
+	function options_from_bits($bits)
+	{
+		global  $USER_OPTIONS;
+		$res = array();
+
+	        foreach ($USER_OPTIONS as $param => $arr)
+			$res[$param] = (($bits & $arr["bit"]) > 0 ? 1 : 0);
+
+		return $res;
+	}
 
 	function	check_authorisation()
 	{
@@ -94,6 +104,7 @@
 				"userid"=>0,
 				"lang"	=>"en_gb",
 				"type"	=>"0",
+				"options_bits"=>0,
 				"node"	=>array(
 					"name"	=>'- unknown -',
 					"nodeid"=>0));
@@ -111,6 +122,8 @@
 			include('index.php');
 			exit;
 		}
+
+		$USER_DETAILS["options"] = options_from_bits($USER_DETAILS["options_bits"]);
 	}
 
 /***********************************************
