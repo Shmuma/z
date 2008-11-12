@@ -103,10 +103,16 @@ include_once "include/page_header.php";
 
 	$cmbGroup = new CComboBox("groupid",$_REQUEST["groupid"],"submit()");
 	$cmbHosts = new CComboBox("hostid",$_REQUEST["hostid"],"submit()");
-
-// 	$cmbGroup->AddItem(0,S_ALL_SMALL);
 	
-	$availiable_groups= get_accessible_groups_by_user($USER_DETAILS,PERM_READ_LIST, null, null, get_current_nodeid());
+	$availiable_groups= get_accessible_groups_by_user($USER_DETAILS,PERM_READ_LIST, null, PERM_RES_IDS_ARRAY, get_current_nodeid());
+
+	if (count ($availiable_groups) == 0)
+		access_deny();
+
+	if (!(isset($_REQUEST["groupid"]) && $_REQUEST["groupid"] > 0 && in_array($_REQUEST["groupid"], $availiable_groups)))
+		$_REQUEST["groupid"] = $availiable_groups[0];
+
+	$availiable_groups = implode(',', $availiable_groups);
 
 	$result=DBselect("select distinct g.groupid,g.name from groups g, hosts_groups hg, hosts h, items i ".
 		" where g.groupid in (".$availiable_groups.") ".
@@ -114,13 +120,9 @@ include_once "include/page_header.php";
 		" and h.hostid=i.hostid and hg.hostid=h.hostid and i.status=".ITEM_STATUS_ACTIVE.
 		" order by g.name");
 	while($row=DBfetch($result))
-	{
-		if ($_REQUEST["groupid"] == 0)
-			$_REQUEST["groupid"] = $row["groupid"];
 		$cmbGroup->AddItem($row['groupid'], $row['name']);
-	}
 	$r_form->AddItem(array(S_GROUP.SPACE,$cmbGroup));
-	
+
 	if($_REQUEST["groupid"] > 0)
 	{
 		$sql="select distinct h.hostid,h.host from hosts h,items i,hosts_groups hg where h.status=".HOST_STATUS_MONITORED.
@@ -131,7 +133,6 @@ include_once "include/page_header.php";
 	}
 	else
 	{
-		$cmbHosts->AddItem(0,S_ALL_SMALL);
 		$sql="select distinct h.hostid,h.host from hosts h,hosts_groups hg,items i where h.status=".HOST_STATUS_MONITORED.
 			" and i.status=".ITEM_STATUS_ACTIVE." and h.hostid=i.hostid".
 			" and hg.hostid=h.hostid and hg.groupid in (".$availiable_groups.") ".
