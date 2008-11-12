@@ -47,18 +47,6 @@ extern char* CONFIG_HFS_PATH;
 static zbx_uint64_t mtr_values = 0;
 static metric_key_t key_values;
 
-static zbx_uint64_t mtr_checks = 0;
-static metric_key_t key_checks;
-
-static zbx_uint64_t mtr_history = 0;
-static metric_key_t key_history;
-
-static zbx_uint64_t mtr_reqs = 0;
-static metric_key_t key_reqs;
-
-static zbx_uint64_t mtr_idle = 0;
-static metric_key_t key_idle;
-
 static int 		process_id = 0;
 static int		history = 0;
 
@@ -75,17 +63,6 @@ static int		queue_inotify_wd = -1;
 #define QUEUE_CHUNK 10
 
 static queue_entry_t req_buf[QUEUE_CHUNK];
-
-
-static void trapper_init_metrics ()
-{
-
-	key_values  = metric_register ("trapper_values",  process_id);
-	key_checks  = metric_register ("trapper_checks",  process_id);
-	key_history = metric_register ("trapper_history", process_id);
-	key_reqs    = metric_register ("trapper_reqs", process_id);
-	key_idle    = metric_register ("trapper_idle", process_id);
-}
 
 
 static void trapper_initialize_queue ()
@@ -295,13 +272,15 @@ void	child_trapper_main(int i)
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In child_trapper_main()");
 	zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Trapper]", i);
-	trapper_init_metrics ();
 
 	process_id = i;
 	history = 0;
 
 	/* initialize queue */
 	trapper_initialize_queue ();
+
+	/* initialize metrics */
+	key_values = metric_register ("trapper_data_values",  num);
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 
@@ -317,6 +296,8 @@ void	child_trapper_main(int i)
 			now = time (NULL);
 			/* handle data block */
 			zbx_setproctitle("processing queue data block");
+			mtr_values += count;
+			metric_update (key_values, mtr_values);
 			for (i = 0; i < count; i++) {
 				process_data ((now - entries[i].ts) > 60, entries[i].ts, entries[i].server, entries[i].key, entries[i].value,
 					      entries[i].error, entries[i].lastlogsize, entries[i].timestamp,
@@ -324,8 +305,6 @@ void	child_trapper_main(int i)
 				free (entries[i].buf);
 			}
 		}
-		else
-			metric_update (key_idle, ++mtr_idle);
 	}
 	DBclose();
 }
@@ -341,11 +320,12 @@ void	child_hist_trapper_main (int i)
 	zabbix_log( LOG_LEVEL_DEBUG, "In child_trapper_main()");
 	zabbix_log( LOG_LEVEL_WARNING, "server #%d started [HistTrapper]", i);
 
-	trapper_init_metrics ();
 	process_id = i;
 	history = 1;
 
 	trapper_initialize_queue ();
+
+	key_values = metric_register ("trapper_history_values",  num);
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 
@@ -357,6 +337,9 @@ void	child_hist_trapper_main (int i)
 
 		if (count) {
 			history_token = NULL;
+
+			mtr_values += entry.count;
+			metric_update (key_values, mtr_values);
 
 			for (i = 0; i < entry.count; i++)
 				append_history (entry.server, entry.key, entry.items[i].value, entry.items[i].ts, &history_token);

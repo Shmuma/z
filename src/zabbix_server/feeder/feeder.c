@@ -44,8 +44,18 @@ static char	timestamp[MAX_STRING_LEN];
 static char	source[MAX_STRING_LEN];
 static char	severity[MAX_STRING_LEN];
 
-static metric_key_t	key_reqs = -1;
+static metric_key_t	key_reqs;
 static zbx_uint64_t	mtr_reqs = 0;
+
+static metric_key_t	key_list;
+static zbx_uint64_t	mtr_list = 0;
+
+static metric_key_t	key_data;
+static zbx_uint64_t	mtr_data = 0;
+
+static metric_key_t	key_hist;
+static zbx_uint64_t	mtr_hist = 0;
+
 
 static int	queue_idx[2] = { 0, 0 };
 static int	queue_fd[2] = { -1, -1 };
@@ -167,6 +177,7 @@ void	process_feeder_child(zbx_sock_t *sock)
 			host = strtok(NULL,"\n");
 			if(host)
 				ret = send_list_of_active_checks(sock, host);
+			metric_update (key_list, ++mtr_list);
 		}
 		break;	
 	case '<':
@@ -185,6 +196,7 @@ void	process_feeder_child(zbx_sock_t *sock)
 
 			/* append to queue for trapper */
 			feeder_queue_data (&entry, 0);
+			metric_update (key_data, ++mtr_data);
 		}
 		else if (strncmp (data, "<reqs>", 6) == 0) {
                         void* token = NULL;
@@ -211,6 +223,9 @@ void	process_feeder_child(zbx_sock_t *sock)
 				count++;
                         }
 
+			mtr_hist += count;
+			metric_update (key_hist, mtr_hist);
+
 			if (ret == SUCCEED) {
 				h_entry.count = count;
 				feeder_queue_history_data (&h_entry);
@@ -224,8 +239,6 @@ void	process_feeder_child(zbx_sock_t *sock)
 			zabbix_log(LOG_LEVEL_WARNING, "Error sending result back");
 		break;
 	}
-
-	metric_update (key_reqs, mtr_reqs++);
 }
 
 
@@ -238,7 +251,10 @@ void	child_feeder_main(int i, zbx_sock_t *s)
 	zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Feeder]", i);
 
 	process_id = i;
-	key_reqs  = metric_register ("feeder_reqs",  i);
+	key_reqs  = metric_register ("feeder_reqs", i);
+	key_list  = metric_register ("feeder_list", i);
+	key_data  = metric_register ("feeder_data", i);
+	key_hist  = metric_register ("feeder_hist", i);
 
 	feeder_initialize_queue (0);
 	feeder_initialize_queue (1);
@@ -255,6 +271,7 @@ void	child_feeder_main(int i, zbx_sock_t *s)
 		if (zbx_tcp_accept(s) != SUCCEED)
 			zabbix_log(LOG_LEVEL_ERR, "feeder failed to accept connection");
 		else {
+			metric_update (key_reqs, ++mtr_reqs);
 			zbx_setproctitle("Feeder processing data");
 			process_feeder_child(s);
 			zbx_tcp_unaccept(s);
