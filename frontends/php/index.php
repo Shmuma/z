@@ -60,7 +60,7 @@
 	{
 		if ($PAM_AUTH) {
 			// trying to perform PAM authentification
-			$name = get_request("name","");
+			$name = strtolower (get_request("name",""));
 			$password = get_request("password","");
 			$err = "";
 			if (pam_auth ($name, $password, $err)) {

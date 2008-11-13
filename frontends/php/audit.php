@@ -93,7 +93,7 @@ include_once "include/page_header.php";
 		$btnPrev->SetEnabled('no');
 
 	$btnNext = new CButton("next","Next ".$PAGE_SIZE." >>");
-	if($i < $limit)
+	if($i < $limit-1)
 		$btnNext->SetEnabled('no');
 
 	$form->AddItem(array(
