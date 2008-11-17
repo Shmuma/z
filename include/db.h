@@ -158,7 +158,7 @@ typedef enum {
 #define HTTPSTEP_REQUIRED_LEN		255
 #define HTTPSTEP_REQUIRED_LEN_MAX	HTTPSTEP_REQUIRED_LEN+1
 
-#define ZBX_SQL_ITEM_SELECT	"i.itemid,i.key_,h.host,h.port,i.delay,i.description,i.nextcheck,i.type,i.snmp_community,i.snmp_oid,h.useip,h.ip,i.history,i.lastvalue,i.prevvalue,i.hostid,h.status,i.value_type,h.errors_from,i.snmp_port,i.delta,i.prevorgvalue,i.lastclock,i.units,i.multiplier,i.snmpv3_securityname,i.snmpv3_securitylevel,i.snmpv3_authpassphrase,i.snmpv3_privpassphrase,i.formula,h.available,i.status,i.trapper_hosts,i.logtimefmt,i.valuemapid,i.delay_flex,h.dns,s.name as siteid from hosts h, items i, sites s"
+#define ZBX_SQL_ITEM_SELECT	"i.itemid,i.key_,h.host,h.port,i.delay,i.description,i.nextcheck,i.type,i.snmp_community,i.snmp_oid,h.useip,h.ip,i.history,i.lastvalue,i.prevvalue,i.hostid,h.status,i.value_type,h.errors_from,i.snmp_port,i.delta,i.prevorgvalue,i.lastclock,i.units,i.multiplier,i.snmpv3_securityname,i.snmpv3_securitylevel,i.snmpv3_authpassphrase,i.snmpv3_privpassphrase,i.formula,h.available,i.status,i.trapper_hosts,i.logtimefmt,i.valuemapid,i.delay_flex,h.dns,s.name as siteid, i.stderr from hosts h, items i, sites s"
 
 #define ZBX_MAX_SQL_LEN			65535
 
@@ -260,8 +260,8 @@ DB_GRAPH_ITEM
 	char	color[GRAPH_ITEM_COLOR_LEN_MAX];
 };
 
-#define DYN_DB_ITEM_ELEM	18 // prevorgvalue_str, ...
-#define CHARS_LEN_MAX		21
+#define DYN_DB_ITEM_ELEM	18 // stderr, prevorgvalue_str, ...
+#define CHARS_LEN_MAX		22
 
 DB_ITEM
 {
@@ -323,6 +323,7 @@ DB_ITEM
 	zbx_uint64_t	valuemapid;
 	char	*delay_flex;
 
+	char	*stderr;
 	char	*prevorgvalue_str;
 	char	*lastvalue_str;
 	char	*prevvalue_str;
