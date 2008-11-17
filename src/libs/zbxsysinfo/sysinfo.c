@@ -575,6 +575,11 @@ int	set_result_type(AGENT_RESULT *result, int value_type, char *c)
 			SET_UI64_RESULT(result, zbx_atoui64(c));
 			ret = SUCCEED;
 		}
+		else if (is_double (c) == SUCCEED)
+		{
+			SET_UI64_RESULT(result, (zbx_uint64_t)round (atof(c)));
+			ret = SUCCEED;
+		}
 	}
 	else if(value_type == ITEM_VALUE_TYPE_FLOAT)
 	{
