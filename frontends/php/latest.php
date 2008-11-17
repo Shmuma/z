@@ -110,7 +110,7 @@ include_once "include/page_header.php";
 		access_deny();
 
 	if (!(isset($_REQUEST["groupid"]) && $_REQUEST["groupid"] > 0 && in_array($_REQUEST["groupid"], $availiable_groups)))
-		$_REQUEST["groupid"] = $availiable_groups[0];
+		$_REQUEST["groupid"] = array_values ($availiable_groups)[0];
 
 	$availiable_groups = implode(',', $availiable_groups);
 
