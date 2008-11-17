@@ -78,9 +78,10 @@ size_t DB_ITEM_OFFSETS[CHARS_LEN_MAX] = {
 /* 15 */	offsetof(DB_ITEM, logtimefmt),
 /* 16 */	offsetof(DB_ITEM, delay_flex),
 /* 17 */	offsetof(DB_ITEM, eventlog_source),
-/* 18 */	offsetof(DB_ITEM, prevorgvalue_str),
-/* 19 */	offsetof(DB_ITEM, lastvalue_str),
-/* 20 */	offsetof(DB_ITEM, prevvalue_str)
+/* 18 */	offsetof(DB_ITEM, stderr),
+/* 19 */	offsetof(DB_ITEM, prevorgvalue_str),
+/* 20 */	offsetof(DB_ITEM, lastvalue_str),
+/* 21 */	offsetof(DB_ITEM, prevvalue_str)
 };
 
 zbx_process_type_t process_type = -1;

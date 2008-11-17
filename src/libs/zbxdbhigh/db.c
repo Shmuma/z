@@ -1543,7 +1543,6 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 {
 	int	rc = 0;
 	hfs_time_t lastclock, nextcheck;
-	char* stderr = NULL;
 
 	/* Zabbix developers is morons. Some DB_ITEM pointers is not
 	   initialized after DBget_item_from_db(). */
@@ -1602,6 +1601,11 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	item->host_dns=row[36];
 	item->siteid=row[37];
 
+	if (!CONFIG_HFS_PATH)
+		item->stderr = row[38];
+	else
+		item->stderr = NULL;
+
 	item->prevvalue_null    = 0;
 	item->lastvalue_null    = 0;
 	item->prevorgvalue_null = 0;
@@ -1617,7 +1621,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 						     &item->prevvalue_dbl,
 						     &item->lastvalue_dbl,
 						     &item->prevorgvalue_dbl,
-						     &stderr);
+						     &item->stderr);
 			if (!rc) {
 				item->prevvalue_dbl = 0.0;
 				item->lastvalue_dbl = 0.0;
@@ -1634,7 +1638,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 						     &item->prevvalue_uint64,
 						     &item->lastvalue_uint64,
 						     &item->prevorgvalue_uint64,
-						     &stderr);
+						     &item->stderr);
 			if (!rc) {
 				item->prevvalue_uint64 = 0;
 				item->lastvalue_uint64 = 0;
@@ -1651,7 +1655,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 						     &item->prevvalue_str,
 						     &item->lastvalue_str,
 						     &item->prevorgvalue_str,
-						     &stderr);
+						     &item->stderr);
 			if (!rc) {
 				item->prevvalue_str = NULL;
 				item->lastvalue_str = NULL;
@@ -1659,12 +1663,6 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 			}
 			break;
 	}
-
-	/* TODO: We need to integrate stderr value into DB_ITEM
-	   structure as well as it's memcache handling. At the moment we just
-	   throw away obtained value. */
-	if (stderr)
-		free (stderr);
 
 	item->lastclock = (rc) ? lastclock : 0;
 	item->nextcheck = (rc) ? nextcheck : 0;
@@ -1694,6 +1692,11 @@ void DBfree_item(DB_ITEM *item)
 #endif
 
 	if (item->chars == NULL) {
+		if (item->stderr) {
+			free(item->stderr);
+			item->stderr = NULL;
+		}
+
 		if (item->prevvalue_str) {
 			free(item->prevvalue_str);
 			item->prevvalue_str = NULL;

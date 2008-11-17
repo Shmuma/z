@@ -797,7 +797,8 @@ void	substitute_simple_macros(DB_EVENT *event, DB_ACTION *action, char **data, i
 
 	char	tmp[MAX_STRING_LEN];
 
-	int	var_len;
+	int	var_len, flag;
+	size_t	str_len;
 
 	time_t  now;
 	struct  tm      *tm;
@@ -1286,45 +1287,46 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 			strncmp(pr, MVAR_ITEM_STDERR, strlen(MVAR_ITEM_STDERR)) == 0)
 		{
 			var_len = strlen(MVAR_ITEM_STDERR);
+			result = DBselect("select %s, triggers t, functions f"
+					  " where t.triggerid=" ZBX_FS_UI64 " and f.triggerid=t.triggerid and f.itemid=i.itemid "
+					  " and h.hostid=i.hostid and " ZBX_COND_SITE " order by i.description",
+					  ZBX_SQL_ITEM_SELECT,
+					  event->objectid,
+					  getSiteCondition());
 
-			if (CONFIG_HFS_PATH) {
-				result = DBselect("select %s where h.hostid=i.hostid and i.itemid=" ZBX_FS_UI64 " and " ZBX_COND_SITE,
-						   ZBX_SQL_ITEM_SELECT, itemid, getSiteCondition ());
-				row = DBfetch(result);
+			str_len = 0;
+			while(row = DBfetch(result)) {
+				DBget_item_from_db(&item, row);
 
-				if(row) {
-					DBget_item_from_db(&item, row);
-					replace_to = zbx_dsprintf (replace_to, "%s", item->stderr);
+				if (str_len > 0) {
+					strnscpy(tmp + str_len, "\n", 1);
+					str_len++;
+				}
+
+				if (!item.stderr) {
+					strnscpy(tmp + str_len, STR_UNKNOWN_VARIABLE,
+						 MAX_STRING_LEN - str_len);
 					DBfree_item (&item);
-					DBfree_result (result);
+					continue;
 				}
-				else
-					replace_to = zbx_dsprintf(replace_to, "%s", STR_UNKNOWN_VARIABLE);
-			}
-			else {
-				result = DBselect("select distinct i.stderr from triggers t, functions f,items i, hosts h"
-						  " where t.triggerid=" ZBX_FS_UI64 " and f.triggerid=t.triggerid and f.itemid=i.itemid "
-						  " and h.hostid=i.hostid order by i.description",
-				event->objectid);
 
-				row=DBfetch(result);
+				strnscpy(tmp + str_len, item.stderr,
+					 MAX_STRING_LEN - str_len);
 
-				if(!row || DBis_null(row[0])==SUCCEED)
-				{
-					zabbix_log( LOG_LEVEL_DEBUG, "No ITEM.STDERR in substitute_simple_macros. Triggerid [" ZBX_FS_UI64 "]",
+				str_len += strlen(item.stderr);
+				DBfree_item (&item);
+
+				if (str_len >= MAX_STRING_LEN) {
+					zabbix_log(LOG_LEVEL_CRIT,
+						"substitute_simple_macros(): ITEM.STDERR is too long. Triggerid [" ZBX_FS_UI64 "]",
 						event->objectid);
-
-					replace_to = zbx_dsprintf(replace_to, "%s",
-						STR_UNKNOWN_VARIABLE);
+					break;
 				}
-				else
-				{
-					replace_to = zbx_dsprintf(replace_to, "%s",
-						row[0]);
-				}
-
-				DBfree_result(result);
 			}
+			DBfree_result (result);
+
+			if (str_len > 0)
+				replace_to = zbx_dsprintf(replace_to, "%s", tmp);
 		}
 		else if(macro_type & (MACRO_TYPE_MESSAGE_SUBJECT | MACRO_TYPE_MESSAGE_BODY) &&
 			strncmp(pr, MVAR_TRIGGER_KEY, strlen(MVAR_TRIGGER_KEY)) == 0)
