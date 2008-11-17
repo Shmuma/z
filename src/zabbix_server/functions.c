@@ -532,12 +532,12 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 					ok = 0;
 			}
 			if (!ok || !process_item_delta (item, &new_val, now, &res_val)) {
-				zabbix_log(LOG_LEVEL_ERR, "Value not stored for itemid [%d]. Unknown delta [%d]",
-					item->itemid,
-					item->delta);
-				zabbix_syslog("Value not stored for itemid [%d]. Unknown delta [%d]",
-					item->itemid,
-					item->delta);
+/* 				zabbix_log(LOG_LEVEL_ERR, "Value not stored for itemid [%d]. Unknown delta [%d]", */
+/* 					item->itemid, */
+/* 					item->delta); */
+/* 				zabbix_syslog("Value not stored for itemid [%d]. Unknown delta [%d]", */
+/* 					item->itemid, */
+/* 					item->delta); */
 				ret = FAIL;
 			}
 			else {
