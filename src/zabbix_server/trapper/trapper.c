@@ -341,6 +341,7 @@ void	child_trapper_main(int i)
 	/* initialize metrics */
 	key_values = metric_register ("trapper_data_values",  i);
 	key_skipped = metric_register ("trapper_data_skipped_bytes",  i);
+	metric_update (key_skipped, mtr_skipped);
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 
@@ -387,6 +388,7 @@ void	child_hist_trapper_main (int i)
 
 	key_values = metric_register ("trapper_history_values",  i);
 	key_skipped = metric_register ("trapper_history_skipped_bytes",  i);
+	metric_update (key_skipped, mtr_skipped);
 
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 
