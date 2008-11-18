@@ -112,7 +112,7 @@ static void    feeder_switch_queue (int queue)
 }
 
 
-static void    feeder_queue_data (queue_entry_t *entry, int queue)
+static void    feeder_queue_data (queue_entry_t *entry)
 {
 	static char buf[16384];
 	char* buf_p;
@@ -128,13 +128,14 @@ static void    feeder_queue_data (queue_entry_t *entry, int queue)
 	}
 
 	len = buf_p-buf;
-	write (queue_fd[queue], &len, sizeof (len));
-	write (queue_fd[queue], buf, buf_p-buf);
+	write (queue_fd[0], &entry_sig, sizeof (entry_sig));
+	write (queue_fd[0], &len, sizeof (len));
+	write (queue_fd[0], buf, buf_p-buf);
 
 	/* switch queue if current file grown too large */
-	ofs = lseek (queue_fd[queue], 0, SEEK_CUR);
+	ofs = lseek (queue_fd[0], 0, SEEK_CUR);
 	if (ofs > QUEUE_SIZE_LIMIT)
-		feeder_switch_queue (queue);
+		feeder_switch_queue (0);
 }
 
 
@@ -146,6 +147,7 @@ static void    feeder_queue_history_data (queue_history_entry_t *entry)
 	/* update items count in entry buffer */
 	*(int*)entry->buf = entry->count;
 
+	write (queue_fd[1], &entry_sig, sizeof (entry_sig));
 	write (queue_fd[1], &entry->buf_size, sizeof (entry->buf_size));
 	write (queue_fd[1], entry->buf, entry->buf_size);
 
@@ -195,7 +197,7 @@ void	process_feeder_child(zbx_sock_t *sock)
 			entry.severity = severity;
 
 			/* append to queue for trapper */
-			feeder_queue_data (&entry, 0);
+			feeder_queue_data (&entry);
 			metric_update (key_data, ++mtr_data);
 		}
 		else if (strncmp (data, "<reqs>", 6) == 0) {
