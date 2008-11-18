@@ -5,6 +5,8 @@
 
 static char* empty_string = "";
 
+zbx_uint64_t entry_sig = 0xFFFFFFFFFFFFFFFFULL;
+
 
 
 const char* queue_get_name (queue_name_kind_t kind, int q_num, int process_id, int index)

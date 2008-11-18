@@ -47,6 +47,9 @@ typedef struct {
 } queue_history_entry_t;
 
 
+extern zbx_uint64_t entry_sig;
+
+
 const char* queue_get_name (queue_name_kind_t kind, int q_num, int process_id, int index);
 
 char* queue_encode_entry (queue_entry_t* entry, char* buf, int size);
