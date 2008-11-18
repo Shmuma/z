@@ -327,7 +327,6 @@ void	child_trapper_main(int i)
 {
 	int count, history;
 	queue_entry_t* entries;
-	hfs_time_t now;
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In child_trapper_main()");
 	zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Trapper]", i);
@@ -354,13 +353,12 @@ void	child_trapper_main(int i)
 
 		/* dequeue data block to process */
 		if (count) {
-			now = time (NULL);
 			/* handle data block */
 			zbx_setproctitle("processing queue data block");
 			mtr_values += count;
 			metric_update (key_values, mtr_values);
 			for (i = 0; i < count; i++) {
-				process_data ((now - entries[i].ts) > 60, entries[i].ts, entries[i].server, entries[i].key, entries[i].value,
+				process_data (0, entries[i].ts, entries[i].server, entries[i].key, entries[i].value,
 					      entries[i].error, entries[i].lastlogsize, entries[i].timestamp,
 					      entries[i].source, entries[i].severity);
 				free (entries[i].buf);

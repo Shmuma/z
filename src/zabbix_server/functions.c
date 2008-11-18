@@ -340,6 +340,8 @@ int	process_data(int history, hfs_time_t ts, char *server,char *key,char *value,
 	}
 #endif
 
+	history = (time (NULL) - ts) > (5*item.delay);
+
 	zabbix_log( LOG_LEVEL_DEBUG, "Processing [%s]",
 		value);
 
