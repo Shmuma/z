@@ -167,7 +167,7 @@ int xopen(const char *fn, int flags, mode_t mode)
 	if ((retval = open(fn, flags, mode)) == -1) {
 		if (!make_directories (fn)) {
 			if ((retval = open(fn, flags, mode)) == -1)
-				zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: open: %s", fn, strerror(errno));
+				zabbix_log(LOG_LEVEL_DEBUG, "HFS: %s: open: %s", fn, strerror(errno));
                 }
 		else
 			return -1;
@@ -1479,7 +1479,7 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 	}
 
 	if ((fd = open (p_data, O_RDONLY)) == -1) {
-		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS: %s: file open failed: %s", p_data, strerror(errno));
 		goto out;
 	}
 
@@ -1601,7 +1601,7 @@ int HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t ite
 	}
 
 	if ((fd = open (p_data, O_RDONLY)) == -1) {
-		zabbix_log(LOG_LEVEL_CRIT, "HFS: %s: file open failed: %s", p_data, strerror(errno));
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS: %s: file open failed: %s", p_data, strerror(errno));
 		goto end; // error
 	}
 
@@ -1660,7 +1660,7 @@ void HFS_update_host_availability (const char* hfs_base_dir, const char* siteid,
 	fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	if (fd < 0) {
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_host_availability: open(): %s: %s", name, strerror(errno));
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_host_availability: open(): %s: %s", name, strerror(errno));
 		xfree (name);
 		return;
 	}
@@ -1690,7 +1690,7 @@ int HFS_get_host_availability (const char* hfs_base_dir, const char* siteid, zbx
 	fd = open (name, O_RDONLY);
 
 	if (fd < 0) {
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_host_availability: open(): %s: %s", name, strerror(errno));
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_host_availability: open(): %s: %s", name, strerror(errno));
 		free (name);
 		return 0;
 	}
@@ -1727,15 +1727,13 @@ int HFS_get_hosts_statuses (const char* hfs_base_dir, const char* siteid, hfs_ho
 	status_t *buf = NULL;
 	int buf_s, buf_c, i;
 
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_hosts_statuses entered");
-
 	if (!name)
 		return 0;
 
 	/* open file for reading */
 	fd = open (name, O_RDONLY);
 	if (fd < 0) {
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_hosts_statuses: open(): %s: %s", name, strerror(errno));
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_hosts_statuses: open(): %s: %s", name, strerror(errno));
 		free (name);
 		return 0;
 	}
@@ -1761,10 +1759,7 @@ int HFS_get_hosts_statuses (const char* hfs_base_dir, const char* siteid, hfs_ho
 		}
 	}
 
-	if (close (fd) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_hosts_statuses: close(): %s", strerror(errno));
-
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_hosts_statuses leave");
+	close (fd);
 	free (buf);
 	return count;
 }
@@ -1786,7 +1781,7 @@ void HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, z
 	fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	if (fd < 0) {
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_item_values_dbl: open(): %s: %s", name, strerror(errno));
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_values_dbl: open(): %s: %s", name, strerror(errno));
 		free (name);
 		return;
 	}
@@ -1822,7 +1817,7 @@ void HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, z
 	fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	if (fd < 0) {
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_item_values_int: open(): %s: %s", name, strerror(errno));
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_values_int: open(): %s: %s", name, strerror(errno));
 		free (name);
 		return;
 	}
@@ -1858,7 +1853,8 @@ void HFS_update_item_values_str (const char* hfs_base_dir, const char* siteid, z
 	fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	if (fd < 0) {
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_item_values_str: open(): %s: %s", name, strerror(errno));
+		/* it's normal situation when file not exists */
+		zabbix_log(LOG_LEVEL_WARNING, "HFS_update_item_values_str: open(): %s: %s", name, strerror(errno));
 		free (name);
 		return;
 	}
@@ -1896,7 +1892,8 @@ int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_u
 	/* open file for reading */
 	fd = open (name, O_RDONLY);
 	if (fd < 0) {
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_item_values_dbl: open(): %s: %s", name, strerror(errno));
+		/* it's normal situation when file not exists */
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_values_dbl: open(): %s: %s", name, strerror(errno));
 		free (name);
 		return 0;
 	}
@@ -1938,7 +1935,8 @@ int HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_u
 	/* open file for reading */
 	fd = open (name, O_RDONLY);
 	if (fd < 0) {
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_item_values_int: open(): %s: %s", name, strerror(errno));
+		/* it's normal situation when file not exists */
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_values_int: open(): %s: %s", name, strerror(errno));
 		free (name);
 		return 0;
 	}
@@ -1980,7 +1978,8 @@ int HFS_get_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_u
 	/* open file for reading */
 	fd = open (name, O_RDONLY);
 	if (fd < 0) {
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_item_values_str: open(): %s: %s", name, strerror(errno));
+		/* it's normal situation when file not exists */
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_values_str: open(): %s: %s", name, strerror(errno));
 		free (name);
 		return 0;
 	}
@@ -2014,19 +2013,16 @@ void HFS_update_item_status (const char* hfs_base_dir, const char* siteid, zbx_u
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemStatus);
 	int fd;
 
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_status entered");
-
 	if (!name)
 		return;
-
-	zabbix_log(LOG_LEVEL_DEBUG, "got name %s", name);
 
 	/* open file for writing */
 	/* S_IWGRP is not a mistake! We need this file writeable by web server. */
 	fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
 
 	if (fd < 0) {
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_item_status: open(): %s: %s", name, strerror(errno));
+		/* it's normal situation when file not exists */
+		zabbix_log(LOG_LEVEL_WARNING, "HFS_update_item_status: open(): %s: %s", name, strerror(errno));
 		free (name);
 		return;
 	}
@@ -2038,10 +2034,7 @@ void HFS_update_item_status (const char* hfs_base_dir, const char* siteid, zbx_u
 
 	write_str (fd, error);
 
-	if (close (fd) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_item_status: close(): %s", strerror(errno));
-
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_item_status leave");
+	close (fd);
 }
 
 
@@ -2050,15 +2043,13 @@ int HFS_get_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint6
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemStatus);
 	int fd;
 
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_status entered");
 	if (!name)
 		return 0;
 
 	/* open file for reading */
 	fd = open (name, O_RDONLY);
 	if (fd < 0) {
-		if (errno != ENOENT)
-			zabbix_log(LOG_LEVEL_CRIT, "HFS_get_item_status: open(): %s: %s", name, strerror(errno));
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_status: open(): %s: %s", name, strerror(errno));
 		free (name);
 		return 0;
 	}
@@ -2069,10 +2060,7 @@ int HFS_get_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint6
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_item_status: read(): %s", strerror(errno));
 	*error = read_str (fd);
 
-	if (close (fd) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_item_status: close(): %s", strerror(errno));
-
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_status leave");
+	close (fd);
 	return 1;
 }
 
@@ -2101,12 +2089,6 @@ int store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t 
 		return 0;
 	}
 
-	if (!obtain_lock (fd, 1)) {
-		if (close (fd) == -1)
-			zabbix_log(LOG_LEVEL_CRIT, "hfs: store_value_str: close(): %s", strerror(errno));
-		return 0;
-	}
-
 	lseek (fd, 0, SEEK_END);
 
 	free (p_name);
@@ -2117,8 +2099,6 @@ int store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t 
 		write (fd, value, len+1);
 	/* write len twice for backward reading */
 	write (fd, &len, sizeof (len));
-
-	release_lock (fd, 1);
 
 	close (fd);
 	return 0;
@@ -2312,7 +2292,7 @@ void HFS_update_trigger_value(const char* hfs_path, const char* siteid, zbx_uint
 	fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	if (fd < 0) {
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_trigger_value: open(): %s: %s", name, strerror(errno));
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS_update_trigger_value: open(): %s: %s", name, strerror(errno));
 		free (name);
 		return;
 	}
@@ -2346,8 +2326,7 @@ int HFS_get_triggers_values (const char* hfs_path, const char* siteid, hfs_trigg
 	/* open file for reading */
 	fd = open (name, O_RDONLY);
 	if (fd < 0) {
-		if (errno != ENOENT)
-			zabbix_log(LOG_LEVEL_CRIT, "HFS_get_trigger_value: open(): %s: %s", name, strerror(errno));
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_trigger_value: open(): %s: %s", name, strerror(errno));
 		free (name);
 		return 0;
 	}
@@ -2390,8 +2369,7 @@ int HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64_
 	/* open file for reading */
 	fd = open (name, O_RDONLY);
 	if (fd < 0) {
-		if (errno != ENOENT)
-			zabbix_log(LOG_LEVEL_CRIT, "HFS_get_trigger_value: open(): %s: %s", name, strerror(errno));
+		zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_trigger_value: open(): %s: %s", name, strerror(errno));
 		free (name);
 		return 0;
 	}
@@ -2432,12 +2410,6 @@ void HFS_add_alert(const char* hfs_path, const char* siteid, hfs_time_t clock, z
 		return;
 	}
 
-/* 	if (!obtain_lock (fd, 1)) { */
-/* 		if (close (fd) == -1) */
-/* 			zabbix_log(LOG_LEVEL_CRIT, "hfs: HFS_add_alert: close(): %s", strerror(errno)); */
-/* 		return; */
-/* 	} */
-
 	free (p_name);
 
 	write (fd, &clock, sizeof (clock));
@@ -2454,8 +2426,6 @@ void HFS_add_alert(const char* hfs_path, const char* siteid, hfs_time_t clock, z
 
 	/* write len twice for backward reading */
 	write (fd, &len, sizeof (len));
-
-/* 	release_lock (fd, 1); */
 
 	close (fd);
 	return;
