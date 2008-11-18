@@ -1328,7 +1328,7 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 			if (str_len > 0)
 				replace_to = zbx_dsprintf(replace_to, "%s", tmp);
 			else
-				replace_to = zbx_dsprintf(replace_to, "%s", STR_UNKNOWN_VARIABLE);
+				replace_to = zbx_dsprintf(replace_to, "");
 		}
 		else if(macro_type & (MACRO_TYPE_MESSAGE_SUBJECT | MACRO_TYPE_MESSAGE_BODY) &&
 			strncmp(pr, MVAR_TRIGGER_KEY, strlen(MVAR_TRIGGER_KEY)) == 0)
