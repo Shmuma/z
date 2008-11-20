@@ -320,28 +320,16 @@ CPU_FNCLIST
 	return SYSINFO_RET_FAIL;
 }
 
-int     SYSTEM_CPU_SWITCHES(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
-{
-        assert(result);
 
-        init_result(result);
-	
-	return SYSINFO_RET_FAIL;
-}
-
-int     SYSTEM_CPU_INTR(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
+static int parse_proc_stat (const char* prefix, AGENT_RESULT *result)
 {
+	FILE *f;
 	int ret = SYSINFO_RET_FAIL;
 	char line[MAX_STRING_LEN];
-
 	char name[MAX_STRING_LEN];
 	zbx_uint64_t value = 0;
-	
-	FILE *f;
 
-        assert(result);
-
-        init_result(result);
+	init_result (result);
 
 	if(NULL != ( f = fopen("/proc/stat","r") ))
 	{
@@ -350,7 +338,7 @@ int     SYSTEM_CPU_INTR(const char *cmd, const char *param, unsigned flags, AGEN
 			if(sscanf(line,"%s\t" ZBX_FS_UI64 "\n", name, &value) != 2) 
 				continue;
 		
-			if(strncmp(name, "intr", sizeof(name)) == 0)
+			if(strncmp(name, prefix, sizeof(name)) == 0)
 			{
 				SET_UI64_RESULT(result, value);
 				ret = SYSINFO_RET_OK;
@@ -361,5 +349,18 @@ int     SYSTEM_CPU_INTR(const char *cmd, const char *param, unsigned flags, AGEN
 	}
 
 	return ret;
+}
+
+
+int     SYSTEM_CPU_SWITCHES(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
+{
+        assert(result);
+	return parse_proc_stat ("ctxt", result);
+}
+
+int     SYSTEM_CPU_INTR(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
+{
+	assert (result);
+	return parse_proc_stat ("intr", result);
 }
 

@@ -293,13 +293,56 @@ int	NET_IF_TOTAL(const char *cmd, const char *param, unsigned flags, AGENT_RESUL
 	return ret;
 }
 
+static int lookup_port (const char* path, const char* hex_port)
+{
+	int res = 0;
+	FILE *f;
+	char* p;
+	char line[MAX_STRING_LEN];
+
+	if (NULL != (f = fopen (path, "r"))) {
+		while (fgets (line, sizeof (line), f) != NULL) {
+			if (p = strchr (line, ':')) {
+				p = strchr (p+1, ':');
+
+				if (p) {
+					p++;
+					if (strncmp (hex_port, p, strlen (hex_port)) == 0)  {
+						res = 1;
+						break;
+					}
+				}
+			}
+		}
+
+		zbx_fclose (f);
+	}
+
+	return res;
+}
+
+
 int     NET_TCP_LISTEN(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
 {
+	int port;
+	int ret = SYSINFO_RET_OK;
+	char str_port[100];
+	int found = 0;
+
         assert(result);
 
         init_result(result);
 	
-	return SYSINFO_RET_FAIL;
+	if (!sscanf (param, "%d", &port))
+		return SYSINFO_RET_FAIL;
+
+	snprintf (str_port, sizeof (str_port)-1, "%04X", port);
+	found = lookup_port ("/proc/net/tcp", str_port);
+	if (!found)
+		found = lookup_port ("/proc/net/tcp6", str_port);
+
+	SET_UI64_RESULT (result, found);
+	return ret;
 }
 
 int     NET_IF_COLLISIONS(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
