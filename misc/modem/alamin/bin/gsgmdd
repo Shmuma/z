@@ -267,7 +267,7 @@ use POSIX;
 my $program_name = "gsgmdd";
 my $program_version = "v0.3.6 - May 6, 2001";
 
-my $configfile = "/etc/alamin/gsgd.conf";
+my $configfile = "/etc/zabbix-sms/gsgd.conf";
 
 my $opt_debug = 0;
 my $opt_verbose = 0;
@@ -1010,6 +1010,7 @@ sub sendsms_at {
   print CHATFILE "OK 'AT+CMGS=\"".$pg_to."\"'\n";
 # 0.3.6 script, new
   $pg_message =~ s/\n/\\n/g;
+  $pg_message =~ s/\'/\\\'/g;
   print CHATFILE "'>' '".$pg_message."'\n";
 # 0.3.5a script, changed in 0.3.6
 #  my @message_array = split(/\n/,$pg_message);
