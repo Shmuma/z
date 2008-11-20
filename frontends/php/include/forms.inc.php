@@ -2136,7 +2136,7 @@
 
 	function	insert_copy_elements_to_forms($elements_array_name)
 	{
-		
+		global $USER_DETAILS;
 		$copy_type = get_request("copy_type", 0);
 		$copy_mode = get_request("copy_mode", 0);
 		$filter_groupid = get_request("filter_groupid", 0);
@@ -2157,16 +2157,17 @@
 		$cmbCopyType->AddItem(0,S_HOSTS);
 		$cmbCopyType->AddItem(1,S_HOST_GROUPS);
 		$frmCopy->AddRow(S_TARGET_TYPE, $cmbCopyType);
+		$accessible_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_WRITE);
 
 		$target_sql = 'select distinct g.groupid as target_id, g.name as target_name'.
 			' from groups g, hosts_groups hg'.
-			' where hg.groupid=g.groupid';
+			' where hg.groupid=g.groupid and hg.groupid in ('.$accessible_groups.')';
 
 		if(0 == $copy_type)
 		{
 			$cmbGroup = new CComboBox('filter_groupid',$filter_groupid,'submit()');
 			$cmbGroup->AddItem(0,S_ALL_SMALL);
-			$groups = DBselect($target_sql);
+			$groups = DBselect($target_sql.'  order by g.name');
 			while($group = DBfetch($groups))
 			{
 				$cmbGroup->AddItem($group["target_id"],$group["target_name"]);
