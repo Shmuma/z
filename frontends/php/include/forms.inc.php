@@ -24,6 +24,7 @@
 	require_once 	"include/defines.inc.php";
 	require_once 	"include/classes/graph.inc.php";
 	require_once 	"include/users.inc.php";
+	require_once 	"include/hosts_mass.inc.php";
 	require_once 	"include/db.inc.php";
 
 	function	insert_slideshow_form()
@@ -4001,6 +4002,7 @@ include_once 'include/discovery.inc.php';
 
 		$useprofile = get_request("useprofile","no");
 		$mass_add   = get_request("massadd", 0);
+		$massadd_view = get_request("massadd_view", 0);
 		$mass_add_patterns = get_request("massaddpatterns", "# <FORMAT> [ARGS]...
 # FORMAT controls the output as in printf(3).
 # ARGS can have expanded sequences of numbers or letters:
@@ -4100,8 +4102,20 @@ include_once 'include/discovery.inc.php';
 
 		if (!$mass_add)
 			$frmHost->AddRow(S_NAME,new CTextBox("host",$host,20));
-		else if (!isset($_REQUEST["hostid"]))
+		else if (!isset($_REQUEST["hostid"])) {
 			$frmHost->AddRow("Mass add patterns", new CTextArea('massaddpatterns', $mass_add_patterns, 50, 10));
+			$frmHost->AddRow("View expanded list", new CButton('massadd_view',"Preview","submit()"));
+
+			if ($massadd_view) {
+				$hostlist = expand_host_patterns($_REQUEST['massaddpatterns']);
+				$hostcount = count($hostlist);
+				$hosts = "";
+				foreach($hostlist as $host)
+					$hosts .= sprintf("%s\n", $host);
+				$msg = ($hostcount > 0) ? "Preview $hostcount hosts" : "Preview hosts";
+				$frmHost->AddRow($msg, new CTextArea('dummy', $hosts, 50, 10));
+			}
+		}
 
 		$frm_row = array();
 		
