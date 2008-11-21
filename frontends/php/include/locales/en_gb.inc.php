@@ -691,6 +691,7 @@
 	'S_ACTIVATE_SELECTED_HOSTS_Q'=>		'Activate selected hosts?',
 	'S_SELECT_HOST_TEMPLATE_FIRST'=>	'Select host template first',
 	'S_CREATE_HOST'=>			'Create Host',
+	'S_MASS_CREATE_HOST'=>			'Mass create host',
 	'S_CREATE_TEMPLATE'=>			'Create Template',
 	'S_TEMPLATE_LINKAGE'=>			'Template linkage',
 	'S_TEMPLATE_LINKAGE_BIG'=>		'TEMPLATE LINKAGE',

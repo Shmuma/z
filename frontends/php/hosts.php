@@ -29,6 +29,57 @@
 
 include_once "include/page_header.php";
 
+function save_host($hostid, $result, $need_message = 1) {
+	global $_REQUEST, $audit_action, $msg_ok, $msg_fail;
+
+	if($result) {
+		delete_host_profile($hostid);
+
+		if(get_request("useprofile","no") == "yes") {
+			$result = add_host_profile($hostid,
+				$_REQUEST["devicetype"],$_REQUEST["name"],$_REQUEST["os"],
+				$_REQUEST["serialno"],$_REQUEST["tag"],$_REQUEST["macaddress"],
+				$_REQUEST["hardware"],$_REQUEST["software"],$_REQUEST["contact"],
+				$_REQUEST["location"],$_REQUEST["notes"]);
+		}
+	}
+
+	if ($need_message)
+		show_messages($result, $msg_ok, $msg_fail);
+
+	if($result){
+		add_audit($audit_action,AUDIT_RESOURCE_HOST,
+			"Host [".$_REQUEST["host"]."] IP [".$_REQUEST["ip"]."] ".
+			"Status [".$_REQUEST["status"]."]");
+
+		unset($_REQUEST["form"]);
+		unset($_REQUEST["hostid"]);
+	}
+	unset($_REQUEST["save"]);
+}
+
+function save_add_host($str) {
+	global $_REQUEST, $templates, $groups;
+
+	$is_ip = ip2long($str);
+	if (!$is_ip) {
+		$_REQUEST["host"] = $str;
+		$_REQUEST["dns"] = $str;
+		$useip = 0;
+	}
+	else {
+		$_REQUEST["host"] = $str;
+		$_REQUEST["ip"] = $str;
+		$useip = 1;
+	}
+
+	$hostid = add_host(
+		$_REQUEST["host"],$_REQUEST["port"],$_REQUEST["status"],$useip,$_REQUEST["dns"],
+		$_REQUEST["ip"],$_REQUEST["siteid"],$templates,"",$groups);
+
+	save_host($hostid, $hostid, 0);
+}
+
 	$_REQUEST["config"] = get_request("config",get_profile("web.hosts.config",0));
 	
 	$available_hosts = get_accessible_hosts_by_user($USER_DETAILS,PERM_READ_WRITE,null,PERM_RES_IDS_ARRAY,NULL);
@@ -74,7 +125,7 @@ include_once "include/page_header.php";
 
 /* host */
 		"hostid"=>	array(T_ZBX_INT, O_OPT,	P_SYS,  DB_ID,		'(isset({config})&&({config}==0))&&(isset({form})&&({form}=="update"))'),
-		"host"=>	array(T_ZBX_STR, O_OPT,	NULL,   NOT_EMPTY,	'isset({config})&&({config}==0||{config}==3)&&isset({save})'),
+		"host"=>	array(T_ZBX_STR, O_OPT,	NULL,   NOT_EMPTY,	'isset({config})&&({config}==0||{config}==3)&&isset({save})&&!isset({massaddpatterns})'),
 		"dns"=>		array(T_ZBX_STR, O_OPT,	NULL,	NULL,		'(isset({config})&&({config}==0))&&isset({save})'),
 		"useip"=>	array(T_ZBX_STR, O_OPT, NULL,	IN('0,1'),	'(isset({config})&&({config}==0))&&isset({save})'),
 		"ip"=>		array(T_ZBX_IP, O_OPT, NULL,	NULL,		'(isset({config})&&({config}==0))&&isset({save})'),
@@ -87,6 +138,9 @@ include_once "include/page_header.php";
 		"clear_templates"=>	array(T_ZBX_INT, O_OPT,	NULL,	DB_ID,	NULL),
 
 		"useprofile"=>	array(T_ZBX_STR, O_OPT, NULL,   NULL,	NULL),
+		"massadd"=>	array(T_ZBX_STR, O_OPT, NULL,   NULL,	NULL),
+		"massaddpatterns"	=> array(T_ZBX_STR, O_OPT, NULL,   NULL,	NULL),
+		"massadd_view"		=> array(T_ZBX_STR, O_OPT, NULL,   NULL,	NULL),
 		"devicetype"=>	array(T_ZBX_STR, O_OPT, NULL,   NULL,	'isset({useprofile})'),
 		"name"=>	array(T_ZBX_STR, O_OPT, NULL,   NULL,	'isset({useprofile})'),
 		"os"=>		array(T_ZBX_STR, O_OPT, NULL,   NULL,	'isset({useprofile})'),
@@ -245,6 +299,18 @@ include_once "include/page_header.php";
 				$audit_action 	= AUDIT_ACTION_UPDATE;
 
 				$hostid = $_REQUEST["hostid"];
+				save_host($hostid, $result);
+			}
+			else if (isset($_REQUEST["massaddpatterns"]))
+			{
+				$msg_ok 	= S_HOST_ADDED;
+				$msg_fail 	= S_CANNOT_ADD_HOST;
+				$audit_action 	= AUDIT_ACTION_ADD;
+
+				$lst = expand_host_patterns($_REQUEST["massaddpatterns"]);
+
+				foreach ($lst as $host)
+					save_add_host($host);
 			} else {
 				$hostid = add_host(
 					$_REQUEST["host"],$_REQUEST["port"],$_REQUEST["status"],$useip,$_REQUEST["dns"],
@@ -254,31 +320,8 @@ include_once "include/page_header.php";
 				$msg_fail 	= S_CANNOT_ADD_HOST;
 				$audit_action 	= AUDIT_ACTION_ADD;
 
-				$result		= $hostid;
+				save_host($hostid, $hostid);
 			}
-
-			if($result){
-				delete_host_profile($hostid);
-
-				if(get_request("useprofile","no") == "yes"){
-					$result = add_host_profile($hostid,
-						$_REQUEST["devicetype"],$_REQUEST["name"],$_REQUEST["os"],
-						$_REQUEST["serialno"],$_REQUEST["tag"],$_REQUEST["macaddress"],
-						$_REQUEST["hardware"],$_REQUEST["software"],$_REQUEST["contact"],
-						$_REQUEST["location"],$_REQUEST["notes"]);
-				}
-			}
-
-			show_messages($result, $msg_ok, $msg_fail);
-			if($result){
-				add_audit($audit_action,AUDIT_RESOURCE_HOST,
-					"Host [".$_REQUEST["host"]."] IP [".$_REQUEST["ip"]."] ".
-					"Status [".$_REQUEST["status"]."]");
-
-				unset($_REQUEST["form"]);
-				unset($_REQUEST["hostid"]);
-			}
-			unset($_REQUEST["save"]);
 		} else {
 			show_error_message (S_HOST_MUST_BELONG_TO_GROUP);
 		}
