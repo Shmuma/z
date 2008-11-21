@@ -4000,6 +4000,12 @@ include_once 'include/discovery.inc.php';
 		$ip	= get_request("ip",	"0.0.0.0");
 
 		$useprofile = get_request("useprofile","no");
+		$mass_add   = get_request("massadd", 0);
+		$mass_add_patterns = get_request("massaddpatterns", "# <FORMAT> [ARGS]...
+# FORMAT controls the output as in printf(3).
+# ARGS can have expanded sequences of numbers or letters:
+# '[1-N]', '[a-z]', '{a,z,x}' or '{1,8,3}.'
+");
 
 		$devicetype	= get_request("devicetype","");
 		$name		= get_request("name","");
@@ -4088,8 +4094,14 @@ include_once 'include/discovery.inc.php';
 
 		if(isset($_REQUEST["hostid"]))		$frmHost->AddVar("hostid",$_REQUEST["hostid"]);
 		if(isset($_REQUEST["groupid"]))		$frmHost->AddVar("groupid",$_REQUEST["groupid"]);
-		
-		$frmHost->AddRow(S_NAME,new CTextBox("host",$host,20));
+
+		if (!isset($_REQUEST["hostid"]))
+			$frmHost->AddRow("Mass add",new CCheckBox("massadd",$mass_add,"submit()"));
+
+		if (!$mass_add)
+			$frmHost->AddRow(S_NAME,new CTextBox("host",$host,20));
+		else if (!isset($_REQUEST["hostid"]))
+			$frmHost->AddRow("Mass add patterns", new CTextArea('massaddpatterns', $mass_add_patterns, 50, 10));
 
 		$frm_row = array();
 		
@@ -4113,7 +4125,7 @@ include_once 'include/discovery.inc.php';
 		$frmHost->AddRow(S_GROUPS,$frm_row);
 
 // onChange does not work on some browsers: MacOS, KDE browser
-		if($show_only_tmp)
+		if($show_only_tmp || $mass_add)
 		{
 			$frmHost->AddVar("useip",0);
 			$frmHost->AddVar("ip","0.0.0.0");
@@ -4188,8 +4200,7 @@ include_once 'include/discovery.inc.php';
 					url_param($templates,false,'existed_templates')."',450,450)",
 					'T')
 				));
-	
-		if($show_only_tmp)
+		if($show_only_tmp || $mass_add)
 		{
 			$useprofile = "no";
 			$frmHost->AddVar("useprofile",$useprofile);
