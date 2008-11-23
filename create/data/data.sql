@@ -41,8 +41,8 @@ INSERT INTO media_type VALUES (3,3,'Jabber','localhost','localhost','zabbix@loca
 -- Dumping data for table `users`
 --
 
-INSERT INTO users VALUES (1,'Admin','Zabbix','Administrator','d41d8cd98f00b204e9800998ecf8427e','',900,'en_gb',30,3);
-INSERT INTO users VALUES (2,'guest','Default','User','d41d8cd98f00b204e9800998ecf8427e','',900,'en_gb',30,1);
+INSERT INTO users VALUES (1,'Admin','Zabbix','Administrator','d41d8cd98f00b204e9800998ecf8427e','',900,'en_gb',30,3,0);
+INSERT INTO users VALUES (2,'guest','Default','User','d41d8cd98f00b204e9800998ecf8427e','',900,'en_gb',30,1,0);
 
 --
 -- Dumping data for table `usrgrp`

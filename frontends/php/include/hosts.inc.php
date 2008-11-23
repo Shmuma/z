@@ -674,12 +674,15 @@ require_once "include/items.inc.php";
 	function	get_templates_by_hostid($hostid)
 	{
 		$resuilt = array();
-		$db_templates = DBselect('select distinct h.hostid,h.host from hosts_templates ht '.
+		$db_templates = DBselect('select distinct h.hostid,h.host,ht.params from hosts_templates ht '.
 			' left join hosts h on h.hostid=ht.templateid '.
 			' where ht.hostid='.$hostid);
 		while($template_data = DBfetch($db_templates))
 		{
-			$resuilt[$template_data['hostid']] = $template_data['host'];
+			$name = $template_data['host'];
+			if (!empty ($template_data['params']))
+				$name .= '['.$template_data['params'].']';
+			$resuilt[$template_data['hostid']] = $name;
 		}
 		return $resuilt;
 	}
