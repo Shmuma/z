@@ -886,7 +886,10 @@ include_once "include/page_header.php";
 				$templates_linked = array();
 				foreach(array_keys($templates) as $templateid)
 				{
-					$templates_linked[$templateid] = host_js_menu($templateid, $templates[$templateid])->ToString();
+					$tmp_name = $templates[$templateid]["host"];
+					if (!empty ($tmp_name))
+						$tmp_name .= '['.$templates[$templateid]["params"].']';
+					$templates_linked[$templateid] = host_js_menu($templates[$templateid]["hostid"], $tmp_name)->ToString();
 				}
 
 				$table->addRow(array(

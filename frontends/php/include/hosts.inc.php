@@ -386,10 +386,16 @@ require_once "include/items.inc.php";
 	function	update_host($hostid,$host,$port,$status,$useip,$dns,$ip,$siteid,$templates,$newgroup,$groups)
 	{
 		// filter parametrized templates from $templates array
-		
-
 		$old_templates = get_templates_by_hostid($hostid);
+		print "<pre>Old templates:\n";
+		print_r ($old_templates);
+		print "</pre>";
+
 		$unlinked_templates = array_diff($old_templates, $templates);
+		print "<pre>unlinked templates:\n";
+		print_r ($unlinked_templates);
+		print "</pre>";
+
 		foreach($unlinked_templates as $id => $name)
 		{
 			unlink_template($hostid, $id);
@@ -398,6 +404,9 @@ require_once "include/items.inc.php";
 		$old_host = get_host_by_hostid($hostid);
 
 		$new_templates = array_diff($templates, $old_templates);
+		print "<pre>New templates:\n";
+		print_r ($new_templates);
+		print "</pre>";
 
 		$result = db_save_host($host,$port,$status,$useip,$dns,$ip,$siteid,$new_templates,$hostid);
 		if(!$result)
@@ -673,18 +682,17 @@ require_once "include/items.inc.php";
 	 */
 	function	get_templates_by_hostid($hostid)
 	{
-		$resuilt = array();
+		$result = array();
 		$db_templates = DBselect('select distinct h.hostid,h.host,ht.params from hosts_templates ht '.
 			' left join hosts h on h.hostid=ht.templateid '.
 			' where ht.hostid='.$hostid);
 		while($template_data = DBfetch($db_templates))
 		{
-			$name = $template_data['host'];
-			if (!empty ($template_data['params']))
-				$name .= '['.$template_data['params'].']';
-			$resuilt[$template_data['hostid']] = $name;
+			$result[] = array ("hostid" => $template_data['hostid'], 
+					   "host"   => $template_data['host'],
+					   "params" => $template_data['params']);
 		}
-		return $resuilt;
+		return $result;
 	}
 
 	/*
