@@ -43,7 +43,7 @@ parse_cfg_object(const char *cfg_file,struct cfg_line *cfg)
 	char *path;
 	struct stat sb;
 	struct dirent *d;
-	int result = SUCCEED;
+	int result = SUCCEED, len;
 
 	if (stat(cfg_file, &sb) == -1) {
 		zbx_error("%s: %s\n", cfg_file, strerror(errno));
@@ -62,7 +62,11 @@ parse_cfg_object(const char *cfg_file,struct cfg_line *cfg)
 		if (d->d_name[0] == '.') {
 			continue;
 		}
-		cfg_len = strlen(cfg_file) + strlen(d->d_name) + 2;
+		len = strlen (d->d_name);
+		if (len < 5 || strncmp (d->d_name + (len - 5), ".conf", 5))
+			continue;
+
+		cfg_len = strlen(cfg_file) + len + 2;
 		path = (char *) malloc(sizeof(char) * cfg_len);
 
 		if (path == NULL) {
