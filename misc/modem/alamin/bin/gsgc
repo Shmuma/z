@@ -185,7 +185,7 @@ my $maxanswers = 10;
 my $fullresponse = "";
 my $challenge = "";
 
-my $configfile = "/etc/alamin/gsgc.conf";
+my $configfile = "/etc/zabbix-sms/gsgc.conf";
 
 my $opt_debug = 0;
 my $opt_verbose = 0;

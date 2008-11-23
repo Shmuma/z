@@ -36,6 +36,16 @@
 /*****************************************
 	CHECK USER AUTHORISATION
 *****************************************/
+	function options_from_bits($bits)
+	{
+		global  $USER_OPTIONS;
+		$res = array();
+
+	        foreach ($USER_OPTIONS as $param => $arr)
+			$res[$param] = (($bits & $arr["bit"]) > 0 ? 1 : 0);
+
+		return $res;
+	}
 
 	function	check_authorisation()
 	{
@@ -94,6 +104,7 @@
 				"userid"=>0,
 				"lang"	=>"en_gb",
 				"type"	=>"0",
+				"options_bits"=>0,
 				"node"	=>array(
 					"name"	=>'- unknown -',
 					"nodeid"=>0));
@@ -111,6 +122,8 @@
 			include('index.php');
 			exit;
 		}
+
+		$USER_DETAILS["options"] = options_from_bits($USER_DETAILS["options_bits"]);
 	}
 
 /***********************************************
@@ -221,7 +234,7 @@ COpt::counter_up('perm');
 
 	function	get_accessible_groups_by_user($user_data,$perm,$perm_mode=null,$perm_res=null,$nodeid=null)
 	{
-		global $ZBX_LOCALNODEID;
+		global $USER_DETAILS, $ZBX_LOCALNODEID;
 
 		if(is_null($perm_mode))		$perm_mode	= PERM_MODE_GE;
 		if(is_null($perm_res))		$perm_res	= PERM_RES_STRING_LINE;
@@ -236,6 +249,12 @@ COpt::counter_up('perm');
 		{
 			case PERM_RES_DATA_ARRAY:	$resdata = '$group_data'; break;
 			default:			$resdata = '$group_data["groupid"]'; break;
+		}
+
+		if ($USER_DETAILS["options"]["hide_ro_host_groups"]) {
+			if (($perm < PERM_READ_ONLY     || $perm == PERM_READ_LIST) &&
+			    ($perm_mode == PERM_MODE_GE || $perm_mode == PERM_MODE_GT))
+				$perm = PERM_READ_WRITE;
 		}
 
 COpt::counter_up('perm_group['.$userid.','.$perm.','.$perm_mode.','.$perm_res.','.$nodeid.']');
@@ -275,7 +294,7 @@ COpt::counter_up('perm');
 				case USER_TYPE_ZABBIX_USER:
 					$group_data['permission'] = PERM_DENY; break;
 				case USER_TYPE_ZABBIX_ADMIN:
-					$group_data['permission'] = PERM_READ_ONLY; break;
+					$group_data['permission'] = $USER_DETAILS["options"]["hide_ro_host_groups"] ? PERM_DENY : PERM_READ_ONLY; break;
 				case USER_TYPE_SUPER_ADMIN:
 					$group_data['permission'] = PERM_READ_WRITE; break;
 				}

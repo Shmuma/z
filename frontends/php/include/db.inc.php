@@ -450,16 +450,13 @@ COpt::savesqlrequest($query);
 	}
 	
 
-/* string value prepearing */
-if(isset($DB_TYPE) && $DB_TYPE == "ORACLE") {	
 	function	zbx_dbstr($var)	{
-		return "'".ereg_replace('\'','\'\'',$var)."'";	
+		global $DB_TYPE;
+		if(isset($DB_TYPE) && $DB_TYPE == "ORACLE")
+			return "'".ereg_replace('"', '\\"', ereg_replace('\'','\'\'',$var))."'";
+		else
+			return "'".addslashes($var)."'";
 	}
-} else {			
-	function	zbx_dbstr($var)	{
-		return "'".addslashes($var)."'";
-	}
-}
 
 	function	zbx_dbconcat($params)
 	{

@@ -1846,7 +1846,12 @@
 		$header=array(new CCol(S_TRIGGERS,'center'));
 		foreach($hosts as $hostname)
 		{
-			$header=array_merge($header,array(new CImg('vtext.php?text='.$hostname)));
+			// remove all right after the first dot
+			if (ereg ("^([^.]+)", $hostname, $reg))
+				$name = $reg[1];
+			else
+				$name = $hostname;
+			$header=array_merge($header,array(new CImg('vtext.php?text='.$name)));
 		}
 		$table->SetHeader($header,'vertical_header');
 

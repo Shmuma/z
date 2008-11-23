@@ -340,6 +340,8 @@ int	process_data(int history, hfs_time_t ts, char *server,char *key,char *value,
 	}
 #endif
 
+	history = (time (NULL) - ts) > (5*item.delay);
+
 	zabbix_log( LOG_LEVEL_DEBUG, "Processing [%s]",
 		value);
 
@@ -532,12 +534,12 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 					ok = 0;
 			}
 			if (!ok || !process_item_delta (item, &new_val, now, &res_val)) {
-				zabbix_log(LOG_LEVEL_ERR, "Value not stored for itemid [%d]. Unknown delta [%d]",
-					item->itemid,
-					item->delta);
-				zabbix_syslog("Value not stored for itemid [%d]. Unknown delta [%d]",
-					item->itemid,
-					item->delta);
+/* 				zabbix_log(LOG_LEVEL_ERR, "Value not stored for itemid [%d]. Unknown delta [%d]", */
+/* 					item->itemid, */
+/* 					item->delta); */
+/* 				zabbix_syslog("Value not stored for itemid [%d]. Unknown delta [%d]", */
+/* 					item->itemid, */
+/* 					item->delta); */
 				ret = FAIL;
 			}
 			else {

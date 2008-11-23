@@ -131,6 +131,17 @@
 		return $result;
 	}
 
+	function	update_user_options($userid)
+	{
+		global $USER_OPTIONS;
+
+		$value = 0;
+		foreach ($USER_OPTIONS as $param => $opt)
+			$value += get_request($param, 0);
+
+		DBexecute("update users set options_bits=".$value." where userid=".$userid);
+	}
+
 	# Update User Profile
 
 	function	update_user_profile($userid,$passwd, $url,$autologout,$lang,$refresh, $user_medias)

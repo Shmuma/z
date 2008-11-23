@@ -676,12 +676,12 @@
 	# Insert form for User
 	function	insert_user_form($userid,$profile=0)
 	{
-		global $_REQUEST;
+		global $_REQUEST, $USER_DETAILS, $USER_OPTIONS;
 
 		$frm_title = S_USER;
 		if(isset($userid))
 		{
-			global $USER_DETAILS;
+//			global $USER_DETAILS;
 /*			if($userid == $USER_DETAILS['userid']) $profile = 1;*/
 
 			$user=get_user_by_userid($userid);
@@ -703,7 +703,7 @@
 			$user_type	= $user["type"];
 
 			$user_groups	= array();
-			$user_medias		= array();
+			$user_medias	= array();
 
 			$db_user_groups = DBselect('select g.* from usrgrp g, users_groups ug'.
 				' where ug.usrgrpid=g.usrgrpid and ug.userid='.$userid);
@@ -866,7 +866,7 @@
 				(count($user_medias) > 0) ? new CButton('del_user_media',S_DELETE_SELECTED) : null
 				));
 		}
-
+/* XXXlegion: translation horrible!
 		$cmbLang = new CComboBox('lang',$lang);
 		$cmbLang->AddItem("en_gb",S_ENGLISH_GB);
 		$cmbLang->AddItem("cn_zh",S_CHINESE_CN);
@@ -883,6 +883,19 @@
 		$cmbLang->AddItem("hu_hu",S_HUNGARY_HU);
 
 		$frmUser->AddRow(S_LANGUAGE, $cmbLang);
+*/
+		$db_bits = DBselect('select options_bits from users where userid='.$userid);
+		$bits = DBfetch($db_bits);
+		$options = options_from_bits($bits[0]);
+
+		$options_table = new CTable("No options defined");
+		foreach($USER_OPTIONS as $param => $opt) {
+			$options_table->AddRow(array(
+				new CCheckBox($param, $options[$param],null,$opt["bit"]),
+				new CSpan($opt["descr"], NULL)));
+		}
+
+		$frmUser->AddRow("Options", $options_table);
 
 		$frmUser->AddRow(S_AUTO_LOGOUT_IN_SEC,	new CNumericBox("autologout",$autologout,4));
 		$frmUser->AddRow(S_URL_AFTER_LOGIN,	new CTextBox("url",$url,50));
@@ -2123,7 +2136,7 @@
 
 	function	insert_copy_elements_to_forms($elements_array_name)
 	{
-		
+		global $USER_DETAILS;
 		$copy_type = get_request("copy_type", 0);
 		$copy_mode = get_request("copy_mode", 0);
 		$filter_groupid = get_request("filter_groupid", 0);
@@ -2144,16 +2157,17 @@
 		$cmbCopyType->AddItem(0,S_HOSTS);
 		$cmbCopyType->AddItem(1,S_HOST_GROUPS);
 		$frmCopy->AddRow(S_TARGET_TYPE, $cmbCopyType);
+		$accessible_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_WRITE);
 
 		$target_sql = 'select distinct g.groupid as target_id, g.name as target_name'.
 			' from groups g, hosts_groups hg'.
-			' where hg.groupid=g.groupid';
+			' where hg.groupid=g.groupid and hg.groupid in ('.$accessible_groups.')';
 
 		if(0 == $copy_type)
 		{
 			$cmbGroup = new CComboBox('filter_groupid',$filter_groupid,'submit()');
 			$cmbGroup->AddItem(0,S_ALL_SMALL);
-			$groups = DBselect($target_sql);
+			$groups = DBselect($target_sql.'  order by g.name');
 			while($group = DBfetch($groups))
 			{
 				$cmbGroup->AddItem($group["target_id"],$group["target_name"]);
