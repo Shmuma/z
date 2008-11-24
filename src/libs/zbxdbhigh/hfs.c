@@ -2422,7 +2422,7 @@ void HFS_add_alert(const char* hfs_path, const char* siteid, hfs_time_t clock, z
 	write_str (fd, message);
 
 	len = sizeof (clock) + sizeof (actionid) + sizeof (userid) + sizeof (triggerid) + sizeof (mediatypeid) + 
-		strlen (sendto) + 1 + strlen (subject) + 1 + strlen (subject) + 1;
+		str_buffer_length (sendto) + str_buffer_length (subject) + str_buffer_length (subject);
 
 	/* write len twice for backward reading */
 	write (fd, &len, sizeof (len));
@@ -2431,6 +2431,80 @@ void HFS_add_alert(const char* hfs_path, const char* siteid, hfs_time_t clock, z
 	return;
 }
 
+
+int HFS_get_alerts (const char* hfs_path, const char* siteid, int skip, int count, hfs_alert_value_t** alerts)
+{
+	char* f_name = get_name (hfs_path, siteid, 0, NK_Alert);
+	int fd, len, res = 0;
+	hfs_off_t ofs;
+
+	if ((fd = open (f_name, O_RDONLY)) == -1) {
+		zabbix_log (LOG_LEVEL_ERR, "HFS_get_alerts: Canot open file %s", f_name);
+		free (f_name);
+		return 0;
+	}
+
+	free (f_name);
+
+	ofs = lseek (fd, 0, SEEK_END);
+
+	if (ofs == (hfs_off_t)-1) {
+		close (fd);
+		return 0;
+	}
+
+	while (skip > 0) {
+		ofs = lseek (fd, ofs - sizeof (len), SEEK_SET);
+		if ((ofs == (hfs_off_t)-1) || (read (fd, &len, sizeof (len)) != sizeof (len))) {
+			close (fd);
+			return 0;
+		}
+
+		ofs = lseek (fd, ofs-len, SEEK_SET);
+		if (ofs == (hfs_off_t)-1) {
+			close (fd);
+			return -1;
+		}
+
+		skip--;
+	}
+
+	/* allocate memory for result */
+	*alerts = (hfs_alert_value_t*)malloc (sizeof (hfs_alert_value_t) * count);
+
+	if (*alerts == NULL) {
+		close (fd);
+		return 0;
+	}
+
+	while (count > 0) {
+		ofs = lseek (fd, ofs - sizeof (len), SEEK_SET);
+		if ((ofs == (hfs_off_t)-1) || (read (fd, &len, sizeof (len)) != sizeof (len))) {
+			close (fd);
+			return res;
+		}
+
+		ofs = lseek (fd, ofs - len, SEEK_SET);
+
+		if (ofs == (hfs_off_t)-1) {
+			close (fd);
+			return res;
+		}
+
+		/* read alert data */
+		read (fd, *alerts + res, sizeof (hfs_alert_value_t) - 3*sizeof (char*));
+		(*alerts)[res].sendto = read_str (fd);
+		(*alerts)[res].subject = read_str (fd);
+		(*alerts)[res].message = read_str (fd);
+
+		lseek (fd, ofs, SEEK_SET);
+
+		res++;
+		count--;
+	}
+
+	return res;
+}
 
 
 void HFS_add_event (const char* hfs_path, const char* siteid, zbx_uint64_t eventid, zbx_uint64_t triggerid, 

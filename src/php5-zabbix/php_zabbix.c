@@ -30,6 +30,7 @@ static zend_function_entry php_zabbix_functions[] = {
 	PHP_FE(zabbix_hfs_trigger_events, NULL)
 	PHP_FE(zabbix_hfs_host_events, NULL)
 	PHP_FE(zabbix_hfs_clear_item_history, NULL)
+	PHP_FE(zabbix_hfs_get_alerts, NULL)
 	{NULL, NULL, NULL}
 };
 
@@ -777,3 +778,74 @@ PHP_FUNCTION(zabbix_hfs_clear_item_history)
 	RETURN_TRUE;
 }
 /* }}} */
+
+
+/* {{{ proto array zabbix_hfs_get_alerts(char *site, int skip, int count) */
+PHP_FUNCTION(zabbix_hfs_get_alerts)
+{
+	char *site = NULL;
+	int site_len = 0;
+	int skip, count, res_count, i;
+	hfs_alert_value_t* alerts;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll", &site, &site_len, &skip, &count) == FAILURE)
+		RETURN_FALSE;
+
+        if (array_init(return_value) == FAILURE)
+		RETURN_FALSE;
+
+	res_count = HFS_get_alerts (ZABBIX_GLOBAL(hfs_base_dir), site, skip, count, &alerts);
+
+	for (i = 0; i < res_count; i++) {
+		zval *z_obj;
+		zval *z_str;
+
+		MAKE_STD_ZVAL(z_obj);
+		object_init(z_obj);
+
+		add_property_long(z_obj, "clock", alerts[i].clock);
+		add_property_long(z_obj, "actionid", alerts[i].actionid);
+		add_property_long(z_obj, "userid", alerts[i].userid);
+		add_property_long(z_obj, "triggerid", alerts[i].triggerid);
+		add_property_long(z_obj, "mediatypeid", alerts[i].mediatypeid);
+
+		MAKE_STD_ZVAL (z_str);
+		if (alerts[i].sendto) {
+			ZVAL_STRING (z_str, alerts[i].sendto, 1);
+		}
+		else {
+			ZVAL_EMPTY_STRING (z_str);
+		}
+		add_property_zval (z_obj, "sendto", z_str);
+
+		MAKE_STD_ZVAL (z_str);
+		if (alerts[i].subject) {
+			ZVAL_STRING (z_str, alerts[i].subject, 1);
+		}
+		else {
+			ZVAL_EMPTY_STRING (z_str);
+		}
+		add_property_zval (z_obj, "subject", z_str);
+
+		MAKE_STD_ZVAL (z_str);
+		if (alerts[i].message) {
+			ZVAL_STRING (z_str, alerts[i].message, 1);
+		}
+		else {
+			ZVAL_EMPTY_STRING (z_str);
+		}
+		add_property_zval (z_obj, "message", z_str);
+
+		add_next_index_object(return_value, z_obj TSRMLS_CC);
+
+		if (alerts[i].sendto)
+			free (alerts[i].sendto);
+		if (alerts[i].subject)
+			free (alerts[i].subject);
+		if (alerts[i].message)
+			free (alerts[i].message);
+	}
+	free (alerts);
+}
+/* }}} */
+
