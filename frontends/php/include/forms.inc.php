@@ -1592,7 +1592,7 @@
 
 		$delay_flex_el = array();
 
-		if($type != ITEM_TYPE_TRAPPER && $type != ITEM_TYPE_HTTPTEST)
+		if($type != ITEM_TYPE_HTTPTEST)
 		{
 			$i = 0;
 			foreach($delay_flex as $val)
@@ -1769,7 +1769,7 @@
 		{
 			$frmItem->AddVar("formula",$formula);
 		}
-		if($type != ITEM_TYPE_TRAPPER && $type != ITEM_TYPE_HTTPTEST)
+		if($type != ITEM_TYPE_HTTPTEST)
 		{
 			$frmItem->AddRow(S_UPDATE_INTERVAL_IN_SEC, new CNumericBox("delay",$delay,5));
 			$frmItem->AddRow("Flexible intervals (sec)", $delay_flex_el);

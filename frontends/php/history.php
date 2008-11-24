@@ -102,12 +102,12 @@ include_once "include/page_header.php";
 		}
 	}
 
-	$denyed_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY,PERM_MODE_LT);
+	$accessible_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY);
 
-	if((DBfetch(DBselect("select h.host,i.hostid,i.description,i.key_ from items i,hosts h,hosts_groups hg ".
+	if((!DBfetch(DBselect("select h.host,i.hostid,i.description,i.key_ from items i,hosts h,hosts_groups hg ".
 		" where i.itemid in (".(is_array($_REQUEST["itemid"]) ? implode(',', $_REQUEST["itemid"]) : $_REQUEST["itemid"]).") ".
 		" and hg.hostid=h.hostid and h.hostid=i.hostid ".
-		" and hg.groupid in (".$denyed_groups.")"))))
+			      " and hg.groupid in (".$accessible_groups.")"))))
 	{
 		access_deny();
 	}
