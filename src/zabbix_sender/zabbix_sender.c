@@ -42,6 +42,7 @@ char *help_message[] = {
 	"",
 	"  -k --key <Key>                       Specify metric name (key) we want to send",
 	"  -o --value <Key value>               Specify value of the key",
+	"  -e --error <message>               	Specify optional error message of the key",
 	"",
 	"  -i --input-file <input_file>         Load values from input file",
 	"                                       Each line of file contains: <zabbix_server> <hostname> <port> <key> <value>",
@@ -64,6 +65,7 @@ char *help_message[] = {
 	"",
 	"  -k <Key>                     Specify metric name (key) we want to send.",
 	"  -o <Key value>               Specify value of the key.",
+	"  -e <message>                 Specify message of the key.",
 	"",
 	"  -i <Input file>              Load values from input file.",
 	"                               Each line of file contains: <zabbix_server> <hostname> <port> <key> <value>.",
@@ -89,6 +91,7 @@ static struct zbx_option longopts[] =
 	{"host",		1,	NULL,	's'},
 	{"key",			1,	NULL,	'k'},
 	{"value",		1,	NULL,	'o'},
+	{"error",		0,	NULL,	'e'},
 	{"input-file",		1,	NULL,	'i'},
 	{"verbose",        	0,      NULL,	'v'},
 	{"help",        	0,      NULL,	'h'},
@@ -98,7 +101,7 @@ static struct zbx_option longopts[] =
 
 /* short options */
 
-static char     shortopts[] = "c:z:p:s:k:o:i:vhV";
+static char     shortopts[] = "c:z:p:s:k:o:e:i:vhV";
 
 /* end of COMMAND LINE OPTIONS*/
 
@@ -111,6 +114,7 @@ unsigned short	ZABBIX_SERVER_PORT = 0;
 static char*	ZABBIX_HOSTNAME = NULL;
 static char*	ZABBIX_KEY = NULL;
 static char*	ZABBIX_KEY_VALUE = NULL;
+static char*	ZABBIX_KEY_ERROR = NULL;
 
 #if !defined(_WINDOWS)
 
@@ -138,6 +142,7 @@ typedef struct zbx_active_metric_type
 	char*	hostname;
 	char*	key;
 	char*	key_value;
+	char*   key_error;
 } ZBX_THREAD_SENDVAL_ARGS;
 
 static ZBX_THREAD_ENTRY(send_value, args)
@@ -172,7 +177,7 @@ static ZBX_THREAD_ENTRY(send_value, args)
 #endif /* NOT _WINDOWS */
 	
 	if (SUCCEED == (tcp_ret = zbx_tcp_connect(&sock, sentdval_args->server, sentdval_args->port, SENDER_TIMEOUT, NULL))) {
-		tosend = comms_create_request(sentdval_args->hostname, sentdval_args->key, sentdval_args->key_value, NULL,
+		tosend = comms_create_request(sentdval_args->hostname, sentdval_args->key, sentdval_args->key_value, sentdval_args->key_error,
 			NULL, NULL, NULL, NULL);
 
 		zabbix_log( LOG_LEVEL_DEBUG, "Send data: '%s'", tosend);
@@ -290,6 +295,9 @@ static zbx_task_t parse_commandline(int argc, char **argv)
 			case 'o':
 				ZABBIX_KEY_VALUE = strdup(zbx_optarg);
 				break;
+			case 'e':
+				ZABBIX_KEY_ERROR = strdup(zbx_optarg);
+				break;
 			case 'i':
 				INPUT_FILE = strdup(zbx_optarg);
 				break;
@@ -394,6 +402,7 @@ int main(int argc, char **argv)
 			if( ZABBIX_HOSTNAME )		sentdval_args.hostname	= ZABBIX_HOSTNAME;
 			if( ZABBIX_KEY )		sentdval_args.key	= ZABBIX_KEY;
 			if( ZABBIX_KEY_VALUE )		sentdval_args.key_value	= ZABBIX_KEY_VALUE;
+			if( ZABBIX_KEY_ERROR )		sentdval_args.key_error	= ZABBIX_KEY_ERROR;
 
 			if( ZABBIX_SERVER_PORT )
 				sentdval_args.port	= ZABBIX_SERVER_PORT;
@@ -445,6 +454,7 @@ int main(int argc, char **argv)
 			sentdval_args.hostname	= ZABBIX_HOSTNAME;
 			sentdval_args.key	= ZABBIX_KEY;
 			sentdval_args.key_value	= ZABBIX_KEY_VALUE;
+			sentdval_args.key_error	= ZABBIX_KEY_ERROR;
 
 			if( SUCCEED == zbx_thread_wait(
 				zbx_thread_start(

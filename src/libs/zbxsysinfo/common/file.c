@@ -24,6 +24,7 @@
 
 #include "file.h"
 
+
 int	VFS_FILE_SIZE(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
 {
 	struct stat	buf;
@@ -148,6 +149,7 @@ int	VFS_FILE_REGEXP(const char *cmd, const char *param, unsigned flags, AGENT_RE
 	char	*c;
 
 	char	*buf = NULL;
+	struct stat st;
 
         assert(result);
 
@@ -165,6 +167,10 @@ int	VFS_FILE_REGEXP(const char *cmd, const char *param, unsigned flags, AGENT_RE
 		return SYSINFO_RET_FAIL;
 	}
 
+	if (stat (filename, &st) || st.st_size == 0) {
+		SET_STR_RESULT(result, strdup(""));
+		return	SYSINFO_RET_OK;
+	}
 
 	if(NULL == (f = fopen(filename,"r")))
 	{
@@ -218,6 +224,7 @@ int	VFS_FILE_REGMATCH(const char *cmd, const char *param, unsigned flags, AGENT_
 	char	*c;
 
 	char	*buf = NULL;
+	struct stat st;
 
         assert(result);
 
@@ -233,6 +240,10 @@ int	VFS_FILE_REGMATCH(const char *cmd, const char *param, unsigned flags, AGENT_
 		return SYSINFO_RET_FAIL;
 	}
 
+	if (stat (filename, &st) || st.st_size == 0) {
+		SET_UI64_RESULT(result, 0);
+		return	SYSINFO_RET_OK;
+	}
 
 	if(NULL == (f = fopen(filename,"r")))
 	{
