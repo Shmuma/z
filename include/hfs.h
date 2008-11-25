@@ -182,18 +182,21 @@ int		HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64
 /* alerts history */
 typedef struct __attribute__ ((packed)) {
 	hfs_time_t clock;
+	zbx_uint64_t mediatypeid;
+	zbx_uint64_t triggerid;
 	zbx_uint64_t actionid;
 	zbx_uint64_t userid;
-	zbx_uint64_t triggerid;
-	zbx_uint64_t mediatypeid;
+	int status;
+	int retries;
 	char* sendto;
 	char* subject;
 	char* message;
 } hfs_alert_value_t;
 
 
-void 		HFS_add_alert(const char* hfs_path, const char* siteid, hfs_time_t clock, zbx_uint64_t actionid, zbx_uint64_t userid, 
-			      zbx_uint64_t triggerid,  zbx_uint64_t mediatypeid, char *sendto, char *subject, char *message);
+void HFS_add_alert(const char* hfs_path, const char* siteid, hfs_time_t clock, zbx_uint64_t userid, zbx_uint64_t triggerid, 
+		   zbx_uint64_t actionid, zbx_uint64_t mediatypeid, int status, int retries, char *sendto, char *subject, char *message);
+int HFS_get_alerts (const char* hfs_path, const char* siteid, int skip, int count, hfs_alert_value_t** alerts);
 
 
 /* trigger events  */

@@ -786,7 +786,7 @@ PHP_FUNCTION(zabbix_hfs_get_alerts)
 	char *site = NULL;
 	int site_len = 0;
 	int skip, count, res_count, i;
-	hfs_alert_value_t* alerts;
+	hfs_alert_value_t* alerts = NULL;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll", &site, &site_len, &skip, &count) == FAILURE)
 		RETURN_FALSE;
@@ -808,6 +808,8 @@ PHP_FUNCTION(zabbix_hfs_get_alerts)
 		add_property_long(z_obj, "userid", alerts[i].userid);
 		add_property_long(z_obj, "triggerid", alerts[i].triggerid);
 		add_property_long(z_obj, "mediatypeid", alerts[i].mediatypeid);
+		add_property_long(z_obj, "status", alerts[i].status);
+		add_property_long(z_obj, "retries", alerts[i].retries);
 
 		MAKE_STD_ZVAL (z_str);
 		if (alerts[i].sendto) {
@@ -845,7 +847,9 @@ PHP_FUNCTION(zabbix_hfs_get_alerts)
 		if (alerts[i].message)
 			free (alerts[i].message);
 	}
-	free (alerts);
+
+	if (res_count && alerts)
+		free (alerts);
 }
 /* }}} */
 

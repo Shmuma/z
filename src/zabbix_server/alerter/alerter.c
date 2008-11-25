@@ -32,6 +32,12 @@
 #include "daemon.h"
 
 #include "alerter.h"
+#include "hfs.h"
+
+
+extern char* CONFIG_SERVER_SITE;
+extern char* CONFIG_HFS_PATH;
+
 
 /******************************************************************************
  *                                                                            *
@@ -187,6 +193,9 @@ int main_alerter_loop()
 	DB_ALERT	alert;
 	DB_MEDIATYPE	mediatype;
 
+	zbx_uint64_t	userid, triggerid, actionid, clock;
+	int		retries;
+
 	zbx_setproctitle("connecting to the database");
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 
@@ -194,7 +203,7 @@ int main_alerter_loop()
 	{
 		now  = time(NULL);
 
-		result = DBselect("select a.alertid,a.mediatypeid,a.sendto,a.subject,a.message,a.status,mt.mediatypeid,mt.type,mt.description,mt.smtp_server,mt.smtp_helo,mt.smtp_email,mt.exec_path,mt.gsm_modem,mt.username,mt.passwd from alerts a,media_type mt where a.status=%d and a.retries<3 and a.mediatypeid=mt.mediatypeid and " ZBX_COND_NODEID " order by a.clock",
+		result = DBselect("select a.alertid,a.mediatypeid,a.sendto,a.subject,a.message,a.status,mt.mediatypeid,mt.type,mt.description,mt.smtp_server,mt.smtp_helo,mt.smtp_email,mt.exec_path,mt.gsm_modem,mt.username,mt.passwd,a.userid,a.triggerid,a.actionid,a.retries,a.clock from alerts a,media_type mt where a.status=%d and a.retries<3 and a.mediatypeid=mt.mediatypeid and " ZBX_COND_NODEID " order by a.clock",
 			ALERT_STATUS_NOT_SENT,
 			LOCAL_NODE("mt.mediatypeid"));
 
@@ -226,6 +235,12 @@ int main_alerter_loop()
 			phan.sa_flags = 0;
 			sigaction(SIGALRM, &phan, NULL);
 
+			ZBX_STR2UINT64(userid, row[16]);
+			ZBX_STR2UINT64(triggerid, row[17]);
+			ZBX_STR2UINT64(actionid, row[18]);
+			retries = atoi (row[19]);
+			ZBX_STR2UINT64(clock, row[20]);
+
 			/* Hardcoded value */
 			/* SMS uses its own timeouts */
 			alarm(40);
@@ -253,6 +268,9 @@ int main_alerter_loop()
 					alert.alertid);
 			}
 
+			if (CONFIG_HFS_PATH)
+				HFS_add_alert(CONFIG_HFS_PATH, CONFIG_SERVER_SITE, (hfs_time_t)clock, userid, triggerid, actionid,  
+					      mediatype.mediatypeid, alert.status, retries, alert.sendto, alert.subject, alert.message);
 		}
 		DBfree_result(result);
 		zbx_setproctitle("sender [sleeping for %d seconds]",

@@ -2397,12 +2397,12 @@ int HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64_
 
 
 
-
-void HFS_add_alert(const char* hfs_path, const char* siteid, hfs_time_t clock, zbx_uint64_t actionid, zbx_uint64_t userid, 
-		   zbx_uint64_t triggerid,  zbx_uint64_t mediatypeid, char *sendto, char *subject, char *message)
+void HFS_add_alert(const char* hfs_path, const char* siteid, hfs_time_t clock, zbx_uint64_t userid, zbx_uint64_t triggerid, zbx_uint64_t actionid, 
+		   zbx_uint64_t mediatypeid, int status, int retries, char *sendto, char *subject, char *message)
 {
 	int len = 0, fd;
 	char* p_name = get_name (hfs_path, siteid, 0, NK_Alert);
+	hfs_alert_value_t alert;
 
 	if ((fd = xopen (p_name, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
 		zabbix_log (LOG_LEVEL_ERR, "HFS_add_alert: Canot open file %s", p_name);
@@ -2412,17 +2412,22 @@ void HFS_add_alert(const char* hfs_path, const char* siteid, hfs_time_t clock, z
 
 	free (p_name);
 
-	write (fd, &clock, sizeof (clock));
-	write (fd, &actionid, sizeof (actionid));
-	write (fd, &userid, sizeof (userid));
-	write (fd, &triggerid, sizeof (triggerid));
-	write (fd, &mediatypeid, sizeof (mediatypeid));
+	alert.clock = clock;
+	alert.userid = userid;
+	alert.triggerid = triggerid;
+	alert.mediatypeid = mediatypeid;
+	alert.actionid = actionid;
+	alert.userid = userid;
+	alert.status = status;
+	alert.retries = retries;
+
+	write (fd, &alert, sizeof (alert) - 3*sizeof (char*));
 	write_str (fd, sendto);
 	write_str (fd, subject);
 	write_str (fd, message);
 
-	len = sizeof (clock) + sizeof (actionid) + sizeof (userid) + sizeof (triggerid) + sizeof (mediatypeid) + 
-		str_buffer_length (sendto) + str_buffer_length (subject) + str_buffer_length (subject);
+	len = sizeof (alert) - 3*sizeof (char*) + str_buffer_length (sendto) + 
+		str_buffer_length (subject) + str_buffer_length (subject);
 
 	/* write len twice for backward reading */
 	write (fd, &len, sizeof (len));

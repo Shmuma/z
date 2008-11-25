@@ -177,7 +177,7 @@
 						continue;
 					}
 
-					if ($num > 0)
+					if ($num == 0)
 						break;
 						
 					$res_events[] = $row;
