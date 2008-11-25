@@ -19,6 +19,7 @@
 **/
 
 include_once 'include/discovery.inc.php';
+include_once 'include/hfs.inc.php';
 
 ?>
 <?php
@@ -773,20 +774,105 @@ include_once 'include/discovery.inc.php';
 		return TRUE;
 	}
 
+
+	function alerts_sort ($a, $b)
+	{
+		return $a->clock - $b->clock;
+	}
+
+
 	function get_history_of_actions($start,$num)
 	{
 		global $USER_DETAILS;
 		
-		$denyed_groups = get_accessible_hosts_by_user($USER_DETAILS, PERM_READ_ONLY, PERM_MODE_LT);
+		$res_alerts = array ();
+		if (zbx_hfs_available ()) {
+			$stop = $count = 0;
+
+			foreach (zbx_hfs_sites (0, 0) as $site) {
+				$site_stat[$site] = new stdClass ();
+				$site_stat[$site]->name  = $site;
+				$site_stat[$site]->begin = 0;
+				$site_stat[$site]->stop  = 0;
+			}
+
+			// prepare mediatype hash
+			$result = DBselect ("select mediatypeid, description from media_type");
+			$medias = array ();
+			while ($row = DBfetch ($result))
+				$medias[$row["mediatypeid"]] = $row["description"];
+
+			// we have sites list. Ok, feeding alerts array
+			while (!$stop && $num) {
+				$stop = 1;
+				$alerts = array ();
+				foreach ($site_stat as $site) {
+					if ($site->stop)
+						continue;
+					$stop = 0;
+					$hfs_alerts = zabbix_hfs_get_alerts ($site->name, $site->begin, $num);
+					if (is_array ($hfs_alerts) && count ($hfs_alerts) > 0) {
+						$alerts = array_merge ($alerts, $hfs_alerts);
+						$site->begin += count ($hfs_alerts);
+						if (count ($hfs_alerts) < $num)
+							$site->stop = 1;
+					}
+					else 
+						$site->stop = 1;
+				}
+
+				if ($stop)
+					break;
+
+				usort ($alerts, "alerts_sort");
+				$len = count ($alerts);
+				if ($len == 0)
+					break;
+				if ($start > 0) {
+					if ($len <= $start) {
+						$start -= $len;
+						$alerts = array ();
+					} else {
+						array_splice ($alerts, 0, $start);
+						$start = 0;
+					}
+					$len = count ($alerts);
+				}
+
+				if ($start == 0) {
+					if ($len > $num) {
+						array_splice ($alerts, $num);
+						$len = count ($alerts);
+					}
+					$res_alerts = array_merge ($res_alerts, $alerts);
+					$num -= $len;
+				}
+			}
+		}
+		else {
+			$denyed_groups = get_accessible_groups_by_user($USER_DETAILS, PERM_READ_ONLY, PERM_MODE_LT);
 		
-		$result=DBselect("select distinct a.alertid,a.clock,mt.description,a.sendto,a.subject,a.message,a.status,a.retries,".
-				"a.error from alerts a,media_type mt,functions f,items i,hosts_groups hg ".
-				" where mt.mediatypeid=a.mediatypeid and a.triggerid=f.triggerid and f.itemid=i.itemid ".
-				" and hg.hostid=i.hostid and hg.groupid not in (".$denyed_groups.")".
-				' and '.DBin_node('a.alertid').
-				" order by a.clock".
-				" desc",
-			10*$start+$num);
+			$result=DBselect("select distinct a.alertid,a.clock,mt.description,a.sendto,a.subject,a.message,a.status,a.retries,".
+					"a.error from alerts a,media_type mt,functions f,items i,hosts_groups hg ".
+					" where mt.mediatypeid=a.mediatypeid and a.triggerid=f.triggerid and f.itemid=i.itemid ".
+					" and hg.hostid=i.hostid and hg.groupid not in (".$denyed_groups.")".
+					' and '.DBin_node('a.alertid').
+					" order by a.clock".
+					" desc", 10*$start+$num);
+
+			while ($row = DBfetch ($result)) {
+				if ($start > 0) {
+					$start--;
+					continue;
+				}
+
+				if ($num == 0)
+					break;
+
+				$res_alerts[] = $row;
+				$num--;
+			}
+		}
 
 		$table = new CTableInfo(S_NO_ACTIONS_FOUND);
 		$table->SetHeader(array(
@@ -796,21 +882,16 @@ include_once 'include/discovery.inc.php';
 				S_STATUS,
 				S_RETRIES_LEFT,
 				S_RECIPIENTS,
-				S_MESSAGE,
-				S_ERROR
+				S_MESSAGE
 				));
 		$col=0;
-		$skip=$start;
-		while(($row=DBfetch($result))&&($col<$num))
+		foreach ($res_alerts as $row) 
 		{
-			if($skip > 0) 
-			{
-				$skip--;
-				continue;
-			}
-			$time=date("Y.M.d H:i:s",$row["clock"]);
+			if (zbx_hfs_available ())
+				$row->description = $medias[$row->mediatypeid];
+			$time=date("Y.M.d H:i:s",$row->clock);
 
-			if($row["status"] == ALERT_STATUS_SENT)
+			if($row->status == ALERT_STATUS_SENT)
 			{
 				$status=new CSpan(S_SENT,"off");
 				$retries=new CSpan(SPACE,"off");
@@ -818,31 +899,20 @@ include_once 'include/discovery.inc.php';
 			else
 			{
 				$status=new CSpan(S_NOT_SENT,"on");
-				$retries=new CSpan(3 - $row["retries"],"on");
+				$retries=new CSpan(3 - $row->retries,"on");
 			}
-			$sendto=htmlspecialchars($row["sendto"]);
+			$sendto=htmlspecialchars($row->sendto);
 
-			$subject = empty($row["subject"]) ? '' : "<pre>".bold(S_SUBJECT.': ').htmlspecialchars($row["subject"])."</pre>";
-			$message = array($subject,"<pre>".htmlspecialchars($row["message"])."</pre>");
+			$subject = empty($row->subject) ? '' : "<pre>".bold(S_SUBJECT.': ').htmlspecialchars($row->subject)."</pre>";
+			$message = array($subject,"<pre>".htmlspecialchars($row->message)."</pre>");
 
-			if($row["error"] == "")
-			{
-				$error=new CSpan(SPACE,"off");
-			}
-			else
-			{
-				$error=new CSpan($row["error"],"on");
-			}
 			$table->AddRow(array(
-				'',
 				new CCol($time, 'top'),
-				new CCol($row["description"], 'top'),
+				new CCol($row->description, 'top'),
 				new CCol($status, 'top'),
 				new CCol($retries, 'top'),
 				new CCol($sendto, 'top'),
-				new CCol($message, 'top'),
-				new CCol($error, 'top')));
-			$col++;
+				new CCol($message, 'top')));
 		}
 
 		return $table;
