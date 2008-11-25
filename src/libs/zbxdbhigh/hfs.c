@@ -2427,7 +2427,7 @@ void HFS_add_alert(const char* hfs_path, const char* siteid, hfs_time_t clock, z
 	write_str (fd, message);
 
 	len = sizeof (alert) - 3*sizeof (char*) + str_buffer_length (sendto) + 
-		str_buffer_length (subject) + str_buffer_length (subject);
+		str_buffer_length (subject) + str_buffer_length (message);
 
 	/* write len twice for backward reading */
 	write (fd, &len, sizeof (len));
