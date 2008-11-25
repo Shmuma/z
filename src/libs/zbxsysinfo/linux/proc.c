@@ -168,7 +168,7 @@ int     PROC_MEMORY(const char *cmd, const char *param, unsigned flags, AGENT_RE
 				{
 					if(strcmp(name1,"Name:") == 0)
 					{
-						if(strcmp(procname,name2)==0)
+						if(strncmp(procname,name2,14)==0)
 						{
 							proc_ok = 1;
 						}
@@ -460,7 +460,7 @@ int	    PROC_NUM(const char *cmd, const char *param, unsigned flags, AGENT_RESUL
                     {
                         if(strcmp(name1,"Name:") == 0)
                         {
-                            if(strcmp(procname,name2)==0)
+                            if(strncmp(procname, name2, 14)==0)
                             {
                                 proc_ok = 1;
                             }
