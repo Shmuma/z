@@ -270,7 +270,8 @@ int main_alerter_loop()
 
 			if (CONFIG_HFS_PATH)
 				HFS_add_alert(CONFIG_HFS_PATH, CONFIG_SERVER_SITE, (hfs_time_t)clock, userid, triggerid, actionid,  
-					      mediatype.mediatypeid, alert.status, retries, alert.sendto, alert.subject, alert.message);
+					      mediatype.mediatypeid, res==SUCCEED ? ALERT_STATUS_SENT : ALERT_STATUS_NOT_SENT, 
+					      retries, alert.sendto, alert.subject, alert.message);
 		}
 		DBfree_result(result);
 		zbx_setproctitle("sender [sleeping for %d seconds]",
