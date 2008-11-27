@@ -2508,6 +2508,7 @@ int HFS_get_alerts (const char* hfs_path, const char* siteid, int skip, int coun
 		count--;
 	}
 
+	close (fd);
 	return res;
 }
 
