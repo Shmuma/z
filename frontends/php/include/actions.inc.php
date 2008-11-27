@@ -777,9 +777,15 @@ include_once 'include/hfs.inc.php';
 
 	function alerts_sort ($a, $b)
 	{
-		return $a->clock - $b->clock;
+		return $b->clock - $a->clock;
 	}
 
+
+	function alerts_filter_by_user ($a)
+	{
+		global $USER_DETAILS;
+		return $a->userid == $USER_DETAILS["userid"];
+	}
 
 	function get_history_of_actions($start,$num)
 	{
@@ -812,10 +818,13 @@ include_once 'include/hfs.inc.php';
 					$stop = 0;
 					$hfs_alerts = zabbix_hfs_get_alerts ($site->name, $site->begin, $num);
 					if (is_array ($hfs_alerts) && count ($hfs_alerts) > 0) {
-						$alerts = array_merge ($alerts, $hfs_alerts);
-						$site->begin += count ($hfs_alerts);
+						//						if ($USER_DETAILS["type"] < USER_TYPE_SUPER_ADMIN)
 						if (count ($hfs_alerts) < $num)
 							$site->stop = 1;
+						$site->begin += count ($hfs_alerts);
+						$hfs_alerts = array_filter ($hfs_alerts, "alerts_filter_by_user");
+						$alerts = array_merge ($alerts, $hfs_alerts);
+						//						print "<pre>$site->name, $site->begin, ".count ($hfs_alerts)."</pre>";
 					}
 					else 
 						$site->stop = 1;
@@ -826,6 +835,8 @@ include_once 'include/hfs.inc.php';
 
 				usort ($alerts, "alerts_sort");
 				$len = count ($alerts);
+				
+				//				print "<pre>len = $len, start = $start, res_count = ".count ($res_alerts)."</pre>";
 				if ($len == 0)
 					break;
 				if ($start > 0) {
@@ -839,7 +850,7 @@ include_once 'include/hfs.inc.php';
 					$len = count ($alerts);
 				}
 
-				if ($start == 0) {
+				if ($start <= 0) {
 					if ($len > $num) {
 						array_splice ($alerts, $num);
 						$len = count ($alerts);
@@ -874,6 +885,7 @@ include_once 'include/hfs.inc.php';
 			}
 		}
 
+		usort ($res_alerts, "alerts_sort");
 		$table = new CTableInfo(S_NO_ACTIONS_FOUND);
 		$table->SetHeader(array(
 				is_show_subnodes() ? S_NODES : null,
@@ -903,7 +915,8 @@ include_once 'include/hfs.inc.php';
 			}
 			$sendto=htmlspecialchars($row->sendto);
 
-			$subject = empty($row->subject) ? '' : "<pre>".bold(S_SUBJECT.': ').htmlspecialchars($row->subject)."</pre>";
+// 			$subject = empty($row->subject) ? '' : "<pre>".bold(S_SUBJECT.': ').htmlspecialchars($row->subject)."</pre>";
+			$subject = '';
 			$message = array($subject,"<pre>".htmlspecialchars($row->message)."</pre>");
 
 			$table->AddRow(array(
