@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Max Lapan <lapan@yandex-team.ru>
 Build-Depends: debhelper (>= 4), libsnmp9-dev | libsnmp-dev, dpatch, automake1.9, po-debconf, libldap2-dev, libcurl4-gnutls-dev, libsetproctitle0-dev, pkg-config, libmysqlclient15-dev, libiksemel-dev
 Standards-Version: 3.7.3
-Version: 1.4.4-yandex-lenny38
+Version: 1.4.4-yandex-lenny43
  
 Package: zabbix-agent
 Architecture: any

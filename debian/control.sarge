@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Max Lapan <lapan@yandex-team.ru>
 Build-Depends: debhelper (>= 4), dpatch, automake1.9, po-debconf, libldap2-dev, libcurl3-dev, libsetproctitle0-dev, pkg-config, libmysqlclient14-dev, libiksemel1-dev
 Standards-Version: 3.7.3
-Version: 1.4.4-yandex-sarge38
+Version: 1.4.4-yandex-sarge43
  
 Package: zabbix-agent
 Architecture: any
