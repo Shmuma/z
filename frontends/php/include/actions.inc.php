@@ -809,22 +809,27 @@ include_once 'include/hfs.inc.php';
 				$medias[$row["mediatypeid"]] = $row["description"];
 
 			// we have sites list. Ok, feeding alerts array
-			while (!$stop && $num) {
+			$orig_num = $num;
+			while (!$stop && $num > 0) {
 				$stop = 1;
 				$alerts = array ();
 				foreach ($site_stat as $site) {
 					if ($site->stop)
 						continue;
 					$stop = 0;
-					$hfs_alerts = zabbix_hfs_get_alerts ($site->name, $site->begin, $num);
+					$hfs_alerts = zabbix_hfs_get_alerts ($site->name, $site->begin, $orig_num);
 					if (is_array ($hfs_alerts) && count ($hfs_alerts) > 0) {
 						//						if ($USER_DETAILS["type"] < USER_TYPE_SUPER_ADMIN)
-						if (count ($hfs_alerts) < $num)
+// 						print "<pre>$orig_num, ".count($hfs_alerts)."</pre>";
+						if (count ($hfs_alerts) < $orig_num)
 							$site->stop = 1;
 						$site->begin += count ($hfs_alerts);
 						$hfs_alerts = array_filter ($hfs_alerts, "alerts_filter_by_user");
 						$alerts = array_merge ($alerts, $hfs_alerts);
-						//						print "<pre>$site->name, $site->begin, ".count ($hfs_alerts)."</pre>";
+// 						print "<pre>$site->name, $site->begin, $site->stop, ".count ($hfs_alerts)."</pre>";
+// 						print "<pre>";
+// 						print_r ($hfs_alerts);
+// 						print "</pre>";
 					}
 					else 
 						$site->stop = 1;
@@ -836,7 +841,10 @@ include_once 'include/hfs.inc.php';
 				usort ($alerts, "alerts_sort");
 				$len = count ($alerts);
 				
-				//				print "<pre>len = $len, start = $start, res_count = ".count ($res_alerts)."</pre>";
+// 				print "<pre>len = $len, num = $num, start = $start, res_count = ".count ($res_alerts)."</pre>";
+// 				print "<pre>";
+// 				print_r ($site_stat);
+// 				print "</pre>\n";
 				if ($len == 0)
 					break;
 				if ($start > 0) {
@@ -849,8 +857,7 @@ include_once 'include/hfs.inc.php';
 					}
 					$len = count ($alerts);
 				}
-
-				if ($start <= 0) {
+				else {
 					if ($len > $num) {
 						array_splice ($alerts, $num);
 						$len = count ($alerts);
@@ -885,6 +892,7 @@ include_once 'include/hfs.inc.php';
 			}
 		}
 
+// 		print "<pre>res_count = ".count ($res_alerts)."</pre>";
 		usort ($res_alerts, "alerts_sort");
 		$table = new CTableInfo(S_NO_ACTIONS_FOUND);
 		$table->SetHeader(array(
