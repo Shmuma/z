@@ -819,12 +819,13 @@ include_once 'include/hfs.inc.php';
 					$stop = 0;
 					$hfs_alerts = zabbix_hfs_get_alerts ($site->name, $site->begin, $orig_num);
 					if (is_array ($hfs_alerts) && count ($hfs_alerts) > 0) {
-						//						if ($USER_DETAILS["type"] < USER_TYPE_SUPER_ADMIN)
+						//						
 // 						print "<pre>$orig_num, ".count($hfs_alerts)."</pre>";
 						if (count ($hfs_alerts) < $orig_num)
 							$site->stop = 1;
 						$site->begin += count ($hfs_alerts);
-						$hfs_alerts = array_filter ($hfs_alerts, "alerts_filter_by_user");
+						if ($USER_DETAILS["type"] < USER_TYPE_SUPER_ADMIN)
+							$hfs_alerts = array_filter ($hfs_alerts, "alerts_filter_by_user");
 						$alerts = array_merge ($alerts, $hfs_alerts);
 // 						print "<pre>$site->name, $site->begin, $site->stop, ".count ($hfs_alerts)."</pre>";
 // 						print "<pre>";
