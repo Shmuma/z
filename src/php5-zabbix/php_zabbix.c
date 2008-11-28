@@ -785,8 +785,8 @@ PHP_FUNCTION(zabbix_hfs_get_alerts)
 {
 	char *site = NULL;
 	int site_len = 0;
-	long long skip;
-	int count, res_count, i;
+	long long skip, count;
+	int res_count, i;
 	hfs_alert_value_t* alerts = NULL;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll", &site, &site_len, &skip, &count) == FAILURE)
