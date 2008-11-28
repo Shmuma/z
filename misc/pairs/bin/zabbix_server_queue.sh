@@ -19,7 +19,7 @@ esac
 ts=`date +%s`
 q_path=/dev/shm/zabbix_queue
 
-[ ! -d $q_path ] && echo 0
+[ ! -d $q_path ] && echo 0; exit 0
 
 
 function get_q_size ()
