@@ -931,12 +931,6 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 
 	/* Required for nodata() */
 	item->lastclock = now;
-#ifdef HAVE_MEMCACHE
-	if (process_type == ZBX_PROCESS_TRAPPERD) {
-		item->nextcheck = nextcheck;
-		memcache_zbx_setitem(item);
-	}
-#endif
 
 	if(prev_value.str)
 		free(prev_value.str);
@@ -1003,6 +997,13 @@ void	process_new_value(int history, DB_ITEM *item, AGENT_RESULT *value, time_t t
 		update_item(item, value, now, stderr);
 		update_functions( item );
 	}
+
+#ifdef HAVE_MEMCACHE
+	if (process_type == ZBX_PROCESS_TRAPPERD) {
+		item->nextcheck = calculate_item_nextcheck(item->itemid, item->type, item->delay, item->delay_flex, now);
+		memcache_zbx_setitem(item);
+	}
+#endif
 }
 
 /*
