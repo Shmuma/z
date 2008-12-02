@@ -203,6 +203,7 @@ install -m 755 misc/init.d/redhat/zabbix_server %{buildroot}%{_sysconfdir}/init.
 %attr(0755,root,root) %{zabbix_bindir}/hfsevents
 %attr(0755,root,root) %{zabbix_bindir}/hfsfilter
 %attr(0755,root,root) %{zabbix_bindir}/hfs_trends_upd
+%attr(0755,root,root) %{zabbix_bindir}/memcachetest
 %{_sysconfdir}/init.d/zabbix_server
 
 %files -n zabbix-agent
