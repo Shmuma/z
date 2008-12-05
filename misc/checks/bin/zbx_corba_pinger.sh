@@ -71,7 +71,7 @@ then
 	exit 2
 fi
 
-result=`$pingior -t $timeout -i $ior $ping -v`
+result=`$pingior -t $timeout -i $converted_ior $ping -v`
 exit_code=$?
 
 if [ x"$string" = "x0" ]
