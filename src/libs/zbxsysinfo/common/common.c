@@ -27,6 +27,7 @@
 #include "http.h"
 #include "net.h"
 #include "system.h"
+#include "cfg.h"
 
 #if !defined(_WINDOWS)
 #	define VFS_TEST_FILE "/etc/passwd"
@@ -168,6 +169,8 @@ int	EXECUTE_STR(const char *cmd, const char *param, unsigned flags, AGENT_RESULT
 	int out[2] = {-1, -1}, err[2] = {-1, -1}, i, out_v, err_v, status;
 	char* shell;
 	fd_set fds;
+	struct timeval tv;
+	int sel_ret;
 
 #endif /* _WINDOWS */
 
@@ -279,8 +282,10 @@ int	EXECUTE_STR(const char *cmd, const char *param, unsigned flags, AGENT_RESULT
 		FD_SET (out[0], &fds);
 		FD_SET (err[0], &fds);
 		out_v = err_v = 1;
+		tv.tv_sec = CONFIG_TIMEOUT;
+		tv.tv_usec = 0;
 
-		while (select (out[0] > err[0] ? out[0] + 1 : err[0] + 1, &fds, NULL, NULL, NULL)) {
+		while (sel_ret = select (out[0] > err[0] ? out[0] + 1 : err[0] + 1, &fds, NULL, NULL, &tv)) {
 			if (FD_ISSET (out[0], &fds)) {
 			/* read data */
 				while ((len = read (out[0], stat_buf, sizeof (stat_buf)-1)) > 0) {
@@ -312,6 +317,12 @@ int	EXECUTE_STR(const char *cmd, const char *param, unsigned flags, AGENT_RESULT
 				FD_SET (err[0], &fds);
 			if (!out_v && !err_v)
 				break;
+		}
+
+		/* timeout occured */
+		if (sel_ret == 0) {
+			kill (p, SIGTERM);
+			ret = SYSINFO_RET_TIMEOUT;
 		}
 		waitpid (p, &status, 0);
 	}
