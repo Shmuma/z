@@ -194,8 +194,21 @@ include_once 'include/hfs.inc.php';
 			return false;
 		}
 
-		foreach($operations as $operation)
-			if( !validate_operation($operation) )	return false;
+		$new_host_with_group = 0;
+
+		foreach($operations as $operation) {
+			if(!validate_operation($operation))
+				return false;
+
+			switch ($operation['operationtype']) {
+				case OPERATION_TYPE_HOST_ADD:  $new_host_with_group +=1; break;
+				case OPERATION_TYPE_GROUP_ADD: $new_host_with_group +=2; break;
+			}
+		}
+		if ($new_host_with_group > 0 && $new_host_with_group < 2) {
+			error("You should add host into group");
+			return false;
+		}
 
 		$actionid=get_dbid("actions","actionid");
 
@@ -251,8 +264,21 @@ include_once 'include/hfs.inc.php';
 			return false;
 		}
 
-		foreach($operations as $operation)
-			if( !validate_operation($operation) )	return false;
+		$new_host_with_group = 0;
+
+		foreach($operations as $operation) {
+			if( !validate_operation($operation) )
+				return false;
+
+			switch ($operation['operationtype']) {
+				case OPERATION_TYPE_HOST_ADD:  $new_host_with_group+=1; break;
+				case OPERATION_TYPE_GROUP_ADD: $new_host_with_group+=2; break;
+			}
+		}
+		if ($new_host_with_group > 0 && $new_host_with_group < 2) {
+			error("You should add host into group");
+			return false;
+		}
 
 		$result = DBexecute('update actions set name='.zbx_dbstr($name).',eventsource='.$eventsource.','.
 			'evaltype='.$evaltype.',status='.$status.' where actionid='.$actionid);

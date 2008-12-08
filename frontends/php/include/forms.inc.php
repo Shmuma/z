@@ -210,10 +210,17 @@
 		$new_check_ports= get_request('new_check_ports', '80');
 		$new_check_key= get_request('new_check_key', '');
 		$new_check_snmp_community= get_request('new_check_snmp_community', '');
+		$site = get_request('site', 0);
 
 		$form->AddRow(S_NAME, new CTextBox('name', $name, 40));
 		$form->AddRow(S_IP_RANGE, new CTextBox('iprange', $iprange, 27));
 		$form->AddRow(S_DELAY.' (seconds)', new CNumericBox('delay', $delay, 8));
+
+		$cmbSite = new CComboBox('site', $site);
+		$result=DBselect("select siteid, name from sites");
+		while($row=DBfetch($result))
+			$cmbSite->AddItem($row['siteid'], $row['name']);
+		$form->AddRow("Site",$cmbSite);
 
 		$form->AddVar('dchecks', $dchecks);
 

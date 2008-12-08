@@ -41,6 +41,7 @@ FIELD		|iprange	|t_varchar(255)	|''	|NOT NULL	|ZBX_SYNC
 FIELD		|delay		|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|nextcheck	|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|status		|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
+FIELD		|siteid		|t_id		|'0'	|NOT NULL	|ZBX_SYNC
 
 TABLE|dchecks|dcheckid|ZBX_SYNC
 FIELD		|dcheckid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC
@@ -53,6 +54,7 @@ FIELD		|ports		|t_varchar(255)	|'0'	|NOT NULL	|ZBX_SYNC
 TABLE|dhosts|dhostid|ZBX_SYNC
 FIELD		|dhostid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|druleid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC
+FIELD		|dns		|t_varchar(64)	|''	|NOT NULL	|ZBX_SYNC
 FIELD		|ip		|t_varchar(15)	|''	|NOT NULL	|ZBX_SYNC
 FIELD		|status		|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|lastup		|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
@@ -68,6 +70,27 @@ FIELD		|port		|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|status		|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|lastup		|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|lastdown	|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
+
+TABLE|dalerts|dalertid|ZBX_SYNC
+FIELD		|dalertid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC
+FIELD		|actionid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC
+FIELD		|triggerid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC
+FIELD		|userid		|t_id		|'0'	|NOT NULL	|ZBX_SYNC
+FIELD		|clock		|t_time		|'0'	|NOT NULL	|ZBX_SYNC
+FIELD		|mediatypeid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC
+FIELD		|sendto		|t_varchar(100)	|''	|NOT NULL	|ZBX_SYNC
+FIELD		|subject	|t_varchar(255)	|''	|NOT NULL	|ZBX_SYNC
+FIELD		|message	|t_blob		|''	|NOT NULL	|ZBX_SYNC
+FIELD		|status		|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
+FIELD		|retries	|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
+FIELD		|error		|t_varchar(128)	|''	|NOT NULL	|ZBX_SYNC
+FIELD		|nextcheck	|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
+INDEX		|1		|actionid
+INDEX		|2		|clock
+INDEX		|3		|triggerid
+INDEX		|4		|status,retries
+INDEX		|5		|mediatypeid
+INDEX		|6		|userid
 
 TABLE|ids|nodeid,table_name,field_name|
 FIELD		|nodeid		|t_integer	|'0'	|NOT NULL	|0
