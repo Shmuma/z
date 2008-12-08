@@ -58,6 +58,7 @@ int	VFS_FILE_TIME(const char *cmd, const char *param, unsigned flags, AGENT_RESU
 	char    filename[MAX_STRING_LEN];
 	char    type[MAX_STRING_LEN];
 	int	ret = SYSINFO_RET_FAIL;
+	time_t  now = time (NULL);
 
         assert(result);
 
@@ -98,6 +99,21 @@ int	VFS_FILE_TIME(const char *cmd, const char *param, unsigned flags, AGENT_RESU
 		else if(strcmp(type,"change") == 0)
 		{
 			SET_UI64_RESULT(result, buf.st_ctime);
+			ret = SYSINFO_RET_OK;
+		}
+		else if(strcmp(type,"modify_age") == 0)
+		{
+			SET_UI64_RESULT(result, now-buf.st_mtime);
+			ret = SYSINFO_RET_OK;
+		}
+		else if(strcmp(type,"access_age") == 0)
+		{
+			SET_UI64_RESULT(result, now-buf.st_atime);
+			ret = SYSINFO_RET_OK;
+		}
+		else if(strcmp(type,"change_age") == 0)
+		{
+			SET_UI64_RESULT(result, now-buf.st_ctime);
 			ret = SYSINFO_RET_OK;
 		}
 	}
