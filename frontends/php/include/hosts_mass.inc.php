@@ -4,14 +4,20 @@
 
 		$host_patterns_list = preg_split('/\n/', $patterns);
 
+		$host_replace_pattern[0] = '/[^0-9A-Za-z_\%-.]/';
+		$host_replace_pattern[1] = '/[.]+/';
+
+		$host_replace_replace[0] = '';
+		$host_replace_replace[1] = '.';
+
 		foreach ($host_patterns_list as $pattern_str)
 		{
-			$pattern_str = trim($pattern_str);
+			$pattern_str = preg_replace("/['\"]/",'', trim($pattern_str));
 
 			if (empty($pattern_str) || preg_match('/^#/', $pattern_str))
 				continue;
 
-			$pattern_arr = split(' ', $pattern_str);
+			$pattern_arr = preg_split('/\s/', $pattern_str);
 			$host_format = array_shift($pattern_arr);
 			$host_pattern_args = array();
 
@@ -65,7 +71,9 @@
 				foreach ($args_cur as $i => $v)
 					array_push($vlist, $host_pattern_args[$i][$v]);
 
-				array_push($result, vsprintf($host_format, $vlist));
+				array_push($result,
+					preg_replace($host_replace_pattern, $host_replace_replace,
+						vsprintf($host_format, $vlist)));
 
 				for ($i = 0; $i < $num_args; $i++)
 				{
@@ -80,6 +88,6 @@
 				$iter++;
 			}
 		}
-		return $result;
+		return array_unique($result);
 	}
 ?>
