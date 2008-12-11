@@ -1329,7 +1329,6 @@ int HFS_find_meta(const char *hfs_base_dir, const char* siteid, int trend,
                   zbx_uint64_t itemid, zbx_uint64_t from_ts, hfs_meta_t **res)
 {
 	int i, block = 0;
-	int ts = (int)from_ts;
 	hfs_meta_t *meta = NULL;
 	hfs_meta_item_t *ip = NULL;
 	char *path;
@@ -1340,9 +1339,6 @@ int HFS_find_meta(const char *hfs_base_dir, const char* siteid, int trend,
 	fflush(stderr);
 #endif
 	(*res) = NULL;
-
-	path = get_name (hfs_base_dir, siteid, itemid, trend ? NK_TrendItemMeta : NK_ItemMeta);
-	free(path);
 
 	if ((meta = read_meta(hfs_base_dir, siteid, itemid, trend)) == NULL)
 		return -1; // Somethig real bad happend :(
@@ -1360,7 +1356,7 @@ int HFS_find_meta(const char *hfs_base_dir, const char* siteid, int trend,
 
 	for (i = 0; i < meta->blocks; i++) {
 		ip = meta->meta + i;
-		if (ip->start <= ts && ts <= ip->end)
+		if (from_ts <= ip->end)
 			return i;
 	}
 
@@ -1449,7 +1445,7 @@ size_t HFSread_item (const char *hfs_base_dir, const char* siteid,
 	}
 
 	if ((block = HFS_find_meta(hfs_base_dir, siteid, is_trend, itemid, ts, &meta)) == -1) {
-		zabbix_log(LOG_LEVEL_CRIT, "HFS: unable to get metafile");
+		zabbix_log(LOG_LEVEL_WARNING, "HFS: unable to find position in metafile");
 		return 0;
 	}
 
