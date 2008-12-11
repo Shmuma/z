@@ -78,6 +78,7 @@ ZBX_THREAD_ENTRY(listener_thread, pSock)
 
 	assert(pSock);
 
+	zbx_setproctitle("listener waiting for connection");
 	zabbix_log( LOG_LEVEL_INFORMATION, "zabbix_agentd listener started");
 
 	memcpy(&s, ((zbx_sock_t *)pSock), sizeof(zbx_sock_t));
@@ -99,6 +100,7 @@ ZBX_THREAD_ENTRY(listener_thread, pSock)
 			zbx_tcp_unaccept(&s);
 		}
 
+		zbx_setproctitle("listener waiting for connection");
 		if( SUCCEED == ret )	continue;
 
 		zabbix_log(LOG_LEVEL_DEBUG, "Listener error: %s", zbx_tcp_strerror());

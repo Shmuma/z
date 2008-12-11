@@ -252,8 +252,8 @@ int MAIN_ZABBIX_ENTRY(void)
 	init_collector_data();
 
 	/* --- START THREADS ---*/
-	if (CONFIG_ZABBIX_FORKS == 1)
-		CONFIG_ZABBIX_FORKS = 2;
+	if (CONFIG_ZABBIX_FORKS < 3)
+		CONFIG_ZABBIX_FORKS = 3;
 
 	threads = calloc(CONFIG_ZABBIX_FORKS, sizeof(ZBX_THREAD_HANDLE));
 
