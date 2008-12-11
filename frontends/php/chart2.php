@@ -53,10 +53,14 @@ include_once "include/page_header.php";
 
 	$denyed_groups = get_accessible_groups_by_user($USER_DETAILS, PERM_READ_ONLY, PERM_MODE_LT);
 	
+	if ($USER_DETAILS['type'] == USER_TYPE_ZABBIX_ADMIN)
+		$cond = "";
+	else
+		$cond = " and ( hg.groupid not in (".$denyed_groups.") OR h.hostid is NULL) ";
+
 	if( !($db_data = DBfetch(DBselect("select g.*,h.host,h.hostid from graphs g left join graphs_items gi on g.graphid=gi.graphid ".
 		" left join items i on gi.itemid=i.itemid left join hosts h on i.hostid=h.hostid left join hosts_groups hg on h.hostid=hg.hostid ".
-		" where g.graphid=".$_REQUEST["graphid"].
-		" and ( hg.groupid not in (".$denyed_groups.") OR h.hostid is NULL) "))))
+		" where g.graphid=".$_REQUEST["graphid"].$cond))))
 	{
 		access_deny();
 	}

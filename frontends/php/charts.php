@@ -104,8 +104,8 @@ include_once "include/page_header.php";
 					" where h.status=".HOST_STATUS_MONITORED.
 					" and h.hostid=i.hostid and g.graphid=".$_REQUEST["graphid"].
 					" and hg.hostid=h.hostid and i.itemid=gi.itemid and gi.graphid=g.graphid".
-					" and hg.groupid not in (".$denyed_groups.") ".
-					' and '.DBin_node('g.graphid').
+					      //					" and hg.groupid not in (".$denyed_groups.") ".
+					      //					' and '.DBin_node('g.graphid').
 					" order by h.host, g.name"
 				))))
 		{
