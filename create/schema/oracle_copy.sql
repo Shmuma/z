@@ -246,17 +246,18 @@ Replicate2MySQL.RunSQL
 end;
 /
 show errors
-create or replace function zabbix.ins_drules (druleid in number,name in varchar2,iprange in varchar2,delay in number,nextcheck in number,status in number) return varchar2
+create or replace function zabbix.ins_drules (druleid in number,name in varchar2,iprange in varchar2,delay in number,nextcheck in number,status in number,siteid in number) return varchar2
 is
 begin
 return
-'insert into drules (druleid,name,iprange,delay,nextcheck,status) values ('
+'insert into drules (druleid,name,iprange,delay,nextcheck,status,siteid) values ('
 ||Nvl(To_Char(druleid),'null')||','
 ||''''||Replace(name,'''','''''')||''''||','
 ||''''||Replace(iprange,'''','''''')||''''||','
 ||Nvl(To_Char(delay),'null')||','
 ||Nvl(To_Char(nextcheck),'null')||','
-||Nvl(To_Char(status),'null')
+||Nvl(To_Char(status),'null')||','
+||Nvl(To_Char(siteid),'null')
 ||')';
 end;
 /
@@ -265,7 +266,7 @@ create or replace trigger zabbix.trai_drules after insert on zabbix.drules for e
 begin
 Replicate2MySQL.RunSQL
 (
-zabbix.ins_drules (:new.druleid,:new.name,:new.iprange,:new.delay,:new.nextcheck,:new.status)
+zabbix.ins_drules (:new.druleid,:new.name,:new.iprange,:new.delay,:new.nextcheck,:new.status,:new.siteid)
 );
 end;
 /
@@ -280,7 +281,8 @@ Replicate2MySQL.RunSQL
 ||' iprange='''||Replace(:new.iprange,'''','''''')||''''||','
 ||' delay='||Nvl(To_Char(:new.delay),'null')||','
 ||' nextcheck='||Nvl(To_Char(:new.nextcheck),'null')||','
-||' status='||Nvl(To_Char(:new.status),'null') || ' where  druleid='||:old.druleid );
+||' status='||Nvl(To_Char(:new.status),'null')||','
+||' siteid='||Nvl(To_Char(:new.siteid),'null') || ' where  druleid='||:old.druleid );
 end;
 /
 show errors
@@ -342,13 +344,14 @@ Replicate2MySQL.RunSQL
 end;
 /
 show errors
-create or replace function zabbix.ins_dhosts (dhostid in number,druleid in number,ip in varchar2,status in number,lastup in number,lastdown in number) return varchar2
+create or replace function zabbix.ins_dhosts (dhostid in number,druleid in number,dns in varchar2,ip in varchar2,status in number,lastup in number,lastdown in number) return varchar2
 is
 begin
 return
-'insert into dhosts (dhostid,druleid,ip,status,lastup,lastdown) values ('
+'insert into dhosts (dhostid,druleid,dns,ip,status,lastup,lastdown) values ('
 ||Nvl(To_Char(dhostid),'null')||','
 ||Nvl(To_Char(druleid),'null')||','
+||''''||Replace(dns,'''','''''')||''''||','
 ||''''||Replace(ip,'''','''''')||''''||','
 ||Nvl(To_Char(status),'null')||','
 ||Nvl(To_Char(lastup),'null')||','
@@ -361,7 +364,7 @@ create or replace trigger zabbix.trai_dhosts after insert on zabbix.dhosts for e
 begin
 Replicate2MySQL.RunSQL
 (
-zabbix.ins_dhosts (:new.dhostid,:new.druleid,:new.ip,:new.status,:new.lastup,:new.lastdown)
+zabbix.ins_dhosts (:new.dhostid,:new.druleid,:new.dns,:new.ip,:new.status,:new.lastup,:new.lastdown)
 );
 end;
 /
@@ -373,6 +376,7 @@ Replicate2MySQL.RunSQL
 'update zabbix.dhosts set '
 ||' dhostid='||Nvl(To_Char(:new.dhostid),'null')||','
 ||' druleid='||Nvl(To_Char(:new.druleid),'null')||','
+||' dns='''||Replace(:new.dns,'''','''''')||''''||','
 ||' ip='''||Replace(:new.ip,'''','''''')||''''||','
 ||' status='||Nvl(To_Char(:new.status),'null')||','
 ||' lastup='||Nvl(To_Char(:new.lastup),'null')||','
@@ -440,6 +444,68 @@ Replicate2MySQL.RunSQL
 (
 'delete from zabbix.dservices '
  || ' where  dserviceid='||:old.dserviceid 
+);
+end;
+/
+show errors
+create or replace function zabbix.ins_dalerts (dalertid in number,actionid in number,triggerid in number,userid in number,clock in number,mediatypeid in number,sendto in varchar2,subject in varchar2,message in varchar2,status in number,retries in number,error in varchar2,nextcheck in number) return varchar2
+is
+begin
+return
+'insert into dalerts (dalertid,actionid,triggerid,userid,clock,mediatypeid,sendto,subject,message,status,retries,error,nextcheck) values ('
+||Nvl(To_Char(dalertid),'null')||','
+||Nvl(To_Char(actionid),'null')||','
+||Nvl(To_Char(triggerid),'null')||','
+||Nvl(To_Char(userid),'null')||','
+||Nvl(To_Char(clock),'null')||','
+||Nvl(To_Char(mediatypeid),'null')||','
+||''''||Replace(sendto,'''','''''')||''''||','
+||''''||Replace(subject,'''','''''')||''''||','
+||''''||Replace(message,'''','''''')||''''||','
+||Nvl(To_Char(status),'null')||','
+||Nvl(To_Char(retries),'null')||','
+||''''||Replace(error,'''','''''')||''''||','
+||Nvl(To_Char(nextcheck),'null')
+||')';
+end;
+/
+show errors
+create or replace trigger zabbix.trai_dalerts after insert on zabbix.dalerts for each row
+begin
+Replicate2MySQL.RunSQL
+(
+zabbix.ins_dalerts (:new.dalertid,:new.actionid,:new.triggerid,:new.userid,:new.clock,:new.mediatypeid,:new.sendto,:new.subject,:new.message,:new.status,:new.retries,:new.error,:new.nextcheck)
+);
+end;
+/
+show errors
+create or replace trigger zabbix.trau_dalerts after update on zabbix.dalerts for each row
+begin
+Replicate2MySQL.RunSQL
+(
+'update zabbix.dalerts set '
+||' dalertid='||Nvl(To_Char(:new.dalertid),'null')||','
+||' actionid='||Nvl(To_Char(:new.actionid),'null')||','
+||' triggerid='||Nvl(To_Char(:new.triggerid),'null')||','
+||' userid='||Nvl(To_Char(:new.userid),'null')||','
+||' clock='||Nvl(To_Char(:new.clock),'null')||','
+||' mediatypeid='||Nvl(To_Char(:new.mediatypeid),'null')||','
+||' sendto='''||Replace(:new.sendto,'''','''''')||''''||','
+||' subject='''||Replace(:new.subject,'''','''''')||''''||','
+||' message='''||Replace(:new.message,'''','''''')||''''||','
+||' status='||Nvl(To_Char(:new.status),'null')||','
+||' retries='||Nvl(To_Char(:new.retries),'null')||','
+||' error='''||Replace(:new.error,'''','''''')||''''||','
+||' nextcheck='||Nvl(To_Char(:new.nextcheck),'null') || ' where  dalertid='||:old.dalertid );
+end;
+/
+show errors
+create or replace trigger zabbix.trad_dalerts after delete on zabbix.dalerts for each row
+begin
+Replicate2MySQL.RunSQL
+(
+'delete from zabbix.dalerts '
+ || ' where  dalertid='||:old.dalertid 
 );
 end;
 /

@@ -43,6 +43,7 @@ static	ZBX_TABLE	tables[]={
 		{"delay",	ZBX_TYPE_INT,	ZBX_SYNC},
 		{"nextcheck",	ZBX_TYPE_INT,	ZBX_SYNC},
 		{"status",	ZBX_TYPE_INT,	ZBX_SYNC},
+		{"siteid",	ZBX_TYPE_ID,	ZBX_SYNC},
 		{0}
 		}
 	},
@@ -61,6 +62,7 @@ static	ZBX_TABLE	tables[]={
 		{
 		{"dhostid",	ZBX_TYPE_ID,	ZBX_SYNC},
 		{"druleid",	ZBX_TYPE_ID,	ZBX_SYNC},
+		{"dns",	ZBX_TYPE_CHAR,	ZBX_SYNC},
 		{"ip",	ZBX_TYPE_CHAR,	ZBX_SYNC},
 		{"status",	ZBX_TYPE_INT,	ZBX_SYNC},
 		{"lastup",	ZBX_TYPE_INT,	ZBX_SYNC},
@@ -79,6 +81,24 @@ static	ZBX_TABLE	tables[]={
 		{"status",	ZBX_TYPE_INT,	ZBX_SYNC},
 		{"lastup",	ZBX_TYPE_INT,	ZBX_SYNC},
 		{"lastdown",	ZBX_TYPE_INT,	ZBX_SYNC},
+		{0}
+		}
+	},
+	{"dalerts",	"dalertid",	ZBX_SYNC,
+		{
+		{"dalertid",	ZBX_TYPE_ID,	ZBX_SYNC},
+		{"actionid",	ZBX_TYPE_ID,	ZBX_SYNC},
+		{"triggerid",	ZBX_TYPE_ID,	ZBX_SYNC},
+		{"userid",	ZBX_TYPE_ID,	ZBX_SYNC},
+		{"clock",	ZBX_TYPE_INT,	ZBX_SYNC},
+		{"mediatypeid",	ZBX_TYPE_ID,	ZBX_SYNC},
+		{"sendto",	ZBX_TYPE_CHAR,	ZBX_SYNC},
+		{"subject",	ZBX_TYPE_CHAR,	ZBX_SYNC},
+		{"message",	ZBX_TYPE_BLOB,	ZBX_SYNC},
+		{"status",	ZBX_TYPE_INT,	ZBX_SYNC},
+		{"retries",	ZBX_TYPE_INT,	ZBX_SYNC},
+		{"error",	ZBX_TYPE_CHAR,	ZBX_SYNC},
+		{"nextcheck",	ZBX_TYPE_INT,	ZBX_SYNC},
 		{0}
 		}
 	},

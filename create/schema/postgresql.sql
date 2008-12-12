@@ -21,6 +21,7 @@ CREATE TABLE drules (
 	delay		integer		DEFAULT '0'	NOT NULL,
 	nextcheck		integer		DEFAULT '0'	NOT NULL,
 	status		integer		DEFAULT '0'	NOT NULL,
+	siteid		bigint		DEFAULT '0'	NOT NULL,
 	PRIMARY KEY (druleid)
 ) with OIDS;
 CREATE TABLE dchecks (
@@ -35,6 +36,7 @@ CREATE TABLE dchecks (
 CREATE TABLE dhosts (
 	dhostid		bigint		DEFAULT '0'	NOT NULL,
 	druleid		bigint		DEFAULT '0'	NOT NULL,
+	dns		varchar(64)		DEFAULT ''	NOT NULL,
 	ip		varchar(15)		DEFAULT ''	NOT NULL,
 	status		integer		DEFAULT '0'	NOT NULL,
 	lastup		integer		DEFAULT '0'	NOT NULL,
@@ -53,6 +55,29 @@ CREATE TABLE dservices (
 	lastdown		integer		DEFAULT '0'	NOT NULL,
 	PRIMARY KEY (dserviceid)
 ) with OIDS;
+CREATE TABLE dalerts (
+	dalertid		bigint		DEFAULT '0'	NOT NULL,
+	actionid		bigint		DEFAULT '0'	NOT NULL,
+	triggerid		bigint		DEFAULT '0'	NOT NULL,
+	userid		bigint		DEFAULT '0'	NOT NULL,
+	clock		integer		DEFAULT '0'	NOT NULL,
+	mediatypeid		bigint		DEFAULT '0'	NOT NULL,
+	sendto		varchar(100)		DEFAULT ''	NOT NULL,
+	subject		varchar(255)		DEFAULT ''	NOT NULL,
+	message		text		DEFAULT ''	NOT NULL,
+	status		integer		DEFAULT '0'	NOT NULL,
+	retries		integer		DEFAULT '0'	NOT NULL,
+	error		varchar(128)		DEFAULT ''	NOT NULL,
+	nextcheck		integer		DEFAULT '0'	NOT NULL,
+	PRIMARY KEY (dalertid)
+) with OIDS;
+CREATE INDEX dalerts_1 on dalerts (actionid);
+CREATE INDEX dalerts_2 on dalerts (clock);
+CREATE INDEX dalerts_3 on dalerts (triggerid);
+CREATE INDEX dalerts_4 on dalerts (status,retries);
+CREATE INDEX dalerts_5 on dalerts (mediatypeid);
+CREATE INDEX dalerts_6 on dalerts (userid);
+
 CREATE TABLE ids (
 	nodeid		integer		DEFAULT '0'	NOT NULL,
 	table_name		varchar(64)		DEFAULT ''	NOT NULL,
@@ -524,6 +549,7 @@ CREATE TABLE items (
 CREATE UNIQUE INDEX items_1 on items (hostid,key_);
 CREATE INDEX items_2 on items (nextcheck);
 CREATE INDEX items_3 on items (status);
+CREATE INDEX items_4 on items (type);
 
 CREATE TABLE items_applications (
 	itemappid		bigint		DEFAULT '0'	NOT NULL,
