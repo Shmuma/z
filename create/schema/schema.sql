@@ -481,6 +481,7 @@ FIELD		|stderr		|t_varchar(255)	|''	|NOT NULL	|ZBX_SYNC
 UNIQUE		|1		|hostid,key_
 INDEX		|2		|nextcheck
 INDEX		|3		|status
+INDEX		|4		|type
 
 TABLE|items_applications|itemappid|ZBX_SYNC
 FIELD		|itemappid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC

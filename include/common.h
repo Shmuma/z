@@ -450,6 +450,7 @@ typedef enum
 
 #define	ZBX_POLLER_TYPE_NORMAL		0
 #define	ZBX_POLLER_TYPE_UNREACHABLE	1
+#define	ZBX_POLLER_TYPE_AGGREGATE	2
 
 typedef enum
 {
