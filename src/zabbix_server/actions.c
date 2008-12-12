@@ -693,7 +693,6 @@ void	execute_operations(DB_EVENT *event, DB_ACTION *action)
 {
 	DB_RESULT	result;
 	DB_ROW		row;
-	
 	DB_OPERATION	operation;
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In execute_operations(actionid:" ZBX_FS_UI64 ")",

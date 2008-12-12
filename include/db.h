@@ -170,6 +170,7 @@ DB_DRULE
 	int		nextcheck;
 	char		*name;
 	int		status;
+	zbx_uint64_t	siteid;
 };
 
 DB_DCHECK

@@ -299,6 +299,7 @@ static void register_host(DB_DHOST *host,DB_DCHECK *check, zbx_uint64_t druleid,
 {
 	DB_RESULT	result;
 	DB_ROW		row;
+	char		hostname[MAX_STRING_LEN], hostname_esc[MAX_STRING_LEN];
 
 	assert(host);
 	assert(check);
@@ -317,12 +318,23 @@ static void register_host(DB_DHOST *host,DB_DCHECK *check, zbx_uint64_t druleid,
 		/* Add host only if service is up */
 		if(check->status == DOBJECT_STATUS_UP)
 		{
-			zabbix_log(LOG_LEVEL_DEBUG, "New host discovered at %s",
-				ip);
+			alarm(CONFIG_TIMEOUT);
+			zbx_gethost_by_ip(ip, hostname, sizeof(hostname));
+			alarm(0);
+
+			if (hostname[0] != '\0')
+				DBescape_string(hostname, hostname_esc, sizeof(hostname_esc));
+			else
+				hostname_esc[0] = '\0';
+
+			zabbix_log(LOG_LEVEL_DEBUG, "New host discovered at %s (%s)",
+				ip, hostname);
+
 			host->dhostid = DBget_maxid("dhosts","dhostid");
-			DBexecute("insert into dhosts (dhostid,druleid,ip) values (" ZBX_FS_UI64 "," ZBX_FS_UI64 ",'%s')",
+			DBexecute("insert into dhosts (dhostid, druleid, dns, ip) values (" ZBX_FS_UI64 "," ZBX_FS_UI64 ", '%s','%s')",
 				host->dhostid,
 				druleid,
+				hostname_esc,
 				ip);
 			host->druleid	= druleid;
 			strscpy(host->ip,ip);
@@ -876,14 +888,14 @@ void main_discoverer_loop(int num)
 
 	for(;;)
 	{
+		zbx_setproctitle("Discoverer finding new hosts and services");
 		now=time(NULL);
 
-		result = DBselect("select druleid,iprange,delay,nextcheck,name,status from drules where status=%d and nextcheck<=%d and " ZBX_SQL_MOD(druleid,%d) "=%d and" ZBX_COND_NODEID,
+		result = DBselect("select druleid,iprange,delay,nextcheck,name,status,siteid from drules where status=%d and nextcheck<=%d and " ZBX_SQL_MOD(druleid,%d) "=%d",
 			DRULE_STATUS_MONITORED,
 			now,
 			CONFIG_DISCOVERER_FORKS,
-			discoverer_num-1,
-			LOCAL_NODE("druleid"));
+			discoverer_num-1);
 		while((row=DBfetch(result)))
 		{
 			memset(&rule, 0, sizeof(DB_DRULE));
@@ -894,12 +906,13 @@ void main_discoverer_loop(int num)
 			rule.nextcheck		= atoi(row[3]);
 			rule.name		= row[4];
 			rule.status		= atoi(row[5]);
-			
+			ZBX_STR2UINT64(rule.siteid,row[6]);
+
 			process_rule(&rule);
 		}
 		DBfree_result(result);
 
-		zbx_setproctitle("sleeping for 30 sec");
+		zbx_setproctitle("Discoverer [sleeping for 30 sec]");
 
 		sleep(30);
 	}

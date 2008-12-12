@@ -115,7 +115,7 @@
 		return $dcheckid;
 	}
 
-	function	add_discovery_rule($name, $iprange, $delay, $status, $dchecks)
+	function	add_discovery_rule($name, $iprange, $delay, $status, $dchecks, $siteid)
 	{
 		if( !validate_ip_range($iprange) )
 		{
@@ -125,8 +125,8 @@
 		}
 
 		$druleid = get_dbid('drules', 'druleid');
-		$result = DBexecute('insert into drules (druleid,name,iprange,delay,status) '.
-			' values ('.$druleid.','.zbx_dbstr($name).','.zbx_dbstr($iprange).','.$delay.','.$status.')');
+		$result = DBexecute('insert into drules (druleid,name,iprange,delay,status,siteid) '.
+			' values ('.$druleid.','.zbx_dbstr($name).','.zbx_dbstr($iprange).','.$delay.','.$status.','.$siteid.')');
 
 		if($result)
 		{
@@ -140,7 +140,7 @@
 		return $result;
 	}
 
-	function	update_discovery_rule($druleid, $name, $iprange, $delay, $status, $dchecks)
+	function	update_discovery_rule($druleid, $name, $iprange, $delay, $status, $dchecks, $siteid)
 	{
 		if( !validate_ip_range($iprange) )
 		{
@@ -150,13 +150,14 @@
 		}
 
 		$result = DBexecute('update drules set name='.zbx_dbstr($name).',iprange='.zbx_dbstr($iprange).','.
-			'delay='.$delay.',status='.$status.' where druleid='.$druleid);
+			'delay='.$delay.',status='.$status.',siteid='.$siteid.' where druleid='.$druleid);
 
 		if($result)
 		{
 			DBexecute('delete from dchecks where druleid='.$druleid);
 			if(isset($dchecks)) foreach($dchecks as $val)
 				add_discovery_check($druleid,$val["type"],$val["ports"],$val["key"],$val["snmp_community"]);
+			DBexecute('delete from dhosts where druleid='.$druleid);
 		}
 		return $result;
 	}
