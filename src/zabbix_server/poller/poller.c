@@ -126,45 +126,59 @@ static int get_minnextcheck(int now)
 /* Host status	0 == MONITORED
 		1 == NOT MONITORED
 		2 == UNREACHABLE */
-	if(poller_type == ZBX_POLLER_TYPE_UNREACHABLE)
-	{
+	switch (poller_type) {
+	case ZBX_POLLER_TYPE_UNREACHABLE:
 		result = DBselect("select min(nextcheck) as nextcheck from items i,hosts h, sites s where " ZBX_SQL_MOD(h.hostid,%d) "=%d and i.nextcheck<=%d and i.status in (%d) and i.type not in (%d,%d,%d) and h.status=%d and h.disable_until<=%d and h.errors_from!=0 and h.hostid=i.hostid and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE "order by nextcheck",
-			CONFIG_UNREACHABLE_POLLER_FORKS,
-			poller_num-1,
-			now,
-			ITEM_STATUS_ACTIVE,
-			ITEM_TYPE_TRAPPER, ITEM_TYPE_ZABBIX_ACTIVE, ITEM_TYPE_HTTPTEST,
-			HOST_STATUS_MONITORED,
-			now,
-			SERVER_STATUS_KEY, SERVER_ICMPPING_KEY, SERVER_ICMPPINGSEC_KEY,SERVER_ZABBIXLOG_KEY,
-			getSiteCondition ());
-	}
-	else
-	{
+				  CONFIG_UNREACHABLE_POLLER_FORKS,
+				  poller_num-1,
+				  now,
+				  ITEM_STATUS_ACTIVE,
+				  ITEM_TYPE_TRAPPER, ITEM_TYPE_ZABBIX_ACTIVE, ITEM_TYPE_HTTPTEST,
+				  HOST_STATUS_MONITORED,
+				  now,
+				  SERVER_STATUS_KEY, SERVER_ICMPPING_KEY, SERVER_ICMPPINGSEC_KEY,SERVER_ZABBIXLOG_KEY,
+				  getSiteCondition ());
+		break;
+	case ZBX_POLLER_TYPE_NORMAL:
 		if(CONFIG_REFRESH_UNSUPPORTED != 0)
 		{
-			result = DBselect("select min(nextcheck) from items i,hosts h, sites s where h.status=%d and h.disable_until<%d and h.errors_from=0 and h.hostid=i.hostid and i.status in (%d,%d) and i.type not in (%d,%d,%d) and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE,
-				HOST_STATUS_MONITORED,
-				now,
-				ITEM_STATUS_ACTIVE, ITEM_STATUS_NOTSUPPORTED,
-				ITEM_TYPE_TRAPPER, ITEM_TYPE_ZABBIX_ACTIVE, ITEM_TYPE_HTTPTEST,
-				CONFIG_POLLER_FORKS,
-				poller_num-1,
-				SERVER_STATUS_KEY, SERVER_ICMPPING_KEY, SERVER_ICMPPINGSEC_KEY,SERVER_ZABBIXLOG_KEY,
-				getSiteCondition ());
+			result = DBselect("select min(nextcheck) from items i,hosts h, sites s where h.status=%d and h.disable_until<%d and h.errors_from=0 and h.hostid=i.hostid and i.status in (%d,%d) and i.type not in (%d,%d,%d,%d) and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE,
+					  HOST_STATUS_MONITORED,
+					  now,
+					  ITEM_STATUS_ACTIVE, ITEM_STATUS_NOTSUPPORTED,
+					  ITEM_TYPE_TRAPPER, ITEM_TYPE_ZABBIX_ACTIVE, ITEM_TYPE_HTTPTEST, ITEM_TYPE_AGGREGATE,
+					  CONFIG_POLLER_FORKS,
+					  poller_num-1,
+					  SERVER_STATUS_KEY, SERVER_ICMPPING_KEY, SERVER_ICMPPINGSEC_KEY,SERVER_ZABBIXLOG_KEY,
+					  getSiteCondition ());
 		}
 		else
 		{
-			result = DBselect("select min(nextcheck) from items i,hosts h, sites s where h.status=%d and h.disable_until<%d and h.errors_from=0 and h.hostid=i.hostid and i.status in (%d) and i.type not in (%d,%d,%d) and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE,
-				HOST_STATUS_MONITORED,
-				now,
-				ITEM_STATUS_ACTIVE,
-				ITEM_TYPE_TRAPPER, ITEM_TYPE_ZABBIX_ACTIVE, ITEM_TYPE_HTTPTEST,
-				CONFIG_POLLER_FORKS,
-				poller_num-1,
-				SERVER_STATUS_KEY, SERVER_ICMPPING_KEY, SERVER_ICMPPINGSEC_KEY,SERVER_ZABBIXLOG_KEY,
-				getSiteCondition ());
+			result = DBselect("select min(nextcheck) from items i,hosts h, sites s where h.status=%d and h.disable_until<%d and h.errors_from=0 and h.hostid=i.hostid and i.status in (%d) and i.type not in (%d,%d,%d,%d) and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE,
+					  HOST_STATUS_MONITORED,
+					  now,
+					  ITEM_STATUS_ACTIVE,
+					  ITEM_TYPE_TRAPPER, ITEM_TYPE_ZABBIX_ACTIVE, ITEM_TYPE_HTTPTEST, ITEM_TYPE_AGGREGATE,
+					  CONFIG_POLLER_FORKS,
+					  poller_num-1,
+					  SERVER_STATUS_KEY, SERVER_ICMPPING_KEY, SERVER_ICMPPINGSEC_KEY,SERVER_ZABBIXLOG_KEY,
+					  getSiteCondition ());
 		}
+		break;
+	case ZBX_POLLER_TYPE_AGGREGATE:
+		result = DBselect("select min(nextcheck) from items i,hosts h, sites s where h.status=%d and h.disable_until<%d and h.errors_from=0 and h.hostid=i.hostid and i.status in (%d) and i.type=%d and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE,
+				  HOST_STATUS_MONITORED,
+				  now,
+				  ITEM_STATUS_ACTIVE,
+				  ITEM_TYPE_AGGREGATE,
+				  CONFIG_POLLER_FORKS,
+				  poller_num-1,
+				  SERVER_STATUS_KEY, SERVER_ICMPPING_KEY, SERVER_ICMPPINGSEC_KEY,SERVER_ZABBIXLOG_KEY,
+				  getSiteCondition ());
+		break;
+	default:
+		res = FAIL;
+		return res;
 	}
 
 	row=DBfetch(result);
@@ -279,9 +293,8 @@ int get_values(void)
 	bzero(tmp, MAX_STRING_LEN);
 	unreachable_hosts=zbx_strdcat(unreachable_hosts,tmp);
 
-	/* Poller for unreachable hosts */
-	if(poller_type == ZBX_POLLER_TYPE_UNREACHABLE)
-	{
+	switch (poller_type) {
+	case ZBX_POLLER_TYPE_UNREACHABLE:
 		result = DBselect("select h.hostid,min(i.itemid) from hosts h,items i, sites s where " ZBX_SQL_MOD(h.hostid,%d) "=%d and i.nextcheck<=%d and i.status in (%d) and i.type not in (%d,%d,%d) and h.status=%d and h.disable_until<=%d and h.errors_from!=0 and h.hostid=i.hostid and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " group by h.hostid",
 			CONFIG_UNREACHABLE_POLLER_FORKS,
 			poller_num-1,
@@ -292,16 +305,15 @@ int get_values(void)
 			now,
 			SERVER_STATUS_KEY, SERVER_ICMPPING_KEY, SERVER_ICMPPINGSEC_KEY,SERVER_ZABBIXLOG_KEY,
 			getSiteCondition ());
-	}
-	else
-	{
+		break;
+	case ZBX_POLLER_TYPE_NORMAL:
 		if(CONFIG_REFRESH_UNSUPPORTED != 0)
 		{
-			result = DBselect("select %s where i.nextcheck<=%d and i.status in (%d,%d) and i.type not in (%d,%d,%d) and h.status=%d and h.disable_until<=%d and h.errors_from=0 and h.hostid=i.hostid and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " order by i.nextcheck",
+			result = DBselect("select %s where i.nextcheck<=%d and i.status in (%d,%d) and i.type not in (%d,%d,%d,%d) and h.status=%d and h.disable_until<=%d and h.errors_from=0 and h.hostid=i.hostid and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " order by i.nextcheck",
 				ZBX_SQL_ITEM_SELECT,
 				now,
 				ITEM_STATUS_ACTIVE, ITEM_STATUS_NOTSUPPORTED,
-				ITEM_TYPE_TRAPPER, ITEM_TYPE_ZABBIX_ACTIVE, ITEM_TYPE_HTTPTEST,
+				ITEM_TYPE_TRAPPER, ITEM_TYPE_ZABBIX_ACTIVE, ITEM_TYPE_HTTPTEST, ITEM_TYPE_AGGREGATE,
 				HOST_STATUS_MONITORED,
 				now,
 				CONFIG_POLLER_FORKS,
@@ -311,11 +323,11 @@ int get_values(void)
 		}
 		else
 		{
-			result = DBselect("select %s where i.nextcheck<=%d and i.status in (%d) and i.type not in (%d,%d,%d) and h.status=%d and h.disable_until<=%d and h.errors_from=0 and h.hostid=i.hostid and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " order by i.nextcheck",
+			result = DBselect("select %s where i.nextcheck<=%d and i.status in (%d) and i.type not in (%d,%d,%d,%d) and h.status=%d and h.disable_until<=%d and h.errors_from=0 and h.hostid=i.hostid and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " order by i.nextcheck",
 				ZBX_SQL_ITEM_SELECT,
 				now,
 				ITEM_STATUS_ACTIVE,
-				ITEM_TYPE_TRAPPER, ITEM_TYPE_ZABBIX_ACTIVE, ITEM_TYPE_HTTPTEST,
+				ITEM_TYPE_TRAPPER, ITEM_TYPE_ZABBIX_ACTIVE, ITEM_TYPE_HTTPTEST, ITEM_TYPE_AGGREGATE,
 				HOST_STATUS_MONITORED,
 				now,
 				CONFIG_POLLER_FORKS,
@@ -323,6 +335,19 @@ int get_values(void)
 				SERVER_STATUS_KEY, SERVER_ICMPPING_KEY, SERVER_ICMPPINGSEC_KEY,SERVER_ZABBIXLOG_KEY,
 				getSiteCondition ());
 		}
+		break;
+	case ZBX_POLLER_TYPE_AGGREGATE:
+		result = DBselect("select %s where i.nextcheck<=%d and i.status in (%d) and i.type = %d and h.status=%d and h.disable_until<=%d and h.errors_from=0 and h.hostid=i.hostid and " ZBX_SQL_MOD(i.itemid,%d) "=%d and " ZBX_COND_SITE " order by i.nextcheck",
+				  ZBX_SQL_ITEM_SELECT,
+				  now,
+				  ITEM_STATUS_ACTIVE,
+				  ITEM_TYPE_AGGREGATE,
+				  HOST_STATUS_MONITORED,
+				  now,
+				  CONFIG_AGGR_POLLER_FORKS,
+				  poller_num-1,
+				  getSiteCondition ());
+		break;
 	}
 
 	/* Do not stop when select is made by poller for unreachable hosts */
@@ -545,6 +570,34 @@ int get_values(void)
 	return SUCCEED;
 }
 
+
+void update_poller_title (int type, int sleep)
+{
+	switch (type) {
+	case ZBX_POLLER_TYPE_UNREACHABLE:
+		if (sleep)
+			zbx_setproctitle ("unreachable poller [sleeping for %d seconds]", sleep);
+		else
+			zbx_setproctitle ("unreachable poller [getting values]");
+		break;
+	case ZBX_POLLER_TYPE_NORMAL:
+		if (sleep)
+			zbx_setproctitle ("poller [sleeping for %d seconds]", sleep);
+		else
+			zbx_setproctitle ("poller [getting values]");
+		break;
+	case ZBX_POLLER_TYPE_AGGREGATE:
+		if (sleep)
+			zbx_setproctitle ("aggregate poller [sleeping for %d seconds]", sleep);
+		else
+			zbx_setproctitle ("aggregate poller [getting values]");
+		break;
+	default:
+		zbx_setproctitle ("unknown poller doing something unknown");
+	}
+}
+
+
 void main_poller_loop(int type, int num)
 {
 	int	now;
@@ -571,8 +624,10 @@ void main_poller_loop(int type, int num)
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
 
 	for(;;)
-	{
-		zbx_setproctitle("poller [getting values]");
+	{	
+		update_poller_title (poller_type, 0);
+
+		sleep (10);
 
 		now=time(NULL);
 		get_values();
@@ -606,10 +661,7 @@ void main_poller_loop(int type, int num)
 			zabbix_log( LOG_LEVEL_DEBUG, "Sleeping for %d seconds",
 					sleeptime );
 
-			zbx_setproctitle("poller [sleeping for %d seconds]",
-					sleeptime);
-
-			sleep( sleeptime );
+			update_poller_title (poller_type, sleeptime);
 		}
 		else
 		{

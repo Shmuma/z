@@ -29,6 +29,7 @@ extern  int     CONFIG_UNREACHABLE_POLLER_FORKS;
 extern  int     CONFIG_UNAVAILABLE_DELAY;
 extern  int     CONFIG_UNREACHABLE_PERIOD;
 extern  int     CONFIG_UNREACHABLE_DELAY;
+extern  int	CONFIG_AGGR_POLLER_FORKS;
 
 void main_poller_loop(int type, int num);
 
