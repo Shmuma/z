@@ -37,6 +37,7 @@ include_once "include/page_header.php";
 		"iprange"=>	array(T_ZBX_IP_RANGE, O_OPT,  null,	NOT_EMPTY,	'isset({save})'),
 		"delay"=>	array(T_ZBX_INT, O_OPT,	 null,	null, 		'isset({save})'),
 		"status"=>	array(T_ZBX_INT, O_OPT,	 null,	IN("0,1"), 	'isset({save})'),
+		"site"=>	array(T_ZBX_INT, O_OPT,	 null,	null,	'isset({save})'),
 
 		"g_druleid"=>	array(T_ZBX_INT, O_OPT,  null,	DB_ID,		null),
 
@@ -97,7 +98,7 @@ include_once "include/page_header.php";
 			$msg_fail = S_CANNOT_UPDATE_DISCOVERY_RULE;
 
 			$result = update_discovery_rule($_REQUEST["druleid"], $_REQUEST['name'], $_REQUEST['iprange'], 
-				$_REQUEST['delay'], $_REQUEST['status'], $_REQUEST['dchecks']);
+				$_REQUEST['delay'], $_REQUEST['status'], $_REQUEST['dchecks'], $_REQUEST['site']);
 
 			$druleid = $_REQUEST["druleid"];
 		}
@@ -107,7 +108,7 @@ include_once "include/page_header.php";
 			$msg_fail = S_CANNOT_ADD_DISCOVERY_RULE;
 
 			$druleid = add_discovery_rule($_REQUEST['name'], $_REQUEST['iprange'],
-				$_REQUEST['delay'], $_REQUEST['status'], $_REQUEST['dchecks']);
+				$_REQUEST['delay'], $_REQUEST['status'], $_REQUEST['dchecks'], $_REQUEST['site']);
 
 			$result = $druleid;
 		}
@@ -199,6 +200,7 @@ include_once "include/page_header.php";
 
 		$tblDiscovery = new CTableInfo(S_NO_DISCOVERY_RULES_DEFINED);
 		$tblDiscovery->SetHeader(array(
+			"Site",
 			array(	new CCheckBox('all_drules',null,"CheckAll('".$form->GetName()."','all_drules');"),
 				S_NAME
 			),
@@ -207,8 +209,8 @@ include_once "include/page_header.php";
 			S_CHECKS,
 			S_STATUS));
 
-		$db_rules = DBselect('select * from drules where '.DBin_node('druleid').
-			' order by name, druleid');
+		$db_rules = DBselect('select drules.*,sites.name as sitename from drules,sites where drules.siteid = sites.siteid'.
+			' order by siteid, name, druleid');
 		while($rule_data = DBfetch($db_rules))
 		{
 			$cheks = array();
@@ -225,6 +227,7 @@ include_once "include/page_header.php";
 				discovery_status2style($rule_data["status"])));
 
 			$tblDiscovery->AddRow(array(
+				$rule_data['sitename'],
 				array(
 					new CCheckBox(
 						"g_druleid[]",		/* name */
@@ -239,7 +242,7 @@ include_once "include/page_header.php";
 				$rule_data['delay'],
 				implode(',', $cheks),
 				$status
-				));	
+				));
 		}
 		$tblDiscovery->SetFooter(new CCol(array(
 			new CButtonQMessage('group_enable',S_ENABLE_SELECTED, S_ENABLE_SELECTED_RULES_Q), SPACE,

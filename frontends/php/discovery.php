@@ -53,9 +53,11 @@ include_once "include/page_header.php";
 	show_table_header(S_STATUS_OF_DISCOVERY_BIG, $r_form);
 ?>
 <?php
-	$db_dhosts = DBselect('select * from dhosts'.
-		($druleid > 0 ? ' where druleid='.$druleid : '').
-		' order by status,ip'
+	$db_dhosts = DBselect('select dhosts.*,sites.name from dhosts,drules,sites '.
+		" where dhosts.druleid = drules.druleid ".
+		"   and  drules.siteid = sites.siteid ".
+		($druleid > 0 ? ' and dhosts.druleid='.$druleid : '').
+		' order by sites.name, dhosts.status, dhosts.ip'
 	);
 
 	$services = array();
@@ -71,7 +73,12 @@ include_once "include/page_header.php";
 			$time = 'lastdown';
 		}
 
-		$discovery_info[$drule_data['ip']] = array('class' => $class, 'time' => $drule_data[$time], 'druleid' => $drule_data['druleid']);
+		$discovery_info[$drule_data['ip']] = array(
+			'class' => $class,
+			'time' => $drule_data[$time],
+			'druleid' => $drule_data['druleid'],
+			'dns' => $drule_data['dns'],
+			'site' => $drule_data['name']);
 
 		$db_dservices = DBselect('select * from dservices where dhostid='.$drule_data['dhostid'].' order by status,type,port');
 		while($dservice_data = DBfetch($db_dservices))
@@ -99,8 +106,9 @@ include_once "include/page_header.php";
 	ksort($services);
 
 	$header = array(
-		is_show_subnodes() ? S_NODE : null,
-		new CCol(S_HOST, 'center'),
+		new CCol(S_SITE, 'center'),
+		new CCol(S_DNS, 'center'),
+		new CCol(S_IP_ADDRESS, 'center'),
 		new CCol(S_UPTIME.'/'.BR.S_DOWNTIME,'center')
 		);
 
@@ -115,7 +123,8 @@ include_once "include/page_header.php";
 	foreach($discovery_info as $ip => $h_data)
 	{
 		$table_row = array(
-			'',
+			$h_data['site'],
+			$h_data['dns'],
 			new CSpan($ip, $h_data['class']),
 			new CSpan(convert_units(time() - $h_data['time'], 'uptime'), $h_data['class'])
 			);
