@@ -63,7 +63,7 @@ void	update_functions(DB_ITEM *item)
 
 /* Oracle does'n support this */
 /*	zbx_snprintf(sql,sizeof(sql),"select function,parameter,itemid,lastvalue from functions where itemid=%d group by function,parameter,itemid order by function,parameter,itemid",item->itemid);*/
-	result = DBselect("select distinct function,parameter,itemid,lastvalue from functions where itemid=" ZBX_FS_UI64,
+	result = DBselect("select function,parameter,itemid,lastvalue from functions where itemid=" ZBX_FS_UI64,
 		item->itemid);
 
 	while((row=DBfetch(result)))
