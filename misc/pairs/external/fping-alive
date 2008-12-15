@@ -1,0 +1,8 @@
+#!/bin/sh
+# $ time fping -r1 -B1 -i10 -p20 -t50 -A -g 213.180.194.117/24
+#
+# real 0m3.934s
+# user 0m0.004s
+# sys  0m0.000s
+#
+fping -r1 -B1 -i10 -p20 -t50 -A -g "$2" 2>&1 |fgrep -c 'is alive'
