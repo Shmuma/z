@@ -33,6 +33,8 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
     INSTALL_PROGRAM += -s
 endif
 
+VERSION=$(shell dpkg-parsechangelog | grep ^Version: | cut -d' ' -f2 | cut -d: -f2)
+
 CONFFLAGS_SERVER  = --host=$(DEB_HOST_GNU_TYPE) \
                     --build=$(DEB_BUILD_GNU_TYPE) \
                     --prefix=/usr \
@@ -40,9 +42,11 @@ CONFFLAGS_SERVER  = --host=$(DEB_HOST_GNU_TYPE) \
                     --infodir=\$${prefix}/share/info \
                     --enable-server \
                     --with-jabber \
-                    --with-net-snmp
+                    --with-net-snmp \
+		    --enable-version=$(VERSION)
 
-CONFFLAGS_AGENT  = --enable-agent --with-ldap
+
+CONFFLAGS_AGENT  = --enable-agent --with-ldap --enable-version=$(VERSION)
 
 build:
 
