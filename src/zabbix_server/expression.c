@@ -708,6 +708,9 @@ static void	expand_trigger_description_constants(
 
 	char	replace[3] = "$0";
 
+	if (!triggerid)
+		return;
+
 	db_trigger = DBselect("select expression from triggers where triggerid=" ZBX_FS_UI64, triggerid);
 
 	if ( (db_trigger_data = DBfetch(db_trigger)) ) {
