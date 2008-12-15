@@ -122,7 +122,11 @@
 
 #define	APPLICATION_NAME	"ZABBIX Agent"
 #define	ZABBIX_REVDATE		"17 December 2007"
+#ifdef ZABBIX_FULL_VERSION
+#define	ZABBIX_VERSION		ZABBIX_FULL_VERSION
+#else
 #define	ZABBIX_VERSION		"1.4.4"
+#endif
 
 #if defined(_WINDOWS)
 /*#	pragma warning (disable: 4100)*/
