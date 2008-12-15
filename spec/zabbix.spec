@@ -12,6 +12,7 @@ BuildPrereq: mysql, mysql-devel, net-snmp-devel, setproctitle-devel, iksemel-dev
 Requires: mysql, net-snmp, setproctitle, iksemel, libmemcached, memcached
 Summary: A network monitor.
 
+%define version_full		%{version}_yandex%{extraver}
 %define zabbix_bindir 	        %{_sbindir}
 %define zabbix_confdir 		%{_sysconfdir}/%{realname}
 %define zabbix_agent_run	%{_localstatedir}/run/zabbix-agent/
@@ -34,7 +35,7 @@ the zabbix network monitor agent.
 %setup -q -n %{realname}-%{version}_yandex%{extraver}
 
 %build
-%configure --enable-server --enable-agent --enable-memcache --with-mysql --with-jabber --with-net-snmp
+%configure --enable-version=%{version_full} --enable-server --enable-agent --enable-memcache --with-mysql --with-jabber --with-net-snmp
 make
 
 # adjust in several files /home/zabbix

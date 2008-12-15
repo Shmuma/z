@@ -809,6 +809,12 @@ if test "$server" = "yes"; then
 	SERVER_LDFLAGS="${SERVER_LDFLAGS} ${MEMCACHE_LIBS}"
 fi
 
+AC_ARG_ENABLE(version,[  --enable-version=version   Provide full version],
+[full_version="${enableval}"], [full_version=no])
+if test "x$full_version" != "xno"; then
+   CFLAGS="${CFLAGS} -DZABBIX_VERSION=\"$full_version\"";
+fi
+
 AM_CONDITIONAL(JABBER,  test "x$found_jabber" = "xyes")
 AM_CONDITIONAL(MEMCACHE,  test "x$enable_memcache" = "xyes")
 
