@@ -11544,7 +11544,7 @@ else
 fi
 
 if test "x$full_version" != "xno"; then
-   CFLAGS="${CFLAGS} -DZABBIX_VERSION=\"$full_version\"";
+   CFLAGS="${CFLAGS} -DZABBIX_FULL_VERSION=\\\"$full_version\\\"";
 fi
 
 
