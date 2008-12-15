@@ -1350,6 +1350,7 @@ Optional Features:
   --enable-agent          Turn on build of agent
   --enable-ipv6         Turn on support of IPv6
   --enable-memcache      Build with memcached support
+  --enable-version=version   Provide full version
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -11533,6 +11534,17 @@ _ACEOF
 	fi
 	CFLAGS="${CFLAGS} ${MEMCACHE_CFLAGS}"
 	SERVER_LDFLAGS="${SERVER_LDFLAGS} ${MEMCACHE_LIBS}"
+fi
+
+# Check whether --enable-version was given.
+if test "${enable_version+set}" = set; then
+  enableval=$enable_version; full_version="${enableval}"
+else
+  full_version=no
+fi
+
+if test "x$full_version" != "xno"; then
+   CFLAGS="${CFLAGS} -DZABBIX_VERSION=\"$full_version\"";
 fi
 
 
