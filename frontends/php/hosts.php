@@ -418,7 +418,7 @@ function save_add_host($str) {
 
 			$result = 1;
 			add_audit(AUDIT_ACTION_UPDATE,AUDIT_RESOURCE_HOST,
-				"Old status [".$host["status"]."] "."New status [".$status."]");
+				"Host [".$host["host"]."] Old status [".$host["status"]."] "."New status [".$status."]");
 		}
 		show_messages($result, S_HOST_STATUS_UPDATED, NULL);
 		unset($_REQUEST["activate"]);
@@ -433,7 +433,7 @@ function save_add_host($str) {
 		if($result)
 		{
 			add_audit(AUDIT_ACTION_UPDATE,AUDIT_RESOURCE_HOST,
-				"Old status [".$host["status"]."] New status [".$_REQUEST["chstatus"]."]");
+				"Host [".$host["host"]."] Old status [".$host["status"]."] New status [".$_REQUEST["chstatus"]."]");
 		}
 		unset($_REQUEST["chstatus"]);
 		unset($_REQUEST["hostid"]);
@@ -548,7 +548,7 @@ function save_add_host($str) {
 
 			$result = 1;
 			add_audit(AUDIT_ACTION_UPDATE,AUDIT_RESOURCE_HOST,
-				"Old status [".$host["status"]."] "."New status [".$status."]");
+				"Host [".$host["host"]."] Old status [".$host["status"]."] "."New status [".$status."]");
 		}
 		show_messages($result, S_HOST_STATUS_UPDATED, NULL);
 		unset($_REQUEST["activate"]);
