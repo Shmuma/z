@@ -71,8 +71,8 @@ FIELD		|status		|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|lastup		|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|lastdown	|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
 
-TABLE|dalerts|dalertid|ZBX_SYNC
-FIELD		|dalertid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC
+TABLE|dalerts|alertid|ZBX_SYNC
+FIELD		|alertid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|actionid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|triggerid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|userid		|t_id		|'0'	|NOT NULL	|ZBX_SYNC

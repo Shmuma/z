@@ -1427,17 +1427,12 @@ int	DBadd_alert(zbx_uint64_t actionid, zbx_uint64_t userid, zbx_uint64_t trigger
 	char	*sendto_esc	= NULL;
 	char	*subject_esc	= NULL;
 	char	*message_esc	= NULL;
-	char	table[7];
-	zbx_uint64_t id;
+	char	table[8];
 
-	if (process_type == ZBX_PROCESS_DISCOVERER) {
-		id = DBget_maxid("dalerts","dalertid");
-		zbx_strlcpy(table, "dalerts", 7);
-	}
-	else {
-		id = DBget_maxid("alerts","alertid");
-		zbx_strlcpy(table, " alerts", 7);
-	}
+	if (process_type == ZBX_PROCESS_DISCOVERER)
+		zbx_strlcpy(table, "dalerts", 8);
+	else
+		zbx_strlcpy(table, "alerts", 8);
 
 	zabbix_log(LOG_LEVEL_DEBUG,"In add_alert(triggerid[%d])",triggerid);
 
@@ -1449,7 +1444,7 @@ int	DBadd_alert(zbx_uint64_t actionid, zbx_uint64_t userid, zbx_uint64_t trigger
 	DBexecute("insert into %s (alertid, actionid,triggerid,userid,clock,mediatypeid,sendto,subject,message,status,retries)"
 		" values (" ZBX_FS_UI64 "," ZBX_FS_UI64 "," ZBX_FS_UI64 "," ZBX_FS_UI64 ",%d," ZBX_FS_UI64 ",'%s','%s','%s',0,0)",
 		table,
-		id,
+		DBget_maxid(table,"alertid"),
 		actionid,
 		triggerid,
 		userid,
