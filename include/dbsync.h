@@ -84,9 +84,9 @@ static	ZBX_TABLE	tables[]={
 		{0}
 		}
 	},
-	{"dalerts",	"dalertid",	ZBX_SYNC,
+	{"dalerts",	"alertid",	ZBX_SYNC,
 		{
-		{"dalertid",	ZBX_TYPE_ID,	ZBX_SYNC},
+		{"alertid",	ZBX_TYPE_ID,	ZBX_SYNC},
 		{"actionid",	ZBX_TYPE_ID,	ZBX_SYNC},
 		{"triggerid",	ZBX_TYPE_ID,	ZBX_SYNC},
 		{"userid",	ZBX_TYPE_ID,	ZBX_SYNC},

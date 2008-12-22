@@ -56,7 +56,7 @@ CREATE TABLE dservices (
 	PRIMARY KEY (dserviceid)
 );
 CREATE TABLE dalerts (
-	dalertid		number(20)		DEFAULT '0'	NOT NULL,
+	alertid		number(20)		DEFAULT '0'	NOT NULL,
 	actionid		number(20)		DEFAULT '0'	NOT NULL,
 	triggerid		number(20)		DEFAULT '0'	NOT NULL,
 	userid		number(20)		DEFAULT '0'	NOT NULL,
@@ -69,7 +69,7 @@ CREATE TABLE dalerts (
 	retries		number(10)		DEFAULT '0'	NOT NULL,
 	error		varchar2(128)		DEFAULT ''	,
 	nextcheck		number(10)		DEFAULT '0'	NOT NULL,
-	PRIMARY KEY (dalertid)
+	PRIMARY KEY (alertid)
 );
 CREATE INDEX dalerts_1 on dalerts (actionid);
 CREATE INDEX dalerts_2 on dalerts (clock);

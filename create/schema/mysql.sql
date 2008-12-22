@@ -56,7 +56,7 @@ CREATE TABLE dservices (
 	PRIMARY KEY (dserviceid)
 ) type=InnoDB;
 CREATE TABLE dalerts (
-	dalertid		bigint unsigned		DEFAULT '0'	NOT NULL,
+	alertid		bigint unsigned		DEFAULT '0'	NOT NULL,
 	actionid		bigint unsigned		DEFAULT '0'	NOT NULL,
 	triggerid		bigint unsigned		DEFAULT '0'	NOT NULL,
 	userid		bigint unsigned		DEFAULT '0'	NOT NULL,
@@ -69,7 +69,7 @@ CREATE TABLE dalerts (
 	retries		integer		DEFAULT '0'	NOT NULL,
 	error		varchar(128)		DEFAULT ''	NOT NULL,
 	nextcheck		integer		DEFAULT '0'	NOT NULL,
-	PRIMARY KEY (dalertid)
+	PRIMARY KEY (alertid)
 ) type=InnoDB;
 CREATE INDEX dalerts_1 on dalerts (actionid);
 CREATE INDEX dalerts_2 on dalerts (clock);

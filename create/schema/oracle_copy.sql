@@ -448,12 +448,12 @@ Replicate2MySQL.RunSQL
 end;
 /
 show errors
-create or replace function zabbix.ins_dalerts (dalertid in number,actionid in number,triggerid in number,userid in number,clock in number,mediatypeid in number,sendto in varchar2,subject in varchar2,message in varchar2,status in number,retries in number,error in varchar2,nextcheck in number) return varchar2
+create or replace function zabbix.ins_dalerts (alertid in number,actionid in number,triggerid in number,userid in number,clock in number,mediatypeid in number,sendto in varchar2,subject in varchar2,message in varchar2,status in number,retries in number,error in varchar2,nextcheck in number) return varchar2
 is
 begin
 return
-'insert into dalerts (dalertid,actionid,triggerid,userid,clock,mediatypeid,sendto,subject,message,status,retries,error,nextcheck) values ('
-||Nvl(To_Char(dalertid),'null')||','
+'insert into dalerts (alertid,actionid,triggerid,userid,clock,mediatypeid,sendto,subject,message,status,retries,error,nextcheck) values ('
+||Nvl(To_Char(alertid),'null')||','
 ||Nvl(To_Char(actionid),'null')||','
 ||Nvl(To_Char(triggerid),'null')||','
 ||Nvl(To_Char(userid),'null')||','
@@ -474,7 +474,7 @@ create or replace trigger zabbix.trai_dalerts after insert on zabbix.dalerts for
 begin
 Replicate2MySQL.RunSQL
 (
-zabbix.ins_dalerts (:new.dalertid,:new.actionid,:new.triggerid,:new.userid,:new.clock,:new.mediatypeid,:new.sendto,:new.subject,:new.message,:new.status,:new.retries,:new.error,:new.nextcheck)
+zabbix.ins_dalerts (:new.alertid,:new.actionid,:new.triggerid,:new.userid,:new.clock,:new.mediatypeid,:new.sendto,:new.subject,:new.message,:new.status,:new.retries,:new.error,:new.nextcheck)
 );
 end;
 /
@@ -484,7 +484,7 @@ begin
 Replicate2MySQL.RunSQL
 (
 'update zabbix.dalerts set '
-||' dalertid='||Nvl(To_Char(:new.dalertid),'null')||','
+||' alertid='||Nvl(To_Char(:new.alertid),'null')||','
 ||' actionid='||Nvl(To_Char(:new.actionid),'null')||','
 ||' triggerid='||Nvl(To_Char(:new.triggerid),'null')||','
 ||' userid='||Nvl(To_Char(:new.userid),'null')||','
@@ -496,7 +496,7 @@ Replicate2MySQL.RunSQL
 ||' status='||Nvl(To_Char(:new.status),'null')||','
 ||' retries='||Nvl(To_Char(:new.retries),'null')||','
 ||' error='''||Replace(:new.error,'''','''''')||''''||','
-||' nextcheck='||Nvl(To_Char(:new.nextcheck),'null') || ' where  dalertid='||:old.dalertid );
+||' nextcheck='||Nvl(To_Char(:new.nextcheck),'null') || ' where  alertid='||:old.alertid );
 end;
 /
 show errors
@@ -505,7 +505,7 @@ begin
 Replicate2MySQL.RunSQL
 (
 'delete from zabbix.dalerts '
- || ' where  dalertid='||:old.dalertid 
+ || ' where  alertid='||:old.alertid 
 );
 end;
 /
