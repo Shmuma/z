@@ -1871,6 +1871,8 @@ zbx_uint64_t DBget_maxid(char *tablename, char *fieldname)
 				DBfree_result(result);
 				if (ret1 + 1 == ret2)
 					found = SUCCEED;
+				else
+					usleep (rand () % 300);
 			}
 		}
 	}
