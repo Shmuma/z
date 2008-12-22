@@ -18,7 +18,7 @@
 PAIR=$(cat /etc/zabbix/server.conf | cut -d = -f 2)
 SITE=$(cat /etc/zabbix/site.conf | cut -d = -f 2)
 
-MYSQL="mysql -h $PAIR --user=ztop --password=oracle zabbix -B -N -e "
+MYSQL="mysql -h $PAIR --connect_timeout=2 --user=ztop --password=oracle zabbix -B -N -e "
 
 
 case $2 in
