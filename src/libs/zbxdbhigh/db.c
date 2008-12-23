@@ -1920,3 +1920,37 @@ zbx_uint64_t DBget_maxid(char *tablename, char *fieldname)
 
 	return ret;*/
 }
+
+
+zbx_uint64_t DBadd_event_low_level (int source, int object, zbx_uint64_t objectid, unsigned int clock, int value)
+{
+	zbx_uint64_t eventid;
+
+#ifdef HAVE_MYSQL
+	DB_RESULT result;
+	DB_ROW row;
+
+	/* for mysql we have optimized auto_increment field */
+	DBexecute("insert into events(source,object,objectid,clock,value) "
+		  " values(%i,%i," ZBX_FS_UI64 ",%lu,%i)",
+		  source, object, objectid, clock, value);
+
+	result = DBselect ("select last_insert_id() as eventid");
+	row = DBfetch (result);
+	if (row && DBis_null (row[0]) != SUCCEED) {
+		ZBX_STR2UINT64 (eventid, row[0]);
+	}
+	else
+		eventid = 0;
+
+	DBfree_result (result);
+#else
+	eventid = DBget_maxid("events","eventid");
+
+	DBexecute("insert into events(eventid,source,object,objectid,clock,value) "
+		  " values(" ZBX_FS_UI64 ",%i,%i," ZBX_FS_UI64 ",%lu,%i)",
+		  eventid, source, object, objectid, clock, value);
+
+#endif
+	return eventid;
+}

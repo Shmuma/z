@@ -3021,11 +3021,7 @@ static int	DBadd_event(
 
 	if( SUCCEED == result )
 	{
-		eventid = DBget_maxid("events","eventid");
-
-		DBexecute("insert into events(eventid,source,object,objectid,clock,value) "
-				" values(" ZBX_FS_UI64 ",%i,%i," ZBX_FS_UI64 ",%lu,%i)",
-				eventid, EVENT_SOURCE_TRIGGERS, EVENT_OBJECT_TRIGGER, triggerid, now, value);
+		eventid = DBadd_event_low_level (EVENT_SOURCE_TRIGGERS, EVENT_OBJECT_TRIGGER, triggerid, now, value);
 
 		if(value == TRIGGER_VALUE_FALSE || value == TRIGGER_VALUE_TRUE)
 		{
