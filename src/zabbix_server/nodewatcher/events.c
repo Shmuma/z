@@ -73,9 +73,8 @@ static int process_node(int nodeid, int master_nodeid, zbx_uint64_t event_lastid
 		ZBX_DM_DELIMITER,
 		nodeid);
 
-	result = DBselect("select eventid,source,object,objectid,clock,value,acknowledged from events where eventid>" ZBX_FS_UI64 " and " ZBX_COND_NODEID " order by eventid",
-		event_lastid,
-		ZBX_NODE("eventid", nodeid));
+	result = DBselect("select eventid,source,object,objectid,clock,value,acknowledged from events where eventid>" ZBX_FS_UI64 " order by eventid",
+		event_lastid);
 	while((row=DBfetch(result)))
 	{
 		ZBX_STR2UINT64(eventid,row[0])

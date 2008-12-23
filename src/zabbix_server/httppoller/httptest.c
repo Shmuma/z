@@ -62,13 +62,12 @@ static int process_value(zbx_uint64_t itemid, AGENT_RESULT *value)
 	zabbix_log( LOG_LEVEL_DEBUG, "In process_value(itemid:" ZBX_FS_UI64 ")",
 		itemid);
 
-	result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and i.status=%d and i.type=%d and i.itemid=" ZBX_FS_UI64 " and " ZBX_COND_NODEID " and " ZBX_COND_SITE,
+	result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and i.status=%d and i.type=%d and i.itemid=" ZBX_FS_UI64 " and " ZBX_COND_SITE,
 		ZBX_SQL_ITEM_SELECT,
 		HOST_STATUS_MONITORED,
 		ITEM_STATUS_ACTIVE,
 		ITEM_TYPE_HTTPTEST,
 		itemid,
-		LOCAL_NODE("h.hostid"),
 		getSiteCondition ());
 	row=DBfetch(result);
 
@@ -518,12 +517,11 @@ void process_httptests(int now)
 
 	zabbix_log(LOG_LEVEL_DEBUG, "In process_httptests()");
 
-	result = DBselect("select httptestid,name,applicationid,nextcheck,status,delay,macros,agent from httptest where status=%d and nextcheck<=%d and " ZBX_SQL_MOD(httptestid,%d) "=%d and " ZBX_COND_NODEID,
+	result = DBselect("select httptestid,name,applicationid,nextcheck,status,delay,macros,agent from httptest where status=%d and nextcheck<=%d and " ZBX_SQL_MOD(httptestid,%d) "=%d",
 		HTTPTEST_STATUS_MONITORED,
 		now,
 		CONFIG_HTTPPOLLER_FORKS,
-		httppoller_num-1,
-		LOCAL_NODE("httptestid"));
+		httppoller_num-1);
 	while((row=DBfetch(result)))
 	{
 		ZBX_STR2UINT64(httptest.httptestid, row[0]);

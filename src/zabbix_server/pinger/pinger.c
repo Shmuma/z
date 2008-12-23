@@ -113,26 +113,24 @@ static int process_value(char *key, char *host, AGENT_RESULT *value)
 	/* IP address? */
 	if(is_ip(host) == SUCCEED)
 	{
-		result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.ip='%s' and i.key_='%s' and i.status=%d and i.type=%d and" ZBX_COND_NODEID " and " ZBX_COND_SITE,
+		result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.ip='%s' and i.key_='%s' and i.status=%d and i.type=%d and " ZBX_COND_SITE,
 			ZBX_SQL_ITEM_SELECT,
 			HOST_STATUS_MONITORED,
 			host,
 			key,
 			ITEM_STATUS_ACTIVE,
 			ITEM_TYPE_SIMPLE,
-			LOCAL_NODE("h.hostid"),
 			getSiteCondition ());
 	}
 	else
 	{
-		result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.dns='%s' and i.key_='%s' and i.status=%d and i.type=%d and" ZBX_COND_NODEID " and " ZBX_COND_SITE,
+		result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.dns='%s' and i.key_='%s' and i.status=%d and i.type=%d and " ZBX_COND_SITE,
 			ZBX_SQL_ITEM_SELECT,
 			HOST_STATUS_MONITORED,
 			host,
 			key,
 			ITEM_STATUS_ACTIVE,
 			ITEM_TYPE_SIMPLE,
-			LOCAL_NODE("h.hostid"),
 			getSiteCondition ());
 	}
 	row=DBfetch(result);
@@ -201,7 +199,7 @@ static int create_host_file(void)
 
 	now=time(NULL);
 	/* Select hosts monitored by IP */
-	result = DBselect("select distinct h.ip from hosts h,items i,sites s where " ZBX_SQL_MOD(h.hostid,%d) "=%d and i.hostid=h.hostid and h.status=%d and (i.key_='%s' or i.key_='%s') and i.type=%d and i.status=%d and h.useip=1 and" ZBX_COND_NODEID " and " ZBX_COND_SITE,
+	result = DBselect("select distinct h.ip from hosts h,items i,sites s where " ZBX_SQL_MOD(h.hostid,%d) "=%d and i.hostid=h.hostid and h.status=%d and (i.key_='%s' or i.key_='%s') and i.type=%d and i.status=%d and h.useip=1 and " ZBX_COND_SITE,
 		CONFIG_PINGER_FORKS,
 		pinger_num-1,
 		HOST_STATUS_MONITORED,
@@ -209,7 +207,6 @@ static int create_host_file(void)
 		SERVER_ICMPPINGSEC_KEY,
 		ITEM_TYPE_SIMPLE,
 		ITEM_STATUS_ACTIVE,
-		LOCAL_NODE("h.hostid"),
 		getSiteCondition ());
 
 	while((row=DBfetch(result)))
@@ -224,7 +221,7 @@ static int create_host_file(void)
 	DBfree_result(result);
 
 	/* Select hosts monitored by hostname */
-	result = DBselect("select distinct h.dns from hosts h,items i,sites s where "  ZBX_SQL_MOD(h.hostid,%d) "=%d and i.hostid=h.hostid and h.status=%d and (i.key_='%s' or i.key_='%s') and i.type=%d and i.status=%d and h.useip=0 and" ZBX_COND_NODEID " and " ZBX_COND_SITE,
+	result = DBselect("select distinct h.dns from hosts h,items i,sites s where "  ZBX_SQL_MOD(h.hostid,%d) "=%d and i.hostid=h.hostid and h.status=%d and (i.key_='%s' or i.key_='%s') and i.type=%d and i.status=%d and h.useip=0 and " ZBX_COND_SITE,
 		CONFIG_PINGER_FORKS,
 		pinger_num-1,
 		HOST_STATUS_MONITORED,
@@ -232,7 +229,6 @@ static int create_host_file(void)
 		SERVER_ICMPPINGSEC_KEY,
 		ITEM_TYPE_SIMPLE,
 		ITEM_STATUS_ACTIVE,
-		LOCAL_NODE("h.hostid"),
 		getSiteCondition ());
 
 	while((row=DBfetch(result)))

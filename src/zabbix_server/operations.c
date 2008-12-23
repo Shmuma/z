@@ -191,9 +191,8 @@ static void run_remote_command(char* host_name, char* command)
 		host_name,
 		command);
 
-	result = DBselect("select distinct host,ip,useip,port,dns from hosts where host='%s' and " ZBX_COND_NODEID,
-			host_name,
-			LOCAL_NODE("hostid"));
+	result = DBselect("select distinct host,ip,useip,port,dns from hosts where host='%s'",
+			host_name);
 	row = DBfetch(result);
 	if(row)
 	{
@@ -347,9 +346,8 @@ void	op_run_commands(DB_EVENT *event, DB_OPERATION *operation)
 		if(alias == '\0' || command == '\0') continue;
 		if(is_group)
 		{
-			result = DBselect("select distinct h.host from hosts_groups hg,hosts h, groups g where hg.hostid=h.hostid and hg.groupid=g.groupid and g.name='%s' and" ZBX_COND_NODEID,
-				alias,
-				LOCAL_NODE("h.hostid"));
+			result = DBselect("select distinct h.host from hosts_groups hg,hosts h, groups g where hg.hostid=h.hostid and hg.groupid=g.groupid and g.name='%s'",
+				alias);
 			while((row=DBfetch(result)))
 			{
 				run_remote_command(row[0], command);

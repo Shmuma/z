@@ -505,7 +505,6 @@ void    *zbx_realloc(void *src, size_t size);
 	
 #define zbx_fclose(f) { if(f){ fclose(f); f = NULL; } }
 
-#define ZBX_COND_NODEID " %s>=100000000000000*%d and %s<=(100000000000000*%d+99999999999999) "
 #define LOCAL_NODE(fieldid) fieldid, CONFIG_NODEID, fieldid, CONFIG_NODEID
 #define ZBX_NODE(fieldid,nodeid) fieldid, nodeid, fieldid, nodeid
 
