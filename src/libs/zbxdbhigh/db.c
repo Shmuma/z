@@ -1779,25 +1779,8 @@ zbx_uint64_t DBget_maxid(char *tablename, char *fieldname)
 		tablename,
 		fieldname);
 
-	for(i = 0; tables[i].table != 0; i++)
-	{
-		if(strcmp(tables[i].table, tablename) == 0)
-		{
-			if(tables[i].flags & ZBX_SYNC)
-			{
-				sync = 1;
-			}
-			break;
-		}
-	}
-
-	if(sync == 1) {
-		min = (zbx_uint64_t)__UINT64_C(100000000000000)*(zbx_uint64_t)CONFIG_NODEID+(zbx_uint64_t)__UINT64_C(100000000000)*(zbx_uint64_t)CONFIG_NODEID;
-		max = (zbx_uint64_t)__UINT64_C(100000000000000)*(zbx_uint64_t)CONFIG_NODEID+(zbx_uint64_t)__UINT64_C(100000000000)*(zbx_uint64_t)CONFIG_NODEID+(zbx_uint64_t)__UINT64_C(99999999999);
-	} else {
-		min = (zbx_uint64_t)__UINT64_C(100000000000000)*(zbx_uint64_t)CONFIG_NODEID;
-		max = (zbx_uint64_t)__UINT64_C(100000000000000)*(zbx_uint64_t)CONFIG_NODEID+(zbx_uint64_t)__UINT64_C(99999999999999);
-	}
+	min = 0;
+	max = (zbx_uint64_t)__UINT64_C(99999999999999);
 
 	do {
 		result = DBselect("select nextid from ids where nodeid=%d and table_name='%s' and field_name='%s'",
@@ -1881,44 +1864,6 @@ zbx_uint64_t DBget_maxid(char *tablename, char *fieldname)
 	zabbix_log(LOG_LEVEL_DEBUG, ZBX_FS_UI64, ret2);
 
 	return ret2;
-
-/*	if(CONFIG_NODEID == 0)
-	{
-		result = DBselect("select max(%s) from %s where " ZBX_COND_NODEID, field, table, LOCAL_NODE(field));
-		row = DBfetch(result);
-
-		if(!row || DBis_null(row[0])==SUCCEED)
-		{
-			ret = 1;
-		}
-		else
-		{
-			ZBX_STR2UINT64(ret, row[0]);
-			ret = CONFIG_NODEID*(zbx_uint64_t)__UINT64_C(100000000000000) + ret;
-			ret++;
-		}
-	}
-	else
-	{
-		result = DBselect("select %s_%s from nodes where nodeid=%d", table, field, CONFIG_NODEID);
-		row = DBfetch(result);
-	
-		if(!row || DBis_null(row[0])==SUCCEED)
-		{
-			ret = CONFIG_NODEID*(zbx_uint64_t)__UINT64_C(100000000000000) + 1;
-		}
-		else
-		{
-			ZBX_STR2UINT64(ret, row[0]);
-			ret = CONFIG_NODEID*(zbx_uint64_t)__UINT64_C(100000000000000) + ret;
-			ret++;
-		}
-		DBexecute("update nodes set %s_%s=%s_%s+1 where nodeid=%d",
-			table, field, table, field, CONFIG_NODEID);
-		DBfree_result(result);
-	}
-
-	return ret;*/
 }
 
 
