@@ -588,4 +588,8 @@ void	DBupdate_services(
 		zbx_uint64_t triggerid,
 		int status
 	);
+
+zbx_uint64_t DBadd_event_low_level (int source, int object, zbx_uint64_t objectid, unsigned int clock, int value);
+
+
 #endif

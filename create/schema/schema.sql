@@ -235,7 +235,7 @@ INDEX		|5		|mediatypeid
 INDEX		|6		|userid
 
 TABLE|events|eventid|0
-FIELD		|eventid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC
+FIELD		|eventid	|t_serial	|	|NOT NULL	|ZBX_SYNC
 FIELD		|source		|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|object		|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|objectid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC

@@ -6398,13 +6398,13 @@ INSERT INTO operations VALUES (6,3,6,0,10002,'','');
 --
 
 
-INSERT INTO drules VALUES (2,'Local network','192.168.1.1-255',3600,0,1);
+--FIXME: INSERT INTO drules VALUES (2,'Local network','192.168.1.1-255',3600,0,1);
 
 --
 -- Dumping data for table `dchecks`
 --
 
-INSERT INTO dchecks VALUES (2,2,9,'system.uname','','10050');
+--FIXME: INSERT INTO dchecks VALUES (2,2,9,'system.uname','','10050');
 
 --
 -- Dumping data for table graphs

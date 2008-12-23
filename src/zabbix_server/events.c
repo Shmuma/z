@@ -162,17 +162,8 @@ int	process_event(DB_EVENT *event)
 
 	add_trigger_info(event);
 
-	if(event->eventid == 0)
-	{
-		event->eventid = DBget_maxid("events","eventid");
-	}
-	DBexecute("insert into events(eventid,source,object,objectid,clock,value) values(" ZBX_FS_UI64 ",%d,%d," ZBX_FS_UI64 ",%d,%d)",
-		event->eventid,
-		event->source,
-		event->object,
-		event->objectid,
-		event->clock,
-		event->value);
+	event->eventid = DBadd_event_low_level (event->source, event->object, event->objectid, event->clock, event->value);
+
 	if (event->source == EVENT_SOURCE_TRIGGERS)
 		HFS_add_event (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, event->eventid, event->objectid, 
 			       event->clock, event->value, event->acknowledged, event->hostid);

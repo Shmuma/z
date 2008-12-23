@@ -248,7 +248,8 @@ static int	trapper_dequeue_requests (queue_entry_t** entries)
 				queue_ofs += res;
 			}
 			if (len < req_len)
-				read (queue_inotify_fd, &ie, sizeof (ie));
+				if (!wait_for_queue (queue_inotify_fd, 2))
+					return count;
 		}
 
 		/* decode request data */
