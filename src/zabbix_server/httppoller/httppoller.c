@@ -56,11 +56,10 @@ static int get_minnextcheck(int now)
 
 	int		res;
 
-	result = DBselect("select count(*),min(nextcheck) from httptest t where t.status=%d and " ZBX_SQL_MOD(t.httptestid,%d) "=%d and " ZBX_COND_NODEID,
+	result = DBselect("select count(*),min(nextcheck) from httptest t where t.status=%d and " ZBX_SQL_MOD(t.httptestid,%d) "=%d",
 		HTTPTEST_STATUS_MONITORED,
 		CONFIG_HTTPPOLLER_FORKS,
-		httppoller_num-1,
-		LOCAL_NODE("t.httptestid"));
+		httppoller_num-1);
 
 	row=DBfetch(result);
 

@@ -309,9 +309,7 @@ static void register_host(DB_DHOST *host,DB_DCHECK *check, zbx_uint64_t druleid,
 		ip);
 
 	host->dhostid=0;
-	result = DBselect("select dhostid,druleid,ip,status,lastup,lastdown from dhosts where ip='%s' and " ZBX_COND_NODEID,
-		ip,
-		LOCAL_NODE("dhostid"));
+	result = DBselect("select dhostid,druleid,ip,status,lastup,lastdown from dhosts where ip='%s'", ip);
 	row=DBfetch(result);
 	if(!row || DBis_null(row[0])==SUCCEED)
 	{

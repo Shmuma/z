@@ -458,8 +458,7 @@ int MAIN_ZABBIX_ENTRY(void)
 
 	DBconnect(ZBX_DB_CONNECT_EXIT);
 
-	result = DBselect("select refresh_unsupported from config where " ZBX_COND_NODEID,
-		LOCAL_NODE("configid"));
+	result = DBselect("select refresh_unsupported from config");
 
 	if (NULL != (row = DBfetch(result)) && DBis_null(row[0]) != SUCCEED)
 		CONFIG_REFRESH_UNSUPPORTED = atoi(row[0]);

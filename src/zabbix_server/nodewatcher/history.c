@@ -82,9 +82,8 @@ static int process_node_history_log(int nodeid, int master_nodeid)
 		ZBX_DM_DELIMITER,
 		nodeid);
 
-	zbx_snprintf(sql,sizeof(sql),"select id,itemid,clock,timestamp,source,severity,value,length(value) from history_log where id>"ZBX_FS_UI64" and "ZBX_COND_NODEID" order by id",
-		sync_lastid,
-		ZBX_NODE("id", nodeid));
+	zbx_snprintf(sql,sizeof(sql),"select id,itemid,clock,timestamp,source,severity,value,length(value) from history_log where id>"ZBX_FS_UI64" order by id",
+		sync_lastid);
 
 	result = DBselectN(sql, 10000);
 	while((row=DBfetch(result)))

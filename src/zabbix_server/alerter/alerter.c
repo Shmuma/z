@@ -203,9 +203,8 @@ int main_alerter_loop()
 	{
 		now  = time(NULL);
 
-		result = DBselect("select a.alertid,a.mediatypeid,a.sendto,a.subject,a.message,a.status,mt.mediatypeid,mt.type,mt.description,mt.smtp_server,mt.smtp_helo,mt.smtp_email,mt.exec_path,mt.gsm_modem,mt.username,mt.passwd,a.userid,a.triggerid,a.actionid,a.retries,a.clock from alerts a,media_type mt where a.status=%d and a.retries<3 and a.mediatypeid=mt.mediatypeid and " ZBX_COND_NODEID " order by a.clock",
-			ALERT_STATUS_NOT_SENT,
-			LOCAL_NODE("mt.mediatypeid"));
+		result = DBselect("select a.alertid,a.mediatypeid,a.sendto,a.subject,a.message,a.status,mt.mediatypeid,mt.type,mt.description,mt.smtp_server,mt.smtp_helo,mt.smtp_email,mt.exec_path,mt.gsm_modem,mt.username,mt.passwd,a.userid,a.triggerid,a.actionid,a.retries,a.clock from alerts a,media_type mt where a.status=%d and a.retries<3 and a.mediatypeid=mt.mediatypeid order by a.clock",
+			ALERT_STATUS_NOT_SENT);
 
 		while((row=DBfetch(result)))
 		{
