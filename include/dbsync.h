@@ -265,7 +265,7 @@ static	ZBX_TABLE	tables[]={
 	},
 	{"events",	"eventid",	0,
 		{
-		{"eventid",	ZBX_TYPE_ID,	ZBX_SYNC},
+		{"eventid",	ZBX_TYPE_UINT,	ZBX_SYNC},
 		{"source",	ZBX_TYPE_INT,	ZBX_SYNC},
 		{"object",	ZBX_TYPE_INT,	ZBX_SYNC},
 		{"objectid",	ZBX_TYPE_ID,	ZBX_SYNC},

@@ -240,7 +240,7 @@ CREATE INDEX alerts_5 on alerts (mediatypeid);
 CREATE INDEX alerts_6 on alerts (userid);
 
 CREATE TABLE events (
-	eventid		number(20)		DEFAULT '0'	NOT NULL,
+	eventid		number(20)			NOT NULL,
 	source		number(10)		DEFAULT '0'	NOT NULL,
 	object		number(10)		DEFAULT '0'	NOT NULL,
 	objectid		number(20)		DEFAULT '0'	NOT NULL,
