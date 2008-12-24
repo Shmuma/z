@@ -1366,7 +1366,7 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 		{
 			var_len = strlen(MVAR_IPADDRESS);
 
-			result = DBselect("select distinct h.ip from triggers t, functions f,items i, hosts h"
+			result = DBselect("select h.ip from triggers t, functions f,items i, hosts h"
 				" where t.triggerid=" ZBX_FS_UI64 " and f.triggerid=t.triggerid and f.itemid=i.itemid and h.hostid=i.hostid",
 				event->objectid);
 
