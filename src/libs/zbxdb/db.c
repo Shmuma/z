@@ -263,7 +263,7 @@ static DB_RESULT __zbx_zbx_db_select(const char *fmt, ...)
 void	zbx_db_begin(void)
 {
 #ifdef	HAVE_MYSQL
-	zbx_db_execute("%s","begin;");
+	//	zbx_db_execute("%s","begin;");
 #endif
 #ifdef	HAVE_POSTGRESQL
 	zbx_db_execute("%s","begin;");
@@ -302,7 +302,7 @@ void	zbx_db_begin(void)
 void zbx_db_commit(void)
 {
 #ifdef	HAVE_MYSQL
-	zbx_db_execute("%s","commit;");
+	//	zbx_db_execute("%s","commit;");
 #endif
 #ifdef	HAVE_POSTGRESQL
 	zbx_db_execute("%s","commit;");
@@ -344,7 +344,7 @@ void zbx_db_commit(void)
 void zbx_db_rollback(void)
 {
 #ifdef	HAVE_MYSQL
-	zbx_db_execute("rollback;");
+	//	zbx_db_execute("rollback;");
 #endif
 #ifdef	HAVE_POSTGRESQL
 	zbx_db_execute("rollback;");
