@@ -477,7 +477,7 @@ int MAIN_ZABBIX_ENTRY(void)
 /* Need to set trigger status to UNKNOWN since last run */
 /* DBconnect() already made in init_config() */
 /*	DBconnect();*/
-	DBupdate_triggers_status_after_restart();
+//	DBupdate_triggers_status_after_restart();
 	DBclose();
 
 /* To make sure that we can connect to the database before forking new processes */
