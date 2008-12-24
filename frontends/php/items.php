@@ -226,13 +226,22 @@ include_once "include/page_header.php";
 		foreach($delay_flex as $val)
 			$db_delay_flex .= $val['delay'].'/'.$val['period'].';';
 		$db_delay_flex = trim($db_delay_flex,";");
+		$snmp_oid = $_REQUEST["snmp_oid"];
+		$snmp_comm = $_REQUEST["snmp_community"];
+
+		if ($_REQUEST["type"] != ITEM_TYPE_SNMPV1 &&
+		    $_REQUEST["type"] != ITEM_TYPE_SNMPV2C &&
+		    $_REQUEST["type"] != ITEM_TYPE_SNMPV3) {
+			$snmp_oid = "";
+			$snmp_comm = "";
+		}
 
 		if(isset($_REQUEST["itemid"]))
 		{
 			$result = smart_update_item($_REQUEST["itemid"],
 				$_REQUEST["description"],$_REQUEST["key"],$_REQUEST["hostid"],$_REQUEST["delay"],
 				$_REQUEST["history"],$_REQUEST["status"],$_REQUEST["type"],
-				$_REQUEST["snmp_community"],$_REQUEST["snmp_oid"],$_REQUEST["value_type"],
+				$snmp_comm,$snmp_oid,$_REQUEST["value_type"],
 				$_REQUEST["trapper_hosts"],$_REQUEST["snmp_port"],$_REQUEST["units"],
 				$_REQUEST["multiplier"],$_REQUEST["delta"],$_REQUEST["snmpv3_securityname"],
 				$_REQUEST["snmpv3_securitylevel"],$_REQUEST["snmpv3_authpassphrase"],
@@ -249,7 +258,7 @@ include_once "include/page_header.php";
 			$itemid=add_item(
 				$_REQUEST["description"],$_REQUEST["key"],$_REQUEST["hostid"],$_REQUEST["delay"],
 				$_REQUEST["history"],$_REQUEST["status"],$_REQUEST["type"],
-				$_REQUEST["snmp_community"],$_REQUEST["snmp_oid"],$_REQUEST["value_type"],
+				$snmp_comm,$snmp_oid,$_REQUEST["value_type"],
 				$_REQUEST["trapper_hosts"],$_REQUEST["snmp_port"],$_REQUEST["units"],
 				$_REQUEST["multiplier"],$_REQUEST["delta"],$_REQUEST["snmpv3_securityname"],
 				$_REQUEST["snmpv3_securitylevel"],$_REQUEST["snmpv3_authpassphrase"],
