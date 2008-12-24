@@ -314,7 +314,7 @@ int	process_data(int history, hfs_time_t ts, char *server,char *key,char *value,
 		DBescape_string(key, key_esc, MAX_STRING_LEN);
 
 		result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.host='%s' and i.key_='%s' and i.status in (%d,%d) and i.type in (%d,%d) and " ZBX_COND_SITE,
-			ZBX_SQL_ITEM_SELECT,
+			ZBX_SQL_HFS_ITEM_SELECT,
 			HOST_STATUS_MONITORED,
 			server_esc,
 			key_esc,
@@ -1088,7 +1088,7 @@ void	append_history (char* server, char* key, char* value, hfs_time_t ts, void**
 		state = (history_state_t*)malloc (sizeof (history_state_t));
 
 		state->result = DBselect("select %s where h.status=%d and h.hostid=i.hostid and h.host='%s' and i.key_='%s' and i.status in (%d,%d) and i.type in (%d,%d) and " ZBX_COND_SITE,
-				  ZBX_SQL_ITEM_SELECT,
+				  ZBX_SQL_HFS_ITEM_SELECT,
 				  HOST_STATUS_MONITORED,
 				  server_esc,
 				  key_esc,
