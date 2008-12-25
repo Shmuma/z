@@ -50,7 +50,7 @@ int memcache_zbx_getitem(char *key, char *host, DB_ITEM *item)
 	memcached_return rc;
 	size_t len, item_len;
 
-	len = strlen(key) + strlen(host) + 5;
+	len = strlen(key) + strlen(host) + 5 + 1;
 
 	strkey = (char *) zbx_malloc(strkey, len);
 	zbx_snprintf(strkey, len, "%d|%d|%s|%s",
@@ -85,14 +85,16 @@ int memcache_zbx_setitem(DB_ITEM *item)
 	memcached_return rc;
 	size_t len, item_len;
 
-	len = strlen(item->key) + strlen(item->host_name) + 5;
+	len = strlen(item->key) + strlen(item->host_name) + 5 + 1;
 
 	strkey = (char *) zbx_malloc(strkey, len);
 	zbx_snprintf(strkey, len, "%d|%d|%s|%s",
 		    process_type, MEMCACHE_VERSION, item->key, item->host_name);
 
 	zabbix_log(LOG_LEVEL_DEBUG, "[memcache] memcache_setitem()"
-		    "[%d|%d|%s|%s]", process_type, MEMCACHE_VERSION, item->key, item->host_name);
+		    "[%d|%d|%s|%s] cache-time=%d",
+		    process_type, MEMCACHE_VERSION, item->key, item->host_name,
+		    item->cache_time);
 
 	item_len = dbitem_size(item, 0);
 	dbitem_serialize(item, item_len);
@@ -108,13 +110,26 @@ int memcache_zbx_setitem(DB_ITEM *item)
 	return -1;
 }
 
-int memcache_zbx_is_item_expire(DB_ITEM *item)
+int memcache_zbx_delitem(DB_ITEM *item)
 {
-	hfs_time_t cur_time;
+	char *strkey = NULL;
+	memcached_return rc;
+	size_t len, item_len;
 
-	if (!item->cache_time)
+	len = strlen(item->key) + strlen(item->host_name) + 5 + 1;
+
+	strkey = (char *) zbx_malloc(strkey, len);
+	zbx_snprintf(strkey, len, "%d|%d|%s|%s",
+		    process_type, MEMCACHE_VERSION, item->key, item->host_name);
+
+	zabbix_log(LOG_LEVEL_DEBUG, "[memcache] memcache_delitem()"
+		    "[%d|%d|%s|%s]", process_type, MEMCACHE_VERSION, item->key, item->host_name);
+
+	rc = memcached_delete(mem_conn, strkey, (len-1), 0);
+	free(strkey);
+
+	if (rc == MEMCACHED_SUCCESS || rc == MEMCACHED_BUFFERED)
 		return 1;
 
-	cur_time = time(NULL);
-	return ((cur_time - item->cache_time) >= CONFIG_MEMCACHE_ITEMS_TTL);
+	return -1;
 }

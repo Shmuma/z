@@ -288,7 +288,8 @@ int	process_data(int history, hfs_time_t ts, char *server,char *key,char *value,
 	char	server_esc[MAX_STRING_LEN];
 	char	key_esc[MAX_STRING_LEN];
 
-	zabbix_log( LOG_LEVEL_DEBUG, "In process_data([%s],[%s],[%s],[%s],[%s])",
+	zabbix_log( LOG_LEVEL_DEBUG, "In process_data[%lld]([%s],[%s],[%s],[%s],[%s])",
+		ts,
 		server,
 		key,
 		value,
@@ -301,7 +302,7 @@ int	process_data(int history, hfs_time_t ts, char *server,char *key,char *value,
 	if (process_type == ZBX_PROCESS_TRAPPERD) {
 		in_cache = memcache_zbx_getitem(key, server, &item);
 
-		if (in_cache == 1 && memcache_zbx_is_item_expire(&item)) {
+		if (in_cache == 1 && (ts > item.cache_time)) {
 			DBfree_item(&item);
 			in_cache = 0;
 		}
