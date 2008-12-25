@@ -32,6 +32,10 @@ int memcache_zbx_connect(void)
 		mem_conn = NULL;
 		return -1;
 	}
+
+	memcached_behavior_set(mem_conn, MEMCACHED_BEHAVIOR_NO_BLOCK, 1);
+	memcached_behavior_set(mem_conn, MEMCACHED_BEHAVIOR_CACHE_LOOKUPS, 1);
+
 	zabbix_log(LOG_LEVEL_DEBUG, "Connect with memcached done");
 	return 0;
 }
