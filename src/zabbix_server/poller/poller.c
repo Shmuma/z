@@ -128,7 +128,7 @@ static int get_minnextcheck(int now)
 		2 == UNREACHABLE */
 	switch (poller_type) {
 	case ZBX_POLLER_TYPE_UNREACHABLE:
-		result = DBselect("select min(nextcheck) as nextcheck from items i,hosts h, sites s where " ZBX_SQL_MOD(h.hostid,%d) "=%d and i.nextcheck<=%d and i.status in (%d) and i.type not in (%d,%d,%d) and h.status=%d and h.disable_until<=%d and h.errors_from!=0 and h.hostid=i.hostid and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE "order by nextcheck",
+		result = DBselect("select min(nextcheck) as nextcheck from items i,hosts h, sites s where " ZBX_SQL_MOD(h.hostid,%d) "=%d and i.nextcheck<=%d and i.status=%d and i.type not in (%d,%d,%d) and h.status=%d and h.disable_until<=%d and h.errors_from!=0 and h.hostid=i.hostid and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE "order by nextcheck",
 				  CONFIG_UNREACHABLE_POLLER_FORKS,
 				  poller_num-1,
 				  now,
@@ -154,7 +154,7 @@ static int get_minnextcheck(int now)
 		}
 		else
 		{
-			result = DBselect("select min(nextcheck) from items i,hosts h, sites s where h.status=%d and h.disable_until<%d and h.errors_from=0 and h.hostid=i.hostid and i.status in (%d) and i.type not in (%d,%d,%d,%d) and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE,
+			result = DBselect("select min(nextcheck) from items i,hosts h, sites s where h.status=%d and h.disable_until<%d and h.errors_from=0 and h.hostid=i.hostid and i.status=%d and i.type not in (%d,%d,%d,%d) and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE,
 					  HOST_STATUS_MONITORED,
 					  now,
 					  ITEM_STATUS_ACTIVE,
@@ -166,7 +166,7 @@ static int get_minnextcheck(int now)
 		}
 		break;
 	case ZBX_POLLER_TYPE_AGGREGATE:
-		result = DBselect("select min(nextcheck) from items i,hosts h, sites s where h.status=%d and h.disable_until<%d and h.errors_from=0 and h.hostid=i.hostid and i.status in (%d) and i.type=%d and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE,
+		result = DBselect("select min(nextcheck) from items i,hosts h, sites s where h.status=%d and h.disable_until<%d and h.errors_from=0 and h.hostid=i.hostid and i.status=%d and i.type=%d and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE,
 				  HOST_STATUS_MONITORED,
 				  now,
 				  ITEM_STATUS_ACTIVE,
@@ -627,8 +627,6 @@ void main_poller_loop(int type, int num)
 	{	
 		update_poller_title (poller_type, 0);
 
-		sleep (10);
-
 		now=time(NULL);
 		get_values();
 
@@ -662,6 +660,7 @@ void main_poller_loop(int type, int num)
 					sleeptime );
 
 			update_poller_title (poller_type, sleeptime);
+			sleep (sleeptime);
 		}
 		else
 		{
