@@ -205,7 +205,7 @@ static int get_nextchecks(int** res_buf)
 		delay = atoi (row[1]);
 
 		if (!ts)
-			ts = now;
+			ts = now + delay;
 
 		while (ts < now+POLLER_GROUP_INTERVAL) {
 			if (count == res) {
