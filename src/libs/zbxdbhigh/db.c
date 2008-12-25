@@ -1562,7 +1562,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	item->lastcheck = 0;
 
 #ifdef HAVE_MEMCACHE
-	item->cache_time = time(NULL);
+	item->cache_time = time(NULL) + CONFIG_MEMCACHE_ITEMS_TTL;
 #endif
 	item->chars = NULL;
 
