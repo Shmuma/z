@@ -45,7 +45,7 @@
  ******************************************************************************/
 void main_timer_loop()
 {
-	int	now;
+	int	now, cur;
 
 /*	int	itemid,functionid;
 	char	*function;
@@ -58,7 +58,7 @@ void main_timer_loop()
 
 	for(;;)
 	{
-		zbx_setproctitle("updating nodata() functions");
+		zbx_setproctitle("Timer: updating nodata() functions");
 
 		DBconnect(ZBX_DB_CONNECT_NORMAL);
 
@@ -76,9 +76,13 @@ void main_timer_loop()
 			HOST_STATUS_MONITORED,
 			ITEM_STATUS_ACTIVE,
 			getSiteCondition ());
+		cur = 1;
 
 		while((row=DBfetch(result)))
 		{
+#ifdef HAVE_MYSQL			
+			zbx_setproctitle("Timer: processing %d item of %d", cur++, result->row_count);
+#endif
 			DBget_item_from_db(&item,row);
 
 			DBbegin();
@@ -92,7 +96,7 @@ void main_timer_loop()
 		DBfree_result(result);
 		DBclose();
 
-		zbx_setproctitle("sleeping for 10 sec");
+		zbx_setproctitle("Timer: sleeping for 10 sec");
 
 		sleep(10);
 	}
