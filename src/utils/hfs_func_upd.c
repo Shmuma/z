@@ -57,6 +57,7 @@ void dbitem_serialize(DB_ITEM *item, size_t item_len)
 
 int main (int argc, char** argv)
 {
+#ifdef HAVE_MYSQL
 	DB_RESULT	result;
 	DB_ROW		row;
 	zbx_uint64_t	id;
@@ -99,5 +100,9 @@ int main (int argc, char** argv)
 	}
 
 	DBclose ();
+#else
+	printf ("This utility have no meaning on ztops\n");
+#endif
+	return 0;
 }
 
