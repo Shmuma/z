@@ -17,8 +17,7 @@ hfsimport_LDADD = $(ZBX_LIBS)
 hfsfilter_LDADD = $(ZBX_LIBS)
 hfsevents_LDADD = $(ZBX_LIBS)
 memcachetest_LDADD = $(ZBX_LIBS) -lmemcached
-hfs_func_upd_LDADD = $(ZBX_LIBS) -L../libs/zbxlog -lzbxlog -L../libs/zbxsys -lzbxsys -L../libs/zbxdb -lzbxdb -L../libs/zbxdbhigh -lzbxdbhigh @SERVER_LIBS@
-
+hfs_func_upd_LDADD = $(ZBX_LIBS) -L../libs/zbxlog -lzbxlog -L../libs/zbxsys -lzbxsys -L../libs/zbxdb -lzbxdb -L../libs/zbxdbhigh -lzbxdbhigh $(DB_LDFLAGS) $(DB_LIBS)
 sbin_PROGRAMS = hfsdump hfsimport hfs_trends_upd hfsfilter hfsevents memcachetest hfs_func_upd
 
 hfsdump_SOURCES = hfsdump.c
