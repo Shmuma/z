@@ -62,7 +62,9 @@ am__DEPENDENCIES_1 = ../libs/zbxcomms/libzbxcomms.a \
 	../libs/zbxdbhigh/libzbxdbhigh.a ../libs/zbxlog/libzbxlog.a \
 	../libs/zbxconf/libzbxconf.a ../libs/zbxcommon/libzbxcommon.a \
 	../libs/zbxcrypto/libzbxcrypto.a ../libs/zbxsys/libzbxsys.a
-hfs_func_upd_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am__DEPENDENCIES_2 =
+hfs_func_upd_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_2)
 am_hfs_trends_upd_OBJECTS = hfs_trends_upd.$(OBJEXT)
 hfs_trends_upd_OBJECTS = $(am_hfs_trends_upd_OBJECTS)
 hfs_trends_upd_DEPENDENCIES = $(am__DEPENDENCIES_1)
@@ -250,7 +252,7 @@ hfsimport_LDADD = $(ZBX_LIBS)
 hfsfilter_LDADD = $(ZBX_LIBS)
 hfsevents_LDADD = $(ZBX_LIBS)
 memcachetest_LDADD = $(ZBX_LIBS) -lmemcached
-hfs_func_upd_LDADD = $(ZBX_LIBS) -L../libs/zbxlog -lzbxlog -L../libs/zbxsys -lzbxsys -L../libs/zbxdb -lzbxdb -L../libs/zbxdbhigh -lzbxdbhigh @SERVER_LIBS@
+hfs_func_upd_LDADD = $(ZBX_LIBS) -L../libs/zbxlog -lzbxlog -L../libs/zbxsys -lzbxsys -L../libs/zbxdb -lzbxdb -L../libs/zbxdbhigh -lzbxdbhigh $(DB_LDFLAGS) $(DB_LIBS)
 hfsdump_SOURCES = hfsdump.c
 hfs_trends_upd_SOURCES = hfs_trends_upd.c
 hfsimport_SOURCES = hfsimport.c
