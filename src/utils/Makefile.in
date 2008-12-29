@@ -38,7 +38,7 @@ build_triplet = @build@
 host_triplet = @host@
 sbin_PROGRAMS = hfsdump$(EXEEXT) hfsimport$(EXEEXT) \
 	hfs_trends_upd$(EXEEXT) hfsfilter$(EXEEXT) hfsevents$(EXEEXT) \
-	memcachetest$(EXEEXT)
+	memcachetest$(EXEEXT) hfs_func_upd$(EXEEXT)
 subdir = src/utils
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -56,12 +56,17 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(sbindir)"
 sbinPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(sbin_PROGRAMS)
-am_hfs_trends_upd_OBJECTS = hfs_trends_upd.$(OBJEXT)
-hfs_trends_upd_OBJECTS = $(am_hfs_trends_upd_OBJECTS)
+am_hfs_func_upd_OBJECTS = hfs_func_upd.$(OBJEXT)
+hfs_func_upd_OBJECTS = $(am_hfs_func_upd_OBJECTS)
 am__DEPENDENCIES_1 = ../libs/zbxcomms/libzbxcomms.a \
 	../libs/zbxdbhigh/libzbxdbhigh.a ../libs/zbxlog/libzbxlog.a \
 	../libs/zbxconf/libzbxconf.a ../libs/zbxcommon/libzbxcommon.a \
 	../libs/zbxcrypto/libzbxcrypto.a ../libs/zbxsys/libzbxsys.a
+am__DEPENDENCIES_2 =
+hfs_func_upd_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_2)
+am_hfs_trends_upd_OBJECTS = hfs_trends_upd.$(OBJEXT)
+hfs_trends_upd_OBJECTS = $(am_hfs_trends_upd_OBJECTS)
 hfs_trends_upd_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_hfsdump_OBJECTS = hfsdump.$(OBJEXT)
 hfsdump_OBJECTS = $(am_hfsdump_OBJECTS)
@@ -86,12 +91,12 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(hfs_trends_upd_SOURCES) $(hfsdump_SOURCES) \
-	$(hfsevents_SOURCES) $(hfsfilter_SOURCES) $(hfsimport_SOURCES) \
-	$(memcachetest_SOURCES)
-DIST_SOURCES = $(hfs_trends_upd_SOURCES) $(hfsdump_SOURCES) \
-	$(hfsevents_SOURCES) $(hfsfilter_SOURCES) $(hfsimport_SOURCES) \
-	$(memcachetest_SOURCES)
+SOURCES = $(hfs_func_upd_SOURCES) $(hfs_trends_upd_SOURCES) \
+	$(hfsdump_SOURCES) $(hfsevents_SOURCES) $(hfsfilter_SOURCES) \
+	$(hfsimport_SOURCES) $(memcachetest_SOURCES)
+DIST_SOURCES = $(hfs_func_upd_SOURCES) $(hfs_trends_upd_SOURCES) \
+	$(hfsdump_SOURCES) $(hfsevents_SOURCES) $(hfsfilter_SOURCES) \
+	$(hfsimport_SOURCES) $(memcachetest_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -247,11 +252,13 @@ hfsimport_LDADD = $(ZBX_LIBS)
 hfsfilter_LDADD = $(ZBX_LIBS)
 hfsevents_LDADD = $(ZBX_LIBS)
 memcachetest_LDADD = $(ZBX_LIBS) -lmemcached
+hfs_func_upd_LDADD = $(ZBX_LIBS) -L../libs/zbxlog -lzbxlog -L../libs/zbxsys -lzbxsys -L../libs/zbxdb -lzbxdb -L../libs/zbxdbhigh -lzbxdbhigh $(DB_LIBS)
 hfsdump_SOURCES = hfsdump.c
 hfs_trends_upd_SOURCES = hfs_trends_upd.c
 hfsimport_SOURCES = hfsimport.c
 hfsfilter_SOURCES = hfsfilter.c
 hfsevents_SOURCES = hfsevents.c
+hfs_func_upd_SOURCES = hfs_func_upd.c
 memcachetest_SOURCES = memcachetest.c \
 	../zabbix_server/memcache.c \
 	../zabbix_server/serialize.c
@@ -312,6 +319,9 @@ uninstall-sbinPROGRAMS:
 
 clean-sbinPROGRAMS:
 	-test -z "$(sbin_PROGRAMS)" || rm -f $(sbin_PROGRAMS)
+hfs_func_upd$(EXEEXT): $(hfs_func_upd_OBJECTS) $(hfs_func_upd_DEPENDENCIES) 
+	@rm -f hfs_func_upd$(EXEEXT)
+	$(LINK) $(hfs_func_upd_LDFLAGS) $(hfs_func_upd_OBJECTS) $(hfs_func_upd_LDADD) $(LIBS)
 hfs_trends_upd$(EXEEXT): $(hfs_trends_upd_OBJECTS) $(hfs_trends_upd_DEPENDENCIES) 
 	@rm -f hfs_trends_upd$(EXEEXT)
 	$(LINK) $(hfs_trends_upd_LDFLAGS) $(hfs_trends_upd_OBJECTS) $(hfs_trends_upd_LDADD) $(LIBS)
@@ -337,6 +347,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfs_func_upd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfs_trends_upd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfsdump.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfsevents.Po@am__quote@
