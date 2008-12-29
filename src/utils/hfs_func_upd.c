@@ -32,7 +32,13 @@ char	*CONFIG_SERVER_SITE		= NULL;
 int	CONFIG_NODEID			= 0;
 int	CONFIG_REFRESH_UNSUPPORTED      = 0;
 
+#ifdef HAVE_MEMCACHE
+char *CONFIG_MEMCACHE_SERVER		= NULL;
+int CONFIG_MEMCACHE_ITEMS_TTL		= 30;
+#endif
+
 zbx_process_type_t process_type = -1;
+
 
 /* Ugly, ugly hacks. */
 void __zbx_zabbix_syslog(const char *fmt, ...)
