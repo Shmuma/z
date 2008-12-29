@@ -230,7 +230,8 @@ typedef struct __attribute__ ((packed)) {
 	item_value_u value;
 } hfs_function_value_t;
 
-int		HFS_convert_function_value (const char* value, hfs_function_value_t* result);
+int		HFS_convert_function_str2val (const char* value, hfs_function_value_t* result);
+char*		HFS_convert_function_val2str (hfs_function_value_t* result);
 int		HFS_save_function_value (const char* hfs_path, const char* siteid, zbx_uint64_t functionid, hfs_function_value_t* value);
 int		HFS_get_function_value (const char* hfs_path, const char* siteid, zbx_uint64_t functionid, hfs_function_value_t* value);
 

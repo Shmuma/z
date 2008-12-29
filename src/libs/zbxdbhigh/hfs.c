@@ -2734,7 +2734,7 @@ zbx_uint64_t	HFS_get_item_last_int (const char* hfs_base_dir, const char* siteid
 /* -------------------------------------------------- */
 
 /* trying to convert string value to apropriate value */
-int HFS_convert_function_value (const char* value, hfs_function_value_t* result)
+int HFS_convert_function_str2val (const char* value, hfs_function_value_t* result)
 {
 	int dig = 0, dots = 0, sign = 0, space = 0, other = 0;
 	char* p = value;
@@ -2775,6 +2775,27 @@ int HFS_convert_function_value (const char* value, hfs_function_value_t* result)
 
 	return 0;
 }
+
+
+
+char* HFS_convert_function_val2str (hfs_function_value_t* result)
+{
+	static char buf[256];
+
+	switch (result->type) {
+	case FVT_NULL:
+		return strdup ("");
+	case FVT_UINT64:
+		snprintf (buf, sizeof (buf), ZBX_FS_UI64, result->value.l);
+		return strdup (buf);
+	case FVT_DOUBLE:
+		snprintf (buf, sizeof (buf), "%lf", result->value.d);
+		return strdup (buf);
+	default:
+		return NULL;
+	}
+}
+
 
 
 int HFS_save_function_value (const char* hfs_path, const char* siteid, zbx_uint64_t functionid, hfs_function_value_t* value)
