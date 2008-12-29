@@ -1,5 +1,5 @@
 %define realname	zabbix
-%define extraver	47
+%define extraver	48
 
 Name: zabbix-oracle
 Version: 1.4.4

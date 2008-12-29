@@ -1,5 +1,5 @@
 %define realname	zabbix
-%define extraver	47
+%define extraver	48
 
 Name: zabbix-mysql
 Version: 1.4.4
@@ -203,6 +203,7 @@ install -m 755 misc/init.d/redhat/zabbix_server %{buildroot}%{_sysconfdir}/init.
 %attr(0755,root,root) %{zabbix_bindir}/hfsimport
 %attr(0755,root,root) %{zabbix_bindir}/hfsevents
 %attr(0755,root,root) %{zabbix_bindir}/hfsfilter
+%attr(0755,root,root) %{zabbix_bindir}/hfs_func_upd
 %attr(0755,root,root) %{zabbix_bindir}/hfs_trends_upd
 %attr(0755,root,root) %{zabbix_bindir}/memcachetest
 %{_sysconfdir}/init.d/zabbix_server

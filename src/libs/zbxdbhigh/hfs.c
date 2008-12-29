@@ -24,6 +24,7 @@
 
 #include <unistd.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 # ifndef ULLONG_MAX
 #  define ULLONG_MAX    18446744073709551615ULL
@@ -782,6 +783,9 @@ char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemi
 	    break;
     case NK_EventHost:
 	    snprintf (res, len, "%s/%s/hosts/%llu/%llu/events.data", hfs_base_dir, siteid, item_ord, itemid);
+	    break;
+    case NK_FunctionVals:
+	    snprintf (res, len, "%s/%s/misc/functions.data", hfs_base_dir, siteid);
 	    break;
     }
 
@@ -2722,4 +2726,125 @@ zbx_uint64_t	HFS_get_item_last_int (const char* hfs_base_dir, const char* siteid
     close (fd);
 
     return res;
+}
+
+
+/* -------------------------------------------------- */
+/* Function values */
+/* -------------------------------------------------- */
+
+/* trying to convert string value to apropriate value */
+int HFS_convert_function_str2val (const char* value, hfs_function_value_t* result)
+{
+	int dig = 0, dots = 0, sign = 0, space = 0, other = 0;
+	const char* p = value;
+
+	/* empty value */
+	if (!value || !value[0]) {
+		result->type = FVT_NULL;
+		result->value.d = 0;
+		return 1;
+	}
+
+	while (*p) {
+		if (isspace (*p))
+			space++;
+		else if (isdigit (*p))
+			dig++;
+		else if (*p == '.')
+			dots++;
+		else if (*p == '+' || *p == '-')
+			sign++;
+		else
+			other++;
+		p++;
+	}
+
+	/* this is an integer value */
+	if (!dots && !sign && !other) {
+		result->type = FVT_UINT64;
+		ZBX_STR2UINT64 (result->value.l, value);
+		return 1;
+	}
+
+	if (!other) {
+		result->type = FVT_DOUBLE;
+		result->value.d = atof (value);
+		return 1;
+	}
+
+	return 0;
+}
+
+
+
+char* HFS_convert_function_val2str (hfs_function_value_t* result)
+{
+	static char buf[256];
+
+	switch (result->type) {
+	case FVT_NULL:
+		return strdup ("");
+	case FVT_UINT64:
+		snprintf (buf, sizeof (buf), ZBX_FS_UI64, result->value.l);
+		return strdup (buf);
+	case FVT_DOUBLE:
+		snprintf (buf, sizeof (buf), "%lf", result->value.d);
+		return strdup (buf);
+	default:
+		return NULL;
+	}
+}
+
+
+
+int HFS_save_function_value (const char* hfs_path, const char* siteid, zbx_uint64_t functionid, hfs_function_value_t* value)
+{
+	char *name = get_name (hfs_path, siteid, 0, NK_FunctionVals);
+	int fd;
+
+	if ((fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0) {
+		zabbix_log (LOG_LEVEL_ERR, "HFS_save_function_value: Cannot open function value file");
+		free (name);
+		return 0;
+	}
+	free (name);
+
+	if (lseek (fd, sizeof (hfs_function_value_t) * functionid, SEEK_SET) == (off_t)-1) {
+		zabbix_log (LOG_LEVEL_ERR, "HFS_save_function_value: Cannot seek to %lld offset", sizeof (hfs_function_value_t) * functionid);
+		close (fd);
+		return 0;
+	}
+
+	if (write (fd, value, sizeof (hfs_function_value_t)) != sizeof (hfs_function_value_t))
+		zabbix_log (LOG_LEVEL_ERR, "HFS_save_function_value: Error updating value");
+
+	close (fd);
+	return 1;
+}
+
+
+int HFS_get_function_value (const char* hfs_path, const char* siteid, zbx_uint64_t functionid, hfs_function_value_t* value)
+{
+	char *name = get_name (hfs_path, siteid, 0, NK_FunctionVals);
+	int fd;
+
+	if ((fd = open (name, O_RDONLY)) < 0) {
+		zabbix_log (LOG_LEVEL_ERR, "HFS_get_function_value: Cannot open function value file");
+		free (name);
+		return 0;
+	}
+	free (name);
+
+	if (lseek (fd, sizeof (hfs_function_value_t) * functionid, SEEK_SET) == (off_t)-1) {
+		value->type = FVT_NULL;
+		close (fd);
+		return 1;
+	}
+
+	if (read (fd, value, sizeof (hfs_function_value_t)) != sizeof (hfs_function_value_t))
+		zabbix_log (LOG_LEVEL_ERR, "HFS_get_function_value: Error reading value");
+
+	close (fd);
+	return 1;
 }
