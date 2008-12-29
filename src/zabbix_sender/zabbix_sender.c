@@ -350,7 +350,8 @@ int main(int argc, char **argv)
 		while(fgets(in_line, sizeof(in_line), in) != NULL)
 		{ /* <zabbix_server> <hostname> <port> <key> <value> */
 			total_count++; /* also used as inputline */
-	
+
+			memset (&sentdval_args, 0, sizeof (sentdval_args));
 			sentdval_args.server = in_line;
 
 			if( !(sentdval_args.hostname = strchr(sentdval_args.server, ' ')) )

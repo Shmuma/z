@@ -57,22 +57,31 @@ void	update_functions(DB_ITEM *item)
 	char		value_esc[MAX_STRING_LEN];
 	char		*lastvalue;
 	int		ret=SUCCEED;
+	hfs_function_value_t fun_val;
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In update_functions(" ZBX_FS_UI64 ")",
 		item->itemid);
 
 /* Oracle does'n support this */
 /*	zbx_snprintf(sql,sizeof(sql),"select function,parameter,itemid,lastvalue from functions where itemid=%d group by function,parameter,itemid order by function,parameter,itemid",item->itemid);*/
-	result = DBselect("select function,parameter,itemid,lastvalue from functions where itemid=" ZBX_FS_UI64,
+	result = DBselect("select function,parameter,itemid,lastvalue,functionid from functions where itemid=" ZBX_FS_UI64,
 		item->itemid);
 
 	while((row=DBfetch(result)))
 	{
-		function.function=row[0];
-		function.parameter=row[1];
-		ZBX_STR2UINT64(function.itemid,row[2]);
-/*		function.itemid=atoi(row[2]); */
-		lastvalue=row[3];
+		function.function = row[0];
+		function.parameter = row[1];
+		ZBX_STR2UINT64 (function.itemid, row[2]);
+		ZBX_STR2UINT64 (function.functionid, row[4]);
+
+		if (!CONFIG_HFS_PATH)
+			lastvalue = strdup (row[3]);
+		else {
+			/* obtain function value from HFS */
+			fun_val.type = FVT_NULL;
+			HFS_get_function_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, function.functionid, &fun_val);
+			lastvalue = HFS_convert_function_val2str (&fun_val);
+		}
 
 		zabbix_log( LOG_LEVEL_DEBUG, "ItemId:" ZBX_FS_UI64 " Evaluating %s(%s)",
 			function.itemid,
@@ -84,25 +93,35 @@ void	update_functions(DB_ITEM *item)
 		{
 			zabbix_log( LOG_LEVEL_DEBUG, "Evaluation failed for function:%s",
 				function.function);
+			if (lastvalue)
+				free (lastvalue);
 			continue;
 		}
 		if (ret == SUCCEED)
 		{
 			/* Update only if lastvalue differs from new one */
-			if( (lastvalue == NULL) || (strcmp(lastvalue,value) != 0))
+			if( (lastvalue == NULL) || !*lastvalue || (strcmp(lastvalue,value) != 0))
 			{
-				DBescape_string(value,value_esc,MAX_STRING_LEN);
-				DBexecute("update functions set lastvalue='%s' where itemid=" ZBX_FS_UI64 " and function='%s' and parameter='%s'",
-					value_esc,
-					function.itemid,
-					function.function,
-					function.parameter );
+				if (CONFIG_HFS_PATH) {
+					if (HFS_convert_function_str2val (value, &fun_val))
+						HFS_save_function_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, function.functionid, &fun_val);
+				}
+				else {
+					DBescape_string(value,value_esc,MAX_STRING_LEN);
+					DBexecute("update functions set lastvalue='%s' where itemid=" ZBX_FS_UI64 " and function='%s' and parameter='%s'",
+						  value_esc,
+						  function.itemid,
+						  function.function,
+						  function.parameter );
+				}
 			}
 			else
 			{
 				zabbix_log( LOG_LEVEL_DEBUG, "Do not update functions, same value");
 			}
 		}
+		if (lastvalue)
+			free (lastvalue);
 	}
 
 	DBfree_result(result);

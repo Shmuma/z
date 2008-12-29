@@ -45,6 +45,7 @@
 #endif
 
 extern char* CONFIG_HFS_PATH;
+extern char* CONFIG_SERVER_SITE;
 
 void	DBclose(void)
 {
@@ -247,32 +248,44 @@ int     DBget_function_result(char **result,char *functionid)
 	DB_RESULT dbresult;
 	DB_ROW	row;
 	int		res = SUCCEED;
+	zbx_uint64_t id;
+	char* val;
 
+	if (CONFIG_HFS_PATH) {
+		hfs_function_value_t fun_val;
+
+		ZBX_STR2UINT64 (id, functionid);
+		if (!HFS_get_function_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, id, &fun_val))
+			res = FAIL;
+		else
+			*result = HFS_convert_function_val2str (&fun_val);
+	}
+	else {
 /* 0 is added to distinguish between lastvalue==NULL and empty result */
-	dbresult = DBselect("select 0,lastvalue from functions where functionid=%s",
-		functionid );
+		dbresult = DBselect("select 0,lastvalue from functions where functionid=%s", functionid);
 
-	row = DBfetch(dbresult);
+		row = DBfetch(dbresult);
 
-	if(!row)
-	{
-		zabbix_log(LOG_LEVEL_WARNING, "No function for functionid:[%s]",
-			functionid );
-		zabbix_syslog("No function for functionid:[%s]",
-			functionid);
-		res = FAIL;
+		if(!row)
+		{
+			zabbix_log(LOG_LEVEL_WARNING, "No function for functionid:[%s]",
+				functionid );
+			zabbix_syslog("No function for functionid:[%s]",
+				functionid);
+			res = FAIL;
+		}
+		else if(DBis_null(row[1]) == SUCCEED)
+		{
+			zabbix_log(LOG_LEVEL_DEBUG, "function.lastvalue==NULL [%s]",
+				functionid);
+			res = FAIL;
+		}
+		else
+		{
+			*result = strdup(row[1]);
+		}
+		DBfree_result(dbresult);
 	}
-	else if(DBis_null(row[1]) == SUCCEED)
-	{
-		zabbix_log(LOG_LEVEL_DEBUG, "function.lastvalue==NULL [%s]",
-			functionid);
-		res = FAIL;
-	}
-	else
-	{
-		*result = strdup(row[1]);
-	}
-        DBfree_result(dbresult);
 
         return res;
 }
