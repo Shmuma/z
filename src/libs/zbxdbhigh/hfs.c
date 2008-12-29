@@ -2837,9 +2837,9 @@ int HFS_get_function_value (const char* hfs_path, const char* siteid, zbx_uint64
 	free (name);
 
 	if (lseek (fd, sizeof (hfs_function_value_t) * functionid) == (off_t)-1) {
-		zabbix_log (LOG_LEVEL_ERR, "HFS_get_function_value: Cannot seek to %lld offset", sizeof (hfs_function_value_t) * functionid);
+		value->type = FVT_NULL;
 		close (fd);
-		return 0;
+		return 1;
 	}
 
 	if (read (fd, value, sizeof (hfs_function_value_t)) != sizeof (hfs_function_value_t))
