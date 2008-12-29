@@ -78,7 +78,7 @@ void	update_functions(DB_ITEM *item)
 			lastvalue = strdup (row[3]);
 		else {
 			/* obtain function value from HFS */
-			value.type = FVT_NULL;
+			fun_val.type = FVT_NULL;
 			HFS_get_function_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, function.functionid, &fun_val);
 			lastvalue = HFS_convert_function_val2str (&fun_val);
 		}

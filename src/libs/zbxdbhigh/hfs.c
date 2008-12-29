@@ -2737,7 +2737,7 @@ zbx_uint64_t	HFS_get_item_last_int (const char* hfs_base_dir, const char* siteid
 int HFS_convert_function_str2val (const char* value, hfs_function_value_t* result)
 {
 	int dig = 0, dots = 0, sign = 0, space = 0, other = 0;
-	char* p = value;
+	const char* p = value;
 
 	/* empty value */
 	if (!value || !value[0]) {
@@ -2810,7 +2810,7 @@ int HFS_save_function_value (const char* hfs_path, const char* siteid, zbx_uint6
 	}
 	free (name);
 
-	if (lseek (fd, sizeof (hfs_function_value_t) * functionid) == (off_t)-1) {
+	if (lseek (fd, sizeof (hfs_function_value_t) * functionid, SEEK_SET) == (off_t)-1) {
 		zabbix_log (LOG_LEVEL_ERR, "HFS_save_function_value: Cannot seek to %lld offset", sizeof (hfs_function_value_t) * functionid);
 		close (fd);
 		return 0;
@@ -2836,7 +2836,7 @@ int HFS_get_function_value (const char* hfs_path, const char* siteid, zbx_uint64
 	}
 	free (name);
 
-	if (lseek (fd, sizeof (hfs_function_value_t) * functionid) == (off_t)-1) {
+	if (lseek (fd, sizeof (hfs_function_value_t) * functionid, SEEK_SET) == (off_t)-1) {
 		value->type = FVT_NULL;
 		close (fd);
 		return 1;

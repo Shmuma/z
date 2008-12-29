@@ -18,13 +18,15 @@ hfsfilter_LDADD = $(ZBX_LIBS)
 hfsevents_LDADD = $(ZBX_LIBS)
 memcachetest_LDADD = $(ZBX_LIBS) -lmemcached
 
-sbin_PROGRAMS = hfsdump hfsimport hfs_trends_upd hfsfilter hfsevents memcachetest
+sbin_PROGRAMS = hfsdump hfsimport hfs_trends_upd hfsfilter hfsevents memcachetest hfs_func_upd
 
 hfsdump_SOURCES = hfsdump.c
 hfs_trends_upd_SOURCES = hfs_trends_upd.c
 hfsimport_SOURCES = hfsimport.c
 hfsfilter_SOURCES = hfsfilter.c
 hfsevents_SOURCES = hfsevents.c
+
+hfs_func_upd_SOURCES = hfs_func_upd.c
 
 memcachetest_SOURCES = memcachetest.c \
 	../zabbix_server/memcache.c \
