@@ -1,5 +1,6 @@
 #include "config.h"
 #include "cfg.h"
+#include "db.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,6 +29,25 @@ int	CONFIG_DBPORT			= 0;
 char	*CONFIG_HFS_PATH		= NULL;
 char	*CONFIG_SERVER_SITE		= NULL;
 
+int	CONFIG_NODEID			= 0;
+int	CONFIG_REFRESH_UNSUPPORTED      = 0;
+
+zbx_process_type_t process_type = -1;
+
+/* Ugly, ugly hacks. */
+void __zbx_zabbix_syslog(const char *fmt, ...)
+{
+}
+
+int  process_event(DB_EVENT *event)
+{
+	return 0;
+}
+
+void dbitem_serialize(DB_ITEM *item, size_t item_len)
+{
+}
+
 
 int main (int argc, char** argv)
 {
@@ -39,14 +59,16 @@ int main (int argc, char** argv)
 		{"DBSocket",&CONFIG_DBSOCKET,0,TYPE_STRING,PARM_OPT,0,0},
 		{"DBPort",&CONFIG_DBPORT,0,TYPE_INT,PARM_OPT,1024,65535},
 		{"ServerSite",&CONFIG_SERVER_SITE,0,TYPE_STRING,PARM_OPT,0,0},	
+		{0}
 	};
 
+	/* read config file */
 	parse_cfg_file ("/etc/zabbix/zabbix_server.conf", cfg);
 
-	/* read config file */
-
 	/* connect to database */
+	DBconnect (ZBX_DB_CONNECT_EXIT);
 	/* select all lastvalues from functions */
 	/* update them in HFS */
+	DBclose ();
 }
 
