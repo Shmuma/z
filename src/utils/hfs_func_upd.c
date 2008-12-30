@@ -83,7 +83,7 @@ int main (int argc, char** argv)
 	/* connect to database */
 	DBconnect (ZBX_DB_CONNECT_EXIT);
 	/* select all lastvalues from functions */
-	result = DBselect ("select functionid, lastvalue from functions where lastvalue != ''");
+	result = DBselect ("select functionid, lastvalue from functions");
 
 	/* update them in HFS */
 	while (row = DBfetch (result)) {
