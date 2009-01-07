@@ -275,6 +275,7 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	if (lseek (fd, ofs, SEEK_SET) == -1)
 		goto err_exit;
 
+	/* TODO: change this to AIO */
 	if (write (fd, values, len * count) == -1)
 		goto err_exit;
 
@@ -318,6 +319,7 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 		lseek (fd, ofs, SEEK_SET);
 
         /* we're ready to write */
+	/* TODO: change this to AIO */
         res = write (fd, values, len*count);
         if (meta->last_ofs < ofs + len*(count-1))
 		meta->last_ofs = ofs + len*(count-1);
