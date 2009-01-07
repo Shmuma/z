@@ -25,11 +25,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
-#include <aio.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-
 
 # ifndef ULLONG_MAX
 #  define ULLONG_MAX    18446744073709551615ULL
@@ -199,37 +194,6 @@ int store_values (const char* hfs_base_dir, const char* siteid, zbx_uint64_t ite
 }
 
 
-static void hfs_aio_completion_handler (sigval_t sigval)
-{
-	struct aiocb *req;
-	req = (struct aiocb *)sigval.sival_ptr;
-	close (req->aio_fildes);
-	free ((char*)req->aio_buf);
-	free (req);
-}
-
-
-static int hfs_write_aio (int fd, hfs_off_t ofs, void* values, int size)
-{
-	struct aiocb* cb;
-
-	cb = calloc (1, sizeof(struct aiocb));
-	cb->aio_fildes = fd;
-	cb->aio_buf = (char*)malloc (size);
-	cb->aio_nbytes = size;
-	cb->aio_offset = ofs;
-
-	memcpy (cb->aio_buf, values, size);
-
-	cb->aio_sigevent.sigev_notify = SIGEV_THREAD;
-	cb->aio_sigevent.sigev_notify_function = hfs_aio_completion_handler;
-	cb->aio_sigevent.sigev_notify_attributes = NULL;
-	cb->aio_sigevent.sigev_value.sival_ptr = cb;
-
-	return aio_write (cb);
-}
-
-
 int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, int delay, void* values, int len, int count, item_type_t type)
 {
     hfs_meta_item_t item, *ip;
@@ -307,8 +271,15 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	/* append data */
 	if ((fd = xopen (p_data, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
 		goto err_exit;
-	if (!hfs_write_aio (fd, ofs, values, len*count))
-		close (fd);
+
+	if (lseek (fd, ofs, SEEK_SET) == -1)
+		goto err_exit;
+
+	/* TODO: change this to AIO */
+	if (write (fd, values, len * count) == -1)
+		goto err_exit;
+
+	close (fd);
 	fd = -1;
 
 	retval = 0;
@@ -343,14 +314,17 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 		memset (buf, 0xFF, extra);
 		res = write (fd, buf, extra);
 		free (buf);
-		ofs = meta->last_ofs + len + extra;
 	}
+	else
+		lseek (fd, ofs, SEEK_SET);
 
         /* we're ready to write */
-	if (!hfs_write_aio (fd, ofs, values, len*count))
-		close (fd);
+	/* TODO: change this to AIO */
+        res = write (fd, values, len*count);
         if (meta->last_ofs < ofs + len*(count-1))
 		meta->last_ofs = ofs + len*(count-1);
+
+        close (fd);
         fd = -1;
 
         /* update meta */
