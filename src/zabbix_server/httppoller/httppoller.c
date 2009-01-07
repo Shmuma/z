@@ -56,28 +56,22 @@ static int get_minnextcheck(int now)
 
 	int		res;
 
-	result = DBselect("select count(*),min(nextcheck) from httptest t where t.status=%d and " ZBX_SQL_MOD(t.httptestid,%d) "=%d",
-		HTTPTEST_STATUS_MONITORED,
-		CONFIG_HTTPPOLLER_FORKS,
-		httppoller_num-1);
+	result = DBselect("select min(t.nextcheck) from httptest t, httptestitem i, items ii, hosts h, sites s where t.status=%d and " ZBX_SQL_MOD(t.httptestid,%d) "=%d and i.itemid=ii.itemid and ii.hostid=h.hostid and " ZBX_COND_SITE,
+			  HTTPTEST_STATUS_MONITORED,
+			  CONFIG_HTTPPOLLER_FORKS,
+			  httppoller_num-1,
+			  getSiteCondition ());
 
 	row=DBfetch(result);
 
-	if(!row || DBis_null(row[0])==SUCCEED || DBis_null(row[1])==SUCCEED)
+	if(!row || DBis_null(row[0])==SUCCEED)
 	{
 		zabbix_log(LOG_LEVEL_DEBUG, "No httptests to process in get_minnextcheck.");
 		res = FAIL; 
 	}
 	else
 	{
-		if( atoi(row[0]) == 0)
-		{
-			res = FAIL;
-		}
-		else
-		{
-			res = atoi(row[1]);
-		}
+		res = atoi(row[0]);
 	}
 	DBfree_result(result);
 
