@@ -67,7 +67,7 @@ zabbix_server_LDADD = \
 	$(top_srcdir)/src/libs/zbxcrypto/libzbxcrypto.a \
 	$(top_srcdir)/src/libs/zbxcomms/libzbxcomms.a \
 	$(JABBER_LDADD) \
-	@SERVER_LIBS@
+	@SERVER_LIBS@ -lrt
 
 zabbix_server_LDFLAGS = \
 	@SERVER_LDFLAGS@
