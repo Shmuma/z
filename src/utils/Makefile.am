@@ -9,7 +9,7 @@ ZBX_LIBS = \
 	../libs/zbxconf/libzbxconf.a \
 	../libs/zbxcommon/libzbxcommon.a \
 	../libs/zbxcrypto/libzbxcrypto.a \
-	../libs/zbxsys/libzbxsys.a -lrt
+	../libs/zbxsys/libzbxsys.a
 
 hfsdump_LDADD = $(ZBX_LIBS)
 hfs_trends_upd_LDADD = $(ZBX_LIBS)
