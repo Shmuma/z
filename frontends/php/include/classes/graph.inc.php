@@ -899,7 +899,8 @@
 // Calculation of maximum Y axis
 		function calculateMinY($side)
 		{
-//			return 0;
+			if($this->type == GRAPH_TYPE_STACKED)
+				return 0;
 
 			if($this->yaxistype==GRAPH_YAXIS_TYPE_FIXED)
 			{
