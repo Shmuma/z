@@ -43,7 +43,8 @@
 			return 0;
 		}
 
-		if(DBfetch(DBselect("select * from users where alias=".zbx_dbstr($alias)." and ".DBin_node('userid', get_current_nodeid(false)))))
+		$row = DBfetch(DBselect("select count(*) as n from users where alias=".zbx_dbstr($alias)));
+		if($row["n"] > 0)
 		{
 			error('User "'.$alias.'" already exists');
 			return 0;
@@ -89,8 +90,10 @@
 
 	function	update_user($userid,$name,$surname,$alias,$passwd, $url,$autologout,$lang,$refresh,$user_type,$user_groups,$user_medias)
 	{
-		if(DBfetch(DBselect("select * from users where alias=".zbx_dbstr($alias).
-			" and userid<>$userid and ".DBin_node('userid', get_current_nodeid(false)))))
+		$row = DBfetch(DBselect("select count(*) as n from users ".
+					"where alias=".zbx_dbstr($alias).
+					" and userid<>$userid"));
+		if($row["n"] > 0)
 		{
 			error("User '$alias' already exists");
 			return 0;
@@ -176,8 +179,8 @@
 
 	function	delete_user($userid)
 	{
-
-		if(DBfetch(DBselect('select * from users where userid='.$userid.' and alias=\'guest\'')))
+		$row = DBfetch(DBselect('select count(*) as n from users where userid='.$userid.' and alias=\'guest\''));
+		if($row["n"] > 0)
 		{
 			error("Cannot delete user 'guest'");
 			return	false;
@@ -216,7 +219,8 @@
 
 	function	add_user_group($name,$users=array(),$rights=array())
 	{
-		if(DBfetch(DBselect('select * from usrgrp where name='.zbx_dbstr($name))))
+		$row = DBfetch(DBselect('select count(*) as n from usrgrp where name='.zbx_dbstr($name)));
+		if($row["n"] > 0)
 		{
 			error("Group '$name' already exists");
 			return 0;
@@ -249,8 +253,10 @@
 
 	function	update_user_group($usrgrpid,$name,$users=array(),$rights=array())
 	{
-		if(DBfetch(DBselect('select * from usrgrp where name='.zbx_dbstr($name).
-			' and usrgrpid<>'.$usrgrpid.' and '.DBin_node('usrgrpid', get_current_nodeid(false)))))
+		$row = DBfetch(DBselect('select count(*) as n from usrgrp '.
+					'where name='.zbx_dbstr($name).
+					' and usrgrpid<>'.$usrgrpid));
+		if($row["n"] > 0)
 		{
 			error("Group '$name' already exists");
 			return 0;

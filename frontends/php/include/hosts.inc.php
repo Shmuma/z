@@ -264,12 +264,10 @@ require_once "include/items.inc.php";
 			return false;
 		}
 
-
-		if(DBfetch(DBselect(
-			"select * from hosts where host=".zbx_dbstr($host).
-				' and '.DBin_node('hostid', get_current_nodeid(false)).
-				(isset($hostid) ? ' and hostid<>'.$hostid : '')
-			)))
+		$row = DBfetch(DBselect(
+			"select count(*) as n from hosts where host=".zbx_dbstr($host).
+				(isset($hostid) ? ' and hostid<>'.$hostid : '')));
+		if($row["n"] > 0)
 		{
 			error("Host '$host' already exists");
 			return false;
