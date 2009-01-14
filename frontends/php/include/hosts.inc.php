@@ -445,6 +445,15 @@ require_once "include/items.inc.php";
 	 */
 	function	copy_template_elements($hostid, $templateid = null, $copy_mode = false)
 	{
+		if($templateid == null)
+			$templateid = array_keys(get_templates_by_hostid($hostid));
+
+		if(is_array($templateid)) {
+			foreach($templateid as $id)
+				copy_template_elements($hostid, $id, $copy_mode);
+			return;
+		}
+
 		copy_template_applications($hostid, $templateid, $copy_mode);
 		copy_template_items($hostid, $templateid, $copy_mode);
 		copy_template_triggers($hostid, $templateid, $copy_mode);
