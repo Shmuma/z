@@ -268,39 +268,49 @@ static aggregate_gather_hook_t hfs_gather_hooks[] = {
 
 /* ---------------------------------------- */
 /* HFS gather hooks                          */
-static double aggr_reduce_max (double* vals, int count)
+/* info_index argument is used when we calculate min or max values. In
+   it we'll store index of item with resulting max/min value */
+static double aggr_reduce_max (double* vals, int count, int* info_index)
 {
 	int i;
 	double res = 0;
 
-	if (count > 0)
+	if (count > 0) {
 		res = vals[0];
+		*info_index = 0;
+	}
 
 	for (i = 1; i < count; i++)
-		if (vals[i] > res)
+		if (vals[i] > res) {
 			res = vals[i];
+			*info_index = i;
+		}
 
 	return res;
 }
 
 
-static double aggr_reduce_min (double* vals, int count)
+static double aggr_reduce_min (double* vals, int count, int* info_index)
 {
 	int i;
 	double res = 0;
 
-	if (count > 0)
+	if (count > 0) {
 		res = vals[0];
+		*info_index = 0;
+	}
 
 	for (i = 1; i < count; i++)
-		if (vals[i] < res)
+		if (vals[i] < res) {
 			res = vals[i];
+			*info_index = i;
+		}
 
 	return res;
 }
 
 
-static double aggr_reduce_sum (double* vals, int count)
+static double aggr_reduce_sum (double* vals, int count, int* info_index)
 {
 	int i;
 	double res = 0;
@@ -311,7 +321,7 @@ static double aggr_reduce_sum (double* vals, int count)
 }
 
 
-static double aggr_reduce_avg (double* vals, int count)
+static double aggr_reduce_avg (double* vals, int count, int* info_index)
 {
 	return aggr_reduce_sum (vals, count) / count;
 }
@@ -370,6 +380,24 @@ static aggregate_item_info_t* get_aggregate_items (const char* hostgroup, const 
 }
 
 
+static char* find_hostname_of_itemid (zbx_uint64_t itemid)
+{
+	DB_RESULT result;
+	DB_ROW row;
+	char* res = NULL;
+
+	result = DBselect ("select h.host from items i, hosts h where i.itemid=" ZBX_FS_UI64 " and h.hostid=i.hostid", itemid);
+
+	row = DBfetch (result);
+
+	if (row && !DBis_null (row[0]))
+		res = strdup (row[0]);
+	DBfree_result (result);
+
+	return res;
+}
+
+
 /*
  * grpfunc: grpmax, grpmin, grpsum, grpavg
  * itemfunc: last, min, max, avg, sum,count
@@ -378,7 +406,7 @@ static int	evaluate_aggregate_hfs(AGENT_RESULT *res,char *grpfunc, char *hostgro
 {
 	int i, result = NOTSUPPORTED, found = 0;
 	aggregate_item_info_t* items;
-	int items_count;
+	int items_count, info_index;
 	double* items_values = NULL;
 
 	/* obtain list of items with sites */
@@ -411,11 +439,20 @@ static int	evaluate_aggregate_hfs(AGENT_RESULT *res,char *grpfunc, char *hostgro
 
 	/* we have item's data. Perform calculations. */
 	found = 0;
+	info_index = -1;
 	for (i = 0; i < sizeof (hfs_reduce_hooks) / sizeof (hfs_reduce_hooks[0]) && !found; i++)
 		if (strcmp (grpfunc, hfs_reduce_hooks[i].grpfunc) == 0) {
 			found = 1;
-			SET_DBL_RESULT (res, hfs_reduce_hooks[i].hook (items_values, items_count));
+			SET_DBL_RESULT (res, hfs_reduce_hooks[i].hook (items_values, items_count, &info_index));
 		}
+
+	if (info_index >= 0 && info_index < items_count) {
+		/* lookup hostname of winning item. It will be stderr of value. */
+		char* hostname = find_hostname_of_itemid (items[info_index].itemid);
+
+		if (hostname)
+			SET_ERR_RESULT (res, hostname);
+	}
 
 	free (items);
 	free (items_values);
