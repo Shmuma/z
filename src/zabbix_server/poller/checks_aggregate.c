@@ -323,7 +323,7 @@ static double aggr_reduce_sum (double* vals, int count, int* info_index)
 
 static double aggr_reduce_avg (double* vals, int count, int* info_index)
 {
-	return aggr_reduce_sum (vals, count) / count;
+	return aggr_reduce_sum (vals, count, info_index) / count;
 }
 
 
@@ -390,7 +390,7 @@ static char* find_hostname_of_itemid (zbx_uint64_t itemid)
 
 	row = DBfetch (result);
 
-	if (row && !DBis_null (row[0]))
+	if (row && row[0])
 		res = strdup (row[0]);
 	DBfree_result (result);
 
