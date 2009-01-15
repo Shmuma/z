@@ -43,7 +43,7 @@ typedef struct {
 
 typedef struct {
 	const char* grpfunc;
-	double (*hook) (double* vals, int count);
+	double (*hook) (double* vals, int count, int* info_index);
 } aggregate_reduce_hook_t;
 
 #endif
