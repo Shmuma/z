@@ -187,7 +187,7 @@ static int get_nextchecks(int** res_buf)
 				  now+POLLER_GROUP_INTERVAL,
 				  ITEM_STATUS_ACTIVE,
 				  ITEM_TYPE_AGGREGATE,
-				  CONFIG_POLLER_FORKS,
+				  CONFIG_AGGR_POLLER_FORKS,
 				  poller_num-1,
 				  SERVER_STATUS_KEY, SERVER_ICMPPING_KEY, SERVER_ICMPPINGSEC_KEY,SERVER_ZABBIXLOG_KEY,
 				  getSiteCondition ());
@@ -422,7 +422,7 @@ int get_values(void)
 		if(res == SUCCEED )
 		{
 
-			process_new_value(0, &item,&agent, 0, NULL);
+			process_new_value(0, &item, &agent, 0, ISSET_ERR(&agent) ? agent.err : NULL);
 
 /*			if(HOST_STATUS_UNREACHABLE == item.host_status)*/
 			if(HOST_AVAILABLE_TRUE != item.host_available)
