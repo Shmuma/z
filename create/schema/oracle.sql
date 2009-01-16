@@ -549,6 +549,7 @@ CREATE TABLE items (
 CREATE UNIQUE INDEX items_1 on items (hostid,key_);
 CREATE INDEX items_2 on items (nextcheck);
 CREATE INDEX items_3 on items (status);
+CREATE INDEX items_4 on items (type);
 
 CREATE TABLE items_applications (
 	itemappid		number(20)		DEFAULT '0'	NOT NULL,
