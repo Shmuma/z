@@ -663,8 +663,9 @@ void main_poller_loop(int type, int num)
 			plan_size = get_nextchecks (&plan);
 			plan_pos = 0;
 			if (!plan_size) {
-				update_poller_title (poller_type, POLLER_DELAY);
-				sleep (POLLER_DELAY);
+				/* if plan for interval is empty, sleep */
+				update_poller_title (poller_type, POLLER_GROUP_INTERVAL);
+				sleep (POLLER_GROUP_INTERVAL);
 				continue;
 			}
 		}
