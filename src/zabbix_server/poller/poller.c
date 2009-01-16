@@ -682,8 +682,6 @@ void main_poller_loop(int type, int num)
 			sleeptime = 0;
 
 		if (sleeptime > 0) {
-			if (sleeptime > POLLER_DELAY)
-				sleeptime = POLLER_DELAY;
 			update_poller_title (poller_type, sleeptime);
 			sleep (sleeptime);
 		}
