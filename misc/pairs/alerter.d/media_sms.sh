@@ -20,3 +20,5 @@ fi
 PRIO=$((6-$PRIO))
 
 gsgc --configfile /etc/zabbix-sms/gsgc.conf --priority $PRIO --send "$1" "$3"
+echo $? > /tmp/gsgc-exitcode.txt
+exit 0

@@ -59,7 +59,7 @@ extern char* CONFIG_HFS_PATH;
 int execute_action(DB_ALERT *alert,DB_MEDIATYPE *mediatype, char *error, int max_error_len)
 {
 	int 	res=FAIL;
-	int	pid;
+	int	pid, status;
 
 	char	full_path[MAX_STRING_LEN];
 
@@ -99,7 +99,7 @@ int execute_action(DB_ALERT *alert,DB_MEDIATYPE *mediatype, char *error, int max
 		pid = zbx_fork();
 		if(0 != pid)
 		{
-			waitpid(pid,NULL,0);
+			waitpid(pid, &status, 0);
 		}
 		else
 		{
@@ -144,7 +144,11 @@ int execute_action(DB_ALERT *alert,DB_MEDIATYPE *mediatype, char *error, int max
 			zabbix_log( LOG_LEVEL_DEBUG, "After execl()");
 			exit(0);
 		}
-		res = SUCCEED;
+
+		if (WIFEXITED(status))
+			res = WEXITSTATUS(status) == 0 ? SUCCEED : FAIL;
+		else
+			res = FAIL;
 	}
 	else
 	{
