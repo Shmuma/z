@@ -20,5 +20,14 @@ fi
 PRIO=$((6-$PRIO))
 
 gsgc --configfile /etc/zabbix-sms/gsgc.conf --priority $PRIO --send "$1" "$3"
-echo $? > /tmp/gsgc-exitcode.txt
-exit 0
+RET=$?
+
+# if send was not successfull, trying other machine in pair
+if $RET -ne 0; then
+    if [ -f /etc/zabbix-sms/backup-host.conf ]; then
+        gsgc --configfile /etc/zabbix-sms/gsgc.conf --host `cat /etc/zabbix-sms/backup-host.conf` --priority $PRIO --send "$1" "$3"
+        RET=$?
+    fi
+fi
+
+exit $RET
