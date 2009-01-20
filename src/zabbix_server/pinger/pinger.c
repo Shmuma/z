@@ -199,7 +199,7 @@ static int create_host_file(void)
 
 	now=time(NULL);
 	/* Select hosts monitored by IP */
-	result = DBselect("select h.ip from hosts h,items i,sites s where " ZBX_SQL_MOD(h.hostid,%d) "=%d and i.hostid=h.hostid and h.status=%d and i.key_='%s' and i.type=%d and i.status=%d and h.useip=1 and " ZBX_COND_SITE,
+	result = DBselect("select h.ip from hosts h,items i where " ZBX_SQL_MOD(h.hostid,%d) "=%d and i.hostid=h.hostid and h.status=%d and i.key_='%s' and i.type=%d and i.status=%d and h.useip=1 and " ZBX_COND_SITE,
 		CONFIG_PINGER_FORKS,
 		pinger_num-1,
 		HOST_STATUS_MONITORED,
@@ -220,7 +220,7 @@ static int create_host_file(void)
 	DBfree_result(result);
 
 	/* Select hosts monitored by hostname */
-	result = DBselect("select h.dns from hosts h,items i,sites s where "  ZBX_SQL_MOD(h.hostid,%d) "=%d and i.hostid=h.hostid and h.status=%d and i.key_='%s' and i.type=%d and i.status=%d and h.useip=0 and " ZBX_COND_SITE,
+	result = DBselect("select h.dns from hosts h,items i where "  ZBX_SQL_MOD(h.hostid,%d) "=%d and i.hostid=h.hostid and h.status=%d and i.key_='%s' and i.type=%d and i.status=%d and h.useip=0 and " ZBX_COND_SITE,
 		CONFIG_PINGER_FORKS,
 		pinger_num-1,
 		HOST_STATUS_MONITORED,

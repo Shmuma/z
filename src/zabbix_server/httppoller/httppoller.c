@@ -56,7 +56,7 @@ static int get_minnextcheck(int now)
 
 	int		res;
 
-	result = DBselect("select min(t.nextcheck) from httptest t, httptestitem i, items ii, hosts h, sites s where t.status=%d and " ZBX_SQL_MOD(t.httptestid,%d) "=%d and i.itemid=ii.itemid and ii.hostid=h.hostid and " ZBX_COND_SITE,
+	result = DBselect("select min(t.nextcheck) from httptest t, httptestitem i, items ii, hosts h where t.status=%d and " ZBX_SQL_MOD(t.httptestid,%d) "=%d and i.itemid=ii.itemid and ii.hostid=h.hostid and " ZBX_COND_SITE,
 			  HTTPTEST_STATUS_MONITORED,
 			  CONFIG_HTTPPOLLER_FORKS,
 			  httppoller_num-1,

@@ -141,7 +141,7 @@ static int get_nextchecks(int** res_buf)
 		2 == UNREACHABLE */
 	switch (poller_type) {
 	case ZBX_POLLER_TYPE_UNREACHABLE:
-		result = DBselect("select i.nextcheck, i.delay from items i,hosts h, sites s where " ZBX_SQL_MOD(h.hostid,%d) "=%d and i.nextcheck<=%d and i.status=%d and i.type not in (%d,%d,%d) and h.status=%d and h.disable_until<=%d and h.errors_from!=0 and h.hostid=i.hostid and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE "order by nextcheck",
+		result = DBselect("select i.nextcheck, i.delay from items i,hosts h where " ZBX_SQL_MOD(h.hostid,%d) "=%d and i.nextcheck<=%d and i.status=%d and i.type not in (%d,%d,%d) and h.status=%d and h.disable_until<=%d and h.errors_from!=0 and h.hostid=i.hostid and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE "order by nextcheck",
 				  CONFIG_UNREACHABLE_POLLER_FORKS,
 				  poller_num-1,
 				  now+POLLER_GROUP_INTERVAL,
@@ -155,7 +155,7 @@ static int get_nextchecks(int** res_buf)
 	case ZBX_POLLER_TYPE_NORMAL:
 		if(CONFIG_REFRESH_UNSUPPORTED != 0)
 		{
-			result = DBselect("select i.nextcheck,i.delay from items i,hosts h, sites s where h.status=%d and h.disable_until<%d and i.nextcheck<=%d and h.errors_from=0 and h.hostid=i.hostid and i.status in (%d,%d) and i.type not in (%d,%d,%d,%d) and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " order by nextcheck",
+			result = DBselect("select i.nextcheck,i.delay from items i,hosts h where h.status=%d and h.disable_until<%d and i.nextcheck<=%d and h.errors_from=0 and h.hostid=i.hostid and i.status in (%d,%d) and i.type not in (%d,%d,%d,%d) and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " order by nextcheck",
 					  HOST_STATUS_MONITORED,
 					  now+POLLER_GROUP_INTERVAL,
 					  now+POLLER_GROUP_INTERVAL,
@@ -168,7 +168,7 @@ static int get_nextchecks(int** res_buf)
 		}
 		else
 		{
-			result = DBselect("select i.nextcheck,i.delay from items i,hosts h, sites s where h.status=%d and h.disable_until<%d and i.nextcheck<=%d h.errors_from=0 and h.hostid=i.hostid and i.status=%d and i.type not in (%d,%d,%d,%d) and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " order by nextcheck",
+			result = DBselect("select i.nextcheck,i.delay from items i,hosts h where h.status=%d and h.disable_until<%d and i.nextcheck<=%d h.errors_from=0 and h.hostid=i.hostid and i.status=%d and i.type not in (%d,%d,%d,%d) and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " order by nextcheck",
 					  HOST_STATUS_MONITORED,
 					  now+POLLER_GROUP_INTERVAL,
 					  now+POLLER_GROUP_INTERVAL,
@@ -181,7 +181,7 @@ static int get_nextchecks(int** res_buf)
 		}
 		break;
 	case ZBX_POLLER_TYPE_AGGREGATE:
-		result = DBselect("select i.nextcheck, i.delay from items i,hosts h, sites s where h.status=%d and h.disable_until<%d and i.nextcheck <= %d and h.errors_from=0 and h.hostid=i.hostid and i.status=%d and i.type=%d and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " order by nextcheck",
+		result = DBselect("select i.nextcheck, i.delay from items i,hosts h where h.status=%d and h.disable_until<%d and i.nextcheck <= %d and h.errors_from=0 and h.hostid=i.hostid and i.status=%d and i.type=%d and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " order by nextcheck",
 				  HOST_STATUS_MONITORED,
 				  now+POLLER_GROUP_INTERVAL,
 				  now+POLLER_GROUP_INTERVAL,
@@ -321,7 +321,7 @@ int get_values(void)
 
 	switch (poller_type) {
 	case ZBX_POLLER_TYPE_UNREACHABLE:
-		result = DBselect("select h.hostid,min(i.itemid) from hosts h,items i, sites s where " ZBX_SQL_MOD(h.hostid,%d) "=%d and i.nextcheck<=%d and i.status=%d and i.type not in (%d,%d,%d) and h.status=%d and h.disable_until<=%d and h.errors_from!=0 and h.hostid=i.hostid and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " group by h.hostid",
+		result = DBselect("select h.hostid,min(i.itemid) from hosts h,items i where " ZBX_SQL_MOD(h.hostid,%d) "=%d and i.nextcheck<=%d and i.status=%d and i.type not in (%d,%d,%d) and h.status=%d and h.disable_until<=%d and h.errors_from!=0 and h.hostid=i.hostid and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " group by h.hostid",
 			CONFIG_UNREACHABLE_POLLER_FORKS,
 			poller_num-1,
 			now,
