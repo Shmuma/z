@@ -1049,7 +1049,7 @@ int getSiteCondition ()
 			row = DBfetch (result);
 
 			if (row)
-				SERVER_SITE_ID = row[0];
+				SERVER_SITE_ID = atoi (row[0]);
 			else
 				SERVER_SITE_ID = 0;
 
