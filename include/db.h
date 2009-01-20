@@ -263,8 +263,8 @@ DB_GRAPH_ITEM
 	char	color[GRAPH_ITEM_COLOR_LEN_MAX];
 };
 
-#define DYN_DB_ITEM_ELEM	18 // stderr, prevorgvalue_str, ...
-#define CHARS_LEN_MAX		22
+#define DYN_DB_ITEM_ELEM	17 // stderr, prevorgvalue_str, ...
+#define CHARS_LEN_MAX		21
 
 DB_ITEM
 {
