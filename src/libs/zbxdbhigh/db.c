@@ -1619,10 +1619,9 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 /*	item->valuemapid=atoi(row[34]); */
 	item->delay_flex=row[35];
 	item->host_dns=row[36];
-	item->siteid=row[37];
 
 	if (!CONFIG_HFS_PATH)
-		item->stderr = row[38];
+		item->stderr = row[37];
 	else
 		item->stderr = NULL;
 
@@ -1636,7 +1635,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 
 	switch(item->value_type) {
 		case ITEM_VALUE_TYPE_FLOAT:
-			rc = HFS_get_item_values_dbl(CONFIG_HFS_PATH, item->siteid, item->itemid,
+			rc = HFS_get_item_values_dbl(CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
 						     &lastclock, &nextcheck,
 						     &item->prevvalue_dbl,
 						     &item->lastvalue_dbl,
@@ -1653,7 +1652,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 			}
 			break;
 		case ITEM_VALUE_TYPE_UINT64:
-			rc = HFS_get_item_values_int(CONFIG_HFS_PATH, item->siteid, item->itemid,
+			rc = HFS_get_item_values_int(CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
 						     &lastclock, &nextcheck,
 						     &item->prevvalue_uint64,
 						     &item->lastvalue_uint64,
@@ -1670,7 +1669,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 			}
 			break;
 		default:
-			rc = HFS_get_item_values_str(CONFIG_HFS_PATH, item->siteid, item->itemid,
+			rc = HFS_get_item_values_str(CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
 						     &lastclock, &nextcheck,
 						     &item->prevvalue_str,
 						     &item->lastvalue_str,

@@ -442,7 +442,7 @@ int get_values(void)
 			}
 			if (CONFIG_HFS_PATH) {
 				metric_update (key_host_updates, ++mtr_host_updates);
-				HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid, HOST_AVAILABLE_TRUE, now, agent.msg);
+				HFS_update_host_availability (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item.hostid, HOST_AVAILABLE_TRUE, now, agent.msg);
 			}
 			if(item.host_errors_from!=0)
 			{
@@ -474,7 +474,7 @@ int get_values(void)
 					item.host_name);
 				DBupdate_item_status_to_notsupported(item.itemid, agent.msg);
 				if (CONFIG_HFS_PATH)
-					HFS_update_item_status (CONFIG_HFS_PATH, item.siteid, item.itemid,
+					HFS_update_item_status (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item.itemid,
 							ITEM_STATUS_NOTSUPPORTED, "Not supported by ZABBIX agent");
 
 	/*			if(HOST_STATUS_UNREACHABLE == item.host_status)*/
@@ -492,7 +492,7 @@ int get_values(void)
 				}
 				if (CONFIG_HFS_PATH) {
 					metric_update (key_host_updates, ++mtr_host_updates);
-					HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid,
+					HFS_update_host_availability (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item.hostid,
 								      HOST_AVAILABLE_TRUE, now, agent.msg);
 				}
 			}
@@ -540,7 +540,7 @@ int get_values(void)
 					DBupdate_host_availability(item.hostid,HOST_AVAILABLE_FALSE,now,agent.msg);
 					if (CONFIG_HFS_PATH) {
 						metric_update (key_host_updates, ++mtr_host_updates);
-						HFS_update_host_availability (CONFIG_HFS_PATH, item.siteid, item.hostid,
+						HFS_update_host_availability (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item.hostid,
 									      HOST_AVAILABLE_FALSE, now, agent.msg);
 					}
 					update_key_status(item.hostid,HOST_AVAILABLE_FALSE); /* 2 */

@@ -206,7 +206,7 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 	if(get_param(parameter, 2, cmp, MAX_STRING_LEN) != 0)
 	{
 		if (!table) {
-			zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)(now-atoi(period)+1)));
+			zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)(now-atoi(period)+1)));
 		}
 		else
 			result = DBselect("select count(value) from %s where clock>%d and itemid=" ZBX_FS_UI64,
@@ -225,7 +225,7 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 		if( (item->value_type == ITEM_VALUE_TYPE_UINT64) && (strcmp(op,"eq") == 0))
 		{
 			if (!table)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_u64_eq (CONFIG_HFS_PATH, item->siteid, item->itemid,
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_u64_eq (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
 							(hfs_time_t)(now-atoi(period)+1), zbx_atoui64(cmp_esc)));
 			else
 				result = DBselect("select count(value) from history_uint where clock>%d and value=" ZBX_FS_UI64 " and itemid=" ZBX_FS_UI64,
@@ -236,7 +236,7 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 		else if( (item->value_type == ITEM_VALUE_TYPE_UINT64) && (strcmp(op,"ne") == 0))
 		{
 			if (!table)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_u64_ne (CONFIG_HFS_PATH, item->siteid, item->itemid,
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_u64_ne (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
 							(hfs_time_t)(now-atoi(period)+1), zbx_atoui64(cmp_esc)));
 			else
 				result = DBselect("select count(value) from history_uint where clock>%d and value<>" ZBX_FS_UI64 " and itemid=" ZBX_FS_UI64,
@@ -247,7 +247,7 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 		else if( (item->value_type == ITEM_VALUE_TYPE_UINT64) && (strcmp(op,"gt") == 0))
 		{
 			if (!table)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_u64_gt (CONFIG_HFS_PATH, item->siteid, item->itemid,
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_u64_gt (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
 							(hfs_time_t)(now-atoi(period)+1), zbx_atoui64(cmp_esc)));
 			else
 				result = DBselect("select count(value) from history_uint where clock>%d and value>" ZBX_FS_UI64 " and itemid=" ZBX_FS_UI64,
@@ -258,7 +258,7 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 		else if( (item->value_type == ITEM_VALUE_TYPE_UINT64) && (strcmp(op,"lt") == 0))
 		{
 			if (!table)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_u64_lt (CONFIG_HFS_PATH, item->siteid, item->itemid,
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_u64_lt (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
 							(hfs_time_t)(now-atoi(period)+1), zbx_atoui64(cmp_esc)));
 			else
 				result = DBselect("select count(value) from history_uint where clock>%d and value<" ZBX_FS_UI64 " and itemid=" ZBX_FS_UI64,
@@ -269,7 +269,7 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 		else if( (item->value_type == ITEM_VALUE_TYPE_UINT64) && (strcmp(op,"ge") == 0))
 		{
 			if (!table)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_u64_ge (CONFIG_HFS_PATH, item->siteid, item->itemid,
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_u64_ge (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
 							(hfs_time_t)(now-atoi(period)+1), zbx_atoui64(cmp_esc)));
 			else
 				result = DBselect("select count(value) from history_uint where clock>%d and value>=" ZBX_FS_UI64 " and itemid=" ZBX_FS_UI64,
@@ -280,7 +280,7 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 		else if( (item->value_type == ITEM_VALUE_TYPE_UINT64) && (strcmp(op,"le") == 0))
 		{
 			if (!table)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_u64_le (CONFIG_HFS_PATH, item->siteid, item->itemid,
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_u64_le (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
 							(hfs_time_t)(now-atoi(period)+1), zbx_atoui64(cmp_esc)));
 			else
 				result = DBselect("select count(value) from history_uint where clock>%d and value<=" ZBX_FS_UI64 " and itemid=" ZBX_FS_UI64,
@@ -292,7 +292,7 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 		else if( (item->value_type == ITEM_VALUE_TYPE_FLOAT) && (strcmp(op,"eq") == 0))
 		{
 			if (!table)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_float_eq (CONFIG_HFS_PATH, item->siteid, item->itemid,
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_float_eq (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
 							(hfs_time_t)(now-atoi(period)+1), zbx_atoui64(cmp_esc)));
 			else
 				result = DBselect("select count(value) from history where clock>%d and value+0.00001>" ZBX_FS_DBL " and value-0.0001<" ZBX_FS_DBL " and itemid=" ZBX_FS_UI64,
@@ -304,7 +304,7 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 		else if( (item->value_type == ITEM_VALUE_TYPE_FLOAT) && (strcmp(op,"ne") == 0))
 		{
 			if (!table)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_float_ne (CONFIG_HFS_PATH, item->siteid, item->itemid,
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_float_ne (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
 							(hfs_time_t)(now-atoi(period)+1), zbx_atoui64(cmp_esc)));
 			else
 				result = DBselect("select count(value) from history where clock>%d and ((value+0.00001<" ZBX_FS_DBL ") or (value-0.0001>" ZBX_FS_DBL ")) and itemid=" ZBX_FS_UI64,
@@ -316,7 +316,7 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 		else if( (item->value_type == ITEM_VALUE_TYPE_FLOAT) && (strcmp(op,"gt") == 0))
 		{
 			if (!table)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_float_gt (CONFIG_HFS_PATH, item->siteid, item->itemid,
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_float_gt (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
 							(hfs_time_t)(now-atoi(period)+1), zbx_atoui64(cmp_esc)));
 			else
 				result = DBselect("select count(value) from history where clock>%d and value>" ZBX_FS_DBL " and itemid=" ZBX_FS_UI64,
@@ -327,7 +327,7 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 		else if( (item->value_type == ITEM_VALUE_TYPE_FLOAT) && (strcmp(op,"ge") == 0))
 		{
 			if (!table)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_float_ge (CONFIG_HFS_PATH, item->siteid, item->itemid,
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_float_ge (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
 							(hfs_time_t)(now-atoi(period)+1), zbx_atoui64(cmp_esc)));
 			else
 				result = DBselect("select count(value) from history where clock>=%d and value>" ZBX_FS_DBL " and itemid=" ZBX_FS_UI64,
@@ -338,7 +338,7 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 		else if( (item->value_type == ITEM_VALUE_TYPE_FLOAT) && (strcmp(op,"lt") == 0))
 		{
 			if (!table)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_float_lt (CONFIG_HFS_PATH, item->siteid, item->itemid,
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_float_lt (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
 							(hfs_time_t)(now-atoi(period)+1), zbx_atoui64(cmp_esc)));
 			else
 				result = DBselect("select count(value) from history where clock>%d and value<" ZBX_FS_DBL " and itemid=" ZBX_FS_UI64,
@@ -349,7 +349,7 @@ static int evaluate_COUNT(char *value, DB_ITEM *item, char *parameter)
 		else if( (item->value_type == ITEM_VALUE_TYPE_FLOAT) && (strcmp(op,"le") == 0))
 		{
 			if (!table)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_float_le (CONFIG_HFS_PATH, item->siteid, item->itemid,
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_count_float_le (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
 							(hfs_time_t)(now-atoi(period)+1), zbx_atoui64(cmp_esc)));
 			else
 				result = DBselect("select count(value) from history where clock>%d and value<=" ZBX_FS_DBL " and itemid=" ZBX_FS_UI64,
@@ -450,9 +450,9 @@ static int evaluate_SUM(char *value, DB_ITEM *item, int parameter, int flag)
 	{
 		if (CONFIG_HFS_PATH) {
 			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_sum_u64 (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)(now-parameter+1), 1));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_sum_u64 (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)(now-parameter+1), 1));
 			else
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_sum_float (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)(now-parameter+1), 1));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_sum_float (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)(now-parameter+1), 1));
 		}
 		else {
 			result = DBselect("select sum(value) from %s where clock>%d and itemid=" ZBX_FS_UI64,
@@ -476,9 +476,9 @@ static int evaluate_SUM(char *value, DB_ITEM *item, int parameter, int flag)
 	{
 		if (CONFIG_HFS_PATH) {
 			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_sum_u64 (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)parameter, 0));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_sum_u64 (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)parameter, 0));
 			else
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_sum_float (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)parameter, 0));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_sum_float (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)parameter, 0));
 		}
 		else {
 			zbx_snprintf(sql,sizeof(sql),"select value from %s where itemid=" ZBX_FS_UI64 " order by clock desc",
@@ -573,9 +573,9 @@ static int evaluate_AVG(char *value,DB_ITEM	*item,int parameter,int flag)
 	{
 		if (CONFIG_HFS_PATH) {
 			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_avg_u64 (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)(now-parameter+1), 1));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_avg_u64 (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)(now-parameter+1), 1));
 			else
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_avg_float (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)(now-parameter+1), 1));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_avg_float (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)(now-parameter+1), 1));
 		}
 		else {
 			result = DBselect("select avg(value) from %s where clock>%d and itemid=" ZBX_FS_UI64,
@@ -601,9 +601,9 @@ static int evaluate_AVG(char *value,DB_ITEM	*item,int parameter,int flag)
 	{
 		if (CONFIG_HFS_PATH) {
 			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_avg_u64 (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)parameter, 0));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_avg_u64 (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)parameter, 0));
 			else
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_avg_float (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)parameter, 0));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_avg_float (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)parameter, 0));
 		}
 		else {
 			zbx_snprintf(sql,sizeof(sql),"select value from %s where itemid=" ZBX_FS_UI64 " order by clock desc",
@@ -694,9 +694,9 @@ static int evaluate_MIN(char *value,DB_ITEM	*item,int parameter, int flag)
 	{
 		if (CONFIG_HFS_PATH) {
 			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_min_u64 (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)(now-parameter+1), 1));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_min_u64 (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)(now-parameter+1), 1));
 			else
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_min_float (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)(now-parameter+1), 1));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_min_float (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)(now-parameter+1), 1));
 		}
 		else {
 			result = DBselect("select min(value) from %s where clock>%d and itemid=" ZBX_FS_UI64,
@@ -720,9 +720,9 @@ static int evaluate_MIN(char *value,DB_ITEM	*item,int parameter, int flag)
 	{
 		if (CONFIG_HFS_PATH) {
 			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_min_u64 (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)parameter, 0));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_min_u64 (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)parameter, 0));
 			else
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_min_float (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)parameter, 0));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_min_float (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)parameter, 0));
 		}
 		else {
 			zbx_snprintf(sql,sizeof(sql),"select value from %s where itemid=" ZBX_FS_UI64 " order by clock desc",
@@ -834,9 +834,9 @@ static int evaluate_MAX(char *value,DB_ITEM *item,int parameter,int flag)
 	{
 		if (CONFIG_HFS_PATH) {
 			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_max_u64 (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)(now-parameter+1), 1));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_max_u64 (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)(now-parameter+1), 1));
 			else
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_max_float (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)(now-parameter+1), 1));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_max_float (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)(now-parameter+1), 1));
 		}
 		else {
 			result = DBselect("select max(value) from %s where clock>%d and itemid=" ZBX_FS_UI64,
@@ -862,9 +862,9 @@ static int evaluate_MAX(char *value,DB_ITEM *item,int parameter,int flag)
 	{
 		if (CONFIG_HFS_PATH) {
 			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_max_u64 (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)parameter, 0));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_max_u64 (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)parameter, 0));
 			else
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_max_float (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)parameter, 0));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_max_float (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)parameter, 0));
 		}
 		else {
 			zbx_snprintf(sql,sizeof(sql),"select value from %s where itemid=" ZBX_FS_UI64 " order by clock desc",
@@ -976,9 +976,9 @@ static int evaluate_DELTA(char *value,DB_ITEM *item,int parameter, int flag)
 	{
 		if (CONFIG_HFS_PATH) {
 			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_delta_u64 (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)(now-parameter+1), 1));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_delta_u64 (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)(now-parameter+1), 1));
 			else
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_delta_float (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)(now-parameter+1), 1));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_delta_float (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)(now-parameter+1), 1));
 		}
 		else {
 			result = DBselect("select max(value)-min(value) from %s where clock>%d and itemid=" ZBX_FS_UI64,
@@ -1003,9 +1003,9 @@ static int evaluate_DELTA(char *value,DB_ITEM *item,int parameter, int flag)
 	{
 		if (CONFIG_HFS_PATH) {
 			if (item->value_type == ITEM_VALUE_TYPE_UINT64)
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_delta_u64 (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)parameter, 0));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_UI64, HFS_get_delta_u64 (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)parameter, 0));
 			else
-				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_delta_float (CONFIG_HFS_PATH, item->siteid, item->itemid, (hfs_time_t)parameter, 0));
+				zbx_snprintf (value, MAX_STRING_LEN, ZBX_FS_DBL, HFS_get_delta_float (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)parameter, 0));
 		}
 		else {
 			zbx_snprintf(sql,sizeof(sql),"select value from %s where itemid=" ZBX_FS_UI64 " order by clock desc",
