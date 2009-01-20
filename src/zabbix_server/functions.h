@@ -30,11 +30,10 @@
 #include "memcache.h"
 #endif
 
-/* filter used in SQL queries. Sites table (s alias) and hosts table
-   (h alias) must be joined for this to work */
-#define ZBX_COND_SITE " s.siteid = h.siteid and %s "
+/* filter used in SQL queries. Hosts table (h alias) must be joined for this to work */
+#define ZBX_COND_SITE " h.siteid=%d "
 
-const char* getSiteCondition ();
+int getSiteCondition ();
 
 void    update_triggers (zbx_uint64_t itemid);
 void	update_functions(DB_ITEM *item);

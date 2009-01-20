@@ -1029,31 +1029,37 @@ void	process_new_value(int history, DB_ITEM *item, AGENT_RESULT *value, time_t t
 /*
    Routine retuns condition equation for ZBX_COND_SITE macro.
 
-   If CONFIG_SERVER_SITE is not null, it returns "s.name = 'CONFIG_SERVER_SITE'",
-   otherwise, it return true value "1=1"
+   If CONFIG_SERVER_SITE is not null, it returns site's ID (which is looked up if needed),
+   otherwise, it return zero (Default site id)
 
    Author: Max Lapan <max.lapan@gmail.com>
  */
+static int SERVER_SITE_ID = -1;
+
+
 const char* getSiteCondition ()
 {
-	static char exprBuffer[256] = { 0 };
+	if (SERVER_SITE_ID < 0) {
+		DB_RESULT result;
+		DB_ROW row;
 
-	if (CONFIG_SERVER_SITE)
-	{
-		if (!exprBuffer[0])
-		{
-			if (strlen (CONFIG_SERVER_SITE) > sizeof (exprBuffer)-12)
-			{
-				zabbix_log (LOG_LEVEL_ERR, "getSiteCondition: Config file value in ServerSite is too large");
-				return "1=1";
-			}
+		/* we need to lookup this ID in sites table */
+		if (CONFIG_SERVER_SITE) {
+			result = DBselect ("select siteid from sites where name='%s'", CONFIG_SERVER_SITE);
+			row = DBfetch (result);
+
+			if (row)
+				SERVER_SITE_ID = row[0];
 			else
-				zbx_snprintf (exprBuffer, sizeof (exprBuffer), "s.name = '%s'", CONFIG_SERVER_SITE);
+				SERVER_SITE_ID = 0;
+
+			DBfree_result (result);
 		}
-		return exprBuffer;
+		else
+			SERVER_SITE_ID = 0;
 	}
-	else
-		return "1=1";
+
+	return SERVER_SITE_ID;
 }
 
 
