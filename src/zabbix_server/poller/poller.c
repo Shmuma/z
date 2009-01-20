@@ -38,6 +38,7 @@
 
 
 extern char* CONFIG_HFS_PATH;
+extern char* CONFIG_SERVER_SITE;
 
 AGENT_RESULT    result;
 

@@ -27,6 +27,7 @@
 #include "evalfunc.h"
 
 extern char* CONFIG_HFS_PATH;
+extern char* CONFIG_SERVER_SITE;
 
 
 /******************************************************************************
