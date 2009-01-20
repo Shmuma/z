@@ -1037,7 +1037,7 @@ void	process_new_value(int history, DB_ITEM *item, AGENT_RESULT *value, time_t t
 static int SERVER_SITE_ID = -1;
 
 
-const char* getSiteCondition ()
+int getSiteCondition ()
 {
 	if (SERVER_SITE_ID < 0) {
 		DB_RESULT result;
@@ -1049,7 +1049,7 @@ const char* getSiteCondition ()
 			row = DBfetch (result);
 
 			if (row)
-				SERVER_SITE_ID = row[0];
+				SERVER_SITE_ID = atoi (row[0]);
 			else
 				SERVER_SITE_ID = 0;
 
