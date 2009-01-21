@@ -347,7 +347,7 @@ COpt::savesqlrequest($query);
 				unlock_db_access();
 				break;
 		}
-		
+
 		return $result;
 	}
 
@@ -554,8 +554,9 @@ COpt::savesqlrequest($query);
 		return in_array(id2nodeid($id_var), $nodes);
 	}
 
-	function	get_dbid($table,$field)
+	function	get_dbid($table,$field,$num=1)
 	{
+		if ($num < 1) $num = 1;
 		$found = false;
 		do
 		{
@@ -591,7 +592,7 @@ COpt::savesqlrequest($query);
 					continue;
 				}
 	
-				DBexecute("update ids set nextid=nextid+1 where table_name='$table' and field_name='$field'");
+				DBexecute("update ids set nextid=nextid+$num where table_name='$table' and field_name='$field'");
 	
 				$row = DBfetch(DBselect("select nextid from ids where table_name='$table' and field_name='$field'"));
 				if(!$row || is_null($row["nextid"]))
@@ -602,7 +603,7 @@ COpt::savesqlrequest($query);
 				else
 				{
 					$ret2 = $row["nextid"];
-					if(bccomp(bcadd($ret1,1),$ret2) ==0)
+					if(bccomp(bcadd($ret1,$num),$ret2) ==0)
 					{
 						$found = true;
 					}
@@ -610,7 +611,6 @@ COpt::savesqlrequest($query);
 			}
 		}
 		while(false == $found);
-
 		return $ret2;
 	}
 ?>

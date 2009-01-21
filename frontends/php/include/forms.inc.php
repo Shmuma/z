@@ -4001,7 +4001,7 @@ include_once 'include/discovery.inc.php';
 		$newgroup	= get_request("newgroup","");
 
 		$host 	= get_request("host",	"");
-		$port 	= get_request("port",	get_profile("HOST_PORT",10050));
+		$port 	= get_request("port",	10050);
 		$status	= get_request("status",	HOST_STATUS_MONITORED);
 		$useip	= get_request("useip",	0);
 		$dns	= get_request("dns",	"");
@@ -4104,7 +4104,7 @@ include_once 'include/discovery.inc.php';
 		if(isset($_REQUEST["hostid"]))		$frmHost->AddVar("hostid",$_REQUEST["hostid"]);
 		if(isset($_REQUEST["groupid"]))		$frmHost->AddVar("groupid",$_REQUEST["groupid"]);
 
-		if (!isset($_REQUEST["hostid"]))
+		if (!isset($_REQUEST["hostid"]) && $_REQUEST["config"]==0)
 			$frmHost->AddRow("Mass add",new CCheckBox("massadd",$mass_add,"submit()"));
 
 		if (!$mass_add)
