@@ -342,8 +342,12 @@
 			' where i.itemid=f.itemid and h.hostid=i.hostid and f.triggerid='.$triggerid);
 	}
 
-	function	&get_functions_by_triggerid($triggerid)
+	function	&get_functions_by_triggerid($triggerid, $return_count = null)
 	{
+		if ($return_count) {
+			$row = DBfetch(DBselect('select count(*) as n from functions where triggerid='.$triggerid));
+			return $row["n"];
+		}
 		return DBselect('select * from functions where triggerid='.$triggerid);
 	}
 
@@ -359,13 +363,23 @@
 	 * Comments:
 	 *
 	 */
-	function	&get_triggers_by_hostid($hostid, $show_mixed = "yes")
+	function	&get_triggers_by_hostid($hostid, $show_mixed = "yes", $return_count = null)
 	{
-		$db_triggers = DBselect("select distinct t.* from triggers t, functions f, items i".
-			" where i.hostid=$hostid and f.itemid=i.itemid and f.triggerid=t.triggerid");
+		if ($return_count == null) {
+			$db_triggers = DBselect("select distinct t.* from triggers t, functions f, items i".
+				" where i.hostid=$hostid and f.itemid=i.itemid and f.triggerid=t.triggerid");
 
-		if($show_mixed == "yes")
-			return $db_triggers;
+			if($show_mixed == "yes")
+				return $db_triggers;
+		}
+		else if ($show_mixed == "yes") {
+			$db_triggers = DBselect("select distinct t.triggerid from triggers t, functions f, items i".
+				" where i.hostid=$hostid and f.itemid=i.itemid and f.triggerid=t.triggerid");
+			$count = 0;
+			while (DBfetch($db_triggers))
+				$count++;
+			return $count;
+		}
 
 		$triggers = array();
 		while($db_trigger = DBfetch($db_triggers))
@@ -376,10 +390,19 @@
 				array_push($triggers,$db_trigger["triggerid"]);
 			}
 		}
-		$sql = "select distinct * from triggers where triggerid=0";
+
+		$sql = ($return_count) ?
+			"select count(*) as n from triggers where triggerid=0" :
+			"select * from triggers where triggerid=0";
+
+		$triggers = array_unique($triggers);
 		foreach($triggers as $triggerid)
 		{
 			$sql .= " or triggerid=$triggerid";
+		}
+		if ($return_count) {
+			$row = DBfetch(DBselect($sql));
+			return $row["n"];
 		}
 		return DBselect($sql);
 	}
@@ -783,7 +806,7 @@
 	 * Comments: !!! Don't forget sync code with C !!!                            *
 	 *                                                                            *
 	 ******************************************************************************/
-	function	copy_trigger_to_host($triggerid, $hostid, $copy_mode = false)
+	function	copy_trigger_to_host($triggerid, $hostid, $copy_mode = false, $force_triggerid = null)
 	{
 		$trigger = get_trigger_by_triggerid($triggerid);
 
@@ -810,13 +833,18 @@
 				$copy_mode ? 0 : $triggerid);
 		}
 
-		$newtriggerid=get_dbid("triggers","triggerid");
+		$newtriggerid = ($force_triggerid==null) ? get_dbid("triggers","triggerid") : $force_triggerid;
 
 		$host = get_host_by_hostid($hostid);
 		$newexpression = $trigger["expression"];
 
 		// Loop: functions
 		$functions = get_functions_by_triggerid($triggerid);
+
+		$count_functions = get_functions_by_triggerid($triggerid, 1);
+		if ($count_functions > 0)
+			$last_functionid = get_dbid("functions","functionid", $count_functions);
+		
 		while($function = DBfetch($functions))
 		{
 			$item = get_item_by_itemid($function["itemid"]);
@@ -831,16 +859,18 @@
 				return FALSE;
 			}
 
-			$newfunctionid=get_dbid("functions","functionid");
+			//$newfunctionid=get_dbid("functions","functionid");
 
 			$result = DBexecute("insert into functions (functionid,itemid,triggerid,function,parameter)".
-				" values ($newfunctionid,".$host_item["itemid"].",$newtriggerid,".
+				" values ($last_functionid,".$host_item["itemid"].",$newtriggerid,".
 				zbx_dbstr($function["function"]).",".zbx_dbstr($function["parameter"]).")");
 
 			$newexpression = str_replace(
 				"{".$function["functionid"]."}",
-				"{".$newfunctionid."}",
+				"{".$last_functionid."}",
 				$newexpression);
+
+			$last_functionid--;
 		}
 
 		$result = DBexecute("insert into triggers".
@@ -864,12 +894,17 @@
 
 // Copy triggers to the child hosts
 		$child_hosts = get_hosts_by_templateid($hostid);
+
+		$count_child_hosts = get_hosts_by_templateid($hostid, 1);
+		if ($count_child_hosts > 0)
+			$last_triggerid = get_dbid("triggers","triggerid", $count_child_hosts);
+		
 		while($child_host = DBfetch($child_hosts))
 		{// recursion
-			$result = copy_trigger_to_host($newtriggerid, $child_host["hostid"]);
-			if(!$result){
+			$result = copy_trigger_to_host($newtriggerid, $child_host["hostid"], false, $last_triggerid);
+			if(!$result)
 				return result;
-			}
+			$last_triggerid--;
 		}
 
 		return $newtriggerid;
@@ -1721,9 +1756,15 @@
 		}
 
 		$triggers = get_triggers_by_hostid($templateid);
+		
+		$count_triggers = get_triggers_by_hostid($templateid,"yes", 1);
+		if ($count_triggers > 0)
+			$last_triggerid = get_dbid("triggers","triggerid", $count_triggers);
+		
 		while($trigger = DBfetch($triggers))
 		{
-			copy_trigger_to_host($trigger["triggerid"], $hostid, $copy_mode);
+			copy_trigger_to_host($trigger["triggerid"], $hostid, $copy_mode, $last_triggerid);
+			$last_triggerid--;
 		}
 
 		update_template_dependences_for_host($hostid);

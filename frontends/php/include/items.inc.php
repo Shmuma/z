@@ -173,9 +173,15 @@
 	{
 		$sql="select hostid from hosts_groups where groupid=$groupid";
 		$result=DBexecute($sql);
+
+		$row = DBfetch(DBexecute("select count(*) as n from hosts_groups where groupid=$groupid"));
+		if ($row["n"] > 0)
+			$last_itemid = get_dbid("items","itemid", $row["n"]);
+
 		while($row=DBfetch($result))
 		{
-			add_item($description,$key,$row["hostid"],$delay,$history,$status,$type,$snmp_community,$snmp_oid,$value_type,$trapper_hosts,$snmp_port,$units,$multiplier,$delta,$snmpv3_securityname,$snmpv3_securitylevel,$snmpv3_authpassphrase,$snmpv3_privpassphrase,$formula,$trends,$logtimefmt,$valuemapid,$delay_flex,$applications);
+			add_item($description,$key,$row["hostid"],$delay,$history,$status,$type,$snmp_community,$snmp_oid,$value_type,$trapper_hosts,$snmp_port,$units,$multiplier,$delta,$snmpv3_securityname,$snmpv3_securitylevel,$snmpv3_authpassphrase,$snmpv3_privpassphrase,$formula,$trends,$logtimefmt,$valuemapid,$delay_flex,$applications, $last_itemid);
+			$last_itemid--;
 		}
 		return 1;
 	}
@@ -189,9 +195,8 @@
 		$description,$key,$hostid,$delay,$history,$status,$type,$snmp_community,$snmp_oid,
 		$value_type,$trapper_hosts,$snmp_port,$units,$multiplier,$delta,$snmpv3_securityname,
 		$snmpv3_securitylevel,$snmpv3_authpassphrase,$snmpv3_privpassphrase,$formula,$trends,$logtimefmt,
-		$valuemapid,$delay_flex,$applications,$templateid=0)
+		$valuemapid,$delay_flex,$applications,$templateid=0,$force_itemid=null)
 	{
-
 		$host=get_host_by_hostid($hostid);
 
 		if(($i = array_search(0,$applications)) !== FALSE)
@@ -281,7 +286,7 @@
 		}
 
 		// first add mother item
-		$itemid=get_dbid("items","itemid");
+		$itemid = ($force_itemid==null) ? get_dbid("items","itemid") : $force_itemid;
 		$result=DBexecute("insert into items".
 			" (itemid,description,key_,hostid,delay,history,nextcheck,status,type,".
 			"snmp_community,snmp_oid,value_type,trapper_hosts,snmp_port,units,multiplier,".
@@ -298,10 +303,14 @@
 		if(!$result)
 			return $result;
 
+		if (count($applications) > 0)
+			$last_itemappid = get_dbid("items_applications","itemappid",
+						    count($applications));
+
 		foreach($applications as $appid)
 		{
-			$itemappid=get_dbid("items_applications","itemappid");
-			DBexecute("insert into items_applications (itemappid,itemid,applicationid) values($itemappid,".$itemid.",".$appid.")");
+			DBexecute("insert into items_applications (itemappid,itemid,applicationid) values($last_itemappid,".$itemid.",".$appid.")");
+			$last_itemappid--;
 		}
 
 		info("Added new item ".$host["host"].":$key");
@@ -309,6 +318,10 @@
 // add items to child hosts
 
 		$db_hosts = get_hosts_by_templateid($host["hostid"]);
+		$count_hosts = get_hosts_by_templateid($host["hostid"], 1);
+		if ($count_hosts > 0)
+			$last_templateid = get_dbid("items","itemid", $count_hosts);
+
 		while($db_host = DBfetch($db_hosts))
 		{
 		// recursion
@@ -319,17 +332,19 @@
 				$snmpv3_authpassphrase, $snmpv3_privpassphrase, $formula,
 				$trends, $logtimefmt, $valuemapid,$delay_flex,
 				get_same_applications_for_host($applications, $db_host["hostid"]),
-				$itemid);
+				$itemid, $last_templateid);
 			if(!$result)
 				break;
+			$last_templateid--;
 		}
+
 		if($result)
 			return $itemid;
 
 		if($templateid == 0){
 			delete_item($itemid);
 		}
-		
+
 		return $result;
 	}
 
@@ -642,9 +657,11 @@
 				copy_template_items($hostid, $id, $copy_mode); // attention recursion
 			return;
 		}
-
+		
 		$db_tmp_items = get_items_by_hostid($templateid);
-
+		$items_count = get_items_by_hostid($templateid, 1);
+		if ($items_count > 0)
+			$last_itemid = get_dbid('items','itemid', $items_count);
 		
 		while($db_tmp_item = DBfetch($db_tmp_items))
 		{
@@ -675,7 +692,9 @@
 				$db_tmp_item["valuemapid"],
 				$db_tmp_item["delay_flex"],
 				$apps,
-				$copy_mode ? 0 : $db_tmp_item["itemid"]);
+				$copy_mode ? 0 : $db_tmp_item["itemid"],
+				$last_itemid);
+			$last_itemid--;
 		}
 	}
 
@@ -711,8 +730,12 @@
 		return $result;
 	}
 
-	function	&get_items_by_hostid($hostid)
+	function	&get_items_by_hostid($hostid, $return_count = 0)
 	{
+		if ($return_count) {
+			$row = DBfetch(DBselect("select count(*) as n from items where hostid=$hostid"));
+			return $row["n"];
+		}
 		return DBselect("select * from items where hostid=$hostid"); 
 	}
 
@@ -1202,7 +1225,6 @@ COpt::profiling_stop('prepare table');
 		if($index == 0)
 		{
 			$sql="select value from $table where itemid=".$db_item["itemid"]." and clock<=$clock order by clock desc";
-			$result = DBselect($sql, 1);
 			$row = DBfetch(DBselect($sql, 1));
 			if($row)
 			{

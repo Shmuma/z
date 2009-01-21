@@ -32,18 +32,6 @@ include_once "include/page_header.php";
 function save_host($hostid, $result, $need_message = 1) {
 	global $_REQUEST, $audit_action, $msg_ok, $msg_fail;
 
-	if($result) {
-		delete_host_profile($hostid);
-
-		if(get_request("useprofile","no") == "yes") {
-			$result = add_host_profile($hostid,
-				$_REQUEST["devicetype"],$_REQUEST["name"],$_REQUEST["os"],
-				$_REQUEST["serialno"],$_REQUEST["tag"],$_REQUEST["macaddress"],
-				$_REQUEST["hardware"],$_REQUEST["software"],$_REQUEST["contact"],
-				$_REQUEST["location"],$_REQUEST["notes"]);
-		}
-	}
-
 	if ($need_message)
 		show_messages($result, $msg_ok, $msg_fail);
 
@@ -56,28 +44,6 @@ function save_host($hostid, $result, $need_message = 1) {
 		unset($_REQUEST["hostid"]);
 	}
 	unset($_REQUEST["save"]);
-}
-
-function save_add_host($str) {
-	global $_REQUEST, $templates, $groups;
-
-	$is_ip = ip2long($str);
-	if (!$is_ip) {
-		$_REQUEST["host"] = $str;
-		$_REQUEST["dns"] = $str;
-		$useip = 0;
-	}
-	else {
-		$_REQUEST["host"] = $str;
-		$_REQUEST["ip"] = $str;
-		$useip = 1;
-	}
-
-	$hostid = add_host(
-		$_REQUEST["host"],$_REQUEST["port"],$_REQUEST["status"],$useip,$_REQUEST["dns"],
-		$_REQUEST["ip"],$_REQUEST["siteid"],$templates,"",$groups);
-
-	save_host($hostid, $hostid, 0);
 }
 
 	$_REQUEST["config"] = get_request("config",get_profile("web.hosts.config",0));
@@ -307,10 +273,13 @@ function save_add_host($str) {
 				$msg_fail 	= S_CANNOT_ADD_HOST;
 				$audit_action 	= AUDIT_ACTION_ADD;
 
-				$lst = expand_host_patterns($_REQUEST["massaddpatterns"]);
+				$hostids = add_hosts_by_name(
+					    expand_host_patterns($_REQUEST["massaddpatterns"]),
+					    $templates, $groups);
 
-				foreach ($lst as $host)
-					save_add_host($host);
+				foreach ($hostids as $hostid)
+					save_host($hostid, $hostid, 0);
+
 			} else {
 				$hostid = add_host(
 					$_REQUEST["host"],$_REQUEST["port"],$_REQUEST["status"],$useip,$_REQUEST["dns"],

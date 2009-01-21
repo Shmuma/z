@@ -69,12 +69,12 @@ require_once "include/items.inc.php";
 		}
 
 		if($siteid==null)
-			$result = DBselect("select * from sites where name=".zbx_dbstr($name));
+			$row = DBfetch(DBselect("select count(*) as n from sites where name=".zbx_dbstr($name)));
 		else
-			$result = DBselect("select * from sites where name=".zbx_dbstr($name).
-				" and siteid<>$siteid");
+			$row = DBfetch(DBselect("select count(*) as n from sites where name=".zbx_dbstr($name).
+				" and siteid<>$siteid"));
 
-		if(DBfetch($result))
+		if($row["n"] > 0)
 		{
 			error("Site '$name' already exists");
 			return false;
@@ -99,8 +99,11 @@ require_once "include/items.inc.php";
 			error("incorrect parameters for 'add_host_to_group' [hostid:".$hostid."][groupid:".$groupid."]");
 			return false;
 		}
+
 		$hostgroupid=get_dbid("hosts_groups","hostgroupid");
+		
 		$result=DBexecute("insert into hosts_groups (hostgroupid,hostid,groupid) values ($hostgroupid,$hostid,$groupid)");
+
 		if(!$result)
 			return $result;
 		return $hostgroupid;
@@ -133,14 +136,14 @@ require_once "include/items.inc.php";
 			error("incorrect parameters for 'db_save_group'");
 			return false;
 		}
-	
+
 		if($groupid==null)
-			$result = DBselect("select * from groups where name=".zbx_dbstr($name));
+			$row = DBfetch(DBselect("select count(*) as n from groups where name=".zbx_dbstr($name)));
 		else
-			$result = DBselect("select * from groups where name=".zbx_dbstr($name).
-				" and groupid<>$groupid");
-		
-		if(DBfetch($result))
+			$row = DBfetch(DBselect("select count(*) as n from groups where name=".zbx_dbstr($name).
+				" and groupid<>$groupid"));
+
+		if($row["n"] > 0)
 		{
 			error("Group '$name' already exists");
 			return false;
@@ -163,6 +166,7 @@ require_once "include/items.inc.php";
 			 return true;
 
 		$groupid = db_save_group($newgroup);
+
 		if(!$groupid)
 			return	$groupid;
 		
@@ -250,7 +254,7 @@ require_once "include/items.inc.php";
 	 *
 	 *     NOTE: templates = array(id => name, id2 => name2, ...)
 	 */
-	function	db_save_host($host,$port,$status,$useip,$dns,$ip,$siteid,$templates,$hostid=null)
+	function	db_save_host($host,$port,$status,$useip,$dns,$ip,$siteid,$templates,$hostid=null,$force_hostid=null)
 	{
 		if( !eregi('^'.ZBX_EREG_HOST_FORMAT.'$', $host) )
 		{
@@ -275,7 +279,7 @@ require_once "include/items.inc.php";
 
 		if($hostid==null)
 		{
-			$hostid = get_dbid("hosts","hostid");
+			$hostid = ($force_hostid==null) ? get_dbid("hosts","hostid") : $force_hostid;
 			$result = DBexecute("insert into hosts".
 				" (hostid,host,port,status,useip,dns,ip,disable_until,available,siteid)".
 				" values ($hostid,".zbx_dbstr($host).",$port,$status,$useip,".zbx_dbstr($dns).",".zbx_dbstr($ip).",0,"
@@ -330,9 +334,9 @@ require_once "include/items.inc.php";
 	 *
 	 *     NOTE: templates = array(id => name, id2 => name2, ...)
 	 */
-	function	add_host($host,$port,$status,$useip,$dns,$ip,$siteid,$templates,$newgroup,$groups)
+	function	add_host($host,$port,$status,$useip,$dns,$ip,$siteid,$templates,$newgroup,$groups,$force_hostid=null)
 	{
-		$hostid = db_save_host($host,$port,$status,$useip,$dns,$ip,$siteid,$templates);
+		$hostid = db_save_host($host,$port,$status,$useip,$dns,$ip,$siteid,$templates,null,$force_hostid);
 		if(!$hostid)
 			return $hostid;
 		else
@@ -344,9 +348,37 @@ require_once "include/items.inc.php";
 
 		sync_host_with_templates($hostid);
 
-		update_profile("HOST_PORT",$port);
-		
 		return	$hostid;
+	}
+
+	function	add_hosts_by_name($hostnames, $templates, $groups) {
+		global $_REQUEST;
+		$res = array();
+
+		if (count($hostnames) > 0)
+			$last_hostid = get_dbid("hosts","hostid", count($hostnames));
+
+		foreach ($hostnames as $hostname) {
+			$is_ip = ip2long($hostname);
+			if (!$is_ip) {
+				$_REQUEST["host"] = $hostname;
+				$_REQUEST["dns"] = $hostname;
+				$useip = 0;
+			}
+			else {
+				$_REQUEST["host"] = $hostname;
+				$_REQUEST["ip"] = $hostname;
+				$useip = 1;
+			}
+
+			$hostid = add_host(
+				$_REQUEST["host"],$_REQUEST["port"],$_REQUEST["status"],$useip,$_REQUEST["dns"],
+				$_REQUEST["ip"],$_REQUEST["siteid"],$templates,"",$groups, $last_hostid);
+
+			$last_hostid--;
+			array_push($res, $hostid);
+		}
+		return $res;
 	}
 
 	/*
@@ -474,7 +506,7 @@ require_once "include/items.inc.php";
 	 */
 	function	sync_host_with_templates($hostid, $templateid = null)
 	{
-		delete_template_elements($hostid, $templateid);		
+		delete_template_elements($hostid, $templateid);
 		copy_template_elements($hostid, $templateid);
 	}
 
@@ -620,8 +652,12 @@ require_once "include/items.inc.php";
 		return	false;
 	}
 
-	function	&get_hosts_by_templateid($templateid)
+	function	&get_hosts_by_templateid($templateid, $return_count = 0)
 	{
+		if ($return_count) {
+			$row = DBfetch(DBselect("select count(*) as n from hosts h, hosts_templates ht where h.hostid=ht.hostid and ht.templateid=$templateid"));
+			return $row["n"];
+		}
 		return DBselect("select h.* from hosts h, hosts_templates ht where h.hostid=ht.hostid and ht.templateid=$templateid");
 	}
 
