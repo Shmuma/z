@@ -469,6 +469,7 @@ typedef enum
 	ZBX_PROCESS_TRAPPERD,
 	ZBX_PROCESS_UNREACHABLE_POLLER,
 	ZBX_PROCESS_FEEDER,
+	ZBX_PROCESS_AGGREGATE_SLAVE,
 } zbx_process_type_t;
 
 extern zbx_process_type_t process_type;

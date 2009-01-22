@@ -12,7 +12,8 @@ SUBDIRS = \
 	nodewatcher \
 	watchdog \
 	utils \
-	feeder
+	feeder \
+	aggr_slave
 
 sbin_PROGRAMS = zabbix_server
 
@@ -51,6 +52,7 @@ zabbix_server_LDADD = \
 	utils/libzbxutils.a \
 	httppoller/libzbxhttppoller.a \
 	watchdog/libzbxwatchdog.a \
+	aggr_slave/libzbxaggrslave.a \
 	$(top_srcdir)/src/libs/zbxsysinfo/libzbxserversysinfo.a \
 	$(top_srcdir)/src/libs/zbxsysinfo/$(ARCH)/libspecsysinfo.a \
 	$(top_srcdir)/src/libs/zbxsysinfo/common/libcommonsysinfo.a \
