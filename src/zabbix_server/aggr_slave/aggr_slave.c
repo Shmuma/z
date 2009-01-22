@@ -46,7 +46,7 @@ void main_aggregate_slave_loop (int procnum)
 
 	while (1) {
 		/* build checks plan for 2 minutes */
-		build_checks_plan ();
+		build_checks_plan (120);
 		sleep (10);
 	}
 }
