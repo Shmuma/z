@@ -177,6 +177,22 @@ int xopen(const char *fn, int flags, mode_t mode)
 }
 
 
+FILE* fxopen(const char *fn, const char* mode)
+{
+	FILE* retval;
+	if (!(retval = fopen(fn, mode))) {
+		if (!make_directories (fn)) {
+			if (!(retval = fopen(fn, mode)))
+				zabbix_log(LOG_LEVEL_DEBUG, "HFS: %s: open: %s", fn, strerror(errno));
+                }
+		else
+			return NULL;
+	}
+	return retval;
+}
+
+
+
 int store_values (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t clock, int delay, void* value, int len, int count, item_type_t type)
 {
     char *p_meta = NULL, *p_data = NULL;
@@ -417,12 +433,22 @@ int make_directories (const char* path)
 void write_str (int fd, const char* str)
 {
 	int len = str ? strlen (str) : 0;
-	int res;
 
-	res = write (fd, &len, sizeof (len));
+	write (fd, &len, sizeof (len));
 	if (len)
-		res = write (fd, str, len+1);
+		write (fd, str, len+1);
 }
+
+
+void fwrite_str (FILE* f, const char* str)
+{
+	int len = str ? strlen (str) : 0;
+
+	fwrite (&len, sizeof (len), 1, f);
+	if (len)
+		fwrite (str, len+1, 1, f);
+}
+
 
 
 int str_buffer_length (char* str)
@@ -788,6 +814,9 @@ char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemi
 	    break;
     case NK_FunctionVals:
 	    snprintf (res, len, "%s/%s/misc/functions.data", hfs_base_dir, siteid);
+	    break;
+    case NK_AggrSlaveVal:
+            snprintf (res, len, "%s/%s/items/%llu/%llu/aggr.data", hfs_base_dir, siteid, item_ord, itemid);
 	    break;
     }
 
@@ -2849,4 +2878,24 @@ int HFS_get_function_value (const char* hfs_path, const char* siteid, zbx_uint64
 
 	close (fd);
 	return 1;
+}
+
+
+void HFS_save_aggr_slave_value (const char* hfs_path, const char* siteid, zbx_uint64_t itemid, hfs_time_t ts, int valid, double value, const char* stderr)
+{
+	char *name = get_name (hfs_path, siteid, itemid, NK_AggrSlaveVal);
+	FILE* f;
+
+	if (!(f = fxopen (name, "w+"))) {
+		zabbix_log (LOG_LEVEL_ERR, "HFS_save_function_value: Cannot open function value file");
+		free (name);
+		return 0;
+	}
+	free (name);
+
+	fwrite (&ts, sizeof (ts), 1, f);
+	fwrite (&valid, sizeof (valid), 1, f);
+	fwrite (&value, sizeof (value), 1, f);
+	fwrite_str (f, stderr);
+	fclose (f);
 }
