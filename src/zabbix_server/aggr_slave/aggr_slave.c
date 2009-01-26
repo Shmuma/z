@@ -631,7 +631,8 @@ static void process_aggr_entry (plan_item_t* item)
 
  exit:
 	/* save result of calculations */
-	HFS_save_aggr_slave_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, time (NULL), value_got, result, stderr);
+	if (value_got)
+		HFS_save_aggr_slave_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, time (NULL), value_got, result, stderr);
 	if (items)
 		free (items);
 	if (items_values)
