@@ -81,7 +81,7 @@ zabbix_server_DEPENDENCIES = alerter/libzbxalerter.a \
 	timer/libzbxtimer.a trapper/libzbxtrapper.a \
 	feeder/libzbxfeeder.a nodewatcher/libzbxnodewatcher.a \
 	utils/libzbxutils.a httppoller/libzbxhttppoller.a \
-	watchdog/libzbxwatchdog.a \
+	watchdog/libzbxwatchdog.a aggr_slave/libzbxaggrslave.a \
 	$(top_srcdir)/src/libs/zbxsysinfo/libzbxserversysinfo.a \
 	$(top_srcdir)/src/libs/zbxsysinfo/$(ARCH)/libspecsysinfo.a \
 	$(top_srcdir)/src/libs/zbxsysinfo/common/libcommonsysinfo.a \
@@ -265,7 +265,8 @@ SUBDIRS = \
 	nodewatcher \
 	watchdog \
 	utils \
-	feeder
+	feeder \
+	aggr_slave
 
 zabbix_server_SOURCES = evalfunc.c evalfunc.h expression.c \
 	expression.h actions.c actions.h operations.c operations.h \
@@ -285,6 +286,7 @@ zabbix_server_LDADD = \
 	utils/libzbxutils.a \
 	httppoller/libzbxhttppoller.a \
 	watchdog/libzbxwatchdog.a \
+	aggr_slave/libzbxaggrslave.a \
 	$(top_srcdir)/src/libs/zbxsysinfo/libzbxserversysinfo.a \
 	$(top_srcdir)/src/libs/zbxsysinfo/$(ARCH)/libspecsysinfo.a \
 	$(top_srcdir)/src/libs/zbxsysinfo/common/libcommonsysinfo.a \
