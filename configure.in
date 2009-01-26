@@ -960,6 +960,7 @@ AC_OUTPUT([
 	src/zabbix_server/feeder/Makefile
 	src/zabbix_server/utils/Makefile
 	src/zabbix_server/watchdog/Makefile
+	src/zabbix_server/aggr_slave/Makefile
 	src/utils/Makefile
 	upgrades/Makefile
 	])

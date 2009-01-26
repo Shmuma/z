@@ -34,6 +34,7 @@ typedef enum {
 	NK_EventTrigger,
 	NK_EventHost,
 	NK_FunctionVals,
+	NK_AggrSlaveVal,
 } name_kind_t;
 
 typedef void (*fold_fn_t) (void* db_val, void* state);

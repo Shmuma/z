@@ -21,6 +21,7 @@
 #include "checks_aggregate.h"
 
 #include "hfs.h"
+#include "../functions.h"
 
 
 extern char* CONFIG_HFS_PATH;
