@@ -177,22 +177,6 @@ int xopen(const char *fn, int flags, mode_t mode)
 }
 
 
-FILE* fxopen(const char *fn, const char* mode)
-{
-	FILE* retval;
-	if (!(retval = fopen(fn, mode))) {
-		if (!make_directories (fn)) {
-			if (!(retval = fopen(fn, mode)))
-				zabbix_log(LOG_LEVEL_DEBUG, "HFS: %s: open: %s", fn, strerror(errno));
-                }
-		else
-			return NULL;
-	}
-	return retval;
-}
-
-
-
 int store_values (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t clock, int delay, void* value, int len, int count, item_type_t type)
 {
     char *p_meta = NULL, *p_data = NULL;
@@ -449,17 +433,6 @@ void write_str_wo_len (int fd, const char* str)
 
 
 
-void fwrite_str (FILE* f, const char* str)
-{
-	int len = str ? strlen (str) : 0;
-
-	fwrite (&len, sizeof (len), 1, f);
-	if (len)
-		fwrite (str, len+1, 1, f);
-}
-
-
-
 int str_buffer_length (char* str)
 {
 	int len = str ? strlen (str) : 0;
@@ -516,27 +489,6 @@ char* read_str_wo_len (int fd, int len)
 		if (res) {
 			res[0] = 0;
 			read (fd, res, len+1);
-		}
-	}
-
-	return res;
-}
-
-
-
-char* fread_str (FILE* f)
-{
-	int len;
-	char* res = NULL;
-
-	if (fread (&len, 1, sizeof (len), f) < sizeof (len))
-		return NULL;
-
-	if (len) {
-		res = (char*)malloc (len+1);
-		if (res) {
-			res[0] = 0;
-			fread (res, len+1, 1, f);
 		}
 	}
 
@@ -742,7 +694,7 @@ void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t ite
 hfs_meta_t *read_metafile(const char *metafile)
 {
 	hfs_meta_t *res;
-	FILE *f;
+	int fd;
 
 	if (!metafile)
 		return NULL;
@@ -751,9 +703,9 @@ hfs_meta_t *read_metafile(const char *metafile)
 		return NULL;
 
 	/* if we have no file, create empty one */
-	if ((f = fopen(metafile, "rb")) == NULL) {
-		zabbix_log(LOG_LEVEL_DEBUG, "%s: file open failed: %s",
-			   metafile, strerror(errno));
+	if ((fd = open(metafile, O_RDONLY)) < 0) {
+/* 		zabbix_log(LOG_LEVEL_DEBUG, "%s: file open failed: %s", */
+/* 			   metafile, strerror(errno)); */
 		res->blocks = 0;
 		res->last_delay = 0;
 		res->last_type = IT_DOUBLE;
@@ -762,28 +714,28 @@ hfs_meta_t *read_metafile(const char *metafile)
 		return res;
 	}
 
-	if (fread (res, sizeof (hfs_meta_t) - sizeof (res->meta), 1, f) != 1)
+	if (read (fd, res, sizeof (hfs_meta_t) - sizeof (res->meta)) < sizeof (hfs_meta_t) - sizeof (res->meta))
 	{
-		fclose(f);
-		free(res);
+		close (fd);
+		free (res);
 		return NULL;
 	}
 
 	res->meta = (hfs_meta_item_t *) malloc(sizeof(hfs_meta_item_t)*res->blocks);
         if (!res->meta) {
-		fclose (f);
+		close (fd);
 		free (res);
 		return NULL;
 	}
 
-        if (fread (res->meta, sizeof (hfs_meta_item_t), res->blocks, f) != res->blocks) {
-		fclose(f);
-		free(res->meta);
-		free(res);
+        if (read (fd, res->meta, sizeof (hfs_meta_item_t) * res->blocks) < sizeof (hfs_meta_item_t) * res->blocks) {
+		close (fd);
+		free (res->meta);
+		free (res);
 		return NULL;
 	}
 
-	fclose (f);
+	close (fd);
 	return res;
 }
 
@@ -2938,23 +2890,36 @@ int HFS_get_function_value (const char* hfs_path, const char* siteid, zbx_uint64
 }
 
 
+typedef struct __attribute__ ((packed)) {
+	zbx_uint64_t ts;
+	int valid;
+	double value;
+	int stderr_len;
+} hfs_aggr_value_t;
+
+
 void HFS_save_aggr_slave_value (const char* hfs_path, const char* siteid, zbx_uint64_t itemid, hfs_time_t ts, int valid, double value, const char* stderr)
 {
 	char *name = get_name (hfs_path, siteid, itemid, NK_AggrSlaveVal);
-	FILE* f;
+	int fd;
+	hfs_aggr_value_t aggr;
 
-	if (!(f = fxopen (name, "w+"))) {
+	if ((fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0) {
 		zabbix_log (LOG_LEVEL_ERR, "HFS_save_function_value: Cannot open function value file");
 		free (name);
 		return;
 	}
 	free (name);
 
-	fwrite (&ts, sizeof (ts), 1, f);
-	fwrite (&valid, sizeof (valid), 1, f);
-	fwrite (&value, sizeof (value), 1, f);
-	fwrite_str (f, stderr);
-	fclose (f);
+	aggr.ts = ts;
+	aggr.valid = valid;
+	aggr.value = value;
+	aggr.stderr_len = stderr ? strlen (stderr) : 0;
+
+	write (fd, &aggr, sizeof (aggr));
+	if (aggr.stderr_len)
+		write_str_wo_len (fd, stderr);
+	close (fd);
 }
 
 
@@ -2962,22 +2927,30 @@ void HFS_save_aggr_slave_value (const char* hfs_path, const char* siteid, zbx_ui
 void HFS_get_aggr_slave_value (const char* hfs_path, const char* siteid, zbx_uint64_t itemid, hfs_time_t* ts, int* valid, double* value, char** stderr)
 {
 	char *name = get_name (hfs_path, siteid, itemid, NK_AggrSlaveVal);
-	FILE* f;
+	int fd;
+	hfs_aggr_value_t aggr;
 
 	*ts = 0;
 	*valid = 0;
 	*stderr = NULL;
 
-	if (!(f = fopen (name, "r"))) {
+	if ((fd = open (name, O_RDONLY)) < 0) {
 		free (name);
 		return;
 	}
 	free (name);
 
-	fread (ts, sizeof (*ts), 1, f);
-	fread (valid, sizeof (*valid), 1, f);
-	fread (value, sizeof (*value), 1, f);
-	if (*valid)
-		*stderr = fread_str (f);
-	fclose (f);
+	if (read (fd, &aggr, sizeof (aggr)) < sizeof (aggr)) {
+		close (fd);
+		return;
+	}
+
+	*ts = aggr.ts;
+	*valid = aggr.valid;
+	*value = aggr.value;
+	if (aggr.stderr_len)
+		*stderr = read_str_wo_len (fd, aggr.stderr_len);
+	else
+		*stderr = NULL;
+	close (fd);
 }
