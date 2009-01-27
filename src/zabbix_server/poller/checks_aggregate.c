@@ -105,7 +105,7 @@ static aggregate_reduce_hook_t hfs_reduce_hooks[] = {
 static int	evaluate_aggregate_hfs(zbx_uint64_t itemid, int delay, AGENT_RESULT *res, char *grpfunc)
 {
 	int i, result = NOTSUPPORTED, found = 0;
-	DB_RESULT result;
+	DB_RESULT db_res;
 	DB_ROW row;
 	aggr_item_t* items = NULL;
 	int items_count = 0, item_buf = 0, info_index;
@@ -115,10 +115,10 @@ static int	evaluate_aggregate_hfs(zbx_uint64_t itemid, int delay, AGENT_RESULT *
 	double value;
 
 	/* collect values from all sites */
-	result = DBselect ("select s.name from sites s");
+	db_res = DBselect ("select s.name from sites s");
 
-	while (row = DBfetch (result)) {
-		if (item_count == item_buf)
+	while (row = DBfetch (db_res)) {
+		if (items_count == item_buf)
 			items = (aggr_item_t*)realloc (items, sizeof (aggr_item_t)*(item_buf += 10));
 		HFS_get_aggr_slave_value (CONFIG_HFS_PATH, row[0], itemid, &ts, &valid, &items[items_count].value, &stderr);
 		if (valid && (now-ts) / delay < 3)
@@ -128,7 +128,7 @@ static int	evaluate_aggregate_hfs(zbx_uint64_t itemid, int delay, AGENT_RESULT *
 				free (stderr);
 	}
 
-	DBfree_result (result);
+	DBfree_result (db_res);
 
 	/* calculate final value */
 	found = 0;
@@ -180,9 +180,9 @@ static int	evaluate_aggregate_hfs(zbx_uint64_t itemid, int delay, AGENT_RESULT *
  ******************************************************************************/
 int	get_value_aggregate(DB_ITEM *item, AGENT_RESULT *result)
 {
+	char    key[MAX_STRING_LEN];
 	char	function_grp[MAX_STRING_LEN];
 	char	*p,*p2;
-
 	int 	ret = SUCCEED;
 
 
@@ -206,12 +206,13 @@ int	get_value_aggregate(DB_ITEM *item, AGENT_RESULT *result)
 		function_grp);
 
 	if (ret == SUCCEED) {
-	if (CONFIG_HFS_PATH) {
-		if (evaluate_aggregate_hfs (item->itemid, item->delay, result, function_grp) != SUCCEED)
+		if (CONFIG_HFS_PATH) {
+			if (evaluate_aggregate_hfs (item->itemid, item->delay, result, function_grp) != SUCCEED)
+				ret = NOTSUPPORTED;
+		}
+		else
 			ret = NOTSUPPORTED;
 	}
-	else
-		ret = NOTSUPPORTED;
 
 	return ret;
 }
