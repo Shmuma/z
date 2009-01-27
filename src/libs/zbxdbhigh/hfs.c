@@ -309,17 +309,18 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	if (extra > 0) {
 		char* buf;
 		lseek (fd, meta->last_ofs + len, SEEK_SET);
-		buf = (char*)malloc (extra);
+		buf = (char*)malloc (extra + len*count);
 		memset (buf, 0xFF, extra);
-		res = write (fd, buf, extra);
+		memcpy (buf+extra, values, len*count);
+		res = write (fd, buf, extra + len*count);
 		free (buf);
 	}
-	else
+	else {
 		lseek (fd, ofs, SEEK_SET);
-
-        /* we're ready to write */
-	/* TODO: change this to AIO */
-        res = write (fd, values, len*count);
+		/* we're ready to write */
+		/* TODO: change this to AIO */
+		res = write (fd, values, len*count);
+	}
         if (meta->last_ofs < ofs + len*(count-1))
 		meta->last_ofs = ofs + len*(count-1);
 
