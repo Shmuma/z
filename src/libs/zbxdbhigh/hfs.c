@@ -214,13 +214,12 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 {
     hfs_meta_item_t item, *ip;
     hfs_meta_t* meta;
-    FILE* f = NULL;
+    int fd;
     int i, j, res;
     unsigned char v = 0xff;
     hfs_off_t extra;
     hfs_off_t size, ofs;
     int retval = 1;
-    unsigned char missed_val = 0xFF;
 
 /*     zabbix_log(LOG_LEVEL_DEBUG, "HFS: store_values()"); */
 
@@ -251,7 +250,7 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	    item.ofs = ofs = 0;
 
 	/* append block to meta */
-	if (!(f = fxopen (p_meta, "w+")))
+	if ((fd = xopen (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
 		goto err_exit;
 
 	meta->blocks++;
@@ -269,34 +268,34 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 /* 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: type <- %u", meta->last_type); */
 /* 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: last_ofs <- %u", meta->last_ofs); */
 
-	if (fwrite (meta, sizeof (hfs_meta_t) - sizeof (meta->meta), 1, f) == -1)
+	if (write (fd, meta, sizeof (hfs_meta_t) - sizeof (meta->meta)) == -1)
 		goto err_exit;
 
-	if (fseek (f, sizeof (hfs_meta_item_t)*(meta->blocks-1), SEEK_CUR) == -1)
+	if (lseek (fd, sizeof (hfs_meta_item_t)*(meta->blocks-1), SEEK_CUR) == -1)
 		goto err_exit;
 
-	if (fwrite (&item, sizeof (item), 1, f) == -1)
+	if (write (fd, &item, sizeof (item)) == -1)
 		goto err_exit;
 
-	fclose (f);
-	f = NULL;
+	close (fd);
+	fd = -1;
 
 /* 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: block metadata updated %d, %d, %d: %lld, %lld, %d, %llu", meta->blocks, meta->last_delay, meta->last_type, */
 /* 		   item.start, item.end, item.delay, item.ofs); */
 
 	/* append data */
-	if (!(f = fxopen (p_data, "w+")))
+	if ((fd = xopen (p_data, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
 		goto err_exit;
 
-	if (fseek (f, ofs, SEEK_SET) == -1)
+	if (lseek (fd, ofs, SEEK_SET) == -1)
 		goto err_exit;
 
 	/* TODO: change this to AIO */
-	if (fwrite (values, len, count, f) == -1)
+	if (write (fd, values, len * count) == -1)
 		goto err_exit;
 
-	fclose (f);
-	f = NULL;
+	close (fd);
+	fd = -1;
 
 	retval = 0;
     }
@@ -311,7 +310,7 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
             goto err_exit;
         }
 
-	if (!(f = fxopen (p_data, "w+")) == -1)
+	if ((fd = xopen (p_data, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
 		goto err_exit;
 
 	/* round start and end clock according to delay */
@@ -324,49 +323,53 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	extra -= extra % len;
 
 	if (extra > 0) {
-		fseek (f, meta->last_ofs + len, SEEK_SET);
-		res = fwrite (&missed_val, 1, extra, f);
+		char* buf;
+		lseek (fd, meta->last_ofs + len, SEEK_SET);
+		buf = (char*)malloc (extra);
+		memset (buf, 0xFF, extra);
+		res = write (fd, buf, extra);
+		free (buf);
 	}
 	else
-		fseek (f, ofs, SEEK_SET);
+		lseek (fd, ofs, SEEK_SET);
 
         /* we're ready to write */
 	/* TODO: change this to AIO */
-        res = fwrite (values, len, count, f);
+        res = write (fd, values, len*count);
         if (meta->last_ofs < ofs + len*(count-1))
 		meta->last_ofs = ofs + len*(count-1);
 
-        fclose (f);
-        f = NULL;
+        close (fd);
+        fd = -1;
 
         /* update meta */
         if (ip->end < clock + delay*(count-1))
             ip->end = clock + delay*(count-1);
 
-        if (!(f = fxopen (p_meta, "w+")))
+        if ((fd = xopen (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
             goto err_exit;
 
-        if (fseek (f, sizeof (meta->blocks) * 3, SEEK_SET) == -1)
+        if (lseek (fd, sizeof (meta->blocks) * 3, SEEK_SET) == -1)
             goto err_exit;
 
-        if (fwrite (&meta->last_ofs, sizeof (meta->last_ofs), 1, f) == -1)
+        if (write (fd, &meta->last_ofs, sizeof (meta->last_ofs)) == -1)
             goto err_exit;
 
-        if (fseek (f, sizeof (hfs_meta_item_t) * (meta->blocks-1), SEEK_CUR) == -1)
+        if (lseek (fd, sizeof (hfs_meta_item_t) * (meta->blocks-1), SEEK_CUR) == -1)
             goto err_exit;
 
-        if (fwrite (ip, sizeof (hfs_meta_item_t), 1, f) == -1)
+        if (write (fd, ip, sizeof (hfs_meta_item_t)) == -1)
             goto err_exit;
 
-        fclose (f);
-        f = NULL;
+        close (fd);
+        fd = -1;
 
 	retval = 0;
     }
 
 err_exit:
-    if (f)
-        fclose (f);
+    if (fd != -1)
+        close (fd);
     free_meta (meta);
 
     return retval;
