@@ -403,12 +403,23 @@ static char* find_hostname_of_itemid (zbx_uint64_t itemid)
  * grpfunc: grpmax, grpmin, grpsum, grpavg
  * itemfunc: last, min, max, avg, sum,count
  */
-static int	evaluate_aggregate_hfs(AGENT_RESULT *res,char *grpfunc, char *hostgroup, char *itemkey, char *itemfunc, char *param)
+static int	evaluate_aggregate_hfs(zbx_uint64_t itemid, AGENT_RESULT *res, char *grpfunc)
 {
 	int i, result = NOTSUPPORTED, found = 0;
 	aggregate_item_info_t* items;
 	int items_count, info_index;
 	double* items_values = NULL;
+	DB_RESULT result;
+	DB_ROW row;
+
+	/* aggregate values from all sites */
+	result = DBselect ("select s.name from sites s");
+
+	while (row = DBfetch (result)) {
+
+	}
+
+	DBfree_result (result);
 
 	/* obtain list of items with sites */
 	items = get_aggregate_items (hostgroup, itemkey, &items_count);
@@ -649,110 +660,17 @@ int	get_value_aggregate(DB_ITEM *item, AGENT_RESULT *result)
 	}
 	else	ret = NOTSUPPORTED;
 
-	if(ret == SUCCEED)
-	{
-		if((p2=strchr(p,'"')) != NULL)
-		{
-			p2++;
-		}
-		else	ret = NOTSUPPORTED;
-
-		if((ret == SUCCEED) && (p=strchr(p2,'"')) != NULL)
-		{
-			*p=0;
-			strscpy(group,p2);
-			*p='"';
-			p++;
-		}
-		else	ret = NOTSUPPORTED;
-	}
-
-	if(ret == SUCCEED)
-	{
-		if(*p != ',')	ret = NOTSUPPORTED;
-	}
-
-	if(ret == SUCCEED)
-	{
-		if((p2=strchr(p,'"')) != NULL)
-		{
-			p2++;
-		}
-		else	ret = NOTSUPPORTED;
-
-		if((ret == SUCCEED) && (p=strchr(p2,'"')) != NULL)
-		{
-			*p=0;
-			strscpy(itemkey,p2);
-			*p='"';
-			p++;
-		}
-		else	ret = NOTSUPPORTED;
-	}
-
-	if(ret == SUCCEED)
-	{
-		if(*p != ',')	ret = NOTSUPPORTED;
-	}
-
-	if(ret == SUCCEED)
-	{
-		if((p2=strchr(p,'"')) != NULL)
-		{
-			p2++;
-		}
-		else	ret = NOTSUPPORTED;
-
-		if((ret == SUCCEED) && (p=strchr(p2,'"')) != NULL)
-		{
-			*p=0;
-			strscpy(function_item,p2);
-			*p='"';
-			p++;
-		}
-		else	ret = NOTSUPPORTED;
-	}
-
-	if(ret == SUCCEED)
-	{
-		if(*p != ',')	ret = NOTSUPPORTED;
-	}
-
-	if(ret == SUCCEED)
-	{
-		if((p2=strchr(p,'"')) != NULL)
-		{
-			p2++;
-		}
-		else	ret = NOTSUPPORTED;
-
-		if((ret == SUCCEED) && (p=strchr(p2,'"')) != NULL)
-		{
-			*p=0;
-			strscpy(parameter,p2);
-			*p='"';
-			p++;
-		}
-		else	ret = NOTSUPPORTED;
-	}
-
-	zabbix_log( LOG_LEVEL_DEBUG, "Evaluating aggregate[%s] grpfunc[%s] group[%s] itemkey[%s] itemfunc [%s] parameter [%s]",
+	zabbix_log( LOG_LEVEL_DEBUG, "Evaluating aggregate[%s] grpfunc[%s]",
 		item->key,
-		function_grp,
-		group,
-		itemkey,
-		function_item,
-		parameter);
+		function_grp);
 
 	if (ret == SUCCEED) {
 	if (CONFIG_HFS_PATH) {
-		if (evaluate_aggregate_hfs (result, function_grp, group, itemkey, function_item, parameter) != SUCCEED)
+		if (evaluate_aggregate_hfs (item->itemid, result, function_grp) != SUCCEED)
 			ret = NOTSUPPORTED;
 	}
 	else
-		if (evaluate_aggregate(result,function_grp, group, itemkey, function_item, parameter) != SUCCEED)
-			ret = NOTSUPPORTED;
-	}
+		ret = NOTSUPPORTED;
 
 	return ret;
 }
