@@ -694,7 +694,9 @@ void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t ite
 hfs_meta_t *read_metafile(const char *metafile)
 {
 	hfs_meta_t *res;
-	int fd;
+	int fd, len;
+	static char buf[1024*4];
+	char* p;
 
 	if (!metafile)
 		return NULL;
@@ -714,12 +716,19 @@ hfs_meta_t *read_metafile(const char *metafile)
 		return res;
 	}
 
-	if (read (fd, res, sizeof (hfs_meta_t) - sizeof (res->meta)) < sizeof (hfs_meta_t) - sizeof (res->meta))
-	{
+	/* read whole file into buffer (we hope) */
+	len = read (fd, buf, sizeof (buf));
+
+	if (len < sizeof (hfs_meta_t) - sizeof (res->meta)) {
 		close (fd);
 		free (res);
 		return NULL;
 	}
+
+	p = buf;
+	memcpy (res, p, sizeof (hfs_meta_t) - sizeof (res->meta));
+	p += sizeof (hfs_meta_t) - sizeof (res->meta);
+	len -= sizeof (hfs_meta_t) - sizeof (res->meta);
 
 	res->meta = (hfs_meta_item_t *) malloc(sizeof(hfs_meta_item_t)*res->blocks);
         if (!res->meta) {
@@ -728,11 +737,10 @@ hfs_meta_t *read_metafile(const char *metafile)
 		return NULL;
 	}
 
-        if (read (fd, res->meta, sizeof (hfs_meta_item_t) * res->blocks) < sizeof (hfs_meta_item_t) * res->blocks) {
-		close (fd);
-		free (res->meta);
-		free (res);
-		return NULL;
+	if (len == sizeof (hfs_meta_item_t) * res->blocks) {
+		memcpy (res->meta, p, sizeof (hfs_meta_item_t) * res->blocks);
+	} else {
+		/* TODO TODO. Meta is grown over 4KB */
 	}
 
 	close (fd);
