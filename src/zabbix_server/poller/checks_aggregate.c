@@ -132,13 +132,14 @@ static int	evaluate_aggregate_hfs(zbx_uint64_t itemid, int delay, AGENT_RESULT *
 
 	/* calculate final value */
 	found = 0;
+	info_index = -1;
 	for (i = 0; i < sizeof (hfs_reduce_hooks) / sizeof (hfs_reduce_hooks[0]) && !found; i++)
 		if (strcmp (grpfunc, hfs_reduce_hooks[i].grpfunc) == 0) {
 			found = 1;
 			SET_DBL_RESULT (res, hfs_reduce_hooks[i].hook (items, items_count, &info_index));
 		}
 
-	if (info_index >= 0 && info_index < items_count) {
+	if (info_index >= 0 && info_index < items_count && items[info_index].stderr) {
 		/* lookup hostname of winning item. It will be stderr of value. */
 		char* hostname = strdup (items[info_index].stderr);
 

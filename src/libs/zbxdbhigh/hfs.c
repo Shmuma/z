@@ -503,7 +503,7 @@ char* fread_str (FILE* f)
 	int len;
 	char* res = NULL;
 
-	if (fread (&len, sizeof (len), 1, f) < sizeof (len))
+	if (fread (&len, 1, sizeof (len), f) < sizeof (len))
 		return NULL;
 
 	if (len) {
@@ -2938,10 +2938,10 @@ void HFS_get_aggr_slave_value (const char* hfs_path, const char* siteid, zbx_uin
 	}
 	free (name);
 
-	fread (&ts, sizeof (ts), 1, f);
-	fread (&valid, sizeof (valid), 1, f);
-	fread (&value, sizeof (value), 1, f);
-	if (valid)
+	fread (ts, sizeof (*ts), 1, f);
+	fread (valid, sizeof (*valid), 1, f);
+	fread (value, sizeof (*value), 1, f);
+	if (*valid)
 		*stderr = fread_str (f);
 	fclose (f);
 }
