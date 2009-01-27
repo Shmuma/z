@@ -439,6 +439,16 @@ void write_str (int fd, const char* str)
 }
 
 
+void write_str_wo_len (int fd, const char* str)
+{
+	int len = str ? strlen (str) : 0;
+
+	if (len)
+		write (fd, str, len+1);
+}
+
+
+
 void fwrite_str (FILE* f, const char* str)
 {
 	int len = str ? strlen (str) : 0;
@@ -495,6 +505,23 @@ char* read_str (int fd)
 
 	return res;
 }
+
+
+char* read_str_wo_len (int fd, int len)
+{
+	char* res = NULL;
+
+	if (len) {
+		res = (char*)malloc (len+1);
+		if (res) {
+			res[0] = 0;
+			read (fd, res, len+1);
+		}
+	}
+
+	return res;
+}
+
 
 
 char* fread_str (FILE* f)
@@ -1844,10 +1871,12 @@ void HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, z
 	val.prevvalue = prevvalue;
 	val.lastvalue = lastvalue;
 	val.prevorgvalue = prevorgvalue;
+	val.stderr_len = stderr ? strlen (stderr) : 0;
 
 	if (write (fd, &val, sizeof (val)) == -1)
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_item_values_dbl: write(): %s", strerror(errno));
-	write_str (fd, stderr);
+	if (val.stderr_len)
+		write_str_wo_len (fd, stderr);
 	close (fd);
 }
 
@@ -1880,10 +1909,12 @@ void HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, z
 	val.prevvalue = prevvalue;
 	val.lastvalue = lastvalue;
 	val.prevorgvalue = prevorgvalue;
+	val.stderr_len = stderr ? strlen (stderr) : 0;
 
 	if (write (fd, &val, sizeof (val)) == -1)
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_item_values_int: write(): %s", strerror(errno));
-	write_str (fd, stderr);
+	if (val.stderr_len)
+		write_str_wo_len (fd, stderr);
 
 	close (fd);
 }
@@ -1965,7 +1996,10 @@ int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_u
 	*prevvalue = val.prevvalue;
 	*lastvalue = val.lastvalue;
 	*prevorgvalue = val.prevorgvalue;
-	*stderr = read_str (fd);
+	if (val.stderr_len)
+		*stderr = read_str_wo_len (fd, val.stderr_len);
+	else
+		*stderr = NULL;
 
 	close (fd);
 	return 1;
@@ -2008,7 +2042,10 @@ int HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_u
 	*prevvalue = val.prevvalue;
 	*lastvalue = val.lastvalue;
 	*prevorgvalue = val.prevorgvalue;
-	*stderr = read_str (fd);
+	if (val.stderr_len)
+		*stderr = read_str_wo_len (fd, val.stderr_len);
+	else
+		*stderr = NULL;
 	close (fd);
 
 	return 1;
