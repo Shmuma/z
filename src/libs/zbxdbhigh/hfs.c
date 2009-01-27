@@ -694,7 +694,7 @@ void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t ite
 hfs_meta_t *read_metafile(const char *metafile)
 {
 	hfs_meta_t *res;
-	FILE *f;
+	int fd;
 
 	if (!metafile)
 		return NULL;
@@ -703,9 +703,9 @@ hfs_meta_t *read_metafile(const char *metafile)
 		return NULL;
 
 	/* if we have no file, create empty one */
-	if ((f = fopen(metafile, "rb")) == NULL) {
-		zabbix_log(LOG_LEVEL_DEBUG, "%s: file open failed: %s",
-			   metafile, strerror(errno));
+	if ((fd = open(metafile, O_RDONLY)) < 0) {
+/* 		zabbix_log(LOG_LEVEL_DEBUG, "%s: file open failed: %s", */
+/* 			   metafile, strerror(errno)); */
 		res->blocks = 0;
 		res->last_delay = 0;
 		res->last_type = IT_DOUBLE;
@@ -714,28 +714,28 @@ hfs_meta_t *read_metafile(const char *metafile)
 		return res;
 	}
 
-	if (fread (res, sizeof (hfs_meta_t) - sizeof (res->meta), 1, f) != 1)
+	if (read (fd, res, sizeof (hfs_meta_t) - sizeof (res->meta)) < sizeof (hfs_meta_t) - sizeof (res->meta))
 	{
-		fclose(f);
-		free(res);
+		close (fd);
+		free (res);
 		return NULL;
 	}
 
 	res->meta = (hfs_meta_item_t *) malloc(sizeof(hfs_meta_item_t)*res->blocks);
         if (!res->meta) {
-		fclose (f);
+		close (fd);
 		free (res);
 		return NULL;
 	}
 
-        if (fread (res->meta, sizeof (hfs_meta_item_t), res->blocks, f) != res->blocks) {
-		fclose(f);
-		free(res->meta);
-		free(res);
+        if (read (fd, res->meta, sizeof (hfs_meta_item_t) * res->blocks) < sizeof (hfs_meta_item_t) * res->blocks) {
+		close (fd);
+		free (res->meta);
+		free (res);
 		return NULL;
 	}
 
-	fclose (f);
+	close (fd);
 	return res;
 }
 
