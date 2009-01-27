@@ -498,6 +498,27 @@ char* read_str (int fd)
 }
 
 
+char* fread_str (FILE* f)
+{
+	int len;
+	char* res = NULL;
+
+	if (fread (&len, sizeof (len), 1, f) < sizeof (len))
+		return NULL;
+
+	if (len) {
+		res = (char*)malloc (len+1);
+		if (res) {
+			res[0] = 0;
+			fread (res, len+1, 1, f);
+		}
+	}
+
+	return res;
+}
+
+
+
 char* unbuffer_str (char **buf)
 {
 	char* b = *buf;
@@ -2889,7 +2910,7 @@ void HFS_save_aggr_slave_value (const char* hfs_path, const char* siteid, zbx_ui
 	if (!(f = fxopen (name, "w+"))) {
 		zabbix_log (LOG_LEVEL_ERR, "HFS_save_function_value: Cannot open function value file");
 		free (name);
-		return 0;
+		return;
 	}
 	free (name);
 
@@ -2897,5 +2918,30 @@ void HFS_save_aggr_slave_value (const char* hfs_path, const char* siteid, zbx_ui
 	fwrite (&valid, sizeof (valid), 1, f);
 	fwrite (&value, sizeof (value), 1, f);
 	fwrite_str (f, stderr);
+	fclose (f);
+}
+
+
+
+void HFS_get_aggr_slave_value (const char* hfs_path, const char* siteid, zbx_uint64_t itemid, hfs_time_t* ts, int* valid, double* value, char** stderr)
+{
+	char *name = get_name (hfs_path, siteid, itemid, NK_AggrSlaveVal);
+	FILE* f;
+
+	*ts = 0;
+	*valid = 0;
+	*stderr = NULL;
+
+	if (!(f = fopen (name, "r"))) {
+		free (name);
+		return;
+	}
+	free (name);
+
+	fread (&ts, sizeof (ts), 1, f);
+	fread (&valid, sizeof (valid), 1, f);
+	fread (&value, sizeof (value), 1, f);
+	if (valid)
+		*stderr = fread_str (f);
 	fclose (f);
 }
