@@ -220,21 +220,20 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
     hfs_off_t extra;
     hfs_off_t size, ofs;
     int retval = 1;
-    hfs_trend_t trend;
 
-    zabbix_log(LOG_LEVEL_DEBUG, "HFS: store_values()");
+/*     zabbix_log(LOG_LEVEL_DEBUG, "HFS: store_values()"); */
 
     if ((meta = read_metafile (p_meta)) == NULL) {
 	zabbix_log(LOG_LEVEL_CRIT, "HFS: store_values(): read_metafile(%s) == NULL", p_meta);
 	return retval;
     }
 
-    zabbix_log(LOG_LEVEL_DEBUG, "HFS: meta read: delays: %d %d, blocks %d, ofs %u", meta->last_delay, delay, meta->blocks, meta->last_ofs);
+/*     zabbix_log(LOG_LEVEL_DEBUG, "HFS: meta read: delays: %d %d, blocks %d, ofs %u", meta->last_delay, delay, meta->blocks, meta->last_ofs); */
     clock -= clock % delay;
 
     /* should we start a new block? */
     if (meta->blocks == 0 || meta->last_delay != delay || type != meta->last_type) {
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS: appending new block for data %s", p_data);
+/* 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: appending new block for data %s", p_data); */
 	item.start = clock;
         item.end = clock + (count-1)*delay;
 	item.type = type;
@@ -243,7 +242,7 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	item.delay = delay;
 	if (meta->blocks) {
 	    ip = meta->meta + (meta->blocks-1);
-	    zabbix_log(LOG_LEVEL_DEBUG, "HFS: there is another block on way: %llu, %llu, %d, %llu", ip->start, ip->end, ip->delay, ip->ofs);
+/* 	    zabbix_log(LOG_LEVEL_DEBUG, "HFS: there is another block on way: %llu, %llu, %d, %llu", ip->start, ip->end, ip->delay, ip->ofs); */
             ofs = meta->last_ofs + len;
 	    item.ofs = meta->last_ofs + len;
 	}
@@ -264,10 +263,10 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
         else
 	    meta->last_ofs += len * (count-1);
 
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS: blocks <- %u", meta->blocks);
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS: delay <- %u", meta->last_delay);
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS: type <- %u", meta->last_type);
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS: last_ofs <- %u", meta->last_ofs);
+/* 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: blocks <- %u", meta->blocks); */
+/* 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: delay <- %u", meta->last_delay); */
+/* 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: type <- %u", meta->last_type); */
+/* 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: last_ofs <- %u", meta->last_ofs); */
 
 	if (write (fd, meta, sizeof (hfs_meta_t) - sizeof (meta->meta)) == -1)
 		goto err_exit;
@@ -281,8 +280,8 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	close (fd);
 	fd = -1;
 
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS: block metadata updated %d, %d, %d: %lld, %lld, %d, %llu", meta->blocks, meta->last_delay, meta->last_type,
-		   item.start, item.end, item.delay, item.ofs);
+/* 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: block metadata updated %d, %d, %d: %lld, %lld, %d, %llu", meta->blocks, meta->last_delay, meta->last_type, */
+/* 		   item.start, item.end, item.delay, item.ofs); */
 
 	/* append data */
 	if ((fd = xopen (p_data, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
@@ -301,7 +300,7 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	retval = 0;
     }
     else {
-	zabbix_log(LOG_LEVEL_DEBUG, "HFS: extending existing block for data %s, last ofs %u", p_data, meta->last_ofs);
+/* 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: extending existing block for data %s, last ofs %u", p_data, meta->last_ofs); */
 
 	/* check for gaps in block */
 	ip = meta->meta + (meta->blocks-1);
