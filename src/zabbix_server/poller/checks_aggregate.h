@@ -28,22 +28,16 @@
 extern	int	get_value_aggregate(DB_ITEM *item, AGENT_RESULT *result);
 
 
-typedef struct {
-	zbx_uint64_t itemid;
-	zbx_item_value_type_t value_type;
-	char site[256];
-} aggregate_item_info_t;
-
 
 typedef struct {
-	const char* itemfunc;
-	double* (*hook) (aggregate_item_info_t* items, int items_count, const char* param);
-} aggregate_gather_hook_t;
+	double value;
+	char* stderr;
+} aggr_item_t;
 
 
 typedef struct {
 	const char* grpfunc;
-	double (*hook) (double* vals, int count, int* info_index);
+	double (*hook) (aggr_item_t* vals, int count, int* info_index);
 } aggregate_reduce_hook_t;
 
 #endif
