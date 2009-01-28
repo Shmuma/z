@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <aio.h>
 
 # ifndef ULLONG_MAX
 #  define ULLONG_MAX    18446744073709551615ULL
@@ -1809,6 +1810,45 @@ int HFS_get_hosts_statuses (const char* hfs_base_dir, const char* siteid, hfs_ho
 }
 
 
+static void aio_completion_handler (sigval_t sigval)
+{
+	struct aiocb *req;
+	req = (struct aiocb *)sigval.sival_ptr;
+	close (req->aio_fildes);
+	free ((char*)req->aio_buf);
+	free (req);
+}
+
+
+
+static void aio_item_value (int fd, void* val, int len, const char* stderr)
+{
+	struct aiocb* cb;
+	int buf_len = len + str_buffer_length (stderr);
+
+	cb = calloc (1, sizeof (struct aiocb));
+
+	cb->aio_fildes = fd;
+	cb->aio_buf = malloc (buf_len);
+	cb->aio_nbytes = buf_len;
+	cb->aio_offset = 0;
+
+	memcpy (cb->aio_buf, val, len);
+	buffer_str ((char*)cb->aio_buf + len, stderr, buf_len-len);
+
+	cb->aio_sigevent.sigev_notify = SIGEV_THREAD;
+	cb->aio_sigevent.sigev_notify_function = aio_completion_handler;
+	cb->aio_sigevent.sigev_notify_attributes = NULL;
+	cb->aio_sigevent.sigev_value.sival_ptr = cb;
+
+	if (aio_write (cb)) {
+		close (fd);
+		free (cb->aio_buf);
+		free (cb);
+	}
+}
+
+
 
 void HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid,
 				 hfs_time_t lastclock, hfs_time_t nextcheck, double prevvalue, double lastvalue, double prevorgvalue,
@@ -1837,13 +1877,8 @@ void HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, z
 	val.prevvalue = prevvalue;
 	val.lastvalue = lastvalue;
 	val.prevorgvalue = prevorgvalue;
-	val.stderr_len = stderr ? strlen (stderr) : 0;
 
-	if (write (fd, &val, sizeof (val)) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_item_values_dbl: write(): %s", strerror(errno));
-	if (val.stderr_len)
-		write_str_wo_len (fd, stderr);
-	close (fd);
+	aio_item_value (fd, &val, sizeof (val), stderr);
 }
 
 
@@ -1875,14 +1910,8 @@ void HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, z
 	val.prevvalue = prevvalue;
 	val.lastvalue = lastvalue;
 	val.prevorgvalue = prevorgvalue;
-	val.stderr_len = stderr ? strlen (stderr) : 0;
 
-	if (write (fd, &val, sizeof (val)) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_item_values_int: write(): %s", strerror(errno));
-	if (val.stderr_len)
-		write_str_wo_len (fd, stderr);
-
-	close (fd);
+	aio_item_value (fd, &val, sizeof (val), stderr);
 }
 
 
@@ -1962,10 +1991,7 @@ int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_u
 	*prevvalue = val.prevvalue;
 	*lastvalue = val.lastvalue;
 	*prevorgvalue = val.prevorgvalue;
-	if (val.stderr_len)
-		*stderr = read_str_wo_len (fd, val.stderr_len);
-	else
-		*stderr = NULL;
+	*stderr = read_str (fd);
 
 	close (fd);
 	return 1;
@@ -2008,10 +2034,7 @@ int HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_u
 	*prevvalue = val.prevvalue;
 	*lastvalue = val.lastvalue;
 	*prevorgvalue = val.prevorgvalue;
-	if (val.stderr_len)
-		*stderr = read_str_wo_len (fd, val.stderr_len);
-	else
-		*stderr = NULL;
+	*stderr = read_str (fd);
 	close (fd);
 
 	return 1;
