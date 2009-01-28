@@ -30,6 +30,11 @@
 #  define ULLONG_MAX    18446744073709551615ULL
 # endif
 
+
+/* global file descriptors */
+static int function_val_fd = -1;
+
+
 int is_trend_type (item_type_t type)
 {
     switch (type) {
@@ -2847,54 +2852,58 @@ char* HFS_convert_function_val2str (hfs_function_value_t* result)
 
 
 
-int HFS_save_function_value (const char* hfs_path, const char* siteid, zbx_uint64_t functionid, hfs_function_value_t* value)
+static int global_fd_function_open (const char* hfs_path, const char* siteid)
 {
 	char *name = get_name (hfs_path, siteid, 0, NK_FunctionVals);
-	int fd;
 
-	if ((fd = xopen (name, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0) {
-		zabbix_log (LOG_LEVEL_ERR, "HFS_save_function_value: Cannot open function value file");
+	if ((function_val_fd = xopen (name, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0) {
+		zabbix_log (LOG_LEVEL_ERR, "global_fd_function_open: Cannot open function value file");
 		free (name);
 		return 0;
 	}
 	free (name);
 
-	if (lseek (fd, sizeof (hfs_function_value_t) * functionid, SEEK_SET) == (off_t)-1) {
+	return 1;
+}
+
+
+
+int HFS_save_function_value (const char* hfs_path, const char* siteid, zbx_uint64_t functionid, hfs_function_value_t* value)
+{
+	if (function_val_fd == -1)
+		if (!global_fd_function_open (hfs_path, siteid))
+			return 0;
+
+	if (lseek (function_val_fd, sizeof (hfs_function_value_t) * functionid, SEEK_SET) == (off_t)-1) {
 		zabbix_log (LOG_LEVEL_ERR, "HFS_save_function_value: Cannot seek to %lld offset", sizeof (hfs_function_value_t) * functionid);
-		close (fd);
+		close (function_val_fd);
+		function_val_fd = -1;
 		return 0;
 	}
 
-	if (write (fd, value, sizeof (hfs_function_value_t)) != sizeof (hfs_function_value_t))
+	if (write (function_val_fd, value, sizeof (hfs_function_value_t)) != sizeof (hfs_function_value_t))
 		zabbix_log (LOG_LEVEL_ERR, "HFS_save_function_value: Error updating value");
 
-	close (fd);
 	return 1;
 }
 
 
 int HFS_get_function_value (const char* hfs_path, const char* siteid, zbx_uint64_t functionid, hfs_function_value_t* value)
 {
-	char *name = get_name (hfs_path, siteid, 0, NK_FunctionVals);
-	int fd;
+	if (function_val_fd == -1)
+		if (!global_fd_function_open (hfs_path, siteid))
+			return 0;
 
-	if ((fd = open (name, O_RDONLY)) < 0) {
-		zabbix_log (LOG_LEVEL_ERR, "HFS_get_function_value: Cannot open function value file");
-		free (name);
-		return 0;
-	}
-	free (name);
-
-	if (lseek (fd, sizeof (hfs_function_value_t) * functionid, SEEK_SET) == (off_t)-1) {
+	if (lseek (function_val_fd, sizeof (hfs_function_value_t) * functionid, SEEK_SET) == (off_t)-1) {
 		value->type = FVT_NULL;
-		close (fd);
+		close (function_val_fd);
+		function_val_fd = -1;
 		return 1;
 	}
 
-	if (read (fd, value, sizeof (hfs_function_value_t)) != sizeof (hfs_function_value_t))
+	if (read (function_val_fd, value, sizeof (hfs_function_value_t)) != sizeof (hfs_function_value_t))
 		zabbix_log (LOG_LEVEL_ERR, "HFS_get_function_value: Error reading value");
 
-	close (fd);
 	return 1;
 }
 
