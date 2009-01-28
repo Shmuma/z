@@ -25,7 +25,7 @@
 
 	'S_DATE_FORMAT_YMDHMS'=>		'd M H:i:s',
 	'S_DATE_FORMAT_YMD'=>			'd M Y',
-	'S_HTML_CHARSET'=>			'iso-8859-1',
+	'S_HTML_CHARSET'=>			'UTF-8',
 
 	'S_ACTIVATE_SELECTED'=>			'Activate selected',
 	'S_DISABLE_SELECTED'=>			'Disable selected',
