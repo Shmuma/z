@@ -180,6 +180,11 @@ static int skip_to_signature ()
 {
 	unsigned char c;
 	int count = 0, skipped = 0;
+	zbx_uint64_t sig;
+
+	/* try to read entire signature first time */
+	if (read (queue_fd, &sig, sizeof (sig)) == sizeof (sig) && sig == entry_sig)
+		return 1;
 
 	while (count < sizeof (entry_sig)) {
 		while (read (queue_fd, &c, sizeof (c)) <= 0) {
