@@ -10,7 +10,8 @@ rcvar=${name}_enable
 load_rc_config $name
 eval : \${${rcvar}='NO'}
 
-command="/sbin/${name}"
-required_files="/etc/zabbix/${name}.conf"
+command="/usr/local/sbin/${name}"
+required_files="/usr/local/etc/zabbix/${name}.conf"
+command_args="-c $required_files"
 
 run_rc_command "$1"
