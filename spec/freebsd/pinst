@@ -9,9 +9,13 @@ PATH=/bin:/usr/sbin
 USER=monitor
 GROUP=${USER}
 
+# make directories (if they not exists)
+[ -d /var/run/zabbix ] || mkdir /var/run/zabbix
+[ -d /var/log/zabbix ] || mkdir /var/log/zabbix
+
 # change owner for installed empty directories
 chown -R monitor:monitor /var/run/zabbix /var/log/zabbix
-chown -R monitor:monitor /usr/local/etc/zabbix/{conf.d,bin}
+chown -R monitor:monitor /usr/local/etc/zabbix/
 
 # replace hostname in config file to FQDN
 NAME=$(hostname -f)

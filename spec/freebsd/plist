@@ -1,16 +1,2 @@
 @name zabbix_agent_yandex
 @cwd /
-var/run/zabbix/
-var/log/zabbix/
-etc/rc.conf.d/zabbix_agentd
-usr/local/etc/zabbix/zabbix_agent.conf
-usr/local/etc/zabbix/zabbix_agentd.conf
-usr/local/etc/zabbix/conf.d/
-usr/local/etc/zabbix/checks/
-usr/local/etc/zabbix/bin/
-usr/local/etc/rc.d/zabbix_agentd
-usr/local/sbin/zabbix_agent
-usr/local/sbin/zabbix_agentd
-usr/local/sbin/zabbix_get
-usr/local/sbin/zabbix_sender
-usr/local/sbin/zabbix-rebase-server
