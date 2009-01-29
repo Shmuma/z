@@ -11,13 +11,12 @@ GROUP=${USER}
 
 # change owner for installed empty directories
 chown -R monitor:monitor /var/run/zabbix /var/log/zabbix
-[ -d /etc/zabbix/conf.d ] || mkdir /etc/zabbix/conf.d
-chown -R monitor:monitor /etc/zabbix/conf.d/
+chown -R monitor:monitor /usr/local/etc/zabbix/{conf.d,bin}
 
 # replace hostname in config file to FQDN
 NAME=$(hostname -f)
-CONF=/etc/zabbix/zabbix_agentd.conf
-PATH=/usr/bin:/usr/local/bin:$PATH
+HN_CONF=/usr/local/etc/zabbix/hostname.conf
+PATH=/usr/bin:/usr/local/bin:/usr/local/sbin:$PATH
 
-cat $CONF | sed "s/^Hostname=.*$/Hostname=$NAME/" > $CONF.new && mv $CONF.new $CONF
-/sbin/zabbix-rebase-server
+echo Hostname=$NAME > $HN_CONF
+/usr/local/sbin/zabbix-rebase-server
