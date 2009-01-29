@@ -24,6 +24,10 @@ print "Got new monitor server name: $srv";
 
 close ($socket);
 
-open (FD, ">/etc/zabbix/server.conf") or die "Cannot open config file for update\n";
+$cfg = "/etc/";
+$cfg = "/usr/local$cfg" if $0 =~ /^\/usr\/local/;
+$cfg .= "zabbix/server.conf";
+
+open (FD, ">$cfg") or die "Cannot open config file for update\n";
 print FD "Server=$srv";
 close (FD);
