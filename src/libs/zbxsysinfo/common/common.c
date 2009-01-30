@@ -307,7 +307,8 @@ int	EXECUTE_STR(const char *cmd, const char *param, unsigned flags, AGENT_RESULT
 		/* close all file descriptors, except out[1] and err[1] */
 		for (i = 0; i < 4096; i++)
 			if (i != out[1] && i != err[1])
-				close (i);
+				if (close (i) < 0)
+					break;
 
 		dup2 (out[1], 1);
 		dup2 (err[1], 2);
