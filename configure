@@ -6299,6 +6299,11 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 
+cat >>confdefs.h <<_ACEOF
+#define ZBX_SYSCONF_DIR "${sysconfdir}"
+_ACEOF
+
+
 { echo "$as_me:$LINENO: checking for union semun" >&5
 echo $ECHO_N "checking for union semun... $ECHO_C" >&6; }
 cat >conftest.$ac_ext <<_ACEOF
@@ -12045,6 +12050,8 @@ esac
 cat >>confdefs.h <<_ACEOF
 #define ARCH "${ARCH}"
 _ACEOF
+
+
 
 
 
