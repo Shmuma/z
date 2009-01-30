@@ -282,17 +282,12 @@ int	EXECUTE_STR(const char *cmd, const char *param, unsigned flags, AGENT_RESULT
 		
 
 #else /* not _WINDOWS */
-	shell = getenv ("SHELL");
-	if (!shell)
-		shell = "/bin/sh";
-
+	shell = "/bin/sh";
 	command = zbx_dsprintf(command, "%s", param);
 
 	/* initialize pipes for stdout and stderr */
 	pipe (out);
 	pipe (err);
-
-	updated_environment ();
 
 	p = fork ();
 

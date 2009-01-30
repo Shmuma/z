@@ -15,7 +15,7 @@ use strict;
 
 my $me  = $0;
 $me     =~ s#^.*/([^.]+)\.[^/]*$#$1#o;
-my $cf  = "$ENV{ZB_CONFDIR}/checks/$me.conf";
+my $cf  = "$ENV{ZBX_CONFDIR}/checks/$me.conf";
 my $cf2  = "$ENV{HOME}/etc/unispace.conf";
 my %var = ();
 my %limit = ();

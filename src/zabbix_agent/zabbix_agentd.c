@@ -50,7 +50,7 @@ char *progname = NULL;
 #ifdef _WINDOWS
 	static char	DEFAULT_CONFIG_FILE[]	= "C:\\zabbix_agentd.conf";
 #else /* not _WINDOWS */
-	static char	DEFAULT_CONFIG_FILE[]	= "/etc/zabbix/zabbix_agentd.conf";
+	static char	DEFAULT_CONFIG_FILE[]	= ZBX_SYSCONF_DIR "/zabbix/zabbix_agentd.conf";
 #endif /* _WINDOWS */
 
 /* application TITLE */
