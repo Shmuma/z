@@ -79,7 +79,7 @@ void	child_signal_handler( int sig )
 #ifdef _WINDOWS
 	static char	DEFAULT_CONFIG_FILE[]	= "C:\\zabbix_agent.conf";
 #else /* not _WINDOWS */
-	static char	DEFAULT_CONFIG_FILE[]	= "/etc/zabbix/zabbix_agent.conf";
+	static char	DEFAULT_CONFIG_FILE[]	= ZBX_SYSCONF_DIR "/zabbix/zabbix_agent.conf";
 #endif /* _WINDOWS */
 
 void    init_config(void)
