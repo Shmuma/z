@@ -6,7 +6,7 @@
 #
 me=zbx_hw_errs     # strip path
 TMP=/tmp/zabbix/
-CONF=/etc/zabbix/checks/$me.conf
+CONF=$ZBX_CONFDIR/checks/$me.conf
 CONF_NAGIOS=$HOME/agents/etc/hw_errs.conf
 PREV=$TMP/$me.prev
 
@@ -60,5 +60,5 @@ echo $ERR_LINES_DELTA
 echo "$c_err" 1>&2
 
 # send amount of warning data using zabbix_sender
-zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k unix.kernel.warning.count -o $WARN_LINES_DELTA > /dev/null
-zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k unix.kernel.warning.messages -o "$err" > /dev/null
+zabbix_sender -c $ZBX_CONFDIR/zabbix_agentd.conf -k unix.kernel.warning.count -o $WARN_LINES_DELTA > /dev/null
+zabbix_sender -c $ZBX_CONFDIR/zabbix_agentd.conf -k unix.kernel.warning.messages -o "$err" > /dev/null
