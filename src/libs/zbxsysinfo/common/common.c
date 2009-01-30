@@ -32,6 +32,8 @@
 #if !defined(_WINDOWS)
 #	define VFS_TEST_FILE "/etc/passwd"
 #	define VFS_TEST_REGEXP "root"
+
+extern char** environ;
 #else
 #	define VFS_TEST_FILE "c:\\windows\\win.ini"
 #	define VFS_TEST_REGEXP "fonts"
@@ -153,6 +155,42 @@ static int	AGENT_VERSION(const char *cmd, const char *param, unsigned flags, AGE
 }
 
 
+static char** updated_environment ()
+{
+	char** env = (char**)environ;
+	int count = 0, i;
+	char** res;
+	int len;
+	const char* PATH = "PATH=";
+	const char* CONF = "ZBX_CONFDIR=";
+	const char* PATH_POST = "/zabbix/bin/";
+	const char* CONF_POST = "/zabbix/checks/";
+
+	while (env[count++]);
+	res = (char**)malloc ((count+1) * sizeof (char*));
+
+	i = 0;
+	while (env[i]) {
+		if (strncmp (env[i], PATH, strlen (PATH)) == 0) {
+			len = strlen (env[i]) + 1 + strlen (ZBX_SYSCONF_DIR) + strlen (PATH_POST) + 1;
+			res[i] = (char*)malloc (len);
+			snprintf (res[i], len, "%s%s%s:%s", PATH, ZBX_SYSCONF_DIR, PATH_POST, env[i]+strlen (PATH));
+		}
+		else
+			res[i] = env[i];
+		i++;
+	}
+
+	len = strlen (ZBX_SYSCONF_DIR) + strlen (CONF) + strlen (CONF_POST) + 1;
+	res[i] = (char*)malloc (len);
+	snprintf (res[i], len, "%s%s%s", CONF, ZBX_SYSCONF_DIR, CONF_POST);
+	res[i+1] = NULL;
+
+	return res;
+}
+
+
+
 int	EXECUTE_STR(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
 {
 
@@ -254,6 +292,8 @@ int	EXECUTE_STR(const char *cmd, const char *param, unsigned flags, AGENT_RESULT
 	pipe (out);
 	pipe (err);
 
+	updated_environment ();
+
 	p = fork ();
 
 	if (p < 0) {
@@ -271,7 +311,10 @@ int	EXECUTE_STR(const char *cmd, const char *param, unsigned flags, AGENT_RESULT
 
 		dup2 (out[1], 1);
 		dup2 (err[1], 2);
-		execl (shell, shell, "-c", command, NULL);
+
+		/* append binary checks dir to process's path */
+		/* append special variable CONFDIR/checks for check's config files */
+		execle (shell, shell, "-c", command, NULL, updated_environment ());
 	}
 	else { /* parent process */
 		/* close write descriptors */
