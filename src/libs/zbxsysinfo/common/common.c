@@ -164,7 +164,7 @@ static char** updated_environment ()
 	const char* PATH = "PATH=";
 	const char* CONF = "ZBX_CONFDIR=";
 	const char* PATH_POST = "/zabbix/bin/";
-	const char* CONF_POST = "/zabbix/checks/";
+	const char* CONF_POST = "/zabbix/";
 
 	while (env[count++]);
 	res = (char**)malloc ((count+1) * sizeof (char*));

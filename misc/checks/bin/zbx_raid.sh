@@ -4,7 +4,7 @@
 #
 me=${0##*/}     # strip path
 me=${me%.*}     # strip extension
-CONF=/etc/zabbix/checks/${me}.conf
+CONF=$ZBX_CONFDIR/checks/${me}.conf
 CONF2=$HOME/etc/raid.conf
 CONF3=$HOME/etc/bsd_raid.conf
 TMP=/tmp/$me
