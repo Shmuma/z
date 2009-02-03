@@ -46,7 +46,7 @@ CONFFLAGS_SERVER  = --host=$(DEB_HOST_GNU_TYPE) \
 		    --enable-version=$(VERSION)
 
 
-CONFFLAGS_AGENT  = --enable-agent --with-ldap --enable-version=$(VERSION)
+CONFFLAGS_AGENT  = --enable-agent --with-ldap --sysconfdir=/etc/zabbix --enable-version=$(VERSION)
 
 build:
 
