@@ -1106,6 +1106,18 @@ COpt::profiling_stop('prepare table');
 		return	DBexecute("delete from trends where itemid=$itemid");
 	}
 	
+
+	function format_stderr ($value)
+	{
+		if (strlen ($value) > 20) {
+			$short = substr ($value, 0, 20)." ...";
+			return "<label title=\"$value\">$short</label>";
+		}
+		else
+			return $value;
+	}
+
+
 	function	format_lastvalue($db_item)
 	{
 		if($db_item["value_type"] == ITEM_VALUE_TYPE_LOG)
