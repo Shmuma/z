@@ -94,7 +94,7 @@ clean: unpatch
 	[ ! -f src/zabbix_agent/Makefile ] || $(MAKE) -C src/zabbix_agent/ clean
 	[ ! -f src/zabbix_get/Makefile ] || $(MAKE) -C src/zabbix_get/ clean
 	[ ! -f src/zabbix_sender/Makefile ] || $(MAKE) -C src/zabbix_sender/ clean
-	debconf-updatepo
+#	debconf-updatepo
 
 	if test -e config.guess.orig ; then \
 		mv config.guess.orig config.guess ; \
