@@ -65,7 +65,8 @@ am_libspecsysinfo_a_OBJECTS = libspecsysinfo_a-cpu.$(OBJEXT) \
 	libspecsysinfo_a-sensors.$(OBJEXT) \
 	libspecsysinfo_a-swap.$(OBJEXT) \
 	libspecsysinfo_a-uptime.$(OBJEXT) \
-	libspecsysinfo_a-boottime.$(OBJEXT)
+	libspecsysinfo_a-boottime.$(OBJEXT) \
+	libspecsysinfo_a-profile.$(OBJEXT)
 libspecsysinfo_a_OBJECTS = $(am_libspecsysinfo_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -229,7 +230,8 @@ libspecsysinfo_a_SOURCES = \
 	sensors.c \
 	swap.c \
 	uptime.c \
-	boottime.c
+	boottime.c \
+	profile.c
 
 all: all-am
 
@@ -287,6 +289,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libspecsysinfo_a-memory.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libspecsysinfo_a-net.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libspecsysinfo_a-proc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libspecsysinfo_a-profile.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libspecsysinfo_a-sensors.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libspecsysinfo_a-swap.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libspecsysinfo_a-uptime.Po@am__quote@
@@ -472,6 +475,20 @@ libspecsysinfo_a-boottime.obj: boottime.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='boottime.c' object='libspecsysinfo_a-boottime.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libspecsysinfo_a_CFLAGS) $(CFLAGS) -c -o libspecsysinfo_a-boottime.obj `if test -f 'boottime.c'; then $(CYGPATH_W) 'boottime.c'; else $(CYGPATH_W) '$(srcdir)/boottime.c'; fi`
+
+libspecsysinfo_a-profile.o: profile.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libspecsysinfo_a_CFLAGS) $(CFLAGS) -MT libspecsysinfo_a-profile.o -MD -MP -MF "$(DEPDIR)/libspecsysinfo_a-profile.Tpo" -c -o libspecsysinfo_a-profile.o `test -f 'profile.c' || echo '$(srcdir)/'`profile.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libspecsysinfo_a-profile.Tpo" "$(DEPDIR)/libspecsysinfo_a-profile.Po"; else rm -f "$(DEPDIR)/libspecsysinfo_a-profile.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='profile.c' object='libspecsysinfo_a-profile.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libspecsysinfo_a_CFLAGS) $(CFLAGS) -c -o libspecsysinfo_a-profile.o `test -f 'profile.c' || echo '$(srcdir)/'`profile.c
+
+libspecsysinfo_a-profile.obj: profile.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libspecsysinfo_a_CFLAGS) $(CFLAGS) -MT libspecsysinfo_a-profile.obj -MD -MP -MF "$(DEPDIR)/libspecsysinfo_a-profile.Tpo" -c -o libspecsysinfo_a-profile.obj `if test -f 'profile.c'; then $(CYGPATH_W) 'profile.c'; else $(CYGPATH_W) '$(srcdir)/profile.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libspecsysinfo_a-profile.Tpo" "$(DEPDIR)/libspecsysinfo_a-profile.Po"; else rm -f "$(DEPDIR)/libspecsysinfo_a-profile.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='profile.c' object='libspecsysinfo_a-profile.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libspecsysinfo_a_CFLAGS) $(CFLAGS) -c -o libspecsysinfo_a-profile.obj `if test -f 'profile.c'; then $(CYGPATH_W) 'profile.c'; else $(CYGPATH_W) '$(srcdir)/profile.c'; fi`
 uninstall-info-am:
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
