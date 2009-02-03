@@ -53,6 +53,9 @@ if [ "$1" = "configure" ]; then
 
     # run zabbix-rebase-server
     /usr/sbin/zabbix-rebase-server
+
+    # append monitor to disk group
+    usermod -a -G disk monitor
 fi
 
 db_stop

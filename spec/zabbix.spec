@@ -57,10 +57,10 @@ done
 
 
 %pre
-if [ -z "`grep zabbix etc/group`" ]; then
+if [ -z "`grep zabbix /etc/group`" ]; then
     /usr/sbin/groupadd zabbix >/dev/null 2>&1
 fi
-if [ -z "`grep zabbix etc/passwd`" ]; then
+if [ -z "`grep zabbix /etc/passwd`" ]; then
     /usr/sbin/useradd -g zabbix zabbix >/dev/null 2>&1
 fi
 
@@ -68,10 +68,10 @@ exit 0
 
 %pre -n zabbix-agent
 
-if [ -z "`grep monitor etc/group`" ]; then
+if [ -z "`grep monitor /etc/group`" ]; then
     /usr/sbin/groupadd monitor >/dev/null 2>&1
 fi
-if [ -z "`grep monitor etc/passwd`" ]; then
+if [ -z "`grep monitor /etc/passwd`" ]; then
     /usr/sbin/useradd -g monitor monitor >/dev/null 2>&1
 fi
 
@@ -122,6 +122,9 @@ done
 
 # perform rebase
 %{zabbix_bindir}/zabbix-rebase-server
+
+# add monitor user to disks group if needed.
+usermod -a -G disk monitor
 
 # clean ipcs to ensure new instance can start correctly (semaphores)
 #ipcs -s | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 2 | while read key; do ipcrm -s $key; done
