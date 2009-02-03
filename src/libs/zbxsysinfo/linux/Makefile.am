@@ -16,4 +16,5 @@ libspecsysinfo_a_SOURCES = \
 	sensors.c \
 	swap.c \
 	uptime.c \
-	boottime.c
+	boottime.c \
+	profile.c
