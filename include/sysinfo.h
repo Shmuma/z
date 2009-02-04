@@ -208,6 +208,7 @@ int     KERNEL_OPENFILES(const char *cmd, const char *param, unsigned flags, AGE
 int     KERNEL_MAXFILES(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result);
 int     KERNEL_MAXPROC(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result);
 int     PROC_MEMORY(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result);
+int     PROC_MEMORY_RSS(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result);
 int     PROC_NUM(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result);
 int     NET_IF_IN(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result);
 int     NET_IF_OUT(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result);

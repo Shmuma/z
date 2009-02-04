@@ -21,479 +21,296 @@
 
 #include "sysinfo.h"
 
-#define DO_SUM 0
-#define DO_MAX 1
-#define DO_MIN 2
-#define DO_AVG 3
-				    
-int     PROC_MEMORY(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
+#include <sys/sysctl.h>
+#include <sys/user.h>
+
+
+typedef enum {
+	CT_MODE,
+	CT_STATE,
+} cond_type_t;
+
+
+typedef enum {
+	MT_SUM,
+	MT_MAX,
+	MT_MIN,
+	MT_AVG,
+} mode_type_t;
+
+
+typedef void (*kinfo_callback_t) (struct kinfo_proc* proc);
+
+
+/* global state */
+char    procname[MAX_STRING_LEN];
+char    usrname[MAX_STRING_LEN];
+char    procstat;
+mode_type_t mode;
+
+struct  passwd *usrinfo;
+
+zbx_uint64_t value, value2;
+
+
+/* Routine walks all processes (without specific order) and call
+   passed routine for every kinfo_proc structure. It's up to structure
+   to save and update it's state. Returns 1 if success, zero
+   otherise. */
+static int enumerate_processes (kinfo_callback_t callback)
 {
-#if defined(HAVE_PROC_1_STATUS)
+	static const int    sysctl_name[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0 };
+	size_t	length;
+	int	err, done, i;
+	struct kinfo_proc *kproc = NULL;
 
-    DIR     *dir;
-    struct  dirent *entries;
-    struct  stat buf;
-    char    filename[MAX_STRING_LEN];
-    char    line[MAX_STRING_LEN];
+	err = sysctl( (int *) sysctl_name, (sizeof(sysctl_name) / sizeof(*sysctl_name)) - 1, NULL, &length, NULL, 0);
+	if (err)
+		return 0;
 
-    char    name1[MAX_STRING_LEN];
-    char    name2[MAX_STRING_LEN];
+	kproc = (struct kinfo_proc*)malloc (length);
+	if (!kproc)
+		return 0;
 
-    char    procname[MAX_STRING_LEN];
-    char    usrname[MAX_STRING_LEN];
-    char    mode[MAX_STRING_LEN];
+	err = sysctl( (int *) sysctl_name, (sizeof(sysctl_name) / sizeof(*sysctl_name)) - 1, kproc, &length, NULL, 0);
+	if (err)
+		return 0;
 
-    int     proc_ok = 0;
-    int     usr_ok = 0;
-    int	    do_task = DO_SUM;
-
-
-    struct  passwd *usrinfo = NULL;
-    long long int	llvalue = 0;
-
-    FILE    *f;
-
-    double	memsize = -1;
-    int	proccount = 0;
-
-        assert(result);
-
-        init_result(result);
+	for (i = 0; i < length / sizeof (*kproc); i++)
+		callback (kproc+i);
 	
-        if(num_param(param) > 3)
-        {
-                return SYSINFO_RET_FAIL;
-        }
-
-        if(get_param(param, 1, procname, MAX_STRING_LEN) != 0)
-        {
-                return SYSINFO_RET_FAIL;
-        }
-    
-        if(get_param(param, 2, usrname, MAX_STRING_LEN) != 0)
-        {
-                usrname[0] = 0;
-        }
-        else
-        {
-        if(usrname[0] != 0)
-        {
-                    usrinfo = getpwnam(usrname);
-                    if(usrinfo == NULL)
-                    {
-	                /* incorrect user name */
-                            return SYSINFO_RET_FAIL;
-	            }			        
-        }
-    }
-
-    if(get_param(param, 3, mode, MAX_STRING_LEN) != 0)
-    {
-       mode[0] = '\0';
-    }
-
-    if(mode[0] == '\0')
-    {
-        strscpy(mode, "sum");
-    }
-    
-    if(strcmp(mode,"avg") == 0)
-    {
-        do_task = DO_AVG;
-    }
-    else if(strcmp(mode,"max") == 0)
-    {
-        do_task = DO_MAX;
-    }
-    else if(strcmp(mode,"min") == 0)
-    {
-        do_task = DO_MIN;
-    }
-    else if(strcmp(mode,"sum") == 0)
-    {
-        do_task = DO_SUM;
-    }
-    else
-    {
-        return SYSINFO_RET_FAIL;
-    }
-    
-    dir=opendir("/proc");
-    if(NULL == dir)
-    {
-            return SYSINFO_RET_FAIL;
-    }
-
-    while((entries=readdir(dir))!=NULL)
-    {
-        proc_ok = 0;
-        usr_ok = 0;
-    
-        strscpy(filename,"/proc/");	
-        zbx_strlcat(filename,entries->d_name,MAX_STRING_LEN);
-        zbx_strlcat(filename,"/status",MAX_STRING_LEN);
-    
-    /* Self is a symbolic link. It leads to incorrect results for proc_cnt[zabbix_agentd] */
-    /* Better approach: check if /proc/x/ is symbolic link */
-        if(strncmp(entries->d_name,"self",MAX_STRING_LEN) == 0)
-        {
-            continue; /* readdir */
-        }
-    
-        if(stat(filename,&buf)==0)
-        {
-            if(NULL == (f = fopen(filename,"r")))
-            {
-                continue; /* readdir */
-            }
-    
-            if(procname[0] != 0)
-            {
-                fgets(line,MAX_STRING_LEN,f);
-                if(sscanf(line,"%s\t%s\n",name1,name2)==2)
-                            {
-                                    if(strcmp(name1,"Name:") == 0)
-                                    {
-                                            if(strcmp(procname,name2)==0)
-                                            {
-                                                    proc_ok = 1;
-                                            }
-                                    }
-                            }
-            
-                if(proc_ok == 0) 
-                {
-                    zbx_fclose(f);
-                    continue; /* readdir */
-                }
-            }
-            else
-            {
-                proc_ok = 1;
-            }
-            
-            if(usrinfo != NULL)
-            {
-                while(fgets(line, MAX_STRING_LEN, f) != NULL)
-                {	
-                
-                    if(sscanf(line, "%s\t%lli\n", name1, &llvalue) != 2)
-                    {
-                        continue; /* fgets */
-                    }
-                    
-                    if(strcmp(name1,"Uid:") != 0)
-                    {
-                        continue; /* fgets */
-                    }
-                    
-                    if(usrinfo->pw_uid == (uid_t)(llvalue))
-                    {
-                        usr_ok = 1;
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                usr_ok = 1;
-            }
-            
-            if(proc_ok && usr_ok)
-            {
-                while(fgets(line, MAX_STRING_LEN, f) != NULL)
-                {	
-                
-                    if(sscanf(line, "%s\t%lli %s\n", name1, &llvalue, name2) != 3)
-                    {
-                        continue; /* fgets */
-                    }
-                    
-                    if(strcmp(name1,"VmSize:") != 0)
-                    {
-                        continue; /* fgets */
-                    }
-                    
-                    proccount++;
-                    
-                    if(strcasecmp(name2, "kB") == 0)
-                    {
-                        llvalue <<= 10;
-                    }
-                    else if(strcasecmp(name2, "mB") == 0)
-                    {
-                        llvalue <<= 20;
-                    }
-                    else if(strcasecmp(name2, "GB") == 0)
-                    {
-                        llvalue <<= 30;
-                    }
-                    else if(strcasecmp(name2, "TB") == 0)
-                    {
-                        llvalue <<= 40;
-                    }
-                    
-                    if(memsize < 0)
-                    {
-                        memsize = (double) llvalue;
-                    }
-                    else
-                    {
-                        if(do_task == DO_MAX)
-                        {
-                            memsize = MAX(memsize, (double) llvalue);
-                        }
-                        else if(do_task == DO_MIN)
-                        {
-                            memsize = MIN(memsize, (double) llvalue);
-                        }
-                        else
-                        {
-                            memsize +=  (double) llvalue;
-                        }
-                    }
-                    
-                    break;
-                }
-            }
-            
-            zbx_fclose(f);
-        }
-    }
-    closedir(dir);
-    
-    if(memsize < 0)
-    {
-        /* incorrect process name */
-        memsize = 0;
-    }
-    
-    if(do_task == DO_AVG)
-    {
-	SET_DBL_RESULT(result, proccount == 0 ? 0 : ((double)memsize/(double)proccount));
-    }
-    else
-    {
-	SET_UI64_RESULT(result, memsize);
-    }
-    return SYSINFO_RET_OK;
-#else
-	return	SYSINFO_RET_FAIL;
-#endif
+	free (kproc);
+	return 1;
 }
 
-int	    PROC_NUM(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
+
+/* prepare global conditions state. Return 1 is succeeded, zero otherwise */
+static int prepare_conditions (const char *param, cond_type_t type)
 {
-#if defined(HAVE_PROC_1_STATUS)
+	char buf[MAX_STRING_LEN];
 
-    DIR     *dir;
-    struct  dirent *entries;
-    struct  stat buf;
-    char    filename[MAX_STRING_LEN];
-    char    line[MAX_STRING_LEN];
-
-    char    name1[MAX_STRING_LEN];
-    char    name2[MAX_STRING_LEN];
-
-    char    procname[MAX_STRING_LEN];
-    char    usrname[MAX_STRING_LEN];
-    char    procstat[MAX_STRING_LEN];
-
-    int     proc_ok = 0;
-    int     usr_ok = 0;
-    int     stat_ok = 0;
-
-    struct  passwd *usrinfo = NULL;
-    long int	lvalue = 0;
-
-    FILE    *f;
-	int	proccount = 0;
-
-        assert(result);
-
-        init_result(result);
-	
+        if(num_param (param) > 3)
+                return 0;
     
-        if(num_param(param) > 3)
-        {
-                return SYSINFO_RET_FAIL;
-        }
-    
-        if(get_param(param, 1, procname, MAX_STRING_LEN) != 0)
-        {
-                return SYSINFO_RET_FAIL;
-        }
+        if(get_param (param, 1, procname, MAX_STRING_LEN) != 0)
+                return 0;
     
         if(get_param(param, 2, usrname, MAX_STRING_LEN) != 0)
-        {
-                usrname[0] = 0;
-        }
+		usrinfo = NULL;
         else
-        {
             if(usrname[0] != 0)
             {
                 usrinfo = getpwnam(usrname);
                 if(usrinfo == NULL)
-                {
                     /* incorrect user name */
-                    return SYSINFO_RET_FAIL;
-                }			        
+                    return 0;
             }
-        }
     
-	if(get_param(param, 3, procstat, MAX_STRING_LEN) != 0)
-	{
-		procstat[0] = '\0';
+	if (type == CT_STATE) {
+		if(get_param(param, 3, buf, MAX_STRING_LEN) != 0)
+			procstat = 0;
+		else if(strcmp(buf,"run") == 0)
+			procstat = 'R';
+		else if(strcmp(buf,"sleep") == 0)
+			procstat = 'S';
+		else if(strcmp(buf,"zomb") == 0)
+			procstat = 'Z';
+		else if(strcmp(buf,"all") == 0)
+			procstat = 0;
+		else
+			return 0;
+	} else {
+		if(get_param(param, 3, buf, MAX_STRING_LEN) != 0)
+			mode = MT_SUM;
+		else if(strcmp(buf,"avg") == 0)
+			mode = MT_AVG;
+		else if(strcmp(buf,"max") == 0)
+			mode = MT_MAX;
+		else if(strcmp(buf,"min") == 0)
+			mode = MT_MIN;
+		else if(strcmp(buf,"sum") == 0)
+			mode = MT_SUM;
+		else
+			return 0;
+	}
+	
+	return 1;
+}
+
+
+/* checks that given process fits conditions. Return 1 if it is, 0 otherwise */
+static int check_conditions (struct kinfo_proc* proc, int check_state)
+{
+	int proc_ok = 1, stat_ok = 1, usr_ok = 1;
+
+	if (procname[0] != 0) {
+		if (strcmp (procname, proc->ki_comm) != 0)
+			proc_ok = 0;
 	}
 
-	if(procstat[0] == '\0')
-	{
-		strscpy(procstat, "all");
+	if (check_state && procstat != 0) {
+		switch (proc->ki_stat) {
+		case SIDL:
+		case SSLEEP:
+		case SSTOP:
+		case SWAIT:
+		case SLOCK:
+			stat_ok = procstat == 'S';
+			break;
+		case SRUN:
+			stat_ok = procstat == 'R';
+			break;
+		case SZOMB:
+			stat_ok = procstat == 'Z';
+			break;
+		default:
+			stat_ok = 0;
+		}
 	}
-    
-        if(strcmp(procstat,"run") == 0)
-        {
-            strscpy(procstat,"R");	
-        }
-        else if(strcmp(procstat,"sleep") == 0)
-        {
-            strscpy(procstat,"S");	
-        }
-        else if(strcmp(procstat,"zomb") == 0)
-        {
-            strscpy(procstat,"Z");	
-        }
-        else if(strcmp(procstat,"all") == 0)
-        {
-            procstat[0] = 0;
-        }
-        else
-        {
-            return SYSINFO_RET_FAIL;
-        }
-		
-        dir=opendir("/proc");
-        if(NULL == dir)
-        {
-            return SYSINFO_RET_FAIL;
-        }
 
-        while((entries=readdir(dir))!=NULL)
-        {
-            proc_ok = 0;
-            stat_ok = 0;
-            usr_ok = 0;
-    
-/* Self is a symbolic link. It leads to incorrect results for proc_cnt[zabbix_agentd] */
-/* Better approach: check if /proc/x/ is symbolic link */
-            if(strncmp(entries->d_name,"self",MAX_STRING_LEN) == 0)
-            {
-                continue; /* readdir */
-            }
+	if (usrinfo) {
+		if (usrinfo->pw_uid != proc->ki_uid)
+			usr_ok = 0;
+	}
 
-            strscpy(filename,"/proc/");	
-            zbx_strlcat(filename,entries->d_name,MAX_STRING_LEN);
-            zbx_strlcat(filename,"/status",MAX_STRING_LEN);
+	if (proc_ok && stat_ok && usr_ok)
+		return 1;
+	else
+		return 0;
+}
 
-            if(stat(filename,&buf)==0)
-            {
-                if( NULL == (f = fopen(filename,"r")))
-                {
-                    continue; /* readdir */
-                }
-    
-                if(procname[0] != 0)
-                {
-                    fgets(line,MAX_STRING_LEN,f);
-                    if(sscanf(line,"%s\t%s\n",name1,name2)==2)
-                    {
-                        if(strcmp(name1,"Name:") == 0)
-                        {
-                            if(strcmp(procname,name2)==0)
-                            {
-                                proc_ok = 1;
-                            }
-                        }
-                    }
-                
-                    if(proc_ok == 0) 
-                    {
-                        zbx_fclose(f);
-                        continue; /* readdir */
-                    }
-                }
-                else
-                {
-                    proc_ok = 1;
-                }
 
-                if(procstat[0] != 0)
-                {
-                    while(fgets(line, MAX_STRING_LEN, f) != NULL)
-                    {	
-                    
-                        if(sscanf(line, "%s\t%s\n", name1, name2) != 2)
-                        {
-                            continue; /* fgets */
-                        }
-                        
-                        if(strcmp(name1,"State:") != 0)
-                        {
-                            continue; /* fgets */
-                        }
-                        
-                        if(strcmp(name2, procstat))
-                        {
-                            stat_ok = 1;
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    stat_ok = 1;
-                }
-                
-                if(usrinfo != NULL)
-                {
-                    while(fgets(line, MAX_STRING_LEN, f) != NULL)
-                    {	
-                    
-                        if(sscanf(line, "%s\t%li\n", name1, &lvalue) != 2)
-                        {
-                            continue; /* fgets */
-                        }
-                        
-                        if(strcmp(name1,"Uid:") != 0)
-                        {
-                            continue; /* fgets */
-                        }
-                        
-                        if(usrinfo->pw_uid == (uid_t)(lvalue))
-                        {
-                            usr_ok = 1;
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    usr_ok = 1;
-                }
-                
-                if(proc_ok && stat_ok && usr_ok)
-                {
-                    proccount++;
-                }
-                
-                zbx_fclose(f);
-            }
-    }
-    closedir(dir);
+/* callback which checks that process fits criteria and increments
+   global count if it is */
+static void proc_num_cb (struct kinfo_proc* proc)
+{
+	if (check_conditions (proc, 1))
+		value++;
+}
 
-	SET_UI64_RESULT(result, proccount);
-    return SYSINFO_RET_OK;
-#else
-    return	SYSINFO_RET_FAIL;
-#endif
+
+static void proc_mem_cb (struct kinfo_proc* proc)
+{
+	if (!check_conditions (proc, 0))
+		return;
+
+	switch (mode) {
+	case MT_SUM:
+		value += proc->ki_size;
+		break;
+	case MT_MIN:
+		if (!value || proc->ki_size < value)
+			value = proc->ki_size;
+		break;
+	case MT_MAX:
+		if (proc->ki_size > value)
+			value = proc->ki_size;
+		break;
+	case MT_AVG:
+		value += proc->ki_size;
+		value2++;
+		break;
+	}
+}
+
+
+
+static void proc_mem_rss_cb (struct kinfo_proc* proc)
+{
+	if (!check_conditions (proc, 0))
+		return;
+
+	switch (mode) {
+	case MT_SUM:
+		value += proc->ki_rssize;
+		break;
+	case MT_MIN:
+		if (!value || proc->ki_rssize < value)
+			value = proc->ki_rssize;
+		break;
+	case MT_MAX:
+		if (proc->ki_rssize > value)
+			value = proc->ki_rssize;
+		break;
+	case MT_AVG:
+		value += proc->ki_rssize;
+		value2++;
+		break;
+	}
+}
+
+
+				    
+int     PROC_MEMORY(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
+{
+        init_result(result);
+
+	if (!prepare_conditions (param, CT_MODE))
+		return SYSINFO_RET_FAIL;
+
+	value = value2 = 0;
+
+	if (!enumerate_processes (proc_mem_cb))
+		return SYSINFO_RET_FAIL;
+
+	if (mode == MT_AVG) {
+		if (!value2) {
+			SET_DBL_RESULT (result, 0);
+		}
+		else {
+			SET_DBL_RESULT (result, value / value2);
+		}
+	}
+	else {
+		SET_UI64_RESULT(result, value);
+	}
+
+	return SYSINFO_RET_OK;
+}
+
+
+
+int     PROC_MEMORY_RSS(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
+{
+        init_result(result);
+
+	if (!prepare_conditions (param, CT_MODE))
+		return SYSINFO_RET_FAIL;
+
+	value = value2 = 0;
+
+	if (!enumerate_processes (proc_mem_rss_cb))
+		return SYSINFO_RET_FAIL;
+
+	if (mode == MT_AVG) {
+		if (!value2) {
+			SET_DBL_RESULT (result, 0);
+		}
+		else {
+			SET_DBL_RESULT (result, value*getpagesize() / value2);
+		}
+	}
+	else {
+		SET_UI64_RESULT(result, value*getpagesize());
+	}
+
+	return SYSINFO_RET_OK;
+}
+
+
+
+
+int	    PROC_NUM(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
+{
+        assert(result);
+        init_result(result);
+
+	if (!prepare_conditions (param, CT_STATE))
+		return SYSINFO_RET_FAIL;
+
+	value = 0;
+	if (!enumerate_processes (proc_num_cb))
+		return SYSINFO_RET_FAIL;
+	SET_UI64_RESULT(result, value);
+	return SYSINFO_RET_OK;
 }
