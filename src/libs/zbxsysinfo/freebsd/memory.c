@@ -237,7 +237,19 @@ static int	VM_MEMORY_FREE(const char *cmd, const char *param, unsigned flags, AG
 
         init_result(result);
 		
-#if defined(HAVE_SYS_PSTAT_H)
+#if defined(HAVE_SYS_VMMETER_VMTOTAL)
+	int mib[2],len;
+	struct vmtotal v;
+
+	len=sizeof(struct vmtotal);
+	mib[0]=CTL_VM;
+	mib[1]=VM_METER;
+
+	sysctl(mib,2,&v,&len,NULL,0);
+
+	SET_UI64_RESULT(result, v.t_free * getpagesize());
+	return SYSINFO_RET_OK;
+#elif defined(HAVE_SYS_PSTAT_H)
 	struct	pst_static pst;
 	struct	pst_dynamic dyn;
 	long	page;
@@ -290,18 +302,6 @@ static int	VM_MEMORY_FREE(const char *cmd, const char *param, unsigned flags, AG
 	{
 		return SYSINFO_RET_FAIL;
 	}
-#elif defined(HAVE_SYS_VMMETER_VMTOTAL)
-	int mib[2],len;
-	struct vmtotal v;
-
-	len=sizeof(struct vmtotal);
-	mib[0]=CTL_VM;
-	mib[1]=VM_METER;
-
-	sysctl(mib,2,&v,&len,NULL,0);
-
-	SET_UI64_RESULT(result, v.t_free * getpagesize());
-	return SYSINFO_RET_OK;
 /* OS/X */
 #elif defined(HAVE_MACH_HOST_INFO_H)
 	vm_statistics_data_t page_info;
