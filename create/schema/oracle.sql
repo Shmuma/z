@@ -428,7 +428,7 @@ CREATE INDEX groups_1 on groups (name);
 CREATE TABLE help_items (
 	itemtype		number(10)		DEFAULT '0'	NOT NULL,
 	key_		varchar2(255)		DEFAULT ''	,
-	description		varchar2(255)		DEFAULT ''	,
+	description		varchar2(1024)		DEFAULT ''	,
 	PRIMARY KEY (itemtype,key_)
 );
 CREATE TABLE hosts (
