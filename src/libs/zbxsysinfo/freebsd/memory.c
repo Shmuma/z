@@ -125,7 +125,19 @@ static int	VM_MEMORY_SHARED(const char *cmd, const char *param, unsigned flags, 
 
         init_result(result);
 		
-#ifdef HAVE_SYSINFO_SHAREDRAM
+#if defined(HAVE_SYS_VMMETER_VMTOTAL)
+	int mib[2],len;
+	struct vmtotal v;
+
+	len=sizeof(struct vmtotal);
+	mib[0]=CTL_VM;
+	mib[1]=VM_METER;
+
+	sysctl(mib,2,&v,&len,NULL,0);
+
+	SET_UI64_RESULT(result, v.t_armshr * getpagesize());
+	return SYSINFO_RET_OK;
+#elif defined(HAVE_SYSINFO_SHAREDRAM)
 	struct sysinfo info;
 
 	if( 0 == sysinfo(&info))
@@ -141,18 +153,6 @@ static int	VM_MEMORY_SHARED(const char *cmd, const char *param, unsigned flags, 
 	{
 		return SYSINFO_RET_FAIL;
 	}
-#elif defined(HAVE_SYS_VMMETER_VMTOTAL)
-	int mib[2],len;
-	struct vmtotal v;
-
-	len=sizeof(struct vmtotal);
-	mib[0]=CTL_VM;
-	mib[1]=VM_METER;
-
-	sysctl(mib,2,&v,&len,NULL,0);
-
-	SET_UI64_RESULT(result, v.t_armshr * getpagesize());
-	return SYSINFO_RET_OK;
 #else
 	return	SYSINFO_RET_FAIL;
 #endif
@@ -164,7 +164,19 @@ static int	VM_MEMORY_TOTAL(const char *cmd, const char *param, unsigned flags, A
 
         init_result(result);
 		
-#if defined(HAVE_SYS_PSTAT_H)
+#if defined(HAVE_SYS_VMMETER_VMTOTAL)
+	int mib[2];
+	size_t len;
+	zbx_uint64_t total;
+
+	len = sizeof(total);
+	mib[0]=CTL_HW;
+	mib[1]=HW_PHYSMEM;
+	sysctl(mib, 2, &total, &len, NULL, 0);
+
+	SET_UI64_RESULT(result, total);
+	return SYSINFO_RET_OK;
+#elif defined(HAVE_SYS_PSTAT_H)
 	struct	pst_static pst;
 	long	page;
 
@@ -196,18 +208,6 @@ static int	VM_MEMORY_TOTAL(const char *cmd, const char *param, unsigned flags, A
 	{
 		return SYSINFO_RET_FAIL;
 	}
-#elif defined(HAVE_SYS_VMMETER_VMTOTAL)
-	int mib[2];
-	size_t len;
-	zbx_uint64_t total;
-
-	len = sizeof(total);
-	mib[0]=CTL_HW;
-	mib[1]=HW_PHYSMEM;
-	sysctl(mib, 2, &total, &len, NULL, 0);
-
-	SET_UI64_RESULT(result, total);
-	return SYSINFO_RET_OK;
 #elif defined(HAVE_SYS_SYSCTL_H)
 	static int mib[] = { CTL_HW, HW_PHYSMEM };
 	size_t len;
