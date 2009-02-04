@@ -396,7 +396,7 @@ INDEX		|1		|name
 TABLE|help_items|itemtype,key_|0
 FIELD		|itemtype	|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|key_		|t_varchar(255)	|''	|NOT NULL	|ZBX_SYNC
-FIELD		|description	|t_varchar(255)	|''	|NOT NULL	|ZBX_SYNC
+FIELD		|description	|t_varchar(1024)|''	|NOT NULL	|ZBX_SYNC
 
 TABLE|hosts|hostid|ZBX_SYNC
 FIELD		|hostid		|t_id		|'0'	|NOT NULL	|ZBX_SYNC
