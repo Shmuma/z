@@ -44,6 +44,7 @@ ZBX_METRIC	parameters_specific[]=
 
 	{"proc.num",		CF_USEUPARAM,	PROC_NUM,		0,	"inetd,,"},
 	{"proc.mem",		CF_USEUPARAM,	PROC_MEMORY,		0,	"inetd,,"},
+	{"proc.mem_rss",	CF_USEUPARAM,	PROC_MEMORY_RSS,	0,	"inetd,,"},
 
 	{"system.cpu.switches", 0,              SYSTEM_CPU_SWITCHES,    0,      0},
 	{"system.cpu.intr",     0,              SYSTEM_CPU_INTR,        0,      0},
