@@ -7,7 +7,7 @@
 me=zbx_hw_errs     # strip path
 TMP=/tmp/zabbix/
 CONF=$ZBX_CONFDIR/checks/$me.conf
-CONF_NAGIOS=$HOME/agents/etc/hw_errs.conf
+CONF_NAGIOS=/home/monitor/agents/etc/hw_errs.conf
 PREV=$TMP/$me.prev
 
 #set -x

@@ -5,8 +5,8 @@
 me=${0##*/}     # strip path
 me=${me%.*}     # strip extension
 CONF=$ZBX_CONFDIR/checks/${me}.conf
-CONF2=$HOME/etc/raid.conf
-CONF3=$HOME/etc/bsd_raid.conf
+CONF2=/home/monitor/etc/raid.conf
+CONF3=/home/monitor/etc/bsd_raid.conf
 TMP=/tmp/$me
 PATH=/bin:/sbin:/usr/bin:/usr/sbin
 err_c=0
