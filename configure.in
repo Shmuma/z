@@ -78,6 +78,9 @@ dnl Check for function res_query
 AC_MSG_CHECKING(for function res_query)
 AC_TRY_COMPILE(
 [
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <arpa/nameser.h>
 #include <resolv.h>
 #if !defined(C_IN)
 #       define C_IN     ns_c_in
