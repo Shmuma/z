@@ -130,6 +130,43 @@ static int	VM_MEMORY_TOTAL(const char *cmd, const char *param, unsigned flags, A
 
 static int	VM_MEMORY_FREE(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
 {
+	/* /proc/meminfo works better when we have virtual machine */
+	FILE	*f;
+	char	*t;
+	char	c[MAX_STRING_LEN];
+	zbx_uint64_t	res = 0;
+
+	assert(result);
+
+        init_result(result);
+		
+	if(NULL == (f = fopen("/proc/meminfo","r") ))
+	{
+		return	SYSINFO_RET_FAIL;
+	}
+	while(NULL!=fgets(c,MAX_STRING_LEN,f))
+	{
+		if(strncmp(c,"MemFree:",8) == 0)
+		{
+			t=(char *)strtok(c," ");
+			t=(char *)strtok(NULL," ");
+			sscanf(t, ZBX_FS_UI64, &res );
+			t=(char *)strtok(NULL," ");
+			
+			if(strcasecmp(t,"kb"))		res <<= 10;
+			else if(strcasecmp(t, "mb")) 	res <<= 20;
+			else if(strcasecmp(t, "gb")) 	res <<= 30;
+			else if(strcasecmp(t, "tb")) 	res <<= 40;
+
+			break;
+		}
+	}
+	zbx_fclose(f);
+
+	SET_UI64_RESULT(result, res);
+	return SYSINFO_RET_OK;
+
+#if 0
 	struct sysinfo info;
 
 	assert(result);
@@ -149,6 +186,7 @@ static int	VM_MEMORY_FREE(const char *cmd, const char *param, unsigned flags, AG
 	{
 		return SYSINFO_RET_FAIL;
 	}
+#endif
 }
 
 static int      VM_MEMORY_PFREE(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
