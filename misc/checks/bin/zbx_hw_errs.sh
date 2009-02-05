@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # Zabbix script which checks dmesg for errors
 #

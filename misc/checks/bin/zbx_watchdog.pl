@@ -8,7 +8,7 @@ use strict;
 
 my $me  = $0;
 $me     =~ s#^.*/([^.]+)\.[^/]*$#$1#o;
-my $cf  = "$ZBX_CONFDIR/checks/$me.conf";
+my $cf  = "$ENV{ZBX_CONFDIR}/checks/$me.conf";
 my $cf2 = "/home/monitor/etc/watchdog.conf";
 my %def = (
         'time_warn'     => 120,
