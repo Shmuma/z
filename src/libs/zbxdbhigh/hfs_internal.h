@@ -65,6 +65,7 @@ int is_trend_type (item_type_t type);
 int make_directories (const char* path);
 hfs_meta_t* read_metafile (const char* metafile);
 hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int trend);
+int write_metafile (const char* filename, hfs_meta_t* meta, hfs_meta_item_t* extra);
 void free_meta (hfs_meta_t* meta);
 char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, name_kind_t kind);
 int hfs_store_value (const char* meta_path, const char* data_path, hfs_time_t clock, int delay, void* value, int len, item_type_t type);

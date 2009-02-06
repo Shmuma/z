@@ -211,19 +211,15 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
     hfs_off_t size, ofs;
     int retval = 1;
 
-/*     zabbix_log(LOG_LEVEL_DEBUG, "HFS: store_values()"); */
-
     if ((meta = read_metafile (p_meta)) == NULL) {
 	zabbix_log(LOG_LEVEL_CRIT, "HFS: store_values(): read_metafile(%s) == NULL", p_meta);
 	return retval;
     }
 
-/*     zabbix_log(LOG_LEVEL_DEBUG, "HFS: meta read: delays: %d %d, blocks %d, ofs %u", meta->last_delay, delay, meta->blocks, meta->last_ofs); */
     clock -= clock % delay;
 
     /* should we start a new block? */
     if (meta->blocks == 0 || meta->last_delay != delay || type != meta->last_type) {
-/* 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: appending new block for data %s", p_data); */
 	item.start = clock;
         item.end = clock + (count-1)*delay;
 	item.type = type;
@@ -232,46 +228,18 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	item.delay = delay;
 	if (meta->blocks) {
 	    ip = meta->meta + (meta->blocks-1);
-/* 	    zabbix_log(LOG_LEVEL_DEBUG, "HFS: there is another block on way: %llu, %llu, %d, %llu", ip->start, ip->end, ip->delay, ip->ofs); */
             ofs = meta->last_ofs + len;
 	    item.ofs = meta->last_ofs + len;
 	}
 	else
 	    item.ofs = ofs = 0;
 
-	/* append block to meta */
-	if ((fd = xopen (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
-		goto err_exit;
-
 	meta->blocks++;
 	meta->last_delay = delay;
 	meta->last_type = type;
 
-	/* when new data file is created, last_ofs is zero */
-	if (meta->last_ofs)
-	    meta->last_ofs += len * count;
-        else
-	    meta->last_ofs += len * (count-1);
-
-/* 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: blocks <- %u", meta->blocks); */
-/* 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: delay <- %u", meta->last_delay); */
-/* 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: type <- %u", meta->last_type); */
-/* 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: last_ofs <- %u", meta->last_ofs); */
-
-	if (write (fd, meta, sizeof (hfs_meta_t) - sizeof (meta->meta)) == -1)
+	if (!write_metafile (p_meta, meta, &item))
 		goto err_exit;
-
-	if (lseek (fd, sizeof (hfs_meta_item_t)*(meta->blocks-1), SEEK_CUR) == -1)
-		goto err_exit;
-
-	if (write (fd, &item, sizeof (item)) == -1)
-		goto err_exit;
-
-	close (fd);
-	fd = -1;
-
-/* 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: block metadata updated %d, %d, %d: %lld, %lld, %d, %llu", meta->blocks, meta->last_delay, meta->last_type, */
-/* 		   item.start, item.end, item.delay, item.ofs); */
 
 	/* append data */
 	if ((fd = xopen (p_data, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
@@ -290,8 +258,6 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	retval = 0;
     }
     else {
-/* 	zabbix_log(LOG_LEVEL_DEBUG, "HFS: extending existing block for data %s, last ofs %u", p_data, meta->last_ofs); */
-
 	/* check for gaps in block */
 	ip = meta->meta + (meta->blocks-1);
 
@@ -337,24 +303,7 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
         if (ip->end < clock + delay*(count-1))
             ip->end = clock + delay*(count-1);
 
-        if ((fd = xopen (p_meta, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
-            goto err_exit;
-
-        if (lseek (fd, sizeof (meta->blocks) * 3, SEEK_SET) == -1)
-            goto err_exit;
-
-        if (write (fd, &meta->last_ofs, sizeof (meta->last_ofs)) == -1)
-            goto err_exit;
-
-        if (lseek (fd, sizeof (hfs_meta_item_t) * (meta->blocks-1), SEEK_CUR) == -1)
-            goto err_exit;
-
-        if (write (fd, ip, sizeof (hfs_meta_item_t)) == -1)
-            goto err_exit;
-
-        close (fd);
-        fd = -1;
-
+	write_metafile (p_meta, meta, NULL);
 	retval = 0;
     }
 
@@ -754,6 +703,7 @@ hfs_meta_t *read_metafile(const char *metafile)
 	return res;
 }
 
+
 hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int trend)
 {
     char* path = get_name (hfs_base_dir, siteid, itemid, trend ? NK_TrendItemMeta : NK_ItemMeta);
@@ -762,6 +712,45 @@ hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_
 
     return res;
 }
+
+
+/* Write metafile. If extra argument passed, it also will be
+   written. Warning! If extra is not NULL, meta->blocks must be
+   already incremented.  */
+int write_metafile (const char* filename, hfs_meta_t* meta, hfs_meta_item_t* extra)
+{
+	int fd;
+	unsigned char* buf = NULL, *p;
+	int len, i;
+
+        if ((fd = xopen (filename, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
+		return 0;
+
+	len = sizeof (hfs_meta_t) - sizeof (meta->meta) + meta->blocks * sizeof (hfs_meta_item_t);
+	buf = (unsigned char*)malloc (len);
+
+	if (!buf) {
+		close (fd);
+		return 0;
+	}
+
+	memcpy (buf, meta, sizeof (hfs_meta_t) - sizeof (meta->meta));
+	p = buf + sizeof (hfs_meta_t) - sizeof (meta->meta);
+
+	for (i = 0; i < meta->blocks - (extra ? 1 : 0); i++) {
+		memcpy (p, meta->meta+i, sizeof (hfs_meta_item_t));
+		p += sizeof (hfs_meta_item_t);
+	}
+
+	if (extra)
+		memcpy (p, extra, sizeof (hfs_meta_item_t));
+
+	write (fd, buf, len);
+	free (buf);
+	close (fd);
+	return 1;
+}
+
 
 void free_meta (hfs_meta_t* meta)
 {
