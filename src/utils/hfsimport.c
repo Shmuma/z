@@ -12,11 +12,6 @@
 #include "hfs.h"
 #include "hfs_internal.h"
 
-char *progname = "test";
-char title_message[] = "Title";
-char usage_message[] = "Usage";
-char *help_message[] = { "Help", 0 };
-
 
 /* append value to bufer (resize it if needed) */
 void append_value (item_value_u** buf, int* buf_size, int* count, item_value_u* val)

@@ -13,46 +13,7 @@
 #include "hfs.h"
 #include "hfs_internal.h"
 
-char *progname = "test";
-char title_message[] = "Title";
-char usage_message[] = "Usage";
-char *help_message[] = { "Help", 0 };
-
-
-char	*CONFIG_DBHOST			= NULL;
-char	*CONFIG_DBNAME			= NULL;
-char	*CONFIG_DBUSER			= NULL;
-char	*CONFIG_DBPASSWORD		= NULL;
-char	*CONFIG_DBSOCKET		= NULL;
-int	CONFIG_DBPORT			= 0;
-
-char	*CONFIG_HFS_PATH		= NULL;
-char	*CONFIG_SERVER_SITE		= NULL;
-
-int	CONFIG_NODEID			= 0;
-int	CONFIG_REFRESH_UNSUPPORTED      = 0;
-
-#ifdef HAVE_MEMCACHE
-char *CONFIG_MEMCACHE_SERVER		= NULL;
-int CONFIG_MEMCACHE_ITEMS_TTL		= 30;
-#endif
-
-zbx_process_type_t process_type = -1;
-
-
-/* Ugly, ugly hacks. */
-void __zbx_zabbix_syslog(const char *fmt, ...)
-{
-}
-
-int  process_event(DB_EVENT *event)
-{
-	return 0;
-}
-
-void dbitem_serialize(DB_ITEM *item, size_t item_len)
-{
-}
+#include "fake-vars.h"
 
 
 int main (int argc, char** argv)

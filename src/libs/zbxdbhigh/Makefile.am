@@ -7,4 +7,8 @@ libzbxdbhigh_a_SOURCES = \
 	db.c \
 	hfs.c
 
+if MEMCACHE
+libzbxdbhigh_a_SOURCES += memcache.c serialize.c
+endif
+
 libzbxdbhigh_a_CFLAGS = -I@top_srcdir@/src/zabbix_server/

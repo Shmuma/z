@@ -21,6 +21,7 @@
 #include "log.h"
 #include "hfs.h"
 #include "hfs_internal.h"
+#include "memcache.h"
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -1843,6 +1844,19 @@ void HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, z
 				 hfs_time_t lastclock, hfs_time_t nextcheck, double prevvalue, double lastvalue, double prevorgvalue,
 				 const char* stderr)
 {
+#ifdef HAVE_MEMCACHE	
+	static char key[128];
+	item_value_dbl_t val;
+
+	zbx_snprintf (key, sizeof (key), "l|d|" ZBX_FS_UI64, itemid);
+	val.lastclock = lastclock;
+	val.nextcheck = nextcheck;
+	val.kind = 0;
+	val.prevvalue = prevvalue;
+	val.lastvalue = lastvalue;
+	val.prevorgvalue = prevorgvalue;
+	memcache_zbx_save_last (key, &val, sizeof (val), stderr);
+#else
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd;
 	item_value_dbl_t val;
@@ -1868,6 +1882,7 @@ void HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, z
 	val.prevorgvalue = prevorgvalue;
 
 	aio_item_value (fd, &val, sizeof (val), stderr);
+#endif
 }
 
 
@@ -1876,6 +1891,20 @@ void HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, z
 				 hfs_time_t lastclock, hfs_time_t nextcheck, zbx_uint64_t prevvalue, zbx_uint64_t lastvalue, 
 				 zbx_uint64_t prevorgvalue, const char* stderr)
 {
+#ifdef HAVE_MEMCACHE	
+	static char key[128];
+	item_value_int_t val;
+
+	zbx_snprintf (key, sizeof (key), "l|i|" ZBX_FS_UI64, itemid);
+	
+	val.lastclock = lastclock;
+	val.nextcheck = nextcheck;
+	val.kind = 0;
+	val.prevvalue = prevvalue;
+	val.lastvalue = lastvalue;
+	val.prevorgvalue = prevorgvalue;
+	memcache_zbx_save_last (key, &val, sizeof (val), stderr);
+#else
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd;
 	item_value_int_t val;
@@ -1901,6 +1930,7 @@ void HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, z
 	val.prevorgvalue = prevorgvalue;
 
 	aio_item_value (fd, &val, sizeof (val), stderr);
+#endif
 }
 
 
@@ -1948,6 +1978,22 @@ int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_u
 			     hfs_time_t* nextcheck, double* prevvalue, double* lastvalue, double* prevorgvalue,
 			     char** stderr)
 {
+#ifdef HAVE_MEMCACHE
+	static char key[128];
+	item_value_dbl_t val;
+
+	zbx_snprintf (key, sizeof (key), "l|d|" ZBX_FS_UI64, itemid);
+	if (!memcache_zbx_read_last (key, &val, sizeof (val), &stderr))
+		return 0;
+
+
+	*lastclock = val.lastclock;
+	*nextcheck = val.nextcheck;
+	*prevvalue = val.prevvalue;
+	*lastvalue = val.lastvalue;
+	*prevorgvalue = val.prevorgvalue;
+	return 1;
+#else
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd;
 	item_value_dbl_t val;
@@ -1984,6 +2030,7 @@ int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_u
 
 	close (fd);
 	return 1;
+#endif
 }
 
 
@@ -1991,6 +2038,21 @@ int HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_u
 			     hfs_time_t* nextcheck, zbx_uint64_t* prevvalue, zbx_uint64_t* lastvalue, zbx_uint64_t* prevorgvalue,
 			     char** stderr)
 {
+#ifdef HAVE_MEMCACHE
+	static char key[128];
+	item_value_int_t val;
+
+	zbx_snprintf (key, sizeof (key), "l|i|" ZBX_FS_UI64, itemid);
+	if (!memcache_zbx_read_last (key, &val, sizeof (val), &stderr))
+		return 0;
+
+	*lastclock = val.lastclock;
+	*nextcheck = val.nextcheck;
+	*prevvalue = val.prevvalue;
+	*lastvalue = val.lastvalue;
+	*prevorgvalue = val.prevorgvalue;
+	return 1;
+#else
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd;
 	item_value_int_t val;
@@ -2027,6 +2089,7 @@ int HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_u
 	close (fd);
 
 	return 1;
+#endif
 }
 
 
