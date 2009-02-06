@@ -15,7 +15,7 @@ PREV=$TMP/$me.prev
 # How long to keep dmesg errors
 WATCH_LAST=3600 # seconds, e.g. 3 hours
 
-PATH=/bin:/sbin:/usr/bin:/usr/sbin
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 
 TSTAMP=`date '+%s'`
 
@@ -48,7 +48,7 @@ WARN_LINES_DELTA=$(($WARN_LINES_AFTER - $WARN_LINES_BEFORE))
 ERR_LINES_DELTA=$(($ERR_LINES_AFTER - $ERR_LINES_BEFORE))
 
 # throw away old data
-awk -v p=$(($TSTAMP-$WATCH_LAST)) '$1>=p {print}' $TMP/$me.msg.prev > $TMP/$me.msg.cur
+awk -v p=$(($TSTAMP-$WATCH_LAST)) '$1>=p {print}' < $TMP/$me.msg.prev > $TMP/$me.msg.cur
 mv $TMP/$me.dmesg.cur $TMP/$me.dmesg.prev
 mv $TMP/$me.msg.cur $TMP/$me.msg.prev
 
