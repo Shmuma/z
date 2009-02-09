@@ -16,18 +16,20 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 **/
+#include <stdarg.h>
 
 #include "common.h"
 #include "log.h"
 #include "hfs.h"
 #include "hfs_internal.h"
-#include "memcache.h"
 #include "memcache_php.h"
 
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
 #include <aio.h>
+#include <stdlib.h>
+#include <errno.h>
 
 # ifndef ULLONG_MAX
 #  define ULLONG_MAX    18446744073709551615ULL
