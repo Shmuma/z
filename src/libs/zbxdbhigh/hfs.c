@@ -22,6 +22,7 @@
 #include "hfs.h"
 #include "hfs_internal.h"
 #include "memcache.h"
+#include "memcache_php.h"
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -390,7 +391,7 @@ void write_str_wo_len (int fd, const char* str)
 
 
 
-int str_buffer_length (char* str)
+int str_buffer_length (const char* str)
 {
 	int len = str ? strlen (str) : 0;
 	if (len)
@@ -1823,7 +1824,7 @@ static void aio_item_value (int fd, void* val, int len, const char* stderr)
 	cb->aio_nbytes = buf_len;
 	cb->aio_offset = 0;
 
-	memcpy (cb->aio_buf, val, len);
+	memcpy ((char*)cb->aio_buf, val, len);
 	buffer_str ((char*)cb->aio_buf + len, stderr, buf_len-len);
 
 	cb->aio_sigevent.sigev_notify = SIGEV_THREAD;
@@ -1833,7 +1834,7 @@ static void aio_item_value (int fd, void* val, int len, const char* stderr)
 
 	if (aio_write (cb)) {
 		close (fd);
-		free (cb->aio_buf);
+		free ((char*)cb->aio_buf);
 		free (cb);
 	}
 }
@@ -1983,9 +1984,8 @@ int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_u
 	item_value_dbl_t val;
 
 	zbx_snprintf (key, sizeof (key), "l|d|" ZBX_FS_UI64, itemid);
-	if (!memcache_zbx_read_last (key, &val, sizeof (val), &stderr))
+	if (!memcache_zbx_read_last (siteid, key, &val, sizeof (val), &stderr))
 		return 0;
-
 
 	*lastclock = val.lastclock;
 	*nextcheck = val.nextcheck;
@@ -2043,7 +2043,7 @@ int HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_u
 	item_value_int_t val;
 
 	zbx_snprintf (key, sizeof (key), "l|i|" ZBX_FS_UI64, itemid);
-	if (!memcache_zbx_read_last (key, &val, sizeof (val), &stderr))
+	if (!memcache_zbx_read_last (siteid, key, &val, sizeof (val), &stderr))
 		return 0;
 
 	*lastclock = val.lastclock;

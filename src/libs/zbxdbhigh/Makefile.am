@@ -8,7 +8,7 @@ libzbxdbhigh_a_SOURCES = \
 	hfs.c
 
 if MEMCACHE
-libzbxdbhigh_a_SOURCES += memcache.c serialize.c
+libzbxdbhigh_a_SOURCES += memcache.c serialize.c memcache_php.c
 endif
 
 libzbxdbhigh_a_CFLAGS = -I@top_srcdir@/src/zabbix_server/

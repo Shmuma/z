@@ -12,6 +12,7 @@
 memcached_st *mem_conn = NULL;
 
 
+
 int memcache_zbx_connect(const char* servers)
 {
 	memcached_server_st	*mem_servers;
@@ -141,6 +142,7 @@ int memcache_zbx_delitem(DB_ITEM *item)
 }
 
 
+
 int memcache_zbx_save_last (const char* key, void* value, int val_len, const char* stderr)
 {
 	static char buf[MAX_STRING_LEN];
@@ -152,27 +154,3 @@ int memcache_zbx_save_last (const char* key, void* value, int val_len, const cha
 	return 1;
 }
 
-
-
-int memcache_zbx_read_last (const char* key, void* value, int val_len, char** stderr)
-{
-	char *p, *pp;
-	int len, flags;
-	memcached_return rc;
-
-	pp = p = memcached_get (mem_conn, key, strlen (key), &len, &flags, &rc);
-
-	if (rc != MEMCACHED_SUCCESS)
-		return 0;
-	
-	if (len < val_len) {
-		free (p);
-		return 0;
-	}
-
-	memcpy (value, p, val_len);
-	pp += val_len;
-	*stderr = unbuffer_str (&pp);
-	free (p);
-	return 1;
-}
