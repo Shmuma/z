@@ -12,11 +12,6 @@
 #include "hfs.h"
 #include "hfs_internal.h"
 
-char *progname = "test";
-char title_message[] = "Title";
-char usage_message[] = "Usage";
-char *help_message[] = { "Help", 0 };
-
 
 typedef struct {
     hfs_time_t ts;

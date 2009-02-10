@@ -56,10 +56,6 @@
 #include <time.h>
 #endif
 
-#ifdef HAVE_MEMCACHE
-memcached_st *mem_conn = NULL;
-#endif
-
 size_t DB_ITEM_OFFSETS[CHARS_LEN_MAX] = {
 /*  0 */	offsetof(DB_ITEM, description),
 /*  1 */	offsetof(DB_ITEM, key),
@@ -387,12 +383,12 @@ int main(int argc, char **argv)
 			zbx_sock_t	listen_sock;
 
 			zbx_tcp_listen(&listen_sock, CONFIG_LISTEN_IP, (unsigned short)CONFIG_LISTEN_PORT);
-			memcache_zbx_connect();
+			memcache_zbx_connect(CONFIG_MEMCACHE_SERVER);
 			process_type = ZBX_PROCESS_FEEDER;
 			child_feeder_main(0, &listen_sock);
 		}
 		else {
-			memcache_zbx_connect();
+			memcache_zbx_connect(CONFIG_MEMCACHE_SERVER);
 			process_type = ZBX_PROCESS_AGGREGATE_SLAVE;
 /* 			child_trapper_main (0); */
 //			child_hist_trapper_main (0);
@@ -533,7 +529,7 @@ int MAIN_ZABBIX_ENTRY(void)
 	}
 #ifdef HAVE_MEMCACHE
 	else
-		memcache_zbx_connect();
+		memcache_zbx_connect(CONFIG_MEMCACHE_SERVER);
 #endif
 
 	if(server_num <= CONFIG_POLLER_FORKS)

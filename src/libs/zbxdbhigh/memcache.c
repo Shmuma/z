@@ -8,7 +8,12 @@
 #include <string.h>
 #include <errno.h>
 
-int memcache_zbx_connect(void)
+
+memcached_st *mem_conn = NULL;
+
+
+
+int memcache_zbx_connect(const char* servers)
 {
 	memcached_server_st	*mem_servers;
 	memcached_return	 mem_rc;
@@ -19,9 +24,7 @@ int memcache_zbx_connect(void)
 	if ((mem_conn = memcached_create(NULL)) == NULL)
 		zabbix_log(LOG_LEVEL_ERR, "memcached_create() == NULL");
 
-	mem_servers = memcached_servers_parse(CONFIG_MEMCACHE_SERVER ?
-					      CONFIG_MEMCACHE_SERVER :
-					      "localhost");
+	mem_servers = memcached_servers_parse(servers ? servers : "localhost");
 	mem_rc = memcached_server_push(mem_conn, mem_servers);
 	memcached_server_list_free(mem_servers);
 
@@ -137,3 +140,17 @@ int memcache_zbx_delitem(DB_ITEM *item)
 
 	return -1;
 }
+
+
+
+int memcache_zbx_save_last (const char* key, void* value, int val_len, const char* stderr)
+{
+	static char buf[MAX_STRING_LEN];
+	char* p;
+
+	memcpy (buf, value, val_len);
+	p = buffer_str (buf + val_len, stderr, sizeof (buf) - val_len);
+	memcached_set (mem_conn, key, strlen (key), &buf, p - buf, 0, 0);
+	return 1;
+}
+

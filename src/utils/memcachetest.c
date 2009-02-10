@@ -6,18 +6,6 @@
 #include "common.h"
 #include "memcache.h"
 
-char *progname = "test";
-char title_message[] = "Title";
-char usage_message[] = "Usage";
-char *help_message[] = { "Help", 0 };
-
-char *CONFIG_MEMCACHE_SERVER		= NULL;
-int CONFIG_MEMCACHE_ITEMS_TTL		= 30;
-
-size_t DB_ITEM_OFFSETS[CHARS_LEN_MAX];
-zbx_process_type_t process_type = -1;
-memcached_st *mem_conn = NULL;
-
 char *item_key = NULL;
 char *item_host_name = NULL;
 char *item_value = NULL;
@@ -64,7 +52,7 @@ int main(int argc, char **argv) {
 
 	printf("memcache key: %s\n", strkey);
 
-	if (memcache_zbx_connect() == -1) {
+	if (memcache_zbx_connect(CONFIG_MEMCACHE_SERVER) == -1) {
 		fprintf(stderr, "Unable to connect to memcache server\n");
 		free(strkey);
 		return 1;

@@ -11,10 +11,6 @@
 #include "hfs.h"
 #include "hfs_internal.h"
 
-char *progname = "test";
-char title_message[] = "Title";
-char usage_message[] = "Usage";
-char *help_message[] = { "Help", 0 };
 
 char *get_datafile(const char *metafile)
 {

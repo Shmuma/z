@@ -8,6 +8,7 @@
 
 #include "php_zabbix.h"
 #include "hfs.h"
+#include "memcache_php.h"
 
 #define LOG_LEVEL_DEBUG 4
 #define __zbx_zbx_snprintf snprintf
@@ -67,12 +68,14 @@ struct items_array {
 };
 
 
-
+/* sites_memcache have form SITE:hostname,SITE:hostname */
 PHP_INI_BEGIN()
 STD_PHP_INI_ENTRY("zabbix.hfs_base_dir", "/tmp/hfs", PHP_INI_ALL, OnUpdateString,
                   hfs_base_dir, zend_zabbix_globals, zabbix_globals)
 STD_PHP_INI_BOOLEAN("zabbix.debug",      "0",        PHP_INI_ALL, OnUpdateBool,
 		  debug,        zend_zabbix_globals, zabbix_globals)
+STD_PHP_INI_ENTRY("zabbix.sites_memcache", "Default,localhost", PHP_INI_ALL, OnUpdateString,
+                  sites_memcache, zend_zabbix_globals, zabbix_globals)
 PHP_INI_END()
 
 char *progname = "test";
@@ -576,6 +579,8 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 
         if (array_init(return_value) == FAILURE)
 		RETURN_FALSE;
+
+	memcache_zbx_prepare_conn_table (ZABBIX_GLOBAL(sites_memcache));
 
 	switch (type) {
 	case ITEM_VALUE_TYPE_FLOAT:

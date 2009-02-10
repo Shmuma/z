@@ -36,6 +36,7 @@ PHP_FUNCTION(zabbix_hfs_get_alerts);
 ZEND_BEGIN_MODULE_GLOBALS(zabbix)
 char *hfs_base_dir;
 int debug;
+char *sites_memcache;
 ZEND_END_MODULE_GLOBALS(zabbix)
 
 #ifdef ZTS
