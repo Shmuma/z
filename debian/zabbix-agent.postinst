@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -x
-
 CONFFILE1="/usr/share/zabbix-agent/zabbix_agentd.conf"
 CONFFILE_DEST1="/etc/zabbix/zabbix_agentd.conf"
 
