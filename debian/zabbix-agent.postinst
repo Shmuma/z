@@ -15,26 +15,18 @@ UNAME=monitor
 GNAME=monitor
 
 if [ "$1" = "configure" ]; then
-
-    RET=""
-    db_get zabbix-agent/server || true
-    zabbix_server="$RET"
-    if [ "$zabbix_server" = "" ]; then
-        zabbix_server="localhost"
-    fi
-
     zabbix_hostname=$(hostname -f)
 
-    sed "s/^[# ]*Server=.*/Server=$zabbix_server/g; s/^[# ]*Hostname=.*/Hostname=$zabbix_hostname/g" < $CONFFILE1 > $CONFFILE_DEST1.new 
+    sed "s/^[# ]*Hostname=.*/Hostname=$zabbix_hostname/g" < $CONFFILE1 > $CONFFILE_DEST1.new 
     ucf --debconf-ok $CONFFILE_DEST1.new $CONFFILE_DEST1
     rm -f $CONFFILE_DEST1.new
 
-    sed "s/^[# ]*Server=.*/Server=$zabbix_server/g; s/^[# ]*Hostname=.*/Hostname=$zabbix_hostname/g" < $CONFFILE2 > $CONFFILE_DEST2.new 
+    sed "s/^[# ]*Hostname=.*/Hostname=$zabbix_hostname/g" < $CONFFILE2 > $CONFFILE_DEST2.new 
     ucf --debconf-ok $CONFFILE_DEST2.new $CONFFILE_DEST2
     rm -f $CONFFILE_DEST2.new
     
     if ! getent group $GNAME > /dev/null 2>&1 ; then
-    addgroup --system --quiet $GNAME
+        addgroup --system --quiet $GNAME
     fi
 
     if ! getent passwd $UNAME > /dev/null 2>&1 ; then
@@ -57,7 +49,7 @@ if [ "$1" = "configure" ]; then
     /usr/sbin/zabbix-rebase-server
 
     # append monitor to disk group
-    usermod -a -G disk monitor
+    gpasswd -a monitor disk
 fi
 
 db_stop
