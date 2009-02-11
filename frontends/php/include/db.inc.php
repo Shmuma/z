@@ -452,8 +452,12 @@ COpt::savesqlrequest($query);
 
 	function	zbx_dbstr($var)	{
 		global $DB_TYPE;
- 		if(isset($DB_TYPE) && $DB_TYPE == "ORACLE")
-			return "'".ereg_replace('"', '\\"', ereg_replace('\'','\'\'',$var))."'";
+ 		if(isset($DB_TYPE) && $DB_TYPE == "ORACLE") {
+			$v = str_replace ("\\", "\\\\", $var);
+			$v = str_replace ("\"", "\\\"", $v);
+			$v = str_replace ("'", "''", $v);
+			return "'".$v."'";
+		}
 // 			return "'".ereg_replace ('\\\'','\'\'',addslashes ($var))."'";
  		else
 			return "'".addslashes($var)."'";
