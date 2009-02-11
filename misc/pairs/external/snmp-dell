@@ -28,8 +28,8 @@ die ()
 #    	echo "[`date +%s`] PROCESS_SERVICE_CHECK_RESULT;$host;$srv;$err_cod;$descr" >> $META_DIR/$host
     	#echo "[`date +%s`] PROCESS_SERVICE_CHECK_RESULT;$host;$srv;$err_cod;$descr" 
         echo $1
+        echo $2 1>&2
         zabbix_sender -s $host -c /etc/zabbix/zabbix_agentd.conf -k snmp-dell.message -o "$2" > /dev/null
-#        echo $2 1>&2
 	exit
 }
 
