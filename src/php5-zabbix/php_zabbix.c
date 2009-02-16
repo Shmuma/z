@@ -74,7 +74,7 @@ STD_PHP_INI_ENTRY("zabbix.hfs_base_dir", "/tmp/hfs", PHP_INI_ALL, OnUpdateString
                   hfs_base_dir, zend_zabbix_globals, zabbix_globals)
 STD_PHP_INI_BOOLEAN("zabbix.debug",      "0",        PHP_INI_ALL, OnUpdateBool,
 		  debug,        zend_zabbix_globals, zabbix_globals)
-STD_PHP_INI_ENTRY("zabbix.sites_memcache", "Default,localhost", PHP_INI_ALL, OnUpdateString,
+STD_PHP_INI_ENTRY("zabbix.sites_memcache", "Default:localhost", PHP_INI_ALL, OnUpdateString,
                   sites_memcache, zend_zabbix_globals, zabbix_globals)
 PHP_INI_END()
 

@@ -1,3 +1,8 @@
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdarg.h>
+
+
 #include "common.h"
 #include "hfs.h"
 #include "memcache_php.h"
@@ -55,7 +60,8 @@ int memcache_zbx_prepare_conn_table (const char* table)
 			count++;
 		}
 
-		p = pp;
+		if (*pp)
+			p = pp+1;
 	}
 
 	memsite = (memsite_item_t*)realloc (memsite, (count+1)*sizeof (memsite_item_t));
