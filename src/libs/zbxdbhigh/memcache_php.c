@@ -60,7 +60,8 @@ int memcache_zbx_prepare_conn_table (const char* table)
 			count++;
 		}
 
-		p = pp;
+		if (*pp)
+			p = pp+1;
 	}
 
 	memsite = (memsite_item_t*)realloc (memsite, (count+1)*sizeof (memsite_item_t));

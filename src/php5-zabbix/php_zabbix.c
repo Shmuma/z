@@ -74,7 +74,7 @@ STD_PHP_INI_ENTRY("zabbix.hfs_base_dir", "/tmp/hfs", PHP_INI_ALL, OnUpdateString
                   hfs_base_dir, zend_zabbix_globals, zabbix_globals)
 STD_PHP_INI_BOOLEAN("zabbix.debug",      "0",        PHP_INI_ALL, OnUpdateBool,
 		  debug,        zend_zabbix_globals, zabbix_globals)
-STD_PHP_INI_ENTRY("zabbix.sites_memcache", "Default,localhost", PHP_INI_ALL, OnUpdateString,
+STD_PHP_INI_ENTRY("zabbix.sites_memcache", "Default:localhost", PHP_INI_ALL, OnUpdateString,
                   sites_memcache, zend_zabbix_globals, zabbix_globals)
 PHP_INI_END()
 
@@ -580,7 +580,7 @@ PHP_FUNCTION(zabbix_hfs_item_values)
         if (array_init(return_value) == FAILURE)
 		RETURN_FALSE;
 
-	//	memcache_zbx_prepare_conn_table (ZABBIX_GLOBAL(sites_memcache));
+	memcache_zbx_prepare_conn_table (ZABBIX_GLOBAL(sites_memcache));
 
 	switch (type) {
 	case ITEM_VALUE_TYPE_FLOAT:
