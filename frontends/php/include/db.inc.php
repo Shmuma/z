@@ -454,7 +454,7 @@ COpt::savesqlrequest($query);
 		global $DB_TYPE;
  		if(isset($DB_TYPE) && $DB_TYPE == "ORACLE") {
 			$v = str_replace ("\\", "\\\\", $var);
-			$v = str_replace ("\"", "\\\"", $v);
+			//			$v = str_replace ("\"", "\\\"", $v);
 			$v = str_replace ("'", "''", $v);
 			return "'".$v."'";
 		}
