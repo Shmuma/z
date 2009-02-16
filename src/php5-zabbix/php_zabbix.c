@@ -580,7 +580,7 @@ PHP_FUNCTION(zabbix_hfs_item_values)
         if (array_init(return_value) == FAILURE)
 		RETURN_FALSE;
 
-	memcache_zbx_prepare_conn_table (ZABBIX_GLOBAL(sites_memcache));
+	//	memcache_zbx_prepare_conn_table (ZABBIX_GLOBAL(sites_memcache));
 
 	switch (type) {
 	case ITEM_VALUE_TYPE_FLOAT:

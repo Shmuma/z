@@ -1,3 +1,8 @@
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdarg.h>
+
+
 #include "common.h"
 #include "hfs.h"
 #include "memcache_php.h"
