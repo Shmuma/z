@@ -62,6 +62,8 @@ int memcache_zbx_prepare_conn_table (const char* table)
 
 		if (*pp)
 			p = pp+1;
+		else
+			p = NULL;
 	}
 
 	memsite = (memsite_item_t*)realloc (memsite, (count+1)*sizeof (memsite_item_t));
@@ -73,6 +75,16 @@ int memcache_zbx_prepare_conn_table (const char* table)
 
 memcached_st* memcache_zbx_site_lookup (const char* site)
 {
+	int i = 0;
+
+	if (!memsite)
+		return NULL;
+
+	while (memsite[i].site) {
+		if (!strcmp (site, memsite[i].site))
+			return memsite[i].conn;
+		i++;
+	}
 	return NULL;
 }
 
@@ -103,4 +115,23 @@ int memcache_zbx_read_last (const char* site, const char* key, void* value, int 
 	*stderr = unbuffer_str (&pp);
 	free (p);
 	return 1;
+}
+
+
+const char* memcache_get_key (memcache_key_type_t type, zbx_uint64_t itemid)
+{
+	static char buf[256];
+
+	switch (type) {
+	case MKT_LAST_UINT64:
+		snprintf (buf, sizeof (buf), "l|i|" ZBX_FS_UI64, itemid);
+		break;
+	case MKT_LAST_DOUBLE:
+		snprintf (buf, sizeof (buf), "l|d|" ZBX_FS_UI64, itemid);
+		break;
+	default:
+		return NULL;
+	}
+
+	return buf;
 }

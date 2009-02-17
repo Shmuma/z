@@ -570,9 +570,11 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 	hfs_time_t lastclock, nextcheck;
 	char* buf = NULL;
 
-	double d_prev, d_last, d_prevorg;
 	unsigned long long i_prev, i_last, i_prevorg;
 	char *s_prev, *s_last, *s_prevorg, *s_stderr;
+	item_value_dbl_t dbl_val;
+	item_value_int_t int_val;
+	const char* key;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll", &site, &site_len, &itemid, &type) == FAILURE)
 		RETURN_FALSE;
@@ -584,10 +586,12 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 
 	switch (type) {
 	case ITEM_VALUE_TYPE_FLOAT:
-		if (!HFS_get_item_values_dbl (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, &lastclock, &nextcheck, &d_prev, &d_last, &d_prevorg, &s_stderr))
+		key = memcache_get_key (MKT_LAST_DOUBLE, itemid);
+		if (!key || !memcache_zbx_read_last (site, key, &dbl_val, sizeof (dbl_val), &s_stderr))
 			RETURN_FALSE;
-		add_assoc_double (return_value, "prevvalue", d_prev);
-		add_assoc_double (return_value, "lastvalue", d_last);
+		add_assoc_double (return_value, "prevvalue", dbl_val.prevvalue);
+		add_assoc_double (return_value, "lastvalue", dbl_val.lastvalue);
+		lastclock = dbl_val.lastclock;
 		break;
 
 	case ITEM_VALUE_TYPE_TEXT:
@@ -611,16 +615,18 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 		break;
 
 	case ITEM_VALUE_TYPE_UINT64:
-		if (!HFS_get_item_values_int (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, &lastclock, &nextcheck, &i_prev, &i_last, &i_prevorg, &s_stderr))
+		key = memcache_get_key (MKT_LAST_UINT64, itemid);
+		if (!key || !memcache_zbx_read_last (site, key, &int_val, sizeof (int_val), &s_stderr))
 			RETURN_FALSE;
-
-		asprintf(&buf, "%lld", i_prev);
+		
+		asprintf(&buf, "%lld", int_val.prevvalue);
 		add_assoc_string (return_value, "prevvalue", buf, 1);
 		free (buf);
 
-		asprintf(&buf, "%lld", i_last);
+		asprintf(&buf, "%lld", int_val.lastvalue);
 		add_assoc_string (return_value, "lastvalue", buf, 1);
 		free (buf);
+		lastclock = int_val.lastclock;
 		break;
 
 	default:
