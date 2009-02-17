@@ -1982,11 +1982,11 @@ int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_u
 			     char** stderr)
 {
 #ifdef HAVE_MEMCACHE
-	static char key[128];
+	const char* key;
 	item_value_dbl_t val;
 
-	zbx_snprintf (key, sizeof (key), "l|d|" ZBX_FS_UI64, itemid);
-	if (!memcache_zbx_read_last (siteid, key, &val, sizeof (val), &stderr))
+	key = memcache_get_key (MKT_LAST_DOUBLE, itemid);
+	if (!key || !memcache_zbx_read_last (siteid, key, &val, sizeof (val), &stderr))
 		return 0;
 
 	*lastclock = val.lastclock;
@@ -2041,11 +2041,11 @@ int HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_u
 			     char** stderr)
 {
 #ifdef HAVE_MEMCACHE
-	static char key[128];
+	const char* key;
 	item_value_int_t val;
 
-	zbx_snprintf (key, sizeof (key), "l|i|" ZBX_FS_UI64, itemid);
-	if (!memcache_zbx_read_last (siteid, key, &val, sizeof (val), &stderr))
+	key = memcache_get_key (MKT_LAST_UINT64, itemid);
+	if (!key || !memcache_zbx_read_last (siteid, key, &val, sizeof (val), &stderr))
 		return 0;
 
 	*lastclock = val.lastclock;

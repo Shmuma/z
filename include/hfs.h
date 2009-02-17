@@ -70,6 +70,21 @@ typedef struct {
 } hfs_item_str_value_t;
 
 
+/* item values structs */
+typedef struct __attribute__ ((packed)) {
+	hfs_time_t lastclock, nextcheck;
+	int kind;
+	double prevvalue, lastvalue, prevorgvalue;
+} item_value_dbl_t;
+
+
+typedef struct __attribute__ ((packed)) {
+	hfs_time_t lastclock, nextcheck;
+	int kind;
+	zbx_uint64_t prevvalue, lastvalue, prevorgvalue;
+} item_value_int_t;
+
+
 typedef void (*read_count_fn_t) (item_type_t type, item_value_u val, hfs_time_t timestamp, void *res);
 
 int 		xopen(const char *fn, int flags, mode_t mode);

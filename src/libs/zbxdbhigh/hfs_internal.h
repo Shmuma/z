@@ -39,20 +39,6 @@ typedef enum {
 
 typedef void (*fold_fn_t) (void* db_val, void* state);
 
-/* item values structs */
-typedef struct __attribute__ ((packed)) {
-	hfs_time_t lastclock, nextcheck;
-	int kind;
-	double prevvalue, lastvalue, prevorgvalue;
-} item_value_dbl_t;
-
-
-typedef struct __attribute__ ((packed)) {
-	hfs_time_t lastclock, nextcheck;
-	int kind;
-	zbx_uint64_t prevvalue, lastvalue, prevorgvalue;
-} item_value_int_t;
-
 
 typedef struct __attribute__ ((packed)) {
 	int value;
