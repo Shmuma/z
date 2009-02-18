@@ -37,9 +37,6 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 sbin_PROGRAMS = zabbix_server$(EXEEXT)
-@MEMCACHE_TRUE@am__append_1 = \
-@MEMCACHE_TRUE@	memcache.c memcache.h
-
 subdir = src/zabbix_server
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -57,12 +54,6 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(sbindir)"
 sbinPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(sbin_PROGRAMS)
-am__zabbix_server_SOURCES_DIST = evalfunc.c evalfunc.h expression.c \
-	expression.h actions.c actions.h operations.c operations.h \
-	events.c events.h zlog.c functions.c functions.h metrics.c \
-	metrics.h queue.c queue.h serialize.c server.c memcache.c \
-	memcache.h
-@MEMCACHE_TRUE@am__objects_1 = zabbix_server-memcache.$(OBJEXT)
 am_zabbix_server_OBJECTS = zabbix_server-evalfunc.$(OBJEXT) \
 	zabbix_server-expression.$(OBJEXT) \
 	zabbix_server-actions.$(OBJEXT) \
@@ -70,8 +61,7 @@ am_zabbix_server_OBJECTS = zabbix_server-evalfunc.$(OBJEXT) \
 	zabbix_server-events.$(OBJEXT) zabbix_server-zlog.$(OBJEXT) \
 	zabbix_server-functions.$(OBJEXT) \
 	zabbix_server-metrics.$(OBJEXT) zabbix_server-queue.$(OBJEXT) \
-	zabbix_server-serialize.$(OBJEXT) \
-	zabbix_server-server.$(OBJEXT) $(am__objects_1)
+	zabbix_server-server.$(OBJEXT)
 zabbix_server_OBJECTS = $(am_zabbix_server_OBJECTS)
 @JABBER_TRUE@am__DEPENDENCIES_1 =  \
 @JABBER_TRUE@	$(top_srcdir)/src/libs/zbxjabber/libzbxjabber.a
@@ -106,7 +96,7 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(zabbix_server_SOURCES)
-DIST_SOURCES = $(am__zabbix_server_SOURCES_DIST)
+DIST_SOURCES = $(zabbix_server_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	html-recursive info-recursive install-data-recursive \
 	install-exec-recursive install-info-recursive \
@@ -268,10 +258,18 @@ SUBDIRS = \
 	feeder \
 	aggr_slave
 
-zabbix_server_SOURCES = evalfunc.c evalfunc.h expression.c \
-	expression.h actions.c actions.h operations.c operations.h \
-	events.c events.h zlog.c functions.c functions.h metrics.c \
-	metrics.h queue.c queue.h serialize.c server.c $(am__append_1)
+zabbix_server_SOURCES = \
+	evalfunc.c evalfunc.h \
+	expression.c expression.h \
+	actions.c actions.h \
+	operations.c operations.h \
+	events.c events.h \
+	zlog.c \
+	functions.c functions.h \
+	metrics.c metrics.h \
+	queue.c queue.h \
+	server.c
+
 @JABBER_TRUE@JABBER_LDADD = $(top_srcdir)/src/libs/zbxjabber/libzbxjabber.a
 zabbix_server_LDADD = \
 	alerter/libzbxalerter.a \
@@ -380,11 +378,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zabbix_server-events.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zabbix_server-expression.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zabbix_server-functions.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zabbix_server-memcache.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zabbix_server-metrics.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zabbix_server-operations.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zabbix_server-queue.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zabbix_server-serialize.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zabbix_server-server.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zabbix_server-zlog.Po@am__quote@
 
@@ -528,20 +524,6 @@ zabbix_server-queue.obj: queue.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -c -o zabbix_server-queue.obj `if test -f 'queue.c'; then $(CYGPATH_W) 'queue.c'; else $(CYGPATH_W) '$(srcdir)/queue.c'; fi`
 
-zabbix_server-serialize.o: serialize.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -MT zabbix_server-serialize.o -MD -MP -MF "$(DEPDIR)/zabbix_server-serialize.Tpo" -c -o zabbix_server-serialize.o `test -f 'serialize.c' || echo '$(srcdir)/'`serialize.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/zabbix_server-serialize.Tpo" "$(DEPDIR)/zabbix_server-serialize.Po"; else rm -f "$(DEPDIR)/zabbix_server-serialize.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='serialize.c' object='zabbix_server-serialize.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -c -o zabbix_server-serialize.o `test -f 'serialize.c' || echo '$(srcdir)/'`serialize.c
-
-zabbix_server-serialize.obj: serialize.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -MT zabbix_server-serialize.obj -MD -MP -MF "$(DEPDIR)/zabbix_server-serialize.Tpo" -c -o zabbix_server-serialize.obj `if test -f 'serialize.c'; then $(CYGPATH_W) 'serialize.c'; else $(CYGPATH_W) '$(srcdir)/serialize.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/zabbix_server-serialize.Tpo" "$(DEPDIR)/zabbix_server-serialize.Po"; else rm -f "$(DEPDIR)/zabbix_server-serialize.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='serialize.c' object='zabbix_server-serialize.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -c -o zabbix_server-serialize.obj `if test -f 'serialize.c'; then $(CYGPATH_W) 'serialize.c'; else $(CYGPATH_W) '$(srcdir)/serialize.c'; fi`
-
 zabbix_server-server.o: server.c
 @am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -MT zabbix_server-server.o -MD -MP -MF "$(DEPDIR)/zabbix_server-server.Tpo" -c -o zabbix_server-server.o `test -f 'server.c' || echo '$(srcdir)/'`server.c; \
 @am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/zabbix_server-server.Tpo" "$(DEPDIR)/zabbix_server-server.Po"; else rm -f "$(DEPDIR)/zabbix_server-server.Tpo"; exit 1; fi
@@ -555,20 +537,6 @@ zabbix_server-server.obj: server.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='server.c' object='zabbix_server-server.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -c -o zabbix_server-server.obj `if test -f 'server.c'; then $(CYGPATH_W) 'server.c'; else $(CYGPATH_W) '$(srcdir)/server.c'; fi`
-
-zabbix_server-memcache.o: memcache.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -MT zabbix_server-memcache.o -MD -MP -MF "$(DEPDIR)/zabbix_server-memcache.Tpo" -c -o zabbix_server-memcache.o `test -f 'memcache.c' || echo '$(srcdir)/'`memcache.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/zabbix_server-memcache.Tpo" "$(DEPDIR)/zabbix_server-memcache.Po"; else rm -f "$(DEPDIR)/zabbix_server-memcache.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='memcache.c' object='zabbix_server-memcache.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -c -o zabbix_server-memcache.o `test -f 'memcache.c' || echo '$(srcdir)/'`memcache.c
-
-zabbix_server-memcache.obj: memcache.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -MT zabbix_server-memcache.obj -MD -MP -MF "$(DEPDIR)/zabbix_server-memcache.Tpo" -c -o zabbix_server-memcache.obj `if test -f 'memcache.c'; then $(CYGPATH_W) 'memcache.c'; else $(CYGPATH_W) '$(srcdir)/memcache.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/zabbix_server-memcache.Tpo" "$(DEPDIR)/zabbix_server-memcache.Po"; else rm -f "$(DEPDIR)/zabbix_server-memcache.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='memcache.c' object='zabbix_server-memcache.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(zabbix_server_CFLAGS) $(CFLAGS) -c -o zabbix_server-memcache.obj `if test -f 'memcache.c'; then $(CYGPATH_W) 'memcache.c'; else $(CYGPATH_W) '$(srcdir)/memcache.c'; fi`
 uninstall-info-am:
 
 # This directory's subdirectories are mostly independent; you can cd

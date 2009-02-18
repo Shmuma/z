@@ -36,6 +36,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@MEMCACHE_TRUE@am__append_1 = memcache.c serialize.c memcache_php.c
 subdir = src/libs/zbxdbhigh
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -55,8 +56,14 @@ AR = ar
 ARFLAGS = cru
 libzbxdbhigh_a_AR = $(AR) $(ARFLAGS)
 libzbxdbhigh_a_LIBADD =
+am__libzbxdbhigh_a_SOURCES_DIST = host.c db.c hfs.c memcache.c \
+	serialize.c memcache_php.c
+@MEMCACHE_TRUE@am__objects_1 = libzbxdbhigh_a-memcache.$(OBJEXT) \
+@MEMCACHE_TRUE@	libzbxdbhigh_a-serialize.$(OBJEXT) \
+@MEMCACHE_TRUE@	libzbxdbhigh_a-memcache_php.$(OBJEXT)
 am_libzbxdbhigh_a_OBJECTS = libzbxdbhigh_a-host.$(OBJEXT) \
-	libzbxdbhigh_a-db.$(OBJEXT) libzbxdbhigh_a-hfs.$(OBJEXT)
+	libzbxdbhigh_a-db.$(OBJEXT) libzbxdbhigh_a-hfs.$(OBJEXT) \
+	$(am__objects_1)
 libzbxdbhigh_a_OBJECTS = $(am_libzbxdbhigh_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -66,7 +73,7 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(libzbxdbhigh_a_SOURCES)
-DIST_SOURCES = $(libzbxdbhigh_a_SOURCES)
+DIST_SOURCES = $(am__libzbxdbhigh_a_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -207,11 +214,7 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 noinst_LIBRARIES = libzbxdbhigh.a
-libzbxdbhigh_a_SOURCES = \
-	host.c \
-	db.c \
-	hfs.c
-
+libzbxdbhigh_a_SOURCES = host.c db.c hfs.c $(am__append_1)
 libzbxdbhigh_a_CFLAGS = -I@top_srcdir@/src/zabbix_server/
 all: all-am
 
@@ -263,6 +266,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libzbxdbhigh_a-db.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libzbxdbhigh_a-hfs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libzbxdbhigh_a-host.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libzbxdbhigh_a-memcache.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libzbxdbhigh_a-memcache_php.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libzbxdbhigh_a-serialize.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -319,6 +325,48 @@ libzbxdbhigh_a-hfs.obj: hfs.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='hfs.c' object='libzbxdbhigh_a-hfs.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -c -o libzbxdbhigh_a-hfs.obj `if test -f 'hfs.c'; then $(CYGPATH_W) 'hfs.c'; else $(CYGPATH_W) '$(srcdir)/hfs.c'; fi`
+
+libzbxdbhigh_a-memcache.o: memcache.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -MT libzbxdbhigh_a-memcache.o -MD -MP -MF "$(DEPDIR)/libzbxdbhigh_a-memcache.Tpo" -c -o libzbxdbhigh_a-memcache.o `test -f 'memcache.c' || echo '$(srcdir)/'`memcache.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libzbxdbhigh_a-memcache.Tpo" "$(DEPDIR)/libzbxdbhigh_a-memcache.Po"; else rm -f "$(DEPDIR)/libzbxdbhigh_a-memcache.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='memcache.c' object='libzbxdbhigh_a-memcache.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -c -o libzbxdbhigh_a-memcache.o `test -f 'memcache.c' || echo '$(srcdir)/'`memcache.c
+
+libzbxdbhigh_a-memcache.obj: memcache.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -MT libzbxdbhigh_a-memcache.obj -MD -MP -MF "$(DEPDIR)/libzbxdbhigh_a-memcache.Tpo" -c -o libzbxdbhigh_a-memcache.obj `if test -f 'memcache.c'; then $(CYGPATH_W) 'memcache.c'; else $(CYGPATH_W) '$(srcdir)/memcache.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libzbxdbhigh_a-memcache.Tpo" "$(DEPDIR)/libzbxdbhigh_a-memcache.Po"; else rm -f "$(DEPDIR)/libzbxdbhigh_a-memcache.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='memcache.c' object='libzbxdbhigh_a-memcache.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -c -o libzbxdbhigh_a-memcache.obj `if test -f 'memcache.c'; then $(CYGPATH_W) 'memcache.c'; else $(CYGPATH_W) '$(srcdir)/memcache.c'; fi`
+
+libzbxdbhigh_a-serialize.o: serialize.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -MT libzbxdbhigh_a-serialize.o -MD -MP -MF "$(DEPDIR)/libzbxdbhigh_a-serialize.Tpo" -c -o libzbxdbhigh_a-serialize.o `test -f 'serialize.c' || echo '$(srcdir)/'`serialize.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libzbxdbhigh_a-serialize.Tpo" "$(DEPDIR)/libzbxdbhigh_a-serialize.Po"; else rm -f "$(DEPDIR)/libzbxdbhigh_a-serialize.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='serialize.c' object='libzbxdbhigh_a-serialize.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -c -o libzbxdbhigh_a-serialize.o `test -f 'serialize.c' || echo '$(srcdir)/'`serialize.c
+
+libzbxdbhigh_a-serialize.obj: serialize.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -MT libzbxdbhigh_a-serialize.obj -MD -MP -MF "$(DEPDIR)/libzbxdbhigh_a-serialize.Tpo" -c -o libzbxdbhigh_a-serialize.obj `if test -f 'serialize.c'; then $(CYGPATH_W) 'serialize.c'; else $(CYGPATH_W) '$(srcdir)/serialize.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libzbxdbhigh_a-serialize.Tpo" "$(DEPDIR)/libzbxdbhigh_a-serialize.Po"; else rm -f "$(DEPDIR)/libzbxdbhigh_a-serialize.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='serialize.c' object='libzbxdbhigh_a-serialize.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -c -o libzbxdbhigh_a-serialize.obj `if test -f 'serialize.c'; then $(CYGPATH_W) 'serialize.c'; else $(CYGPATH_W) '$(srcdir)/serialize.c'; fi`
+
+libzbxdbhigh_a-memcache_php.o: memcache_php.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -MT libzbxdbhigh_a-memcache_php.o -MD -MP -MF "$(DEPDIR)/libzbxdbhigh_a-memcache_php.Tpo" -c -o libzbxdbhigh_a-memcache_php.o `test -f 'memcache_php.c' || echo '$(srcdir)/'`memcache_php.c; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libzbxdbhigh_a-memcache_php.Tpo" "$(DEPDIR)/libzbxdbhigh_a-memcache_php.Po"; else rm -f "$(DEPDIR)/libzbxdbhigh_a-memcache_php.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='memcache_php.c' object='libzbxdbhigh_a-memcache_php.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -c -o libzbxdbhigh_a-memcache_php.o `test -f 'memcache_php.c' || echo '$(srcdir)/'`memcache_php.c
+
+libzbxdbhigh_a-memcache_php.obj: memcache_php.c
+@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -MT libzbxdbhigh_a-memcache_php.obj -MD -MP -MF "$(DEPDIR)/libzbxdbhigh_a-memcache_php.Tpo" -c -o libzbxdbhigh_a-memcache_php.obj `if test -f 'memcache_php.c'; then $(CYGPATH_W) 'memcache_php.c'; else $(CYGPATH_W) '$(srcdir)/memcache_php.c'; fi`; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/libzbxdbhigh_a-memcache_php.Tpo" "$(DEPDIR)/libzbxdbhigh_a-memcache_php.Po"; else rm -f "$(DEPDIR)/libzbxdbhigh_a-memcache_php.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='memcache_php.c' object='libzbxdbhigh_a-memcache_php.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libzbxdbhigh_a_CFLAGS) $(CFLAGS) -c -o libzbxdbhigh_a-memcache_php.obj `if test -f 'memcache_php.c'; then $(CYGPATH_W) 'memcache_php.c'; else $(CYGPATH_W) '$(srcdir)/memcache_php.c'; fi`
 uninstall-info-am:
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)

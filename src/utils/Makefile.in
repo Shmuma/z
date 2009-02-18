@@ -56,7 +56,7 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(sbindir)"
 sbinPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(sbin_PROGRAMS)
-am_hfs_func_upd_OBJECTS = hfs_func_upd.$(OBJEXT)
+am_hfs_func_upd_OBJECTS = hfs_func_upd.$(OBJEXT) fake-vars.$(OBJEXT)
 hfs_func_upd_OBJECTS = $(am_hfs_func_upd_OBJECTS)
 am__DEPENDENCIES_1 = ../libs/zbxcomms/libzbxcomms.a \
 	../libs/zbxdbhigh/libzbxdbhigh.a ../libs/zbxlog/libzbxlog.a \
@@ -65,23 +65,23 @@ am__DEPENDENCIES_1 = ../libs/zbxcomms/libzbxcomms.a \
 am__DEPENDENCIES_2 =
 hfs_func_upd_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_2)
-am_hfs_trends_upd_OBJECTS = hfs_trends_upd.$(OBJEXT)
+am_hfs_trends_upd_OBJECTS = hfs_trends_upd.$(OBJEXT) \
+	fake-vars.$(OBJEXT)
 hfs_trends_upd_OBJECTS = $(am_hfs_trends_upd_OBJECTS)
 hfs_trends_upd_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_hfsdump_OBJECTS = hfsdump.$(OBJEXT)
+am_hfsdump_OBJECTS = hfsdump.$(OBJEXT) fake-vars.$(OBJEXT)
 hfsdump_OBJECTS = $(am_hfsdump_OBJECTS)
 hfsdump_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_hfsevents_OBJECTS = hfsevents.$(OBJEXT)
+am_hfsevents_OBJECTS = hfsevents.$(OBJEXT) fake-vars.$(OBJEXT)
 hfsevents_OBJECTS = $(am_hfsevents_OBJECTS)
 hfsevents_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_hfsfilter_OBJECTS = hfsfilter.$(OBJEXT)
+am_hfsfilter_OBJECTS = hfsfilter.$(OBJEXT) fake-vars.$(OBJEXT)
 hfsfilter_OBJECTS = $(am_hfsfilter_OBJECTS)
 hfsfilter_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_hfsimport_OBJECTS = hfsimport.$(OBJEXT)
+am_hfsimport_OBJECTS = hfsimport.$(OBJEXT) fake-vars.$(OBJEXT)
 hfsimport_OBJECTS = $(am_hfsimport_OBJECTS)
 hfsimport_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_memcachetest_OBJECTS = memcachetest.$(OBJEXT) memcache.$(OBJEXT) \
-	serialize.$(OBJEXT)
+am_memcachetest_OBJECTS = memcachetest.$(OBJEXT) fake-vars.$(OBJEXT)
 memcachetest_OBJECTS = $(am_memcachetest_OBJECTS)
 memcachetest_DEPENDENCIES = $(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/include
@@ -244,7 +244,7 @@ ZBX_LIBS = \
 	../libs/zbxconf/libzbxconf.a \
 	../libs/zbxcommon/libzbxcommon.a \
 	../libs/zbxcrypto/libzbxcrypto.a \
-	../libs/zbxsys/libzbxsys.a -lrt
+	../libs/zbxsys/libzbxsys.a -lrt -lmemcached
 
 hfsdump_LDADD = $(ZBX_LIBS)
 hfs_trends_upd_LDADD = $(ZBX_LIBS)
@@ -253,16 +253,13 @@ hfsfilter_LDADD = $(ZBX_LIBS)
 hfsevents_LDADD = $(ZBX_LIBS)
 memcachetest_LDADD = $(ZBX_LIBS) -lmemcached
 hfs_func_upd_LDADD = $(ZBX_LIBS) -L../libs/zbxlog -lzbxlog -L../libs/zbxsys -lzbxsys -L../libs/zbxdb -lzbxdb -L../libs/zbxdbhigh -lzbxdbhigh $(DB_LDFLAGS) $(DB_LIBS)
-hfsdump_SOURCES = hfsdump.c
-hfs_trends_upd_SOURCES = hfs_trends_upd.c
-hfsimport_SOURCES = hfsimport.c
-hfsfilter_SOURCES = hfsfilter.c
-hfsevents_SOURCES = hfsevents.c
-hfs_func_upd_SOURCES = hfs_func_upd.c
-memcachetest_SOURCES = memcachetest.c \
-	../zabbix_server/memcache.c \
-	../zabbix_server/serialize.c
-
+hfsdump_SOURCES = hfsdump.c fake-vars.c
+hfs_trends_upd_SOURCES = hfs_trends_upd.c fake-vars.c
+hfsimport_SOURCES = hfsimport.c fake-vars.c
+hfsfilter_SOURCES = hfsfilter.c fake-vars.c
+hfsevents_SOURCES = hfsevents.c fake-vars.c
+hfs_func_upd_SOURCES = hfs_func_upd.c fake-vars.c
+memcachetest_SOURCES = memcachetest.c fake-vars.c
 all: all-am
 
 .SUFFIXES:
@@ -347,15 +344,14 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fake-vars.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfs_func_upd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfs_trends_upd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfsdump.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfsevents.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfsfilter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hfsimport.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memcache.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memcachetest.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/serialize.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -370,34 +366,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
-
-memcache.o: ../zabbix_server/memcache.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT memcache.o -MD -MP -MF "$(DEPDIR)/memcache.Tpo" -c -o memcache.o `test -f '../zabbix_server/memcache.c' || echo '$(srcdir)/'`../zabbix_server/memcache.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/memcache.Tpo" "$(DEPDIR)/memcache.Po"; else rm -f "$(DEPDIR)/memcache.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='../zabbix_server/memcache.c' object='memcache.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o memcache.o `test -f '../zabbix_server/memcache.c' || echo '$(srcdir)/'`../zabbix_server/memcache.c
-
-memcache.obj: ../zabbix_server/memcache.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT memcache.obj -MD -MP -MF "$(DEPDIR)/memcache.Tpo" -c -o memcache.obj `if test -f '../zabbix_server/memcache.c'; then $(CYGPATH_W) '../zabbix_server/memcache.c'; else $(CYGPATH_W) '$(srcdir)/../zabbix_server/memcache.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/memcache.Tpo" "$(DEPDIR)/memcache.Po"; else rm -f "$(DEPDIR)/memcache.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='../zabbix_server/memcache.c' object='memcache.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o memcache.obj `if test -f '../zabbix_server/memcache.c'; then $(CYGPATH_W) '../zabbix_server/memcache.c'; else $(CYGPATH_W) '$(srcdir)/../zabbix_server/memcache.c'; fi`
-
-serialize.o: ../zabbix_server/serialize.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT serialize.o -MD -MP -MF "$(DEPDIR)/serialize.Tpo" -c -o serialize.o `test -f '../zabbix_server/serialize.c' || echo '$(srcdir)/'`../zabbix_server/serialize.c; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/serialize.Tpo" "$(DEPDIR)/serialize.Po"; else rm -f "$(DEPDIR)/serialize.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='../zabbix_server/serialize.c' object='serialize.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o serialize.o `test -f '../zabbix_server/serialize.c' || echo '$(srcdir)/'`../zabbix_server/serialize.c
-
-serialize.obj: ../zabbix_server/serialize.c
-@am__fastdepCC_TRUE@	if $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT serialize.obj -MD -MP -MF "$(DEPDIR)/serialize.Tpo" -c -o serialize.obj `if test -f '../zabbix_server/serialize.c'; then $(CYGPATH_W) '../zabbix_server/serialize.c'; else $(CYGPATH_W) '$(srcdir)/../zabbix_server/serialize.c'; fi`; \
-@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/serialize.Tpo" "$(DEPDIR)/serialize.Po"; else rm -f "$(DEPDIR)/serialize.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='../zabbix_server/serialize.c' object='serialize.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o serialize.obj `if test -f '../zabbix_server/serialize.c'; then $(CYGPATH_W) '../zabbix_server/serialize.c'; else $(CYGPATH_W) '$(srcdir)/../zabbix_server/serialize.c'; fi`
 uninstall-info-am:
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
