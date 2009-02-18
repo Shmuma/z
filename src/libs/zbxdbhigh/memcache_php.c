@@ -89,7 +89,6 @@ void memcache_zbx_reconnect (memsite_item_t* item)
 
 	if (item->conn)
 		memcached_free (item->conn);
-	
 
 	item->conn = memcached_create (NULL);
 	mem_servers = memcached_servers_parse (item->server);

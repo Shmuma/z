@@ -19,12 +19,10 @@ int memcache_zbx_connect(const char* servers)
 	memcached_server_st	*mem_servers;
 	memcached_return	 mem_rc;
 
-	if (last_servers)
-		free (last_servers);
-	if (servers && strlen (servers) > 0)
+	if (servers)
 		last_servers = strdup (servers);
-	else
-		last_servers = strdup ("localhost");
+	if (!last_servers)
+		last_servers = "localhost";
 
 	if (mem_conn)
 		memcached_free(mem_conn);
