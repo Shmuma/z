@@ -9,12 +9,6 @@
 
 
 
-typedef struct {
-	char* site;
-	memcached_st* conn;
-} memsite_item_t;
-
-
 /* array with site-connection mapping. Terminated with record with NULL site field. */
 memsite_item_t* memsite;
 
@@ -28,7 +22,6 @@ int memcache_zbx_prepare_conn_table (const char* table)
 	char* site;
 	char buf[256];
 	int count = 0;
-	memcached_server_st *mem_servers;
 
 	if (memsite)
 		return 1;
@@ -52,11 +45,9 @@ int memcache_zbx_prepare_conn_table (const char* table)
 			p++;
 			memsite = (memsite_item_t*)realloc (memsite, (count+1)*sizeof (memsite_item_t));
 			memsite[count].site = strdup (buf);
-			memsite[count].conn = memcached_create (NULL);
-			mem_servers = memcached_servers_parse (p);
-			memcached_server_push (memsite[count].conn, mem_servers);
-			memcached_server_list_free(mem_servers);
-			memcached_behavior_set(memsite[count].conn, MEMCACHED_BEHAVIOR_CACHE_LOOKUPS, 1);
+			memsite[count].server = strdup (p);
+			memsite[count].conn = NULL;
+			memcache_zbx_reconnect (memsite+count);
 			count++;
 		}
 
@@ -73,7 +64,7 @@ int memcache_zbx_prepare_conn_table (const char* table)
 }
 
 
-memcached_st* memcache_zbx_site_lookup (const char* site)
+memsite_item_t* memcache_zbx_site_lookup (const char* site)
 {
 	int i = 0;
 
@@ -82,12 +73,29 @@ memcached_st* memcache_zbx_site_lookup (const char* site)
 
 	while (memsite[i].site) {
 		if (!strcmp (site, memsite[i].site))
-			return memsite[i].conn;
+			return memsite+i;
 		i++;
 	}
 	return NULL;
 }
 
+
+void memcache_zbx_reconnect (memsite_item_t* item)
+{
+	memcached_server_st *mem_servers;
+
+	if (!item)
+		return;
+
+	if (item->conn)
+		memcached_free (item->conn);
+
+	item->conn = memcached_create (NULL);
+	mem_servers = memcached_servers_parse (item->server);
+	memcached_server_push (item->conn, mem_servers);
+	memcached_server_list_free(mem_servers);
+	memcached_behavior_set(item->conn, MEMCACHED_BEHAVIOR_CACHE_LOOKUPS, 1);
+}
 
 
 int memcache_zbx_read_last (const char* site, const char* key, void* value, int val_len, char** stderr)
@@ -95,12 +103,17 @@ int memcache_zbx_read_last (const char* site, const char* key, void* value, int 
 	char *p, *pp;
 	int len, flags;
 	memcached_return rc;
-	memcached_st* conn;
+	memsite_item_t* conn;
 
 	if ((conn = memcache_zbx_site_lookup (site)) == NULL)
 		return 0;
 
-	pp = p = memcached_get (conn, key, strlen (key), &len, &flags, &rc);
+	pp = p = memcached_get (conn->conn, key, strlen (key), &len, &flags, &rc);
+
+	if (rc == MEMCACHED_ERRNO) {
+		memcache_zbx_reconnect (conn);
+		return 0;
+	}
 
 	if (rc != MEMCACHED_SUCCESS)
 		return 0;

@@ -10,6 +10,7 @@
 
 
 memcached_st *mem_conn = NULL;
+static char* last_servers = NULL;
 
 
 
@@ -18,13 +19,18 @@ int memcache_zbx_connect(const char* servers)
 	memcached_server_st	*mem_servers;
 	memcached_return	 mem_rc;
 
+	if (servers)
+		last_servers = strdup (servers);
+	if (!last_servers)
+		last_servers = "localhost";
+
 	if (mem_conn)
 		memcached_free(mem_conn);
 
 	if ((mem_conn = memcached_create(NULL)) == NULL)
 		zabbix_log(LOG_LEVEL_ERR, "memcached_create() == NULL");
 
-	mem_servers = memcached_servers_parse(servers ? servers : "localhost");
+	mem_servers = memcached_servers_parse(last_servers);
 	mem_rc = memcached_server_push(mem_conn, mem_servers);
 	memcached_server_list_free(mem_servers);
 
@@ -80,8 +86,14 @@ int memcache_zbx_getitem(char *key, char *host, DB_ITEM *item)
 		return 0;
 	}
 
-	zabbix_log(LOG_LEVEL_ERR, "[memcache] memcache_getitem(): ERR: %s",
-		memcached_strerror(mem_conn, rc));
+	if (rc == MEMCACHED_ERRNO) {
+		/* trying to reconnect */
+		if (last_servers)
+			memcache_zbx_connect (last_servers);
+	}
+	else
+		zabbix_log(LOG_LEVEL_ERR, "[memcache] memcache_getitem(): ERR: %s",
+			   memcached_strerror(mem_conn, rc));
 
 	return -1;
 }
@@ -114,6 +126,12 @@ int memcache_zbx_setitem(DB_ITEM *item)
 	if (rc == MEMCACHED_SUCCESS || rc == MEMCACHED_BUFFERED)
 		return 1;
 
+	if (rc == MEMCACHED_ERRNO) {
+		/* trying to reconnect */
+		if (last_servers)
+			memcache_zbx_connect (last_servers);
+	}
+
 	return -1;
 }
 
@@ -138,6 +156,12 @@ int memcache_zbx_delitem(DB_ITEM *item)
 	if (rc == MEMCACHED_SUCCESS || rc == MEMCACHED_BUFFERED)
 		return 1;
 
+	if (rc == MEMCACHED_ERRNO) {
+		/* trying to reconnect */
+		if (last_servers)
+			memcache_zbx_connect (last_servers);
+	}
+
 	return -1;
 }
 
@@ -147,10 +171,21 @@ int memcache_zbx_save_last (const char* key, void* value, int val_len, const cha
 {
 	static char buf[MAX_STRING_LEN];
 	char* p;
+	memcached_return rc;
 
 	memcpy (buf, value, val_len);
 	p = buffer_str (buf + val_len, stderr, sizeof (buf) - val_len);
-	memcached_set (mem_conn, key, strlen (key), &buf, p - buf, 0, 0);
+	rc = memcached_set (mem_conn, key, strlen (key), &buf, p - buf, 0, 0);
+	if (rc != MEMCACHED_SUCCESS && rc != MEMCACHED_BUFFERED) {
+		zabbix_log (LOG_LEVEL_ERR, "[memcache] Error saving last value %d (last servers = %s)", rc, last_servers);
+	}
+
+	if (rc == MEMCACHED_ERRNO) {
+		/* trying to reconnect */
+		if (last_servers)
+			memcache_zbx_connect (last_servers);
+	}
+
 	return 1;
 }
 
