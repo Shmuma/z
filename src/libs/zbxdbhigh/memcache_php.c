@@ -150,6 +150,8 @@ void memcache_zbx_reconnect (memsite_item_t* item)
 /* save value to memcache. Returns 0 if save failed, 1 otherise */
 int memcache_zbx_save_val (const char* key, void* value, int val_len)
 {
+	memcached_return rc;
+
 	if (!memsite)
 		return 0;
 

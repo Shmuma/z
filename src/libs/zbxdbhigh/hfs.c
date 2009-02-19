@@ -1857,12 +1857,12 @@ void HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, z
 	len = sizeof (item_value_dbl_t) + str_buffer_length (stderr);
 	buf = (char*)malloc (len);
 	
-	(item_value_dbl_t*)buf->lastclock = lastclock;
-	(item_value_dbl_t*)buf->nextcheck = nextcheck;
-	(item_value_dbl_t*)buf->kind = 0;
-	(item_value_dbl_t*)buf->prevvalue = prevvalue;
-	(item_value_dbl_t*)buf->lastvalue = lastvalue;
-	(item_value_dbl_t*)buf->prevorgvalue = prevorgvalue;
+	((item_value_dbl_t*)buf)->lastclock = lastclock;
+	((item_value_dbl_t*)buf)->nextcheck = nextcheck;
+	((item_value_dbl_t*)buf)->kind = 0;
+	((item_value_dbl_t*)buf)->prevvalue = prevvalue;
+	((item_value_dbl_t*)buf)->lastvalue = lastvalue;
+	((item_value_dbl_t*)buf)->prevorgvalue = prevorgvalue;
 	buffer_str (buf+sizeof (item_value_dbl_t), stderr, len-sizeof (item_value_dbl_t));
 
 	memcache_zbx_save_val (key, buf, len);
@@ -1912,12 +1912,12 @@ void HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, z
 	len = sizeof (item_value_int_t) + str_buffer_length (stderr);
 	buf = (char*)malloc (len);
 	
-	(item_value_int_t*)buf->lastclock = lastclock;
-	(item_value_int_t*)buf->nextcheck = nextcheck;
-	(item_value_int_t*)buf->kind = 0;
-	(item_value_int_t*)buf->prevvalue = prevvalue;
-	(item_value_int_t*)buf->lastvalue = lastvalue;
-	(item_value_int_t*)buf->prevorgvalue = prevorgvalue;
+	((item_value_int_t*)buf)->lastclock = lastclock;
+	((item_value_int_t*)buf)->nextcheck = nextcheck;
+	((item_value_int_t*)buf)->kind = 0;
+	((item_value_int_t*)buf)->prevvalue = prevvalue;
+	((item_value_int_t*)buf)->lastvalue = lastvalue;
+	((item_value_int_t*)buf)->prevorgvalue = prevorgvalue;
 	buffer_str (buf+sizeof (item_value_int_t), stderr, len-sizeof (item_value_int_t));
 
 	memcache_zbx_save_val (key, buf, len);
@@ -1965,8 +1965,8 @@ void HFS_update_item_values_str (const char* hfs_base_dir, const char* siteid, z
 	key = memcache_get_key (MKT_LAST_STRING, itemid);
 
 	/* make buffer */
-	len = sizeof (hfs_time_t)*2 + str_buffer_len (prevvalue) + 
-		str_buffer_len (lastvalue) + str_buffer_len (prevorgvalue) + str_buffer_len (stderr);
+	len = sizeof (hfs_time_t)*2 + str_buffer_length (prevvalue) + 
+		str_buffer_length (lastvalue) + str_buffer_length (prevorgvalue) + str_buffer_length (stderr);
 
 	buf = malloc (len);
 	if (!buf)
@@ -1974,21 +1974,21 @@ void HFS_update_item_values_str (const char* hfs_base_dir, const char* siteid, z
 
 	p = buf;
 	rest = len;
-	(hfs_time_t*)p[0] = lastclock;
-	(hfs_time_t*)p[1] = nextcheck;
+	((hfs_time_t*)p)[0] = lastclock;
+	((hfs_time_t*)p)[1] = nextcheck;
 	p += sizeof (hfs_time_t) * 2;
 	rest -= sizeof (hfs_time_t) * 2;
 
-	p = buffer_str (p, prevvalue, res);
-	rest -= str_buffer_len (prevvalue);
+	p = buffer_str (p, prevvalue, rest);
+	rest -= str_buffer_length (prevvalue);
 
-	p = buffer_str (p, lastvalue, res);
-	rest -= str_buffer_len (lastvalue);
+	p = buffer_str (p, lastvalue, rest);
+	rest -= str_buffer_length (lastvalue);
 
-	p = buffer_str (p, prevorgvalue, res);
-	rest -= str_buffer_len (prevorgvalue);
+	p = buffer_str (p, prevorgvalue, rest);
+	rest -= str_buffer_length (prevorgvalue);
 
-	p = buffer_str (p, stderr, res);
+	p = buffer_str (p, stderr, rest);
 	memcache_zbx_save_val (key, buf, len);
 #else
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
@@ -2023,7 +2023,7 @@ void HFS_update_item_values_str (const char* hfs_base_dir, const char* siteid, z
 	write_str (fd, stderr);
 
 	close (fd);
-#else
+#endif
 }
 
 
@@ -2050,11 +2050,11 @@ int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_u
 		return 0;
 	}
 
-	*lastclock = (item_value_dbl_t*)buf->lastclock;
-	*nextcheck = (item_value_dbl_t*)buf->nextcheck;
-	*prevvalue = (item_value_dbl_t*)buf->prevvalue;
-	*lastvalue = (item_value_dbl_t*)buf->lastvalue;
-	*prevorgvalue = (item_value_dbl_t*)buf->prevorgvalue;
+	*lastclock = ((item_value_dbl_t*)buf)->lastclock;
+	*nextcheck = ((item_value_dbl_t*)buf)->nextcheck;
+	*prevvalue = ((item_value_dbl_t*)buf)->prevvalue;
+	*lastvalue = ((item_value_dbl_t*)buf)->lastvalue;
+	*prevorgvalue = ((item_value_dbl_t*)buf)->prevorgvalue;
 	p = buf + sizeof (item_value_dbl_t);
 	*stderr = unbuffer_str (&p);
 	free (buf);
@@ -2123,11 +2123,11 @@ int HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_u
 		return 0;
 	}
 
-	*lastclock = (item_value_int_t*)buf->lastclock;
-	*nextcheck = (item_value_int_t*)buf->nextcheck;
-	*prevvalue = (item_value_int_t*)buf->prevvalue;
-	*lastvalue = (item_value_int_t*)buf->lastvalue;
-	*prevorgvalue = (item_value_int_t*)buf->prevorgvalue;
+	*lastclock = ((item_value_int_t*)buf)->lastclock;
+	*nextcheck = ((item_value_int_t*)buf)->nextcheck;
+	*prevvalue = ((item_value_int_t*)buf)->prevvalue;
+	*lastvalue = ((item_value_int_t*)buf)->lastvalue;
+	*prevorgvalue = ((item_value_int_t*)buf)->prevorgvalue;
 	p = buf + sizeof (item_value_int_t);
 	*stderr = unbuffer_str (&p);
 	free (buf);
@@ -2192,8 +2192,8 @@ int HFS_get_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_u
 		return 0;
 
 	p = buf;
-	*lastclock = (hfs_time_t*)p[0];
-	*nextcheck = (hfs_time_t*)p[1];
+	*lastclock = ((hfs_time_t*)p)[0];
+	*nextcheck = ((hfs_time_t*)p)[1];
 	p += sizeof (hfs_time_t)*2;
 	
 	*prevvalue = unbuffer_str (&p);
