@@ -1848,17 +1848,25 @@ void HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, z
 				 const char* stderr)
 {
 #ifdef HAVE_MEMCACHE	
-	static char key[128];
+	const char* key;
+	char* buf;
+	int len;
 	item_value_dbl_t val;
 
-	snprintf (key, sizeof (key), "l|d|" ZBX_FS_UI64, itemid);
-	val.lastclock = lastclock;
-	val.nextcheck = nextcheck;
-	val.kind = 0;
-	val.prevvalue = prevvalue;
-	val.lastvalue = lastvalue;
-	val.prevorgvalue = prevorgvalue;
-	memcache_zbx_save_last (key, &val, sizeof (val), stderr);
+	key = memcache_get_key (MKT_LAST_DOUBLE, itemid);
+	len = sizeof (item_value_dbl_t) + str_buffer_length (stderr);
+	buf = (char*)malloc (len);
+	
+	(item_value_dbl_t*)buf->lastclock = lastclock;
+	(item_value_dbl_t*)buf->nextcheck = nextcheck;
+	(item_value_dbl_t*)buf->kind = 0;
+	(item_value_dbl_t*)buf->prevvalue = prevvalue;
+	(item_value_dbl_t*)buf->lastvalue = lastvalue;
+	(item_value_dbl_t*)buf->prevorgvalue = prevorgvalue;
+	buffer_str (buf+sizeof (item_value_dbl_t), stderr, len-sizeof (item_value_dbl_t));
+
+	memcache_zbx_save_val (key, buf, len);
+	free (buf);
 #else
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd;
@@ -1895,18 +1903,25 @@ void HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, z
 				 zbx_uint64_t prevorgvalue, const char* stderr)
 {
 #ifdef HAVE_MEMCACHE	
-	static char key[128];
+	const char* key;
+	char* buf;
+	int len;
 	item_value_int_t val;
 
-	snprintf (key, sizeof (key), "l|i|" ZBX_FS_UI64, itemid);
+	key = memcache_get_key (MKT_LAST_UINT64, itemid);
+	len = sizeof (item_value_int_t) + str_buffer_length (stderr);
+	buf = (char*)malloc (len);
 	
-	val.lastclock = lastclock;
-	val.nextcheck = nextcheck;
-	val.kind = 0;
-	val.prevvalue = prevvalue;
-	val.lastvalue = lastvalue;
-	val.prevorgvalue = prevorgvalue;
-	memcache_zbx_save_last (key, &val, sizeof (val), stderr);
+	(item_value_int_t*)buf->lastclock = lastclock;
+	(item_value_int_t*)buf->nextcheck = nextcheck;
+	(item_value_int_t*)buf->kind = 0;
+	(item_value_int_t*)buf->prevvalue = prevvalue;
+	(item_value_int_t*)buf->lastvalue = lastvalue;
+	(item_value_int_t*)buf->prevorgvalue = prevorgvalue;
+	buffer_str (buf+sizeof (item_value_int_t), stderr, len-sizeof (item_value_int_t));
+
+	memcache_zbx_save_val (key, buf, len);
+	free (buf);
 #else
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd;
@@ -1942,6 +1957,40 @@ void HFS_update_item_values_str (const char* hfs_base_dir, const char* siteid, z
 				 hfs_time_t lastclock, hfs_time_t nextcheck, const char* prevvalue, const char* lastvalue, 
 				 const char* prevorgvalue, const char* stderr)
 {
+#ifdef HAVE_MEMCACHE	
+	const char* key;
+	int len, rest;
+	char *buf, *p;
+
+	key = memcache_get_key (MKT_LAST_STRING, itemid);
+
+	/* make buffer */
+	len = sizeof (hfs_time_t)*2 + str_buffer_len (prevvalue) + 
+		str_buffer_len (lastvalue) + str_buffer_len (prevorgvalue) + str_buffer_len (stderr);
+
+	buf = malloc (len);
+	if (!buf)
+		return;
+
+	p = buf;
+	rest = len;
+	(hfs_time_t*)p[0] = lastclock;
+	(hfs_time_t*)p[1] = nextcheck;
+	p += sizeof (hfs_time_t) * 2;
+	rest -= sizeof (hfs_time_t) * 2;
+
+	p = buffer_str (p, prevvalue, res);
+	rest -= str_buffer_len (prevvalue);
+
+	p = buffer_str (p, lastvalue, res);
+	rest -= str_buffer_len (lastvalue);
+
+	p = buffer_str (p, prevorgvalue, res);
+	rest -= str_buffer_len (prevorgvalue);
+
+	p = buffer_str (p, stderr, res);
+	memcache_zbx_save_val (key, buf, len);
+#else
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd, kind;
 
@@ -1974,6 +2023,7 @@ void HFS_update_item_values_str (const char* hfs_base_dir, const char* siteid, z
 	write_str (fd, stderr);
 
 	close (fd);
+#else
 }
 
 
@@ -1983,17 +2033,31 @@ int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_u
 {
 #ifdef HAVE_MEMCACHE
 	const char* key;
+	char* buf, *p;
+	int len;
 	item_value_dbl_t val;
 
 	key = memcache_get_key (MKT_LAST_DOUBLE, itemid);
-	if (!key || !memcache_zbx_read_last (siteid, key, &val, sizeof (val), &stderr))
+	if (!key)
 		return 0;
 
-	*lastclock = val.lastclock;
-	*nextcheck = val.nextcheck;
-	*prevvalue = val.prevvalue;
-	*lastvalue = val.lastvalue;
-	*prevorgvalue = val.prevorgvalue;
+	buf = memcache_zbx_read_val (siteid, key, &len);
+	if (!buf)
+		return 0;
+
+	if (len < sizeof (item_value_dbl_t)) {
+		free (buf);
+		return 0;
+	}
+
+	*lastclock = (item_value_dbl_t*)buf->lastclock;
+	*nextcheck = (item_value_dbl_t*)buf->nextcheck;
+	*prevvalue = (item_value_dbl_t*)buf->prevvalue;
+	*lastvalue = (item_value_dbl_t*)buf->lastvalue;
+	*prevorgvalue = (item_value_dbl_t*)buf->prevorgvalue;
+	p = buf + sizeof (item_value_dbl_t);
+	*stderr = unbuffer_str (&p);
+	free (buf);
 	return 1;
 #else
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
@@ -2042,17 +2106,31 @@ int HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_u
 {
 #ifdef HAVE_MEMCACHE
 	const char* key;
+	char* buf, *p;
+	int len;
 	item_value_int_t val;
 
 	key = memcache_get_key (MKT_LAST_UINT64, itemid);
-	if (!key || !memcache_zbx_read_last (siteid, key, &val, sizeof (val), &stderr))
+	if (!key)
 		return 0;
 
-	*lastclock = val.lastclock;
-	*nextcheck = val.nextcheck;
-	*prevvalue = val.prevvalue;
-	*lastvalue = val.lastvalue;
-	*prevorgvalue = val.prevorgvalue;
+	buf = memcache_zbx_read_val (siteid, key, &len);
+	if (!buf)
+		return 0;
+
+	if (len < sizeof (item_value_int_t)) {
+		free (buf);
+		return 0;
+	}
+
+	*lastclock = (item_value_int_t*)buf->lastclock;
+	*nextcheck = (item_value_int_t*)buf->nextcheck;
+	*prevvalue = (item_value_int_t*)buf->prevvalue;
+	*lastvalue = (item_value_int_t*)buf->lastvalue;
+	*prevorgvalue = (item_value_int_t*)buf->prevorgvalue;
+	p = buf + sizeof (item_value_int_t);
+	*stderr = unbuffer_str (&p);
+	free (buf);
 	return 1;
 #else
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
@@ -2100,6 +2178,31 @@ int HFS_get_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_u
 			     hfs_time_t* lastclock, hfs_time_t* nextcheck, char** prevvalue, char** lastvalue, 
 			     char** prevorgvalue, char** stderr)
 {
+#ifdef HAVE_MEMCACHE
+	const char* key;
+	char *buf, *p;
+	int len;
+
+	key = memcache_get_key (MKT_LAST_STRING, itemid);
+	if (!key)
+		return 0;
+
+	buf = memcache_zbx_read_val (siteid, key, &len);
+	if (!buf)
+		return 0;
+
+	p = buf;
+	*lastclock = (hfs_time_t*)p[0];
+	*nextcheck = (hfs_time_t*)p[1];
+	p += sizeof (hfs_time_t)*2;
+	
+	*prevvalue = unbuffer_str (&p);
+	*lastvalue = unbuffer_str (&p);
+	*prevorgvalue = unbuffer_str (&p);
+	*stderr = unbuffer_str (&p);
+	free (buf);
+	return 1;
+#else
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd, kind;
 
@@ -2135,6 +2238,7 @@ int HFS_get_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_u
 	close (fd);
 
 	return 1;
+#endif
 }
 
 
