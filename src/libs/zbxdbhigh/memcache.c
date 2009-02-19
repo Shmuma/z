@@ -4,57 +4,11 @@
 #include "log.h"
 #include "hfs.h"
 #include "memcache.h"
+#include "memcache_php.h"
 
 #include <string.h>
 #include <errno.h>
 
-
-memcached_st *mem_conn = NULL;
-static char* last_servers = NULL;
-
-
-
-int memcache_zbx_connect(const char* servers)
-{
-	memcached_server_st	*mem_servers;
-	memcached_return	 mem_rc;
-
-	if (servers)
-		last_servers = strdup (servers);
-	if (!last_servers)
-		last_servers = "localhost";
-
-	if (mem_conn)
-		memcached_free(mem_conn);
-
-	if ((mem_conn = memcached_create(NULL)) == NULL)
-		zabbix_log(LOG_LEVEL_ERR, "memcached_create() == NULL");
-
-	mem_servers = memcached_servers_parse(last_servers);
-	mem_rc = memcached_server_push(mem_conn, mem_servers);
-	memcached_server_list_free(mem_servers);
-
-	if (mem_rc != MEMCACHED_SUCCESS) {
-		zabbix_log(LOG_LEVEL_ERR, "memcached_server_push(): %s",
-			   memcached_strerror(mem_conn, mem_rc));
-		memcached_free(mem_conn);
-		mem_conn = NULL;
-		return -1;
-	}
-
-	memcached_behavior_set(mem_conn, MEMCACHED_BEHAVIOR_NO_BLOCK, 1);
-	memcached_behavior_set(mem_conn, MEMCACHED_BEHAVIOR_CACHE_LOOKUPS, 1);
-
-	zabbix_log(LOG_LEVEL_DEBUG, "Connect with memcached done");
-	return 0;
-}
-
-int memcache_zbx_disconnect(void)
-{
-	if (mem_conn != NULL)
-		memcached_free(mem_conn);
-	return 0;
-}
 
 int memcache_zbx_getitem(char *key, char *host, DB_ITEM *item)
 {
@@ -62,6 +16,9 @@ int memcache_zbx_getitem(char *key, char *host, DB_ITEM *item)
 	uint32_t flags;
 	memcached_return rc;
 	size_t len, item_len;
+
+	if (!memsite)
+		return 0;
 
 	len = strlen(key) + strlen(host) + 5 + 1;
 
@@ -72,7 +29,7 @@ int memcache_zbx_getitem(char *key, char *host, DB_ITEM *item)
 	zabbix_log(LOG_LEVEL_DEBUG, "[memcache] memcache_getitem()"
 		    "[%s|%s]", key, host);
 
-	strvalue = memcached_get(mem_conn, strkey, len, &item_len, &flags, &rc);
+	strvalue = memcached_get(memsite->conn, strkey, len, &item_len, &flags, &rc);
 	free(strkey);
 
 	if (rc == MEMCACHED_SUCCESS) {
@@ -86,14 +43,11 @@ int memcache_zbx_getitem(char *key, char *host, DB_ITEM *item)
 		return 0;
 	}
 
-	if (rc == MEMCACHED_ERRNO) {
-		/* trying to reconnect */
-		if (last_servers)
-			memcache_zbx_connect (last_servers);
-	}
+	if (rc == MEMCACHED_ERRNO)
+		memcache_zbx_reconnect (memsite);
 	else
 		zabbix_log(LOG_LEVEL_ERR, "[memcache] memcache_getitem(): ERR: %s",
-			   memcached_strerror(mem_conn, rc));
+			   memcached_strerror(memsite->conn, rc));
 
 	return -1;
 }
@@ -103,6 +57,9 @@ int memcache_zbx_setitem(DB_ITEM *item)
 	char *strkey = NULL;
 	memcached_return rc;
 	size_t len, item_len;
+
+	if (!memsite)
+		return -1;
 
 	len = strlen(item->key) + strlen(item->host_name) + 5 + 1;
 
@@ -118,7 +75,7 @@ int memcache_zbx_setitem(DB_ITEM *item)
 	item_len = dbitem_size(item, 0);
 	dbitem_serialize(item, item_len);
 
-	rc = memcached_set(mem_conn, strkey, (len-1), item->chars, item_len,
+	rc = memcached_set(memsite->conn, strkey, (len-1), item->chars, item_len,
 			    (time_t)(CONFIG_MEMCACHE_ITEMS_TTL * 2),
 			    (uint32_t)0);
 	free(strkey);
@@ -128,8 +85,7 @@ int memcache_zbx_setitem(DB_ITEM *item)
 
 	if (rc == MEMCACHED_ERRNO) {
 		/* trying to reconnect */
-		if (last_servers)
-			memcache_zbx_connect (last_servers);
+		memcache_zbx_reconnect (memsite);
 	}
 
 	return -1;
@@ -141,6 +97,9 @@ int memcache_zbx_delitem(DB_ITEM *item)
 	memcached_return rc;
 	size_t len, item_len;
 
+	if (!memsite)
+		return -1;
+
 	len = strlen(item->key) + strlen(item->host_name) + 5 + 1;
 
 	strkey = (char *) zbx_malloc(strkey, len);
@@ -150,17 +109,14 @@ int memcache_zbx_delitem(DB_ITEM *item)
 	zabbix_log(LOG_LEVEL_DEBUG, "[memcache] memcache_delitem()"
 		    "[%d|%d|%s|%s]", process_type, MEMCACHE_VERSION, item->key, item->host_name);
 
-	rc = memcached_delete(mem_conn, strkey, (len-1), 0);
+	rc = memcached_delete(memsite->conn, strkey, (len-1), 0);
 	free(strkey);
 
 	if (rc == MEMCACHED_SUCCESS || rc == MEMCACHED_BUFFERED)
 		return 1;
 
-	if (rc == MEMCACHED_ERRNO) {
-		/* trying to reconnect */
-		if (last_servers)
-			memcache_zbx_connect (last_servers);
-	}
+	if (rc == MEMCACHED_ERRNO)
+		memcache_zbx_reconnect (memsite);
 
 	return -1;
 }
@@ -173,17 +129,19 @@ int memcache_zbx_save_last (const char* key, void* value, int val_len, const cha
 	char* p;
 	memcached_return rc;
 
+	if (!memsite)
+		return 0;
+
 	memcpy (buf, value, val_len);
 	p = buffer_str (buf + val_len, stderr, sizeof (buf) - val_len);
-	rc = memcached_set (mem_conn, key, strlen (key), &buf, p - buf, 0, 0);
+	rc = memcached_set (memsite->conn, key, strlen (key), &buf, p - buf, 0, 0);
 	if (rc != MEMCACHED_SUCCESS && rc != MEMCACHED_BUFFERED) {
-		zabbix_log (LOG_LEVEL_ERR, "[memcache] Error saving last value %d (last servers = %s)", rc, last_servers);
+		zabbix_log (LOG_LEVEL_ERR, "[memcache] Error saving last value %d", rc);
 	}
 
 	if (rc == MEMCACHED_ERRNO) {
 		/* trying to reconnect */
-		if (last_servers)
-			memcache_zbx_connect (last_servers);
+		memcache_zbx_reconnect (memsite);
 	}
 
 	return 1;

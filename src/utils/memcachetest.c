@@ -5,6 +5,7 @@
 #include "config.h"
 #include "common.h"
 #include "memcache.h"
+#include "memcache_php.h"
 
 char *item_key = NULL;
 char *item_host_name = NULL;
@@ -59,7 +60,7 @@ int main(int argc, char **argv) {
 	}
 
 	printf("Setting item into server...");
-	rc = memcached_set(mem_conn, strkey, len, item_value, strlen(item_value),
+	rc = memcached_set(memsite->conn, strkey, len, item_value, strlen(item_value),
 			    (time_t)(CONFIG_MEMCACHE_ITEMS_TTL * 2),
 			    (uint32_t)0);
 
@@ -72,7 +73,7 @@ int main(int argc, char **argv) {
 	}
 
 	printf("Getting item from server...");
-	strvalue = memcached_get(mem_conn, strkey, (len-1), &item_len, &flags, &rc);
+	strvalue = memcached_get(memsite->conn, strkey, (len-1), &item_len, &flags, &rc);
 
 	if (rc == MEMCACHED_SUCCESS) {
 		if (!item_len) {
@@ -90,7 +91,7 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 	else {
-		printf("error: %s\n", memcached_strerror(mem_conn, rc));
+		printf("error: %s\n", memcached_strerror(memsite->conn, rc));
 		free(strvalue);
 	}
 
