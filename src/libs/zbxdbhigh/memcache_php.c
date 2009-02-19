@@ -147,19 +147,15 @@ void memcache_zbx_reconnect (memsite_item_t* item)
 }
 
 
-
-int memcache_zbx_save_last (const char* key, void* value, int val_len, const char* stderr)
+/* save value to memcache. Returns 0 if save failed, 1 otherise */
+int memcache_zbx_save_val (const char* key, void* value, int val_len)
 {
-	static char buf[MAX_STRING_LEN];
-	char* p;
 	memcached_return rc;
 
 	if (!memsite)
 		return 0;
 
-	memcpy (buf, value, val_len);
-	p = buffer_str (buf + val_len, stderr, sizeof (buf) - val_len);
-	rc = memcached_set (memsite->conn, key, strlen (key), &buf, p - buf, 0, 0);
+	rc = memcached_set (memsite->conn, key, strlen (key), value, val_len, 0, 0);
 	if (rc == MEMCACHED_ERRNO) {
 		/* trying to reconnect */
 		memcache_zbx_reconnect (memsite);
@@ -173,36 +169,28 @@ int memcache_zbx_save_last (const char* key, void* value, int val_len, const cha
 
 
 
-int memcache_zbx_read_last (const char* site, const char* key, void* value, int val_len, char** stderr)
+/* fetch value from memcache. Return NULL if fetch failed. Return value must bee freed */
+void* memcache_zbx_read_val (const char* site, const char* key, int* val_len)
 {
-	char *p, *pp;
+	char *p;
 	int len, flags;
 	memcached_return rc;
 	memsite_item_t* conn;
 
 	if ((conn = memcache_zbx_site_lookup (site)) == NULL)
-		return 0;
+		return NULL;
 
-	pp = p = memcached_get (conn->conn, key, strlen (key), &len, &flags, &rc);
+	p = memcached_get (conn->conn, key, strlen (key), val_len, &flags, &rc);
 
 	if (rc == MEMCACHED_ERRNO) {
 		memcache_zbx_reconnect (conn);
-		return 0;
+		return NULL;
 	}
 
 	if (rc != MEMCACHED_SUCCESS)
-		return 0;
-	
-	if (len < val_len) {
-		free (p);
-		return 0;
-	}
+		return NULL;
 
-	memcpy (value, p, val_len);
-	pp += val_len;
-	*stderr = unbuffer_str (&pp);
-	free (p);
-	return 1;
+	return p;
 }
 
 
@@ -216,6 +204,9 @@ const char* memcache_get_key (memcache_key_type_t type, zbx_uint64_t itemid)
 		break;
 	case MKT_LAST_DOUBLE:
 		snprintf (buf, sizeof (buf), "l|d|" ZBX_FS_UI64, itemid);
+		break;
+	case MKT_LAST_STRING:
+		snprintf (buf, sizeof (buf), "l|s|" ZBX_FS_UI64, itemid);
 		break;
 	default:
 		return NULL;
