@@ -9,6 +9,6 @@ if test "$PHP_ZABBIX" != "no"; then
   #PHP_SUBST(shared_objects_zabbix)
   
   PHP_NEW_EXTENSION(zabbix, php_zabbix.c hfs.c memcache_php.c, $ext_shared,,-DZABBIX_PHP_MODULE=1)
-  ZABBIX_SHARED_LIBADD=-lmemcached
+  ZABBIX_SHARED_LIBADD="-lmemcached -lrt"
   PHP_SUBST(ZABBIX_SHARED_LIBADD)
 fi

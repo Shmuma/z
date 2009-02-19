@@ -122,28 +122,3 @@ int memcache_zbx_delitem(DB_ITEM *item)
 }
 
 
-
-int memcache_zbx_save_last (const char* key, void* value, int val_len, const char* stderr)
-{
-	static char buf[MAX_STRING_LEN];
-	char* p;
-	memcached_return rc;
-
-	if (!memsite)
-		return 0;
-
-	memcpy (buf, value, val_len);
-	p = buffer_str (buf + val_len, stderr, sizeof (buf) - val_len);
-	rc = memcached_set (memsite->conn, key, strlen (key), &buf, p - buf, 0, 0);
-	if (rc != MEMCACHED_SUCCESS && rc != MEMCACHED_BUFFERED) {
-		zabbix_log (LOG_LEVEL_ERR, "[memcache] Error saving last value %d", rc);
-	}
-
-	if (rc == MEMCACHED_ERRNO) {
-		/* trying to reconnect */
-		memcache_zbx_reconnect (memsite);
-	}
-
-	return 1;
-}
-
