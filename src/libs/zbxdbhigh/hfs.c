@@ -1851,7 +1851,7 @@ void HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, z
 	static char key[128];
 	item_value_dbl_t val;
 
-	zbx_snprintf (key, sizeof (key), "l|d|" ZBX_FS_UI64, itemid);
+	snprintf (key, sizeof (key), "l|d|" ZBX_FS_UI64, itemid);
 	val.lastclock = lastclock;
 	val.nextcheck = nextcheck;
 	val.kind = 0;
@@ -1898,7 +1898,7 @@ void HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, z
 	static char key[128];
 	item_value_int_t val;
 
-	zbx_snprintf (key, sizeof (key), "l|i|" ZBX_FS_UI64, itemid);
+	snprintf (key, sizeof (key), "l|i|" ZBX_FS_UI64, itemid);
 	
 	val.lastclock = lastclock;
 	val.nextcheck = nextcheck;
