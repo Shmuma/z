@@ -18,6 +18,7 @@ memsite_item_t* memsite;
 /* routine prepares table for memcache connections */
 int memcache_zbx_prepare_conn_table (const char* table)
 {
+	char *new_table;
 	char *p, *pp;
 	char* site;
 	char buf[256];
@@ -26,10 +27,11 @@ int memcache_zbx_prepare_conn_table (const char* table)
 	if (memsite)
 		return 1;
 
+	new_table = strdup (table);
 	memsite = NULL;
 
 	/* parse table */
-	p = table;
+	p = new_table;
 	while (p && *p) {
 		pp = strchr (p, ',');
 
@@ -60,6 +62,51 @@ int memcache_zbx_prepare_conn_table (const char* table)
 	memsite = (memsite_item_t*)realloc (memsite, (count+1)*sizeof (memsite_item_t));
 	memsite[count].site = NULL;
 	memsite[count].conn = NULL;
+	free (new_table);
+	return 1;
+}
+
+
+int memcache_zbx_connect(const char* servers)
+{
+	memcached_server_st	*mem_servers;
+	memcached_return	 mem_rc;
+	char* srv;
+
+	if (!servers)
+		srv = "localhost";
+
+	if (memsite)
+		return 1;
+
+	memsite = (memsite_item_t*)calloc (1, sizeof (memsite_item_t));
+
+	memsite->conn = memcached_create(NULL);
+	memsite->server = strdup (srv);
+	mem_servers = memcached_servers_parse(srv);
+	mem_rc = memcached_server_push(memsite->conn, mem_servers);
+	memcached_server_list_free(mem_servers);
+
+	if (mem_rc != MEMCACHED_SUCCESS) {
+		memcached_free(memsite->conn);
+		free (memsite);
+		memsite = NULL;
+		return 0;
+	}
+
+	memcached_behavior_set(memsite->conn, MEMCACHED_BEHAVIOR_NO_BLOCK, 1);
+	memcached_behavior_set(memsite->conn, MEMCACHED_BEHAVIOR_CACHE_LOOKUPS, 1);
+	return 1;
+}
+
+
+int memcache_zbx_disconnect(void)
+{
+	if (memsite && memsite->conn) {
+		memcached_free(memsite->conn);
+		free (memsite->server);
+		free (memsite);
+	}
 	return 1;
 }
 
@@ -70,6 +117,9 @@ memsite_item_t* memcache_zbx_site_lookup (const char* site)
 
 	if (!memsite)
 		return NULL;
+
+	if (!memsite->site && memsite->server)
+		return memsite;
 
 	while (memsite[i].site) {
 		if (!strcmp (site, memsite[i].site))

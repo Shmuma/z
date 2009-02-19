@@ -301,6 +301,9 @@ int	process_data(int history, hfs_time_t ts, char *server,char *key,char *value,
 	DB_ROW	row;
 	DB_ITEM	item;
 
+	if (!strcmp (key, "system.cpu.load[,avg1]"))
+		zabbix_log (LOG_LEVEL_WARNING, "Load average value!");
+
 #ifdef HAVE_MEMCACHE
 	int	in_cache = 0;
 #endif
