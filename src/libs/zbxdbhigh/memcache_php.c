@@ -20,7 +20,6 @@ int memcache_zbx_prepare_conn_table (const char* table)
 {
 	char *new_table;
 	char *p, *pp;
-	char* site;
 	char buf[256];
 	int count = 0;
 
@@ -161,14 +160,13 @@ int memcache_zbx_save_last (const char* key, void* value, int val_len, const cha
 	memcpy (buf, value, val_len);
 	p = buffer_str (buf + val_len, stderr, sizeof (buf) - val_len);
 	rc = memcached_set (memsite->conn, key, strlen (key), &buf, p - buf, 0, 0);
-	if (rc != MEMCACHED_SUCCESS && rc != MEMCACHED_BUFFERED) {
-		zabbix_log (LOG_LEVEL_ERR, "[memcache] Error saving last value %d", rc);
-	}
-
 	if (rc == MEMCACHED_ERRNO) {
 		/* trying to reconnect */
 		memcache_zbx_reconnect (memsite);
 	}
+
+	if (rc != MEMCACHED_SUCCESS && rc != MEMCACHED_BUFFERED)
+		return 0;
 
 	return 1;
 }
