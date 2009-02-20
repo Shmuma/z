@@ -2034,7 +2034,7 @@ int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_u
 #ifdef HAVE_MEMCACHE
 	const char* key;
 	char* buf, *p;
-	int len;
+	size_t len;
 	item_value_dbl_t val;
 
 	key = memcache_get_key (MKT_LAST_DOUBLE, itemid);
@@ -2107,7 +2107,7 @@ int HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_u
 #ifdef HAVE_MEMCACHE
 	const char* key;
 	char* buf, *p;
-	int len;
+	size_t len;
 	item_value_int_t val;
 
 	key = memcache_get_key (MKT_LAST_UINT64, itemid);
@@ -2181,7 +2181,7 @@ int HFS_get_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_u
 #ifdef HAVE_MEMCACHE
 	const char* key;
 	char *buf, *p;
-	int len;
+	size_t len;
 
 	key = memcache_get_key (MKT_LAST_STRING, itemid);
 	if (!key)

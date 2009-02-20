@@ -172,7 +172,7 @@ int memcache_zbx_save_val (const char* key, void* value, int val_len)
 
 
 /* fetch value from memcache. Return NULL if fetch failed. Return value must bee freed */
-void* memcache_zbx_read_val (const char* site, const char* key, int* val_len)
+void* memcache_zbx_read_val (const char* site, const char* key, size_t* val_len)
 {
 	char *p;
 	int len, flags;
