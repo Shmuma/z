@@ -2918,7 +2918,7 @@ double		HFS_get_item_last_dbl (const char* hfs_base_dir, const char* siteid, zbx
 	hfs_time_t lastclock, nextcheck;
 	double prev, last, prevorg, res = 0.0;
 	char* stderr = NULL;
-	if (HFS_get_item_values_dbl (hfs_base_dir, siteid, itemid, &prev, &last, &prevorg, &stderr))
+	if (HFS_get_item_values_dbl (hfs_base_dir, siteid, itemid, &lastclock, &nextcheck, &prev, &last, &prevorg, &stderr))
 		res = last;
 	if (stderr)
 		free (stderr);
@@ -2955,7 +2955,7 @@ zbx_uint64_t	HFS_get_item_last_int (const char* hfs_base_dir, const char* siteid
 	hfs_time_t lastclock, nextcheck;
 	zbx_uint64_t prev, last, prevorg, res = 0;
 	char* stderr = NULL;
-	if (HFS_get_item_values_int (hfs_base_dir, siteid, itemid, &prev, &last, &prevorg, &stderr))
+	if (HFS_get_item_values_int (hfs_base_dir, siteid, itemid, &lastclock, &nextcheck, &prev, &last, &prevorg, &stderr))
 		res = last;
 	if (stderr)
 		free (stderr);
