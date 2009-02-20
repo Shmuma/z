@@ -2914,6 +2914,16 @@ void HFS_clear_item_history (const char* hfs_path, const char* siteid, zbx_uint6
 /* optimized routines which get latest values */
 double		HFS_get_item_last_dbl (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid)
 {
+#ifdef HAVE_MEMCACHE
+	hfs_time_t lastclock, nextcheck;
+	double prev, last, prevorg, res = 0.0;
+	char* stderr = NULL;
+	if (HFS_get_item_values_dbl (hfs_base_dir, siteid, itemid, &prev, &last, &prevorg, &stderr))
+		res = last;
+	if (stderr)
+		free (stderr);
+	return res;
+#else
     char *p_data;
     int fd;
     hfs_off_t ofs;
@@ -2935,11 +2945,22 @@ double		HFS_get_item_last_dbl (const char* hfs_base_dir, const char* siteid, zbx
     close (fd);
 
     return res;
+#endif
 }
 
 
 zbx_uint64_t	HFS_get_item_last_int (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid)
 {
+#ifdef HAVE_MEMCACHE
+	hfs_time_t lastclock, nextcheck;
+	zbx_uint64_t prev, last, prevorg, res = 0;
+	char* stderr = NULL;
+	if (HFS_get_item_values_int (hfs_base_dir, siteid, itemid, &prev, &last, &prevorg, &stderr))
+		res = last;
+	if (stderr)
+		free (stderr);
+	return res;
+#else
     char *p_data;
     int fd;
     hfs_off_t ofs;
@@ -2961,6 +2982,7 @@ zbx_uint64_t	HFS_get_item_last_int (const char* hfs_base_dir, const char* siteid
     close (fd);
 
     return res;
+#endif
 }
 
 
