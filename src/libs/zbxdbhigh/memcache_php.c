@@ -74,6 +74,8 @@ int memcache_zbx_connect(const char* servers)
 
 	if (!servers)
 		srv = "localhost";
+	else
+		srv = servers;
 
 	if (memsite)
 		return 1;
