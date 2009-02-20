@@ -591,7 +591,7 @@ void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
 		    if (!count)
 			    break;
 		    for (i = 0; i < count; i++)
-			    if (is_valid_val (value[i], sizeof (value[i])))
+			    if (is_valid_val (value+i, sizeof (value[i])))
 				    fn (value+i, init_res);
 	    }
     }
