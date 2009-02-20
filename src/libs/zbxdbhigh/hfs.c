@@ -558,8 +558,8 @@ void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
     char *p_data;
     hfs_meta_t* meta;
     hfs_off_t ofs;
-    int fd;
-    zbx_uint64_t value;
+    int fd, count, i;
+    zbx_uint64_t value[128];
 
     zabbix_log(LOG_LEVEL_DEBUG, "HFS_foldl_time (%s, %llu, %lld)", hfs_base_dir, itemid, ts);
 
@@ -582,23 +582,21 @@ void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
     }
     free (p_data);
 
-/*     if (!obtain_lock (fd, 0)) { */
-/*         close (fd); */
-/*         free_meta (meta); */
-/*         return; */
-/*     } */
-
     ofs = find_meta_ofs (ts, meta, NULL);
 
     if (ofs != -1) {
 	    lseek (fd, ofs, SEEK_SET);
-	    while (read (fd, &value, sizeof (value)) > 0)
-		    if (is_valid_val (&value, sizeof (value)))
-			    fn (&value, init_res);
+	    while (1) {
+		    count = read (fd, value, sizeof (value)) / sizeof (value[0]);
+		    if (!count)
+			    break;
+		    for (i = 0; i < count; i++)
+			    if (is_valid_val (value[i], sizeof (value[i])))
+				    fn (value+i, init_res);
+	    }
     }
 
     free_meta (meta);
-/*     release_lock (fd, 0); */
     close (fd);
 }
 
@@ -630,11 +628,6 @@ void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t ite
 
     if (fd < 0)
         return;
-
-/*     if (!obtain_lock (fd, 0)) { */
-/*         close (fd); */
-/*         return; */
-/*     } */
 
     ofs = lseek (fd, 0, SEEK_END);
 
