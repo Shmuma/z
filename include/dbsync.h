@@ -358,6 +358,7 @@ static	ZBX_TABLE	tables[]={
 		{"operationtype",	ZBX_TYPE_INT,	ZBX_SYNC},
 		{"object",	ZBX_TYPE_INT,	ZBX_SYNC},
 		{"objectid",	ZBX_TYPE_ID,	ZBX_SYNC},
+		{"shortarg",	ZBX_TYPE_CHAR,	ZBX_SYNC},
 		{"shortdata",	ZBX_TYPE_CHAR,	ZBX_SYNC},
 		{"longdata",	ZBX_TYPE_BLOB,	ZBX_SYNC},
 		{0}

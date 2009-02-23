@@ -1014,16 +1014,17 @@ Replicate2MySQL.RunSQL
 end;
 /
 show errors
-create or replace function zabbix.ins_operations (operationid in number,actionid in number,operationtype in number,object in number,objectid in number,shortdata in varchar2,longdata in varchar2) return varchar2
+create or replace function zabbix.ins_operations (operationid in number,actionid in number,operationtype in number,object in number,objectid in number,shortarg in varchar2,shortdata in varchar2,longdata in varchar2) return varchar2
 is
 begin
 return
-'insert into operations (operationid,actionid,operationtype,object,objectid,shortdata,longdata) values ('
+'insert into operations (operationid,actionid,operationtype,object,objectid,shortarg,shortdata,longdata) values ('
 ||Nvl(To_Char(operationid),'null')||','
 ||Nvl(To_Char(actionid),'null')||','
 ||Nvl(To_Char(operationtype),'null')||','
 ||Nvl(To_Char(object),'null')||','
 ||Nvl(To_Char(objectid),'null')||','
+||''''||Replace(shortarg,'''','''''')||''''||','
 ||''''||Replace(shortdata,'''','''''')||''''||','
 ||''''||Replace(longdata,'''','''''')||''''
 ||')';
@@ -1034,7 +1035,7 @@ create or replace trigger zabbix.trai_operations after insert on zabbix.operatio
 begin
 Replicate2MySQL.RunSQL
 (
-zabbix.ins_operations (:new.operationid,:new.actionid,:new.operationtype,:new.object,:new.objectid,:new.shortdata,:new.longdata)
+zabbix.ins_operations (:new.operationid,:new.actionid,:new.operationtype,:new.object,:new.objectid,:new.shortarg,:new.shortdata,:new.longdata)
 );
 end;
 /
@@ -1049,6 +1050,7 @@ Replicate2MySQL.RunSQL
 ||' operationtype='||Nvl(To_Char(:new.operationtype),'null')||','
 ||' object='||Nvl(To_Char(:new.object),'null')||','
 ||' objectid='||Nvl(To_Char(:new.objectid),'null')||','
+||' shortarg='''||Replace(:new.shortarg,'''','''''')||''''||','
 ||' shortdata='''||Replace(:new.shortdata,'''','''''')||''''||','
 ||' longdata='''||Replace(:new.longdata,'''','''''')||'''' || ' where  operationid='||:old.operationid );
 end;

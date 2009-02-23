@@ -329,6 +329,7 @@ CREATE TABLE operations (
 	operationtype		integer		DEFAULT '0'	NOT NULL,
 	object		integer		DEFAULT '0'	NOT NULL,
 	objectid		bigint		DEFAULT '0'	NOT NULL,
+	shortarg		varchar(255)		DEFAULT ''	NOT NULL,
 	shortdata		varchar(255)		DEFAULT ''	NOT NULL,
 	longdata		text		DEFAULT ''	NOT NULL,
 	PRIMARY KEY (operationid)
