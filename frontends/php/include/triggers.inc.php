@@ -1844,6 +1844,7 @@
 
 		// get rid of warnings about $triggers undefined
 		$triggers = array();
+		$sites = array();
 		while($row = DBfetch($result))
 		{
 			if (is_array ($hfs_triggers))
@@ -1852,10 +1853,10 @@
 					$row["lastchange"] = $hfs_triggers[$row["triggerid"]]->when;
 				}
 
-			$row['host'] = get_node_name_by_elid($row['hostid']).$row['host'];
 			$row['description'] = expand_trigger_description_constants($row['description'], $row);
 
 			$hosts[$row['host']] = $row['host'];
+			$sites[$row['host']] = $row['siteid'];
 
 			// A little tricky check for attempt to overwite active trigger (value=1) with
 			// inactive or active trigger with lower priority.
@@ -1892,6 +1893,8 @@
 				$name = $reg[1];
 			else
 				$name = $hostname;
+			if ($USER_DETAILS["options"]["show_site_in_overview"])
+				$name .= ": ".$sites[$hostname];
 			$header=array_merge($header,array(new CImg('vtext.php?text='.$name)));
 		}
 		$table->SetHeader($header,'vertical_header');
