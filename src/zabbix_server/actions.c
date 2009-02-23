@@ -698,7 +698,7 @@ void	execute_operations(DB_EVENT *event, DB_ACTION *action)
 	zabbix_log( LOG_LEVEL_DEBUG, "In execute_operations(actionid:" ZBX_FS_UI64 ")",
 		action->actionid);
 
-	result = DBselect("select operationid,actionid,operationtype,object,objectid,shortdata,longdata from operations where actionid=" ZBX_FS_UI64,
+	result = DBselect("select operationid,actionid,operationtype,object,objectid,objectarg,shortdata,longdata from operations where actionid=" ZBX_FS_UI64,
 			action->actionid);
 	while((row=DBfetch(result)))
 	{
@@ -708,8 +708,9 @@ void	execute_operations(DB_EVENT *event, DB_ACTION *action)
 		operation.object			= atoi(row[3]);
 		ZBX_STR2UINT64(operation.objectid,	row[4]);
 
-		operation.shortdata		= strdup(row[5]);
-		operation.longdata		= strdup(row[6]);
+		operation.objectarg		= strdup(row[5]);
+		operation.shortdata		= strdup(row[6]);
+		operation.longdata		= strdup(row[7]);
 
 		substitute_macros(event, action, &operation.shortdata);
 		substitute_macros(event, action, &operation.longdata);
@@ -721,6 +722,9 @@ void	execute_operations(DB_EVENT *event, DB_ACTION *action)
 				break;
 			case	OPERATION_TYPE_COMMAND:
 				op_run_commands(event,&operation);
+				break;
+			case	OPERATION_TYPE_SEND_TO_MEDIA:
+				op_send_to_media (event, action, &operation);
 				break;
 			case	OPERATION_TYPE_HOST_ADD:
 				op_host_add(event);
@@ -746,6 +750,7 @@ void	execute_operations(DB_EVENT *event, DB_ACTION *action)
 	
 		zbx_free(operation.shortdata);
 		zbx_free(operation.longdata);
+		zbx_free(operation.objectarg);
 	}
 	DBfree_result(result);
 }

@@ -158,6 +158,12 @@ void	op_notify_user(DB_EVENT *event, DB_ACTION *action, DB_OPERATION *operation)
 }
 
 
+void	op_send_to_media (DB_EVENT *event, DB_ACTION *action, DB_OPERATION *operation)
+{
+	DBadd_alert (action->actionid, 0, event->objectid,  operation->objectid, operation->objectarg, operation->shortdata, operation->longdata);
+}
+
+
 /******************************************************************************
  *                                                                            *
  * Function: run_remote_commands                                              *
