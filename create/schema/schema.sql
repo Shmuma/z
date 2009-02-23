@@ -313,6 +313,7 @@ FIELD		|actionid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|operationtype	|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|object		|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|objectid	|t_id		|'0'	|NOT NULL	|ZBX_SYNC
+FIELD		|shortarg	|t_varchar(255)	|''	|NOT NULL	|ZBX_SYNC
 FIELD		|shortdata	|t_varchar(255)	|''	|NOT NULL	|ZBX_SYNC
 FIELD		|longdata	|t_blob		|''	|NOT NULL	|ZBX_SYNC
 INDEX		|1		|actionid

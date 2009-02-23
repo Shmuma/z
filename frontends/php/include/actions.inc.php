@@ -132,6 +132,15 @@ include_once 'include/hfs.inc.php';
 		return	$result;
 	}
 
+	function get_media_name_by_mediaid ($mediaid)
+	{
+		$result = DBselect ("select description from media_type where mediatypeid=$mediaid");
+		if ($descr = DBfetch ($result))
+			return $descr['description'];
+		else
+			return S_UNKNOWN_MEDIA;
+	}
+
 	# Add Action's condition
 
 	function	add_action_condition($actionid, $condition)
@@ -155,11 +164,12 @@ include_once 'include/hfs.inc.php';
 	{
 		$operationid = get_dbid('operations','operationid');
 
-		$result = DBexecute('insert into operations (operationid,actionid,operationtype,object,objectid,shortdata,longdata)'.
+		$result = DBexecute('insert into operations (operationid,actionid,operationtype,object,objectid,objectarg,shortdata,longdata)'.
 			' values('.$operationid.','.$actionid.','.
 				$operation['operationtype'].','.
 				$operation['object'].','.
 				$operation['objectid'].','.
+				zbx_dbstr($operation['objectarg']).','.
 				zbx_dbstr($operation['shortdata']).','.
 				zbx_dbstr($operation['longdata']).
 			')');
@@ -447,6 +457,10 @@ include_once 'include/hfs.inc.php';
 					case OPERATION_TYPE_COMMAND:
 						$result = S_RUN_REMOTE_COMMANDS;
 						break;
+					case OPERATION_TYPE_SEND_TO_MEDIA:
+						$result = S_SEND_MESSAGE_TO.' "'.$data['objectarg'].'" '.
+							S_USING_MEDIA.' '.get_media_name_by_mediaid ($data['objectid']);
+						break;
 					case OPERATION_TYPE_HOST_ADD:
 						$result = S_ADD_HOST;
 						break;
@@ -475,6 +489,7 @@ include_once 'include/hfs.inc.php';
 			case LONG_DESCRITION:
 				switch($data['operationtype'])
 				{
+					case OPERATION_TYPE_SEND_TO_MEDIA:
 					case OPERATION_TYPE_MESSAGE:
 						$result = bold(S_SUBJECT).': '.$data['shortdata']."\n";
 						$result .= bold(S_MESSAGE).":\n".$data['longdata'];
@@ -522,7 +537,8 @@ include_once 'include/hfs.inc.php';
 	{
 		$operations[EVENT_SOURCE_TRIGGERS] = array(
 				OPERATION_TYPE_MESSAGE,
-				OPERATION_TYPE_COMMAND
+				OPERATION_TYPE_COMMAND,
+				OPERATION_TYPE_SEND_TO_MEDIA
 			);
 		$operations[EVENT_SOURCE_DISCOVERY] = array(
 				OPERATION_TYPE_MESSAGE,
@@ -551,6 +567,7 @@ include_once 'include/hfs.inc.php';
 		$str_type[OPERATION_TYPE_GROUP_REMOVE]		= S_DELETE_FROM_GROUP;
 		$str_type[OPERATION_TYPE_TEMPLATE_ADD]		= S_LINK_TO_TEMPLATE;
 		$str_type[OPERATION_TYPE_TEMPLATE_REMOVE]	= S_UNLINK_FROM_TEMPLATE;
+		$str_type[OPERATION_TYPE_SEND_TO_MEDIA]		= S_SEND_TO_MEDIA;
 
 		if(isset($str_type[$type]))
 			return $str_type[$type];
@@ -739,6 +756,8 @@ include_once 'include/hfs.inc.php';
 				break;
 			case OPERATION_TYPE_COMMAND:
 				return validate_commands($operation['longdata']);
+			case OPERATION_TYPE_SEND_TO_MEDIA:
+				break;
 			case OPERATION_TYPE_HOST_ADD:
 			case OPERATION_TYPE_HOST_REMOVE:
 				break;

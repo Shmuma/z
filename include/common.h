@@ -404,6 +404,7 @@ typedef enum
 #define OPERATION_TYPE_GROUP_REMOVE	5
 #define OPERATION_TYPE_TEMPLATE_ADD	6
 #define OPERATION_TYPE_TEMPLATE_REMOVE	7
+#define OPERATION_TYPE_SEND_TO_MEDIA	8
 
 /* Algorithms for service status calculation */
 #define SERVICE_ALGORITHM_NONE	0
