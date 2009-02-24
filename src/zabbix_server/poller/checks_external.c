@@ -63,33 +63,34 @@ int     get_value_external(DB_ITEM *item, AGENT_RESULT *result)
 		zabbix_log( LOG_LEVEL_DEBUG, "scriptname [%s]",scriptname);
 		*p2='[';
 		p2++;
-	}
-	else    ret = NOTSUPPORTED;
-
-	if(ret == SUCCEED)
-	{
-		if((ret == SUCCEED) && (p=strchr(p2,']')) != NULL)
+		if(ret == SUCCEED)
 		{
-			*p=0;
-			strscpy(params,p2);
-			zabbix_log( LOG_LEVEL_DEBUG, "params [%s]",params);
-			*p=']';
-			p++;
+			if((ret == SUCCEED) && (p=strchr(p2,']')) != NULL)
+			{
+				*p=0;
+				strscpy(params,p2);
+				zabbix_log( LOG_LEVEL_DEBUG, "params [%s]",params);
+				*p=']';
+				p++;
+			}
+			else    ret = NOTSUPPORTED;
 		}
-		else    ret = NOTSUPPORTED;
+		else
+		{
+			zbx_snprintf(error,MAX_STRING_LEN-1,"External check [%s] is not supported", item->key);
+			zabbix_log( LOG_LEVEL_DEBUG, "%s", error);
+			SET_STR_RESULT(result, strdup(error));
+			return NOTSUPPORTED;
+		}
 	}
-	else
-	{
-		zbx_snprintf(error,MAX_STRING_LEN-1,"External check [%s] is not supported", item->key);
-		zabbix_log( LOG_LEVEL_DEBUG, "%s", error);
-		SET_STR_RESULT(result, strdup(error));
-		return NOTSUPPORTED;
+	else {
+		params[0] = 0;
+		strscpy(scriptname,key);
 	}
 
-	zbx_snprintf(cmd, MAX_STRING_LEN-1, "%s/%s",
+	zbx_snprintf(args, MAX_STRING_LEN-1, "%s/%s %s %s",
 		CONFIG_EXTERNALSCRIPTS,
-		scriptname);
-	zbx_snprintf(args, MAX_STRING_LEN-1, "%s %s",
+		scriptname,
 		item->useip == 1 ? item->host_ip : item->host_dns,
 		params);
 
