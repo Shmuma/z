@@ -95,7 +95,7 @@ int memcache_zbx_connect(const char* servers)
 		return 0;
 	}
 
-	memcached_behavior_set(memsite->conn, MEMCACHED_BEHAVIOR_NO_BLOCK, 1);
+	//	memcached_behavior_set(memsite->conn, MEMCACHED_BEHAVIOR_NO_BLOCK, 1);
 	memcached_behavior_set(memsite->conn, MEMCACHED_BEHAVIOR_CACHE_LOOKUPS, 1);
 	return 1;
 }
