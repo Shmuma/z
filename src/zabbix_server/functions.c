@@ -457,13 +457,13 @@ static int process_item_delta (DB_ITEM *item, item_value_u* new_val, int now, it
 			if(item->prevorgvalue_null == 0 && (item->prevorgvalue_dbl <= new_val->d) && (now != item->lastclock))
 				res_val->d = (new_val->d - item->prevorgvalue_dbl)/(now-item->lastclock);
 			else
-				res_val->d = item->prevvalue_dbl;
+				return 0;
 		}
 		else if( ITEM_VALUE_TYPE_UINT64 == item->value_type ) {
 			if((item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= new_val->l) && (now != item->lastclock))
 				res_val->l = (new_val->l - item->prevorgvalue_uint64)/(now-item->lastclock);
 			else
-				res_val->l = item->prevvalue_uint64;
+				return 0;
 		}
 		else
 			return 0;
@@ -475,13 +475,13 @@ static int process_item_delta (DB_ITEM *item, item_value_u* new_val, int now, it
 			if((item->prevorgvalue_null == 0) && (item->prevorgvalue_dbl <= new_val->d) )
 				res_val->d = new_val->d - item->prevorgvalue_dbl;
 			else
-				res_val->d = item->prevvalue_dbl;
+				return 0;
 		}
 		else if(item->value_type==ITEM_VALUE_TYPE_UINT64) {
 			if((item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= new_val->l) )
 				res_val->l = new_val->l - item->prevorgvalue_uint64;
 			else
-				res_val->l = item->prevvalue_uint64;
+				return 0;
 		}
 		else
 			return 0;
@@ -753,7 +753,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 
 					if (CONFIG_HFS_PATH)
 						HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now, nextcheck,
-									    item->lastvalue_dbl, value->dbl, value->dbl, stderr);
+									    item->lastvalue_dbl, item->lastvalue_dbl, value->dbl, stderr);
 				}
 			}
 		}
@@ -819,7 +819,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 
 					if (CONFIG_HFS_PATH)
 						HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now, nextcheck,
-									    item->lastvalue_uint64, value->ui64, value->ui64, stderr);
+									    item->lastvalue_uint64, item->lastvalue_uint64, value->ui64, stderr);
 				}
 			}
 		}
@@ -863,7 +863,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 
 				    if (CONFIG_HFS_PATH)
 					    HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now, nextcheck,
-									item->lastvalue_dbl, value->dbl, value->dbl, stderr);
+									item->lastvalue_dbl, item->lastvalue_dbl, value->dbl, stderr);
 				}
 			}
 		}
@@ -904,7 +904,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 
 					if (CONFIG_HFS_PATH)
 						HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now, nextcheck,
-									    item->lastvalue_uint64, value->ui64, value->ui64, stderr);
+									    item->lastvalue_uint64, item->lastvalue_uint64, value->ui64, stderr);
 				}
 			}
 		}
