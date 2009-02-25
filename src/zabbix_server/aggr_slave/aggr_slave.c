@@ -600,7 +600,7 @@ static void process_aggr_entry (plan_item_t* item)
 	/* find items' IDs for our group and site */
 	items = get_aggregate_items (group, itemkey, &items_count);
 
-	zabbix_log (LOG_LEVEL_ERR, "Aggr Slave: process item %lld with key %s. Count of values are %d", item->itemid, item->key, items_count);
+/* 	zabbix_log (LOG_LEVEL_ERR, "Aggr Slave: process item %lld with key %s. Count of values are %d", item->itemid, item->key, items_count); */
 
 	if (items_count) {
 		/* process items */
@@ -616,8 +616,8 @@ static void process_aggr_entry (plan_item_t* item)
 		if (!items_values)
 			goto exit;
 
-		for (i = 0; i < items_count; i++)
-			zabbix_log (LOG_LEVEL_ERR, "Aggr Slave: value %d = %f", i, items_values[i]);
+/* 		for (i = 0; i < items_count; i++) */
+/* 			zabbix_log (LOG_LEVEL_ERR, "Aggr Slave: value %d = %f", i, items_values[i]); */
 
 		/* calculate value of this site */
 		found = 0;
@@ -635,10 +635,10 @@ static void process_aggr_entry (plan_item_t* item)
 	}
 
  exit:
-	if (value_got)
-		zabbix_log (LOG_LEVEL_ERR, "Aggr Slave: item %lld finished, value = %f, stderr = %s", item->itemid, result, stderr);
-	else
-		zabbix_log (LOG_LEVEL_ERR, "Aggr Slave: item %lld finished, no value is calculated", item->itemid);
+/* 	if (value_got) */
+/* 		zabbix_log (LOG_LEVEL_ERR, "Aggr Slave: item %lld finished, value = %f, stderr = %s", item->itemid, result, stderr); */
+/* 	else */
+/* 		zabbix_log (LOG_LEVEL_ERR, "Aggr Slave: item %lld finished, no value is calculated", item->itemid); */
 
 	/* save result of calculations */
 	if (value_got)

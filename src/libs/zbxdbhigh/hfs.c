@@ -2049,13 +2049,6 @@ int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_u
 	*lastvalue = ((item_value_dbl_t*)buf)->lastvalue;
 	*prevorgvalue = ((item_value_dbl_t*)buf)->prevorgvalue;
 
-	zabbix_log (LOG_LEVEL_ERR, "HFS_get_item_values_dbl: item %lld", itemid);
-	zabbix_log (LOG_LEVEL_ERR, "lastclock %lld", *lastclock);
-	zabbix_log (LOG_LEVEL_ERR, "nextcheck %lld", *nextcheck);
-	zabbix_log (LOG_LEVEL_ERR, "prevvalue %f", *prevvalue);
-	zabbix_log (LOG_LEVEL_ERR, "lastvalue %f", *lastvalue);
-	zabbix_log (LOG_LEVEL_ERR, "prevorgvalue %f", *prevorgvalue);
-
 	p = buf + sizeof (item_value_dbl_t);
 	*stderr = unbuffer_str (&p);
 	free (buf);
