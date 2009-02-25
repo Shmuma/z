@@ -635,8 +635,8 @@ static void process_aggr_entry (plan_item_t* item)
 	}
 
  exit:
-	if (val_got)
-		zabbix_log (LOG_LEVEL_ERR, "Aggr Slave: item %lld finished, val_got = %d, %f, stderr = %s", item->itemid, value_got, result, stderr);
+	if (value_got)
+		zabbix_log (LOG_LEVEL_ERR, "Aggr Slave: item %lld finished, value = %f, stderr = %s", item->itemid, result, stderr);
 	else
 		zabbix_log (LOG_LEVEL_ERR, "Aggr Slave: item %lld finished, no value is calculated", item->itemid);
 
