@@ -318,17 +318,11 @@ int	process_data(int history, hfs_time_t ts, char *server,char *key,char *value,
 	init_result(&agent);
 
 #ifdef HAVE_MEMCACHE
-	if (process_type == ZBX_PROCESS_TRAPPERD) {
+	if (process_type == ZBX_PROCESS_TRAPPERD)
 		in_cache = memcache_zbx_getitem(key, server, &item);
 
-		if (in_cache == 1 && (ts > item.cache_time)) {
-			DBfree_item(&item);
-			in_cache = 0;
-		}
-	}
-
 	if (in_cache != 1) {
-		zabbix_log( LOG_LEVEL_DEBUG, "In process_data: [NOT IN MEMCACHE] '%s %s'", key, server);
+		zabbix_log( LOG_LEVEL_DEBUG, "In process_data: [NOT IN MEMCACHE] '%s %s in_cache=%d'", key, server, in_cache);
 #endif
 		DBescape_string(server, server_esc, MAX_STRING_LEN);
 		DBescape_string(key, key_esc, MAX_STRING_LEN);
@@ -915,9 +909,19 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 
 	if (item->value_type != ITEM_VALUE_TYPE_FLOAT &&
 	    item->value_type != ITEM_VALUE_TYPE_UINT64) {
-		dbitem_change_chars(item, 20, item->lastvalue_str);
-		dbitem_change_chars(item, 19, value->str);
-		dbitem_change_chars(item, 18, prev_value.str);
+		if (item->prevvalue_str)
+			free(item->prevvalue_str);
+		item->prevvalue_str = (item->lastvalue_str) ?
+					strdup(item->lastvalue_str) :
+					NULL;
+
+		if (item->lastvalue_str)
+			free(item->lastvalue_str);
+		item->lastvalue_str = strdup(value->str);
+
+		if (item->prevorgvalue_str)
+			free(item->prevorgvalue_str);
+		item->prevorgvalue_str = strdup(prev_value.str);
 	}
 	else {
 		item->prevvalue_dbl			= item->lastvalue_dbl;
@@ -929,6 +933,10 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 		item->prevorgvalue_uint64		= prev_value.ui64;
 		item->prevorgvalue_dbl			= prev_value.dbl;
 	}
+
+	if (item->stderr)
+		free(item->stderr);
+	item->stderr = strdup(stderr);
 
 /* Update item status if required */
 	if(item->status == ITEM_STATUS_NOTSUPPORTED)
@@ -1017,13 +1025,6 @@ void	process_new_value(int history, DB_ITEM *item, AGENT_RESULT *value, time_t t
 		update_item(item, value, now, stderr);
 		update_functions( item );
 	}
-
-#ifdef HAVE_MEMCACHE
-	if (process_type == ZBX_PROCESS_TRAPPERD) {
-		item->nextcheck = calculate_item_nextcheck(item->itemid, item->type, item->delay, item->delay_flex, now);
-		memcache_zbx_setitem(item);
-	}
-#endif
 }
 
 /*
