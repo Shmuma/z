@@ -2870,7 +2870,7 @@ include_once 'include/discovery.inc.php';
 			unset($condition_data, $db_conditions);
 
 			/* prepate operations */
-			$db_operations = DBselect('select operationtype,object,objectid,shortdata,longdata from operations'.
+			$db_operations = DBselect('select operationtype,object,objectid,objectarg,shortdata,longdata from operations'.
 				' where actionid='.$_REQUEST['actionid'].' order by operationtype,object,operationid');
 
 			while($operation_data = DBfetch($db_operations))
@@ -2879,6 +2879,7 @@ include_once 'include/discovery.inc.php';
 					'operationtype'	=> $operation_data['operationtype'],
 					'object'	=> $operation_data['object'],
 					'objectid'	=> $operation_data['objectid'],
+					'objectarg'	=> $operation_data['objectarg'],
 					'shortdata'	=> $operation_data['shortdata'],
 					'longdata'	=> $operation_data['longdata']);
 
@@ -2916,6 +2917,7 @@ include_once 'include/discovery.inc.php';
 		if( !isset($new_operation['operationtype']))	$new_operation['operationtype']	= OPERATION_TYPE_MESSAGE;
 		if( !isset($new_operation['object']))		$new_operation['object']	= OPERATION_OBJECT_GROUP;
 		if( !isset($new_operation['objectid']))		$new_operation['objectid']	= 0;
+		if( !isset($new_operation['objectarg']))	$new_operation['objectarg']	= '';
 		if( !isset($new_operation['shortdata']))	$new_operation['shortdata']	= '{TRIGGER.NAME}: {STATUS}';
 		if( !isset($new_operation['longdata']))		$new_operation['longdata']	= '{TRIGGER.NAME}: {STATUS}';
 
@@ -3146,6 +3148,7 @@ include_once 'include/discovery.inc.php';
 			$frmAction->AddVar('operations['.$id.'][operationtype]'	,$val['operationtype']	);
 			$frmAction->AddVar('operations['.$id.'][object]'	,$val['object']		);
 			$frmAction->AddVar('operations['.$id.'][objectid]'	,$val['objectid']	);
+			$frmAction->AddVar('operations['.$id.'][objectarg]'	,$val['objectarg']	);
 			$frmAction->AddVar('operations['.$id.'][shortdata]'	,$val['shortdata']	);
 			$frmAction->AddVar('operations['.$id.'][longdata]'	,$val['longdata']	);
 		}
@@ -3203,6 +3206,7 @@ include_once 'include/discovery.inc.php';
 					}
 
 					$frmAction->AddVar('new_operation[objectid]', $new_operation['objectid']); 
+					$frmAction->AddVar('new_operation[objectarg]','');
 
 					if($object_name)	$object_name = $object_name[$display_name];
 
@@ -3229,6 +3233,7 @@ include_once 'include/discovery.inc.php';
 				case OPERATION_TYPE_COMMAND:
 					$frmAction->AddVar('new_operation[object]',0);
 					$frmAction->AddVar('new_operation[objectid]',0);
+					$frmAction->AddVar('new_operation[objectarg]','');
 					$frmAction->AddVar('new_operation[shortdata]','');
 
 					$tblNewOperation->AddRow(array(S_REMOTE_COMMAND,
@@ -3237,18 +3242,21 @@ include_once 'include/discovery.inc.php';
 				case OPERATION_TYPE_HOST_ADD:
 					$frmAction->AddVar('new_operation[object]',0);
 					$frmAction->AddVar('new_operation[objectid]',0);
+					$frmAction->AddVar('new_operation[objectarg]','');
 					$frmAction->AddVar('new_operation[shortdata]','');
 					$frmAction->AddVar('new_operation[longdata]','');
 					break;
 				case OPERATION_TYPE_HOST_REMOVE:
 					$frmAction->AddVar('new_operation[object]',0);
 					$frmAction->AddVar('new_operation[objectid]',0);
+					$frmAction->AddVar('new_operation[objectarg]','');
 					$frmAction->AddVar('new_operation[shortdata]','');
 					$frmAction->AddVar('new_operation[longdata]','');
 					break;
 				case OPERATION_TYPE_GROUP_ADD:
 					$frmAction->AddVar('new_operation[object]',0);
 					$frmAction->AddVar('new_operation[objectid]',$new_operation['objectid']);
+					$frmAction->AddVar('new_operation[objectarg]','');
 					$frmAction->AddVar('new_operation[shortdata]','');
 					$frmAction->AddVar('new_operation[longdata]','');
 
@@ -3269,6 +3277,7 @@ include_once 'include/discovery.inc.php';
 				case OPERATION_TYPE_GROUP_REMOVE:
 					$frmAction->AddVar('new_operation[object]',0);
 					$frmAction->AddVar('new_operation[objectid]',$new_operation['objectid']);
+					$frmAction->AddVar('new_operation[objectarg]','');
 					$frmAction->AddVar('new_operation[shortdata]','');
 					$frmAction->AddVar('new_operation[longdata]','');
 
@@ -3289,6 +3298,7 @@ include_once 'include/discovery.inc.php';
 				case OPERATION_TYPE_TEMPLATE_ADD:
 					$frmAction->AddVar('new_operation[object]',0);
 					$frmAction->AddVar('new_operation[objectid]',$new_operation['objectid']);
+					$frmAction->AddVar('new_operation[objectarg]','');
 					$frmAction->AddVar('new_operation[shortdata]','');
 					$frmAction->AddVar('new_operation[longdata]','');
 
@@ -3310,6 +3320,7 @@ include_once 'include/discovery.inc.php';
 				case OPERATION_TYPE_TEMPLATE_REMOVE:
 					$frmAction->AddVar('new_operation[object]',0);
 					$frmAction->AddVar('new_operation[objectid]',$new_operation['objectid']);
+					$frmAction->AddVar('new_operation[objectarg]','');
 					$frmAction->AddVar('new_operation[shortdata]','');
 					$frmAction->AddVar('new_operation[longdata]','');
 
@@ -3327,6 +3338,22 @@ include_once 'include/discovery.inc.php';
 								'",450,450)',
 								'T')
 						)));
+					break;
+				case OPERATION_TYPE_SEND_TO_MEDIA:
+					$frmAction->AddVar('new_operation[object]', $new_operation['object']); 
+					$cmbMedia = new CComboBox('new_operation[objectid]', $new_operation['objectid']);
+					$types = DBselect ("select mediatypeid,description from media_type order by type");
+					while ($type = DBfetch ($types)) {
+						$cmbMedia->AddItem ($type["mediatypeid"], $type["description"]);
+					}
+
+					$tblNewOperation->AddRow (array (S_MEDIA_TYPE, $cmbMedia));
+					$tblNewOperation->AddRow (array (S_SEND_TO, new CTextBox ('new_operation[objectarg]', 
+												  $new_operation['objectarg'], 40)));
+					$tblNewOperation->AddRow(array(S_SUBJECT,
+						new CTextBox('new_operation[shortdata]', $new_operation['shortdata'],77)));
+					$tblNewOperation->AddRow(array(S_MESSAGE,
+						new CTextArea('new_operation[longdata]', $new_operation['longdata'],77,7)));
 					break;
 			}
 

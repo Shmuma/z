@@ -31,8 +31,8 @@ function TODO($msg) { echo "TODO: ".$msg.BR; }  // DEBUG INFO!!!
 // GLOBALS
 	global $USER_DETAILS, $USER_RIGHTS, $USER_OPTIONS;
 
-	$USER_OPTIONS = array(
-			    "hide_ro_host_groups"    => array("bit" => 1, "descr" => "Hide read-only host groups"));
+	$USER_OPTIONS = array("hide_ro_host_groups"    => array("bit" => 1, "descr" => "Hide read-only host groups"),
+			      "show_site_in_overview"  => array("bit" => 2, "descr" => "Show site in overview"));
 
 	$USER_DETAILS	= array();
 	$USER_RIGHTS	= array();

@@ -98,6 +98,8 @@ hfs_data_item_t* read_data (hfs_meta_t* meta, hfs_time_t from, const char* path,
     int fd;
     hfs_off_t ofs;
     int cur_block;
+    item_value_u in_buf[256];
+    int cnt, index;
 
     size = buf_size = 0;
     *count = 0;
@@ -113,6 +115,8 @@ hfs_data_item_t* read_data (hfs_meta_t* meta, hfs_time_t from, const char* path,
 
     lseek (fd, ofs, SEEK_SET);
 
+    cnt = index = 0;
+
     while (cur_block < meta->blocks) {
         while (from <= meta->meta[cur_block].end) {
             if (size == buf_size) {
@@ -120,11 +124,19 @@ hfs_data_item_t* read_data (hfs_meta_t* meta, hfs_time_t from, const char* path,
                 res = (hfs_data_item_t*)realloc (res, buf_size * sizeof (hfs_data_item_t));
             }
 
-            if (read (fd, &res[size].val, sizeof (item_value_u)) == sizeof (item_value_u))  {
-                res[size].ts = from;
-                res[size].type = meta->meta[cur_block].type;
-                if (is_valid_val (&res[size].val, sizeof (item_value_u)))
-                    size++;
+	    if (index == cnt) {
+		    cnt = read (fd, in_buf, sizeof (in_buf));
+		    cnt /= sizeof (in_buf[0]);
+		    index = 0;
+	    }
+	    else {
+		    //            if (read (fd, &res[size].val, sizeof (item_value_u)) == sizeof (item_value_u))  {
+		    memcpy (&res[size].val, in_buf+index, sizeof (item_value_u));
+		    index++;
+		    res[size].ts = from;
+		    res[size].type = meta->meta[cur_block].type;
+		    if (is_valid_val (&res[size].val, sizeof (item_value_u)))
+			    size++;
             }
             from += meta->meta[cur_block].delay;
         }
