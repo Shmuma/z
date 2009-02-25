@@ -449,7 +449,6 @@ static int process_item_delta (DB_ITEM *item, item_value_u* new_val, int now, it
 			res_val->d = new_val->d;
 		else
 			return 0;
-		return 1;
 	}
 	/* Delta as speed of change */
 	else if(item->delta == ITEM_STORE_SPEED_PER_SECOND) {
@@ -458,15 +457,16 @@ static int process_item_delta (DB_ITEM *item, item_value_u* new_val, int now, it
 			if(item->prevorgvalue_null == 0 && (item->prevorgvalue_dbl <= new_val->d) && (now != item->lastclock))
 				res_val->d = (new_val->d - item->prevorgvalue_dbl)/(now-item->lastclock);
 			else
-				return 0;
+				res_val->d = item->prevvalue_dbl;
 		}
 		else if( ITEM_VALUE_TYPE_UINT64 == item->value_type ) {
 			if((item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= new_val->l) && (now != item->lastclock))
 				res_val->l = (new_val->l - item->prevorgvalue_uint64)/(now-item->lastclock);
 			else
-				return 0;
+				res_val->l = item->prevvalue_uint64;
 		}
-		return 1;
+		else
+			return 0;
 	}
 	/* Real delta: simple difference between values */
 	else if(item->delta == ITEM_STORE_SIMPLE_CHANGE) {
@@ -475,20 +475,21 @@ static int process_item_delta (DB_ITEM *item, item_value_u* new_val, int now, it
 			if((item->prevorgvalue_null == 0) && (item->prevorgvalue_dbl <= new_val->d) )
 				res_val->d = new_val->d - item->prevorgvalue_dbl;
 			else
-				return 0;
+				res_val->d = item->prevvalue_dbl;
 		}
 		else if(item->value_type==ITEM_VALUE_TYPE_UINT64) {
 			if((item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= new_val->l) )
 				res_val->l = new_val->l - item->prevorgvalue_uint64;
-			else 
-				return 0;
+			else
+				res_val->l = item->prevvalue_uint64;
 		}
 		else
 			return 0;
-		return 1;
 	}
 	else
 		return 0;
+
+	return 1;
 }
 
 
