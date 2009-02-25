@@ -600,6 +600,8 @@ static void process_aggr_entry (plan_item_t* item)
 	/* find items' IDs for our group and site */
 	items = get_aggregate_items (group, itemkey, &items_count);
 
+	zabbix_log (LOG_LEVEL_WARNING, "Aggr Slave: process item %lld with key %s. Count of values are %d", item->itemid, item->key, items_count);
+
 	if (items_count) {
 		/* process items */
 		/* call apropriate hook to obtain per-item value */
@@ -630,6 +632,8 @@ static void process_aggr_entry (plan_item_t* item)
 	}
 
  exit:
+	zabbix_log (LOG_LEVEL_WARNING, "Aggr Slave: item %lld finished, val_got = %d, %f, stderr = %s", item->itemid, value_got, result, stderr);
+
 	/* save result of calculations */
 	if (value_got)
 		HFS_save_aggr_slave_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, time (NULL), value_got, result, stderr);
