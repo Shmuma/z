@@ -71,7 +71,7 @@ int main (int argc, char** argv)
 				clear = 0;
 				if (meta->meta[i].type == IT_DOUBLE) {
 					if (count > 1000)
-						if (val.d < 0 || val.d > (max.d * limit) || val.d > prev.d*limit)
+						if (val.d < 0 || val.d > (max.d * limit) || (val.d > prev.d*limit && prev.d > 1))
 							clear = 1;
 					if (!clear) {
 						if (max.d < val.d)
@@ -81,7 +81,7 @@ int main (int argc, char** argv)
 				}
 				else {
 					if (count > 1000)
-						if (val.l > (max.l*limit) || val.l > prev.l*limit)
+						if (val.l > (max.l*limit) || (val.l > prev.l*limit && prev.l > 1))
 							clear = 1;
 					if (!clear) {
 						if (max.l < val.l)
