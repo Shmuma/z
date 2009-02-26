@@ -23,18 +23,21 @@ int main (int argc, char** argv)
 	int fd;
 	item_value_u val, max, prev;
 	hfs_time_t ts;
-	int clear, count, cl_count, force = 0;
+	int clear, count, cl_count, force = 0, limit = 1000000;
 	unsigned long long inval = 0xFFFFFFFFFFFFFFFFULL;
 
-	if (argc != 2 && argc != 3) {
-		printf ("Usage: hfsfilter history.meta [-f]\n");
+	if (argc != 3 && argc != 4) {
+		printf ("Usage: hfsfilter limit history.meta [-f]\n");
 		return 1;
 	}
 
-	if (argc == 3)
+	if (argc == 4)
 		force = 1;
 
-	path = argv[1];
+	limit = atoi (argv[1]);
+	if (limit < 10000)
+		limit = 1000000;
+	path = argv[2];
 
 	meta = read_metafile (path);
 
@@ -68,7 +71,7 @@ int main (int argc, char** argv)
 				clear = 0;
 				if (meta->meta[i].type == IT_DOUBLE) {
 					if (count > 1000)
-						if (val.d < 0 || val.d > (max.d * 1000000.0) || val.d > prev.d*100000.0)
+						if (val.d < 0 || val.d > (max.d * limit) || val.d > prev.d*limit)
 							clear = 1;
 					if (!clear) {
 						if (max.d < val.d)
@@ -78,7 +81,7 @@ int main (int argc, char** argv)
 				}
 				else {
 					if (count > 1000)
-						if (val.l > (max.l * 1000000) || val.l > prev.l*100000)
+						if (val.l > (max.l*limit) || val.l > prev.l*limit)
 							clear = 1;
 					if (!clear) {
 						if (max.l < val.l)
@@ -104,7 +107,7 @@ int main (int argc, char** argv)
 	}
 
 	close (data);
-	printf ("%.2f%% items cleared (%d out of %d)\n", 100.0 * cl_count / count, cl_count, count);
+	printf ("%.2f%% items cleared (%d out of %d), limit %d\n", 100.0 * cl_count / count, cl_count, count, limit);
 
 	return cl_count ? 0 : 1;
 }
