@@ -780,6 +780,8 @@ static int evaluate_MIN(char *value,DB_ITEM	*item,int parameter, int flag)
 	if (result)
 		DBfree_result(result);
 
+	zabbix_log (LOG_LEVEL_ERR, "evaluate_MIN: itemid = %lld, key_ = %s, param = %d, res = %s", item->itemid, item->key, parameter, value);
+
 	return res;
 }
 
