@@ -1559,71 +1559,12 @@ char*	DBdyn_escape_string(const char *str)
 	return str_esc;
 }
 
-void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
+int	DBget_item_values(DB_ITEM *item)
 {
-	int	rc = 0;
+	int rc = 0;
 	hfs_time_t lastclock, nextcheck;
 
-	/* Zabbix developers is morons. Some DB_ITEM pointers is not
-	   initialized after DBget_item_from_db(). */
-	item->eventlog_source = NULL;
-	item->shortname = NULL;
-	item->eventlog_severity = 0;
-	item->lastlogsize = 0;
-	item->timestamp = 0;
-	item->trends = 0;
-	item->lastcheck = 0;
-
-#ifdef HAVE_MEMCACHE
-	item->cache_time = time(NULL) + CONFIG_MEMCACHE_ITEMS_TTL;
-#endif
-	item->chars = NULL;
-
-	ZBX_STR2UINT64(item->itemid, row[0]);
-/*	item->itemid=atoi(row[0]); */
-/*	zbx_snprintf(item->key, ITEM_KEY_LEN, "%s", row[1]); */
-	item->key=row[1];
-	item->host_name=row[2];
-	item->port=atoi(row[3]);
-	item->delay=atoi(row[4]);
-	item->description=row[5];
-	item->nextcheck=atoi(row[6]);
-	item->type=atoi(row[7]);
-	item->snmp_community=row[8];
-	item->snmp_oid=row[9];
-	item->useip=atoi(row[10]);
-	item->host_ip=row[11];
-	item->history=atoi(row[12]);
-	item->value_type=atoi(row[17]);
-
-	ZBX_STR2UINT64(item->hostid, row[15]);
-	item->host_status=atoi(row[16]);
-
-	item->host_errors_from=atoi(row[18]);
-	item->snmp_port=atoi(row[19]);
-	item->delta=atoi(row[20]);
-
-	item->units=row[23];
-	item->multiplier=atoi(row[24]);
-
-	item->snmpv3_securityname = row[25];
-	item->snmpv3_securitylevel = atoi(row[26]);
-	item->snmpv3_authpassphrase = row[27];
-	item->snmpv3_privpassphrase = row[28];
-	item->formula = row[29];
-	item->host_available=atoi(row[30]);
-	item->status=atoi(row[31]);
-	item->trapper_hosts=row[32];
-	item->logtimefmt=row[33];
-	ZBX_STR2UINT64(item->valuemapid, row[34]);
-/*	item->valuemapid=atoi(row[34]); */
-	item->delay_flex=row[35];
-	item->host_dns=row[36];
-
-	if (!CONFIG_HFS_PATH)
-		item->stderr = row[37];
-	else
-		item->stderr = NULL;
+	item->stderr = NULL;
 
 	item->prevvalue_null    = 0;
 	item->lastvalue_null    = 0;
@@ -1686,8 +1627,70 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	item->lastclock = (rc) ? lastclock : 0;
 	item->nextcheck = (rc) ? nextcheck : 0;
 
+	return rc;
+}
+
+void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
+{
+	int	rc = 0;
+	hfs_time_t lastclock, nextcheck;
+
+	/* Zabbix developers is morons. Some DB_ITEM pointers is not
+	   initialized after DBget_item_from_db(). */
+	item->eventlog_source = NULL;
+	item->shortname = NULL;
+	item->eventlog_severity = 0;
+	item->lastlogsize = 0;
+	item->timestamp = 0;
+	item->trends = 0;
+	item->lastcheck = 0;
+
+	item->chars = NULL;
+
+	ZBX_STR2UINT64(item->itemid, row[0]);
+/*	item->itemid=atoi(row[0]); */
+/*	zbx_snprintf(item->key, ITEM_KEY_LEN, "%s", row[1]); */
+	item->key=row[1];
+	item->host_name=row[2];
+	item->port=atoi(row[3]);
+	item->delay=atoi(row[4]);
+	item->description=row[5];
+	item->nextcheck=atoi(row[6]);
+	item->type=atoi(row[7]);
+	item->snmp_community=row[8];
+	item->snmp_oid=row[9];
+	item->useip=atoi(row[10]);
+	item->host_ip=row[11];
+	item->history=atoi(row[12]);
+	item->value_type=atoi(row[17]);
+
+	ZBX_STR2UINT64(item->hostid, row[15]);
+	item->host_status=atoi(row[16]);
+
+	item->host_errors_from=atoi(row[18]);
+	item->snmp_port=atoi(row[19]);
+	item->delta=atoi(row[20]);
+
+	item->units=row[23];
+	item->multiplier=atoi(row[24]);
+
+	item->snmpv3_securityname = row[25];
+	item->snmpv3_securitylevel = atoi(row[26]);
+	item->snmpv3_authpassphrase = row[27];
+	item->snmpv3_privpassphrase = row[28];
+	item->formula = row[29];
+	item->host_available=atoi(row[30]);
+	item->status=atoi(row[31]);
+	item->trapper_hosts=row[32];
+	item->logtimefmt=row[33];
+	ZBX_STR2UINT64(item->valuemapid, row[34]);
+/*	item->valuemapid=atoi(row[34]); */
+	item->delay_flex=row[35];
+	item->host_dns=row[36];
+
+	DBget_item_values(item);
 	dbitem_serialize(item, 0);
-/*
+
 #ifdef HAVE_MEMCACHE
 //	Trapper call DBget_item_from_db only for update_item.
 //	update_item call memcache_zbx_setitem.
@@ -1695,7 +1698,6 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	if (process_type == ZBX_PROCESS_TRAPPERD)
 		memcache_zbx_setitem(item);
 #endif
-*/
 }
 
 void DBfree_item(DB_ITEM *item)
@@ -1710,28 +1712,27 @@ void DBfree_item(DB_ITEM *item)
 	zabbix_log(LOG_LEVEL_DEBUG, "In DBfree_item(%s)", item->key);
 #endif
 
-	if (item->chars == NULL) {
-		if (item->stderr) {
-			free(item->stderr);
-			item->stderr = NULL;
-		}
-
-		if (item->prevvalue_str) {
-			free(item->prevvalue_str);
-			item->prevvalue_str = NULL;
-		}
-
-		if (item->lastvalue_str) {
-			free(item->lastvalue_str);
-			item->lastvalue_str = NULL;
-		}
-
-		if (item->prevorgvalue_str) {
-			free(item->prevorgvalue_str);
-			item->prevorgvalue_str = NULL;
-		}
+	if (item->stderr) {
+		free(item->stderr);
+		item->stderr = NULL;
 	}
-	else {
+
+	if (item->prevvalue_str) {
+		free(item->prevvalue_str);
+		item->prevvalue_str = NULL;
+	}
+
+	if (item->lastvalue_str) {
+		free(item->lastvalue_str);
+		item->lastvalue_str = NULL;
+	}
+
+	if (item->prevorgvalue_str) {
+		free(item->prevorgvalue_str);
+		item->prevorgvalue_str = NULL;
+	}
+
+	if (item->chars != NULL) {
 		free(item->chars);
 		item->chars = NULL;
 	}

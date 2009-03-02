@@ -15,10 +15,13 @@ int memcache_zbx_getitem(char *key, char *host, DB_ITEM *item)
 	char *strkey = NULL, *strvalue = NULL;
 	uint32_t flags;
 	memcached_return rc;
-	size_t len, item_len;
+	size_t len, item_len = 0;
 
-	if (!memsite)
+	if (!memsite) {
+		zabbix_log(LOG_LEVEL_DEBUG, "[memcache] memcache_getitem()"
+			    "[%s|%s] ERR: memsite == NULL", key, host);
 		return 0;
+	}
 
 	len = strlen(key) + strlen(host) + 5 + 1;
 
@@ -33,10 +36,15 @@ int memcache_zbx_getitem(char *key, char *host, DB_ITEM *item)
 	free(strkey);
 
 	if (rc == MEMCACHED_SUCCESS) {
-		if (!item_len)
+		if (!item_len) {
+			zabbix_log(LOG_LEVEL_DEBUG, "[memcache] memcache_getitem()"
+				    "[%s|%s] ERR: item_len == 0", key, host);
 			return 0;
+		}
 
 		dbitem_unserialize(strvalue, item);
+		DBget_item_values(item);
+
 		return 1;
 	}
 	else if (rc == MEMCACHED_NOTFOUND) {
@@ -68,15 +76,14 @@ int memcache_zbx_setitem(DB_ITEM *item)
 		    process_type, MEMCACHE_VERSION, item->key, item->host_name);
 
 	zabbix_log(LOG_LEVEL_DEBUG, "[memcache] memcache_setitem()"
-		    "[%d|%d|%s|%s] cache-time=%d",
-		    process_type, MEMCACHE_VERSION, item->key, item->host_name,
-		    item->cache_time);
+		    "[%d|%d|%s|%s]",
+		    process_type, MEMCACHE_VERSION, item->key, item->host_name);
 
 	item_len = dbitem_size(item, 0);
 	dbitem_serialize(item, item_len);
 
 	rc = memcached_set(memsite->conn, strkey, (len-1), item->chars, item_len,
-			    (time_t)(CONFIG_MEMCACHE_ITEMS_TTL * 2),
+			    (time_t)CONFIG_MEMCACHE_ITEMS_TTL,
 			    (uint32_t)0);
 	free(strkey);
 
