@@ -263,8 +263,7 @@ DB_GRAPH_ITEM
 	char	color[GRAPH_ITEM_COLOR_LEN_MAX];
 };
 
-#define DYN_DB_ITEM_ELEM	17 // stderr, prevorgvalue_str, ...
-#define CHARS_LEN_MAX		21
+#define CHARS_LEN_MAX		17
 
 DB_ITEM
 {
@@ -329,9 +328,7 @@ DB_ITEM
 	char	*prevorgvalue_str;
 	char	*lastvalue_str;
 	char	*prevvalue_str;
-#ifdef HAVE_MEMCACHE
-	hfs_time_t	cache_time;
-#endif
+
 	long		chars_len[CHARS_LEN_MAX];
 	char		*chars;
 };
@@ -542,6 +539,7 @@ int	DBget_queue_count(void);
 void    DBescape_string(const char *from, char *to, int maxlen);
 char*   DBdyn_escape_string(const char *str);
 
+int	DBget_item_values(DB_ITEM *item);
 void    DBget_item_from_db(DB_ITEM *item,DB_ROW row);
 
 zbx_uint64_t	DBadd_host(char *server, int port, int status, int useip, char *ip, int disable_until, int available);
