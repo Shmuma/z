@@ -896,9 +896,8 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 						(int)now,
 						item->itemid);
 
-					if (CONFIG_HFS_PATH)
-						HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now, nextcheck,
-									    item->lastvalue_uint64, item->lastvalue_uint64, value->ui64, stderr);
+					HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now, nextcheck,
+								    item->lastvalue_uint64, item->lastvalue_uint64, value->ui64, stderr);
 				}
 			}
 		}
@@ -912,17 +911,33 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 	    item->value_type != ITEM_VALUE_TYPE_UINT64) {
 		if (item->prevvalue_str)
 			free(item->prevvalue_str);
-		item->prevvalue_str = (item->lastvalue_str) ?
-					strdup(item->lastvalue_str) :
-					NULL;
+
+		if (!item->lastvalue_str) {
+			item->prevvalue_str = NULL;
+			item->prevvalue_null = 1;
+		}
+		else
+			item->prevvalue_str = strdup(item->lastvalue_str);
 
 		if (item->lastvalue_str)
 			free(item->lastvalue_str);
-		item->lastvalue_str = strdup(value->str);
+
+		if (!value->str) {
+			item->lastvalue_str = NULL;
+			item->lastvalue_null = 1;
+		}
+		else
+			item->lastvalue_str = strdup(value->str);
 
 		if (item->prevorgvalue_str)
 			free(item->prevorgvalue_str);
-		item->prevorgvalue_str = strdup(prev_value.str);
+
+		if (!prev_value.str) {
+			item->prevorgvalue_str = NULL;
+			item->prevorgvalue_null = 1;
+		}
+		else
+			item->prevorgvalue_str = strdup(prev_value.str);
 	}
 	else {
 		item->prevvalue_dbl			= item->lastvalue_dbl;
@@ -937,7 +952,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 
 	if (item->stderr)
 		free(item->stderr);
-	item->stderr = strdup(stderr);
+	item->stderr = (stderr) ? strdup(stderr) : NULL;
 
 /* Update item status if required */
 	if(item->status == ITEM_STATUS_NOTSUPPORTED)
@@ -954,8 +969,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 			ITEM_STATUS_ACTIVE,
 			item->itemid);
 
-		if (CONFIG_HFS_PATH)
-			HFS_update_item_status (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, ITEM_STATUS_ACTIVE, NULL);
+		HFS_update_item_status (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, ITEM_STATUS_ACTIVE, NULL);
 	}
 
 	/* Required for nodata() */
