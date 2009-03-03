@@ -43,6 +43,6 @@ void	process_new_value(int history, DB_ITEM *item, AGENT_RESULT *value, time_t t
 
 void	append_history (char* server, char* key, char* value, hfs_time_t ts, void** token);
 void	flush_history (void** token);
-
+void	process_profile_value (char* server, char* value);
 
 #endif

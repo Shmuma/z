@@ -364,6 +364,8 @@ void	child_trapper_main(int i)
 			mtr_values += count;
 			metric_update (key_values, mtr_values);
 			for (i = 0; i < count; i++) {
+				if (strcmp (entries[i].key, "profile"))
+					process_profile_data (entries[i].server, entries[i].error);
 				process_data (0, entries[i].ts, entries[i].server, entries[i].key, entries[i].value,
 					      entries[i].error, entries[i].lastlogsize, entries[i].timestamp,
 					      entries[i].source, entries[i].severity);

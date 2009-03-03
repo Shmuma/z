@@ -29,6 +29,7 @@
 #include "evalfunc.h"
 #include "functions.h"
 #include "expression.h"
+#include "memcache_php.h"
 
 extern char* CONFIG_SERVER_SITE;
 extern char* CONFIG_HFS_PATH;
@@ -1258,4 +1259,26 @@ void	flush_history (void** token)
 	DBfree_item(&state->item);
 	free (state);
 	*token = NULL;
+}
+
+
+
+/* handle host's profile data */
+void	process_profile_value (char* server, char* value)
+{
+	int len = strlen (server);
+	char* key;
+
+	if (!server || !value)
+		return;
+
+	key = (char*)malloc (len+4);
+
+	if (!key)
+		return;
+
+	snprintf (key, "p|%s", server);
+
+	memcache_zbx_save_val (key, value, strlen (value)+1);
+	free (key);
 }
