@@ -2500,6 +2500,8 @@ void HFS_update_trigger_value(const char* hfs_path, const char* siteid, zbx_uint
 	char* name = get_name (hfs_path, siteid, triggerid, NK_TriggerStatus);
 	int fd;
 	trigger_value_t val = { new_value, now };
+	const char* key;
+	size_t len;
 
 	if (!name)
 		return;
@@ -2523,6 +2525,12 @@ void HFS_update_trigger_value(const char* hfs_path, const char* siteid, zbx_uint
 	}
 
 	close (fd);
+
+#ifdef HAVE_MEMCACHE
+	key = memcache_get_key (MKT_TRIGGER, triggerid);
+	len = sizeof (val);
+	memcache_zbx_save_val (key, &val, len);
+#endif
 	return;
 }
 
@@ -2575,9 +2583,38 @@ int HFS_get_triggers_values (const char* hfs_path, const char* siteid, hfs_trigg
 
 int HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64_t triggerid, hfs_trigger_value_t* res)
 {
-	char* name = get_name (hfs_path, siteid, 0, NK_TriggerStatus);
+	char* name;
 	int fd;
 	trigger_value_t val;
+
+	/* trying to fetch value from cache first */
+#ifdef HAVE_MEMCACHE
+	int cached = 0;
+	const char* key;
+	char* buf;
+	size_t len;
+
+	/* trying to obtain value from memcache */
+	key = memcache_get_key (MKT_TRIGGER, triggerid);
+
+	if (key) {
+		buf = memcache_zbx_read_val (siteid, key, &len);
+
+		if (buf) {
+			if (len == sizeof (hfs_trigger_value_t)) {
+				memcpy (res, buf, len);
+				cached = 1;
+			}
+			else
+				free (buf);
+		}
+	}
+
+	if (cached)
+		return 1;
+#endif
+
+	name = get_name (hfs_path, siteid, 0, NK_TriggerStatus);
 
 	if (!name)
 		return 0;
@@ -2608,6 +2645,15 @@ int HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64_
         res->value = val.value;
 
 	close (fd);
+
+#ifdef HAVE_MEMCACHE
+#ifndef ZABBIX_PHP_MODULE
+	/* save read value to memcache for future hits */
+	/* we already have initialized key, so just use it */
+	len = sizeof (*res);
+	memcache_zbx_save_val (key, res, len);
+#endif
+#endif
 	return 1;
 }
 
