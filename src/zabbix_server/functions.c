@@ -152,6 +152,7 @@ void	update_triggers(zbx_uint64_t itemid)
 	DB_TRIGGER	trigger;
 	DB_RESULT	result;
 	DB_ROW		row;
+	hfs_trigger_value_t hfs_val;
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In update_triggers [itemid:" ZBX_FS_UI64 "]",
 		itemid);
@@ -173,6 +174,11 @@ void	update_triggers(zbx_uint64_t itemid)
 		trigger.priority	= atoi(row[7]);
 
 		exp = strdup(trigger.expression);
+
+		if (CONFIG_HFS_PATH)
+			if (HFS_get_trigger_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, trigger.triggerid, &hfs_val))
+				trigger.value = hfs_val.value;
+
 		if( evaluate_expression(&exp_value, &exp, trigger.value, error, sizeof(error)) != 0 )
 		{
 			zabbix_log( LOG_LEVEL_WARNING, "Expression [%s] cannot be evaluated [%s]",
