@@ -567,7 +567,7 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 	long long itemid = 0;
 	char *site = NULL;
 	int site_len = 0, type;
-	hfs_time_t lastclock, nextcheck;
+	hfs_time_t lastclock;
 	char* buf = NULL;
 
 	double d_prev, d_last, d_prevorg;
@@ -584,7 +584,7 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 
 	switch (type) {
 	case ITEM_VALUE_TYPE_FLOAT:
-		if (!HFS_get_item_values_dbl (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, &lastclock, &nextcheck, &d_prev, &d_last, &d_prevorg, &s_stderr))
+		if (!HFS_get_item_values_dbl (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, &lastclock, &d_prev, &d_last, &d_prevorg, &s_stderr))
 			RETURN_FALSE;
 		add_assoc_double (return_value, "prevvalue", d_prev);
 		add_assoc_double (return_value, "lastvalue", d_last);
@@ -592,7 +592,7 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 
 	case ITEM_VALUE_TYPE_TEXT:
 	case ITEM_VALUE_TYPE_STR:
-		if (!HFS_get_item_values_str (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, &lastclock, &nextcheck, &s_prev, &s_last, &s_prevorg, &s_stderr))
+		if (!HFS_get_item_values_str (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, &lastclock, &s_prev, &s_last, &s_prevorg, &s_stderr))
 			RETURN_FALSE;
 		if (s_prev) {
 			add_assoc_string (return_value, "prevvalue", s_prev, 1);
@@ -611,7 +611,7 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 		break;
 
 	case ITEM_VALUE_TYPE_UINT64:
-		if (!HFS_get_item_values_int (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, &lastclock, &nextcheck, &i_prev, &i_last, &i_prevorg, &s_stderr))
+		if (!HFS_get_item_values_int (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, &lastclock, &i_prev, &i_last, &i_prevorg, &s_stderr))
 			RETURN_FALSE;
 		
 		asprintf(&buf, "%lld", i_prev);
