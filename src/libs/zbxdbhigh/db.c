@@ -1562,7 +1562,7 @@ char*	DBdyn_escape_string(const char *str)
 int	DBget_item_values(DB_ITEM *item)
 {
 	int rc = 0;
-	hfs_time_t lastclock, nextcheck;
+	hfs_time_t lastclock;
 
 	item->stderr = NULL;
 
@@ -1577,7 +1577,7 @@ int	DBget_item_values(DB_ITEM *item)
 	switch(item->value_type) {
 		case ITEM_VALUE_TYPE_FLOAT:
 			rc = HFS_get_item_values_dbl(CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
-						     &lastclock, &nextcheck,
+						     &lastclock,
 						     &item->prevvalue_dbl,
 						     &item->lastvalue_dbl,
 						     &item->prevorgvalue_dbl,
@@ -1594,7 +1594,7 @@ int	DBget_item_values(DB_ITEM *item)
 			break;
 		case ITEM_VALUE_TYPE_UINT64:
 			rc = HFS_get_item_values_int(CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
-						     &lastclock, &nextcheck,
+						     &lastclock,
 						     &item->prevvalue_uint64,
 						     &item->lastvalue_uint64,
 						     &item->prevorgvalue_uint64,
@@ -1611,7 +1611,7 @@ int	DBget_item_values(DB_ITEM *item)
 			break;
 		default:
 			rc = HFS_get_item_values_str(CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
-						     &lastclock, &nextcheck,
+						     &lastclock,
 						     &item->prevvalue_str,
 						     &item->lastvalue_str,
 						     &item->prevorgvalue_str,
@@ -1624,10 +1624,8 @@ int	DBget_item_values(DB_ITEM *item)
 			break;
 	}
 
-	if (rc) {
+	if (rc)
 		item->lastclock = lastclock;
-		item->nextcheck = nextcheck;
-	}
 
 	return rc;
 }
@@ -1635,7 +1633,6 @@ int	DBget_item_values(DB_ITEM *item)
 void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 {
 	int	rc = 0;
-	hfs_time_t lastclock, nextcheck;
 
 	/* Zabbix developers is morons. Some DB_ITEM pointers is not
 	   initialized after DBget_item_from_db(). */

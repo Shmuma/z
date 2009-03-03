@@ -667,15 +667,15 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 		    switch (item->value_type) {
 		    case ITEM_VALUE_TYPE_STR:
 		    case ITEM_VALUE_TYPE_TEXT:
-			HFS_update_item_values_str (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now, (hfs_time_t)nextcheck,
+			HFS_update_item_values_str (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now,
 						    item->lastvalue_null ? NULL : item->lastvalue_str, value->str, NULL, stderr);
 			break;
 		    case ITEM_VALUE_TYPE_FLOAT:
-			HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now, (hfs_time_t)nextcheck,
+			HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now,
 						    item->lastvalue_null ? 0.0 : item->lastvalue_dbl, value->dbl, 0.0, stderr);
 			break;
 		    case ITEM_VALUE_TYPE_UINT64:
-			HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now, (hfs_time_t)nextcheck,
+			HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now,
 						    item->lastvalue_null ? 0 : item->lastvalue_uint64, value->ui64, 0, stderr);
 			break;
 		    }
@@ -707,7 +707,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 
 						if (CONFIG_HFS_PATH)
 							HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-										    nextcheck, item->lastvalue_dbl,
+										    item->lastvalue_dbl,
 										    (value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock),
 										    value->dbl, stderr);
 
@@ -727,7 +727,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 							item->itemid);
 
 						if (CONFIG_HFS_PATH)
-							HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now, nextcheck,
+							HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
 										    item->lastvalue_dbl, value->dbl - item->prevorgvalue_dbl, value->dbl,
 										    stderr);
 
@@ -746,7 +746,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 						item->itemid);
 
 					if (CONFIG_HFS_PATH)
-						HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now, nextcheck,
+						HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
 									    item->lastvalue_dbl, item->lastvalue_dbl, value->dbl, stderr);
 				}
 			}
@@ -772,7 +772,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 
 						if (CONFIG_HFS_PATH)
 							HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-										    nextcheck, item->lastvalue_uint64,
+										    item->lastvalue_uint64,
 										    (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64)/(now-item->lastclock),
 										    value->ui64, stderr);
 
@@ -792,7 +792,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 							item->itemid);
 
 						if (CONFIG_HFS_PATH)
-							HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now, nextcheck,
+							HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
 										    item->lastvalue_uint64,
 										    (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64),
 										    value->ui64, stderr);
@@ -812,7 +812,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 						item->itemid);
 
 					if (CONFIG_HFS_PATH)
-						HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now, nextcheck,
+						HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
 									    item->lastvalue_uint64, item->lastvalue_uint64, value->ui64, stderr);
 				}
 			}
@@ -839,7 +839,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 						item->itemid);
 
 				    if (CONFIG_HFS_PATH)
-					    HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now, nextcheck,
+					    HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
 									item->lastvalue_dbl, value->dbl - item->prevorgvalue_dbl, value->dbl,
 									stderr);
 				    SET_DBL_RESULT(value, (double)(value->dbl - item->prevorgvalue_dbl));
@@ -856,7 +856,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 						item->itemid);
 
 				    if (CONFIG_HFS_PATH)
-					    HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now, nextcheck,
+					    HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
 									item->lastvalue_dbl, item->lastvalue_dbl, value->dbl, stderr);
 				}
 			}
@@ -879,7 +879,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 						item->itemid);
 
 				    if (CONFIG_HFS_PATH)
-					    HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now, nextcheck,
+					    HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
 									item->lastvalue_uint64,
 									(zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64),
 									value->ui64, stderr);
@@ -896,8 +896,9 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 						(int)now,
 						item->itemid);
 
-					HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now, nextcheck,
-								    item->lastvalue_uint64, item->lastvalue_uint64, value->ui64, stderr);
+					if (CONFIG_HFS_PATH)
+						HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
+									    item->lastvalue_uint64, item->lastvalue_uint64, value->ui64, stderr);
 				}
 			}
 		}
