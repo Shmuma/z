@@ -1624,7 +1624,8 @@ int	DBget_item_values(DB_ITEM *item)
 			break;
 	}
 
-	item->lastclock = (rc) ? lastclock : 0;
+	if (rc)
+		item->lastclock = lastclock;
 
 	return rc;
 }
