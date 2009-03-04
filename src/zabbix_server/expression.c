@@ -1260,7 +1260,8 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 				if(row1) {
 					DBget_item_from_db(&item, row1);
 
-					switch(item.value_type) {
+					if (!item.lastvalue_null) {
+						switch(item.value_type) {
 						case ITEM_VALUE_TYPE_FLOAT:
 							zbx_snprintf(tmp, MAX_STRING_LEN, "%lf", item.lastvalue_dbl);
 							break;
@@ -1269,11 +1270,13 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 							break;
 						default:
 							strscpy(tmp, item.lastvalue_str);
+						}
+
+						add_value_suffix(tmp, sizeof(tmp), item.units, item.value_type);
+						replace_to = zbx_dsprintf(replace_to, "%s", tmp);
 					}
-
-					add_value_suffix(tmp, sizeof(tmp), item.units, item.value_type);
-					replace_to = zbx_dsprintf(replace_to, "%s", tmp);
-
+					else
+						replace_to = zbx_dsprintf(replace_to, "%s", STR_UNKNOWN_VARIABLE);
 					DBfree_item(&item);
 				}
 				else {

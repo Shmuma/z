@@ -1620,6 +1620,10 @@ int	DBget_item_values(DB_ITEM *item)
 				item->prevvalue_str = NULL;
 				item->lastvalue_str = NULL;
 				item->prevorgvalue_str = NULL;
+
+				item->prevvalue_null    = 1;
+				item->lastvalue_null    = 1;
+				item->prevorgvalue_null = 1;
 			}
 			break;
 	}
