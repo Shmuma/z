@@ -122,6 +122,9 @@ memsite_item_t* memcache_zbx_site_lookup (const char* site)
 	if (!memsite->site && memsite->server)
 		return memsite;
 
+	if (!site)
+		return NULL;
+
 	while (memsite[i].site) {
 		if (!strcmp (site, memsite[i].site))
 			return memsite+i;

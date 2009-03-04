@@ -215,7 +215,7 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
     hfs_off_t size, ofs;
     int retval = 1;
 
-    if ((meta = read_metafile (p_meta)) == NULL) {
+    if ((meta = read_metafile (p_meta, NULL)) == NULL) {
 	zabbix_log(LOG_LEVEL_CRIT, "HFS: store_values(): read_metafile(%s) == NULL", p_meta);
 	return retval;
     }
@@ -644,12 +644,14 @@ void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t ite
     close (fd);
 }
 
-hfs_meta_t *read_metafile(const char *metafile)
+hfs_meta_t *read_metafile(const char *metafile, const char* siteid)
 {
 	hfs_meta_t *res;
-	int fd, len;
-	static char buf[1024*4];
+	int fd = -1;
+	char* buf = NULL;
 	char* p;
+	size_t len;
+	struct stat st;
 
 	if (!metafile)
 		return NULL;
@@ -657,24 +659,34 @@ hfs_meta_t *read_metafile(const char *metafile)
 	if ((res = (hfs_meta_t *) malloc(sizeof(hfs_meta_t))) == NULL)
 		return NULL;
 
-	/* if we have no file, create empty one */
-	if ((fd = open(metafile, O_RDONLY)) < 0) {
-/* 		zabbix_log(LOG_LEVEL_DEBUG, "%s: file open failed: %s", */
-/* 			   metafile, strerror(errno)); */
-		res->blocks = 0;
-		res->last_delay = 0;
-		res->last_type = IT_DOUBLE;
-		res->last_ofs = 0;
-		res->meta = NULL;
-		return res;
+#ifdef HAVE_MEMCACHE
+	buf = memcache_zbx_read_val (siteid, metafile, &len);
+#endif
+
+	if (!buf) {
+		/* if we have no file, create empty one */
+		if ((fd = open(metafile, O_RDONLY)) < 0) {
+			res->blocks = 0;
+			res->last_delay = 0;
+			res->last_type = IT_DOUBLE;
+			res->last_ofs = 0;
+			res->meta = NULL;
+			return res;
+		}
+
+		if (fstat (fd, &st) < 0)
+			st.st_size = 1024*4;
+		buf = (char*)malloc (st.st_size);
+
+		/* read whole file into buffer (we hope) */
+		len = read (fd, buf, st.st_size);
 	}
 
-	/* read whole file into buffer (we hope) */
-	len = read (fd, buf, sizeof (buf));
-
 	if (len < sizeof (hfs_meta_t) - sizeof (res->meta)) {
-		close (fd);
+		if (fd >= 0)
+			close (fd);
 		free (res);
+		free (buf);
 		return NULL;
 	}
 
@@ -685,18 +697,19 @@ hfs_meta_t *read_metafile(const char *metafile)
 
 	res->meta = (hfs_meta_item_t *) malloc(sizeof(hfs_meta_item_t)*res->blocks);
         if (!res->meta) {
-		close (fd);
+		if (fd >= 0)
+			close (fd);
 		free (res);
+		free (buf);
 		return NULL;
 	}
 
-	if (len == sizeof (hfs_meta_item_t) * res->blocks) {
+	if (len == sizeof (hfs_meta_item_t) * res->blocks)
 		memcpy (res->meta, p, sizeof (hfs_meta_item_t) * res->blocks);
-	} else {
-		/* TODO TODO. Meta is grown over 4KB */
-	}
 
-	close (fd);
+	if (fd >= 0)
+		close (fd);
+	free (buf);
 	return res;
 }
 
@@ -704,7 +717,7 @@ hfs_meta_t *read_metafile(const char *metafile)
 hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int trend)
 {
     char* path = get_name (hfs_base_dir, siteid, itemid, trend ? NK_TrendItemMeta : NK_ItemMeta);
-    hfs_meta_t* res = read_metafile(path);
+    hfs_meta_t* res = read_metafile(path, siteid);
     free(path);
 
     return res;
@@ -743,8 +756,13 @@ int write_metafile (const char* filename, hfs_meta_t* meta, hfs_meta_item_t* ext
 		memcpy (p, extra, sizeof (hfs_meta_item_t));
 
 	write (fd, buf, len);
-	free (buf);
 	close (fd);
+
+#ifdef HAVE_MEMCACHE
+	memcache_save_val (filename, buf, len);
+#endif
+
+	free (buf);
 	return 1;
 }
 

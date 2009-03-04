@@ -49,7 +49,7 @@ typedef struct __attribute__ ((packed)) {
 
 int is_trend_type (item_type_t type);
 int make_directories (const char* path);
-hfs_meta_t* read_metafile (const char* metafile);
+hfs_meta_t* read_metafile (const char* metafile, const char* siteid);
 hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int trend);
 int write_metafile (const char* filename, hfs_meta_t* meta, hfs_meta_item_t* extra);
 void free_meta (hfs_meta_t* meta);
