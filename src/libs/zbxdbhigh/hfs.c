@@ -2182,6 +2182,14 @@ int HFS_get_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_u
 	*prevvalue = unbuffer_str (&p);
 	*lastvalue = unbuffer_str (&p);
 	*prevorgvalue = unbuffer_str (&p);
+
+	if (!*prevvalue)
+		*prevvalue = strdup ("");
+	if (!*lastvalue)
+		*lastvalue = strdup ("");
+	if (!*prevorgvalue)
+		*prevorgvalue = strdup ("");
+
 	*stderr = unbuffer_str (&p);
 	free (buf);
 	return 1;
