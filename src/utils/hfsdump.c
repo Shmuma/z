@@ -50,7 +50,7 @@ int dump_by_meta(const char *metafile)
 	hfs_time_t ts;
 	hfs_off_t ofs;
 
-	if ((meta = read_metafile(metafile)) == NULL)
+	if ((meta = read_metafile(metafile, NULL)) == NULL)
 		return -1; // Somethig real bad happend :(
 
 	if (meta->blocks == 0) {

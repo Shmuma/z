@@ -39,7 +39,7 @@ int main (int argc, char** argv)
 		limit = 1000000;
 	path = argv[2];
 
-	meta = read_metafile (path);
+	meta = read_metafile (path, NULL);
 
 	if (!meta || !meta->blocks)
 		return 1;

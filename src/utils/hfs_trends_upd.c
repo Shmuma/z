@@ -45,7 +45,7 @@ int main (int argc, char** argv)
 	item_dir = argv[1];
 
 	zbx_snprintf (path, sizeof (path), "%s/trends.meta", item_dir);
-	trends_meta = read_metafile (path);
+	trends_meta = read_metafile (path, NULL);
 
 	if (trends_meta && trends_meta->blocks) {
 		start_ts = trends_meta->meta[trends_meta->blocks-1].end;
@@ -58,7 +58,7 @@ int main (int argc, char** argv)
 	start_ts -= start_ts % 3600;
 
 	zbx_snprintf (path, sizeof (path), "%s/history.meta", item_dir);
-	meta = read_metafile (path);
+	meta = read_metafile (path, NULL);
 
         if (meta) {
 		if (meta->blocks) {

@@ -759,7 +759,7 @@ int write_metafile (const char* filename, hfs_meta_t* meta, hfs_meta_item_t* ext
 	close (fd);
 
 #ifdef HAVE_MEMCACHE
-	memcache_save_val (filename, buf, len);
+	memcache_zbx_save_val (filename, buf, len);
 #endif
 
 	free (buf);
