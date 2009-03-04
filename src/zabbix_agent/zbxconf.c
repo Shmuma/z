@@ -150,6 +150,7 @@ void    load_user_parameters(void)
 
 		{"Alias",		0,	&add_alias_from_config,	TYPE_STRING,PARM_OPT,0,0},		
 		{"UserParameter",	0,	&add_parameter,		0,	0,	0,	0},
+		{"Timeout",		&CONFIG_TIMEOUT,	0,TYPE_INT,	PARM_OPT,	1,30},
 
 #if defined(_WINDOWS)
 		{"PerfCounter",		0,	&add_perfs_from_config,	TYPE_STRING,PARM_OPT,0,0},
