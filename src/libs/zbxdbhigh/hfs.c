@@ -2610,7 +2610,7 @@ int HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64_
 		}
 	}
 
-	if (cached)
+	if (cached && res->when)
 		return 1;
 #endif
 
@@ -2643,6 +2643,9 @@ int HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64_
         res->triggerid = triggerid;
         res->when = val.when;
         res->value = val.value;
+
+	if (!res->when)
+		res->value = TRIGGER_VALUE_UNKNOWN;
 
 	close (fd);
 
