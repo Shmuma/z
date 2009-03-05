@@ -488,7 +488,7 @@ int HFSread_interval(const char* hfs_base_dir, const char* siteid, zbx_uint64_t 
     int fd, block;
     item_value_u value;
     hfs_time_t ts;
-    int count = 0;
+    int count = 0, total = 0;
 
     zabbix_log(LOG_LEVEL_DEBUG, "HFSread_interval (%s, %llu, %lld, %lld)", hfs_base_dir, itemid, from, to);
 
@@ -511,12 +511,6 @@ int HFSread_interval(const char* hfs_base_dir, const char* siteid, zbx_uint64_t 
     }
     free (p_data);
 
-/*     if (!obtain_lock (fd, 0)) { */
-/*         close (fd); */
-/*         free_meta (meta); */
-/*         return count; */
-/*     } */
-
     ofs = find_meta_ofs (from, meta, &block);
 
     if (ofs != -1) {
@@ -528,6 +522,7 @@ int HFSread_interval(const char* hfs_base_dir, const char* siteid, zbx_uint64_t 
 		    if (is_valid_val (&value, sizeof (value))) {
 			    fn (meta->meta[block].type, value, ts, init_res);
 			    count++;
+			    total++;
 		    }
 		    ts += meta->meta[block].delay;
 
@@ -542,8 +537,9 @@ int HFSread_interval(const char* hfs_base_dir, const char* siteid, zbx_uint64_t 
 	    }
     }
 
+    zabbix_log (LOG_LEVEL_ERR, "IODEBUG: folded by count %d values for itemid %lld", total, itemid);
+
     free_meta (meta);
-/*     release_lock (fd, 0); */
     close (fd);
     return count;
 }
@@ -560,6 +556,7 @@ void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
     hfs_off_t ofs;
     int fd, count, i;
     zbx_uint64_t value[128];
+    int total = 0;
 
     zabbix_log(LOG_LEVEL_DEBUG, "HFS_foldl_time (%s, %llu, %lld)", hfs_base_dir, itemid, ts);
 
@@ -591,10 +588,14 @@ void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
 		    if (!count)
 			    break;
 		    for (i = 0; i < count; i++)
-			    if (is_valid_val (value+i, sizeof (value[i])))
+			    if (is_valid_val (value+i, sizeof (value[i]))) {
 				    fn (value+i, init_res);
+				    total++;
+			    }
 	    }
     }
+
+    zabbix_log (LOG_LEVEL_ERR, "IODEBUG: folded by time %d values for itemid %lld", total, itemid);
 
     free_meta (meta);
     close (fd);
