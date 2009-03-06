@@ -34,6 +34,16 @@
 extern char* CONFIG_SERVER_SITE;
 extern char* CONFIG_HFS_PATH;
 
+
+typedef struct {
+	char function[128];
+	char parameter[128];
+	char lastvalue[128];
+	zbx_uint64_t functionid;
+	zbx_uint64_t triggerid;
+} function_info_t;
+
+
 /******************************************************************************
  *                                                                            *
  * Function: update_functions                                                 *
@@ -59,25 +69,63 @@ void	update_functions(DB_ITEM *item)
 	char		*lastvalue;
 	int		ret=SUCCEED;
 	hfs_function_value_t fun_val;
+	function_info_t* info = NULL;
+	int count, i, info_size;
+	size_t size;
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In update_functions(" ZBX_FS_UI64 ")",
 		item->itemid);
 
+#ifdef HAVE_MEMCACHE
+	/* trying to obtain item's functions information from memcache */
+	info = memcache_zbx_get_functions (item->itemid, &size);
+	count = size / sizeof (function_info_t);
+#endif
+
+	if (!info) {
+		/* select and cache */
+		result = DBselect("select f.function,f.parameter,f.itemid,f.lastvalue,f.functionid from functions f, triggers t where "
+				  " f.itemid=" ZBX_FS_UI64" and t.triggerid=f.triggerid and t.status=%d",
+				  item->itemid,
+				  TRIGGER_STATUS_ENABLED);
+		info_size = count = 0;
+		
+		while ((row = DBfetch (result))) {
+			if (info_size == count) {
+				info = (function_info_t*)realloc (info, sizeof (function_info_t) * (info_size += 2));
+				if (!info) {
+					DBfree_result (result);
+					return;
+				}
+			}
+
+			strncpy (info[count].function, row[0], sizeof (info[count].function));
+			strncpy (info[count].parameter, row[1], sizeof (info[count].parameter));
+			strncpy (info[count].lastvalue, row[3], sizeof (info[count].parameter));
+			ZBX_STR2UINT64 (info[count].functionid, row[4]);
+			info[count].triggerid = 0;
+			count++;
+		}
+
+		DBfree_result (result);
+
+#ifdef HAVE_MEMCACHE
+		memcache_zbx_put_functions (item->itemid, items, count*sizeof (function_info_t));
+#endif
+	}
+
 /* Oracle does'n support this */
 /*	zbx_snprintf(sql,sizeof(sql),"select function,parameter,itemid,lastvalue from functions where itemid=%d group by function,parameter,itemid order by function,parameter,itemid",item->itemid);*/
-	result = DBselect("select f.function,f.parameter,f.itemid,f.lastvalue,f.functionid from functions f, triggers t where f.itemid=" ZBX_FS_UI64" and t.triggerid=f.triggerid and t.status=%d",
-			  item->itemid,
-			  TRIGGER_STATUS_ENABLED);
 
-	while((row=DBfetch(result)))
+	for (i = 0; i < count; i++)
 	{
-		function.function = row[0];
-		function.parameter = row[1];
-		ZBX_STR2UINT64 (function.itemid, row[2]);
-		ZBX_STR2UINT64 (function.functionid, row[4]);
+		function.function = info[i].function;
+		function.parameter = info[i].parameter;
+		function.itemid = item->itemid;
+		function.functionid = info[i].functionid;
 
 		if (!CONFIG_HFS_PATH)
-			lastvalue = strdup (row[3]);
+			lastvalue = strdup (info[i].lastvalue);
 		else {
 			/* obtain function value from HFS */
 			fun_val.type = FVT_NULL;
@@ -126,7 +174,8 @@ void	update_functions(DB_ITEM *item)
 			free (lastvalue);
 	}
 
-	DBfree_result(result);
+	if (info)
+		free (info);
 
 	zabbix_log( LOG_LEVEL_DEBUG, "End update_functions()");
 }
