@@ -3126,7 +3126,7 @@ static int global_fd_function_open (const char* hfs_path, const char* siteid)
 int HFS_save_function_value (const char* hfs_path, const char* siteid, zbx_uint64_t functionid, hfs_function_value_t* value)
 {
 #ifdef HAVE_MEMCACHE
-	char* key = memcache_get_key (MKT_FUNCTION, functionid);
+	const char* key = memcache_get_key (MKT_FUNCTION, functionid);
 
 	memcache_zbx_save_val (key, value, sizeof (hfs_function_value_t));
 #endif
@@ -3152,12 +3152,14 @@ int HFS_save_function_value (const char* hfs_path, const char* siteid, zbx_uint6
 int HFS_get_function_value (const char* hfs_path, const char* siteid, zbx_uint64_t functionid, hfs_function_value_t* value)
 {
 #ifdef HAVE_MEMCACHE
-	char* key = memcache_get_key (MKT_FUNCTION, functionid);
+	const char* key = memcache_get_key (MKT_FUNCTION, functionid);
 	void* buf;
+	size_t len;
 
-	buf = memcache_zbx_read_val (siteid, key);
+	buf = memcache_zbx_read_val (siteid, key, &len);
 	if (buf) {
-		memcpy (value, buf, sizeof (hfs_function_value_t));
+		if (len == sizeof (hfs_function_value_t))
+			memcpy (value, buf, sizeof (hfs_function_value_t));
 		free (buf);
 		return 1;
 	}
