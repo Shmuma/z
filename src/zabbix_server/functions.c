@@ -85,10 +85,9 @@ void	update_functions(DB_ITEM *item)
 
 	if (!info) {
 		/* select and cache */
-		result = DBselect("select f.function,f.parameter,f.itemid,f.lastvalue,f.functionid from functions f, triggers t where "
-				  " f.itemid=" ZBX_FS_UI64" and t.triggerid=f.triggerid and t.status=%d",
-				  item->itemid,
-				  TRIGGER_STATUS_ENABLED);
+		result = DBselect("select f.function,f.parameter,f.itemid,f.lastvalue,f.functionid from functions f where "
+				  " f.itemid=" ZBX_FS_UI64,
+				  item->itemid);
 		info_size = count = 0;
 		
 		while ((row = DBfetch (result))) {
