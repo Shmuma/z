@@ -120,8 +120,7 @@ void	update_functions(DB_ITEM *item)
 		DBfree_result (result);
 
 #ifdef HAVE_MEMCACHE
-		if (info)
-			memcache_zbx_set_functions (item->itemid, info, count*sizeof (function_info_t));
+		memcache_zbx_set_functions (item->itemid, info, count*sizeof (function_info_t));
 #endif
 	}
 
