@@ -129,3 +129,31 @@ int memcache_zbx_delitem(DB_ITEM *item)
 }
 
 
+void* memcache_zbx_get_functions (zbx_uint64_t itemid, size_t* size)
+{
+	const char* key = memcache_get_key (MKT_ITEM_FUNCTIONS, itemid);
+
+	if (!key)
+		return NULL;
+
+	return memcache_zbx_read_val (NULL, key, size);
+}
+
+
+void  memcache_zbx_set_functions (zbx_uint64_t itemid, void* value, size_t size)
+{
+	const char* key = memcache_get_key (MKT_ITEM_FUNCTIONS, itemid);
+	memcached_return rc;
+
+	if (!key)
+		return;
+
+	if (!memsite)
+		return;
+
+	rc = memcached_set (memsite->conn, key, strlen (key), value, size, (time_t)CONFIG_MEMCACHE_ITEMS_TTL, 0);
+	if (rc == MEMCACHED_ERRNO) {
+		/* trying to reconnect */
+		memcache_zbx_reconnect (memsite);
+	}
+}

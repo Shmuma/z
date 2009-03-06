@@ -178,7 +178,7 @@ int memcache_zbx_save_val (const char* key, void* value, int val_len)
 void* memcache_zbx_read_val (const char* site, const char* key, size_t* val_len)
 {
 	char *p;
-	int len, flags;
+	int flags;
 	memcached_return rc;
 	memsite_item_t* conn;
 
@@ -219,6 +219,9 @@ const char* memcache_get_key (memcache_key_type_t type, zbx_uint64_t itemid)
 	case MKT_FUNCTION:
 		snprintf (buf, sizeof (buf), "f|" ZBX_FS_UI64, itemid);
 		break;
+	case MKT_ITEM_FUNCTIONS:
+		snprintf (buf, sizeof (buf), "if|" ZBX_FS_UI64, itemid);
+		break;		
 	default:
 		return NULL;
 	}
