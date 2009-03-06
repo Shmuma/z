@@ -44,6 +44,7 @@ typedef struct {
 } function_info_t;
 
 
+
 /******************************************************************************
  *                                                                            *
  * Function: update_functions                                                 *
@@ -99,9 +100,18 @@ void	update_functions(DB_ITEM *item)
 				}
 			}
 
-			strncpy (info[count].function, row[0], sizeof (info[count].function));
-			strncpy (info[count].parameter, row[1], sizeof (info[count].parameter));
-			strncpy (info[count].lastvalue, row[3], sizeof (info[count].parameter));
+			if (row[0])
+				zbx_strlcpy (info[count].function, row[0], sizeof (info[count].function));
+			else
+				info[count].function[0] = 0;
+			if (row[1])
+				zbx_strlcpy (info[count].parameter, row[1], sizeof (info[count].parameter));
+			else
+				info[count].parameter[0] = 0;
+			if (row[3])
+				zbx_strlcpy (info[count].lastvalue, row[3], sizeof (info[count].parameter));
+			else
+				info[count].lastvalue[0] = 0;
 			ZBX_STR2UINT64 (info[count].functionid, row[4]);
 			info[count].triggerid = 0;
 			count++;
@@ -110,7 +120,8 @@ void	update_functions(DB_ITEM *item)
 		DBfree_result (result);
 
 #ifdef HAVE_MEMCACHE
-		memcache_zbx_put_functions (item->itemid, items, count*sizeof (function_info_t));
+		if (info)
+			memcache_zbx_set_functions (item->itemid, info, count*sizeof (function_info_t));
 #endif
 	}
 
