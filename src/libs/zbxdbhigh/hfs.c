@@ -551,7 +551,7 @@ void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
 {
     char *p_data;
     hfs_meta_t* meta;
-    hfs_off_t ofs;
+    hfs_off_t ofs, ofs2;
     int fd, count, i;
     zbx_uint64_t value[128];
     int total = 0;
@@ -578,6 +578,7 @@ void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
     free (p_data);
 
     ofs = find_meta_ofs (ts, meta, NULL);
+    ofs2 = find_meta_ofs (time (NULL), meta, NULL);
 
     if (ofs != -1) {
 	    lseek (fd, ofs, SEEK_SET);
@@ -585,11 +586,18 @@ void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
 		    count = read (fd, value, sizeof (value)) / sizeof (value[0]);
 		    if (!count)
 			    break;
-		    for (i = 0; i < count; i++)
+		    for (i = 0; i < count; i++) {
 			    if (is_valid_val (value+i, sizeof (value[i]))) {
 				    fn (value+i, init_res);
 				    total++;
 			    }
+			    ofs += sizeof (double);
+			    if (ofs > ofs2)
+				    break;
+		    }
+
+		    if (ofs > ofs2)
+			    break;
 	    }
     }
 
@@ -869,11 +877,6 @@ hfs_off_t find_meta_ofs (hfs_time_t time, hfs_meta_t* meta, int* block)
 	return -1;
 }
 
-
-hfs_time_t get_data_index_from_ts (hfs_time_t ts)
-{
-	return ts / (zbx_uint64_t)1000000;
-}
 
 
 zbx_uint64_t HFS_get_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t from)
