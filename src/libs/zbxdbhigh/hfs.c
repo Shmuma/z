@@ -537,8 +537,6 @@ int HFSread_interval(const char* hfs_base_dir, const char* siteid, zbx_uint64_t 
 	    }
     }
 
-    zabbix_log (LOG_LEVEL_ERR, "IODEBUG: folded by count %d values for itemid %lld", total, itemid);
-
     free_meta (meta);
     close (fd);
     return count;
@@ -594,8 +592,6 @@ void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
 			    }
 	    }
     }
-
-    zabbix_log (LOG_LEVEL_ERR, "IODEBUG: folded by time %d values for itemid %lld", total, itemid);
 
     free_meta (meta);
     close (fd);
