@@ -537,8 +537,6 @@ int HFSread_interval(const char* hfs_base_dir, const char* siteid, zbx_uint64_t 
 	    }
     }
 
-    zabbix_log (LOG_LEVEL_ERR, "IODEBUG: folded by count %d values for itemid %lld", total, itemid);
-
     free_meta (meta);
     close (fd);
     return count;
@@ -594,8 +592,6 @@ void foldl_time (const char* hfs_base_dir, const char* siteid, zbx_uint64_t item
 			    }
 	    }
     }
-
-    zabbix_log (LOG_LEVEL_ERR, "IODEBUG: folded by time %d values for itemid %lld", total, itemid);
 
     free_meta (meta);
     close (fd);
@@ -2632,8 +2628,7 @@ int HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64_
 				memcpy (res, buf, len);
 				cached = 1;
 			}
-			else
-				free (buf);
+			free (buf);
 		}
 	}
 
@@ -3130,6 +3125,12 @@ static int global_fd_function_open (const char* hfs_path, const char* siteid)
 
 int HFS_save_function_value (const char* hfs_path, const char* siteid, zbx_uint64_t functionid, hfs_function_value_t* value)
 {
+#ifdef HAVE_MEMCACHE
+	char* key = memcache_get_key (MKT_FUNCTION, functionid);
+
+	memcache_zbx_save_val (key, value, sizeof (hfs_function_value_t));
+#endif
+
 	if (function_val_fd == -1)
 		if (!global_fd_function_open (hfs_path, siteid))
 			return 0;
@@ -3150,6 +3151,18 @@ int HFS_save_function_value (const char* hfs_path, const char* siteid, zbx_uint6
 
 int HFS_get_function_value (const char* hfs_path, const char* siteid, zbx_uint64_t functionid, hfs_function_value_t* value)
 {
+#ifdef HAVE_MEMCACHE
+	char* key = memcache_get_key (MKT_FUNCTION, functionid);
+	void* buf;
+
+	buf = memcache_zbx_read_val (siteid, key);
+	if (buf) {
+		memcpy (value, buf, sizeof (hfs_function_value_t));
+		free (buf);
+		return 1;
+	}
+#endif
+
 	if (function_val_fd == -1)
 		if (!global_fd_function_open (hfs_path, siteid))
 			return 0;
@@ -3164,6 +3177,9 @@ int HFS_get_function_value (const char* hfs_path, const char* siteid, zbx_uint64
 	if (read (function_val_fd, value, sizeof (hfs_function_value_t)) != sizeof (hfs_function_value_t))
 		zabbix_log (LOG_LEVEL_ERR, "HFS_get_function_value: Error reading value");
 
+#ifdef HAVE_MEMCACHE
+	memcache_zbx_save_val (key, value, sizeof (hfs_function_value_t));
+#endif
 	return 1;
 }
 

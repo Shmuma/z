@@ -216,6 +216,9 @@ const char* memcache_get_key (memcache_key_type_t type, zbx_uint64_t itemid)
 	case MKT_TRIGGER:
 		snprintf (buf, sizeof (buf), "t|" ZBX_FS_UI64, itemid);
 		break;
+	case MKT_FUNCTION:
+		snprintf (buf, sizeof (buf), "f|" ZBX_FS_UI64, itemid);
+		break;
 	default:
 		return NULL;
 	}

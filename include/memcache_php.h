@@ -8,6 +8,7 @@ typedef enum {
 	MKT_LAST_DOUBLE,
 	MKT_LAST_STRING,
 	MKT_TRIGGER,
+	MKT_FUNCTION,
 } memcache_key_type_t;
 
 typedef struct {
