@@ -17,6 +17,12 @@
 ** Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 **/
 
+#include <sys/types.h>
+#include <sys/msg.h>
+#include <sys/ipc.h>
+#include <errno.h>
+#include <string.h>
+
 #include "common.h"
 
 #include "cfg.h"
@@ -35,15 +41,6 @@ extern char* CONFIG_SERVER_SITE;
 extern char* CONFIG_HFS_PATH;
 
 
-static int	process_id = 0;
-
-
-static char	host_dec[MAX_STRING_LEN],key_dec[MAX_STRING_LEN],value_dec[MAX_STRING_LEN],error_dec[MAX_STRING_LEN];
-static char	lastlogsize[MAX_STRING_LEN];
-static char	timestamp[MAX_STRING_LEN];
-static char	source[MAX_STRING_LEN];
-static char	severity[MAX_STRING_LEN];
-
 static metric_key_t	key_reqs;
 static zbx_uint64_t	mtr_reqs = 0;
 
@@ -57,110 +54,69 @@ static metric_key_t	key_hist;
 static zbx_uint64_t	mtr_hist = 0;
 
 
-static int	queue_idx[2] = { 0, 0 };
 static int	queue_fd[2] = { -1, -1 };
-
-
-static void    feeder_initialize_queue (int queue)
-{
-	int fd, len;
-	const char* buf;
-	static char idx_buf[256];
-
-	/* read current index of queue */
-	buf = queue_get_name (QNK_Index, queue, process_id, 0);
-	fd = open (buf, O_RDONLY);
-
-	if (fd < 0)
-		queue_idx[queue] = 0;
-	else {
-		if ((len = read (fd, idx_buf, sizeof (idx_buf))) >= 0) {
-			idx_buf[len] = 0;
-			if (!sscanf (idx_buf, "%d", &(queue_idx[queue])))
-				queue_idx[queue] = 0;
-		}
-		close (fd);
-	}
-
-	/* open queue file */
-	buf = queue_get_name (QNK_File, queue, process_id, queue_idx[queue]);
-	queue_fd[queue] = xopen (buf, O_CREAT | O_APPEND | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-}
-
-
-static void    feeder_switch_queue (int queue)
-{
-	const char* buf;
-	int fd;
-	static char idx_buf[256];
-
-	/* close queue file */
-	close (queue_fd[queue]);
-
-	/* update queue index */
-	buf = queue_get_name (QNK_Index, queue, process_id, 0);
-	fd = xopen (buf, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-	ftruncate (fd, 0);
-	
-	queue_idx[queue]++;
-	snprintf (idx_buf, sizeof (idx_buf), "%d\n", queue_idx[queue]);
-	write (fd, idx_buf, strlen (idx_buf)-1);
-	close (fd);
-
-	/* reopen queue file */
-	feeder_initialize_queue (queue);
-}
 
 
 static void    feeder_queue_data (queue_entry_t *entry)
 {
-	static char buf[16384];
+	static struct {
+		long type;
+		char buf[16384];
+	} msg;
 	char* buf_p;
 	int len;
 	off_t ofs;
 
-	buf_p = queue_encode_entry (entry, buf, sizeof (buf));
+	buf_p = queue_encode_entry (entry, msg.buf, sizeof (msg.buf));
 
 	/* request is too large, discard it */
 	if (!buf_p) {
-		zabbix_log(LOG_LEVEL_ERR, "feeder_queue_data: Request is too large and won't fit in %d bytes buffer", sizeof (buf));
+		zabbix_log(LOG_LEVEL_ERR, "feeder_queue_data: Request is too large and won't fit in %d bytes buffer", sizeof (msg.buf));
 		return;
 	}
 
-	len = buf_p-buf;
-	write (queue_fd[0], &entry_sig, sizeof (entry_sig));
-	write (queue_fd[0], &len, sizeof (len));
-	write (queue_fd[0], buf, buf_p-buf);
+	len = buf_p-msg.buf;
+	msg.type = 1;
 
-	/* switch queue if current file grown too large */
-	ofs = lseek (queue_fd[0], 0, SEEK_CUR);
-	if (ofs > QUEUE_SIZE_LIMIT)
-		feeder_switch_queue (0);
+	if (msgsnd (queue_fd[0], &msg, len+sizeof (long), IPC_NOWAIT) < 0)
+		zabbix_log (LOG_LEVEL_ERR, "feeder_queue_data: Error enqueue message of size %d: %s", len, strerror (errno));
 }
 
 
 
 static void    feeder_queue_history_data (queue_history_entry_t *entry)
 {
-	off_t ofs;
+	char* buf;
 
 	/* update items count in entry buffer */
 	*(int*)entry->buf = entry->count;
 
-	write (queue_fd[1], &entry_sig, sizeof (entry_sig));
-	write (queue_fd[1], &entry->buf_size, sizeof (entry->buf_size));
-	write (queue_fd[1], entry->buf, entry->buf_size);
+	buf = (char*)malloc (entry->buf_size + sizeof (long));
 
-	/* switch queue if current file grown too large */
-	ofs = lseek (queue_fd[1], 0, SEEK_CUR);
-	if (ofs > QUEUE_SIZE_LIMIT)
-		feeder_switch_queue (1);
+	if (!buf) {
+		zabbix_log (LOG_LEVEL_ERR, "feeder_queue_history_data: Cannot allocate %d bytes", entry->buf_size + sizeof (long));
+		return;
+	}
+
+	*(long*)buf = 1;
+	memcpy (buf+sizeof (long), entry->buf, entry->buf_size);
+
+	if (msgsnd (queue_fd[1], buf, entry->buf_size+sizeof (long), IPC_NOWAIT) < 0)
+		zabbix_log (LOG_LEVEL_ERR, "feeder_queue_history_data: Error enqueue message of size %d: %s", entry->buf_size, strerror (errno));
+
+	free (buf);
 }
 
 
 
 void	process_feeder_child(zbx_sock_t *sock)
 {
+	static char	host_dec[MAX_STRING_LEN],key_dec[MAX_STRING_LEN],value_dec[MAX_STRING_LEN],error_dec[MAX_STRING_LEN];
+	static char	lastlogsize[MAX_STRING_LEN];
+	static char	timestamp[MAX_STRING_LEN];
+	static char	source[MAX_STRING_LEN];
+	static char	severity[MAX_STRING_LEN];
+
 	char	*data, *line, *host;
 	char	*server,*key = NULL,*value_string, *error = NULL;
 	int	ret = SUCCEED;
@@ -252,14 +208,13 @@ void	child_feeder_main(int i, zbx_sock_t *s)
 
 	zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Feeder]", i);
 
-	process_id = i;
 	key_reqs  = metric_register ("feeder_reqs", i);
 	key_list  = metric_register ("feeder_list", i);
 	key_data  = metric_register ("feeder_data", i);
 	key_hist  = metric_register ("feeder_hist", i);
 
-	feeder_initialize_queue (0);
-	feeder_initialize_queue (1);
+	queue_fd[0] = queue_get_queue_id (i, 0);
+	queue_fd[1] = queue_get_queue_id (i, 1);
 
 	/* Set max recv timeout for socket to 90 seconds. This will prevent stall of data handling process. */
 	tv.tv_sec = 90;

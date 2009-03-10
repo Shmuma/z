@@ -5,28 +5,29 @@
 
 static char* empty_string = "";
 
-zbx_uint64_t entry_sig = 0xFFFFFFFFFFFFFFFFULL;
 
-
-
-const char* queue_get_name (queue_name_kind_t kind, int q_num, int process_id, int index)
+int queue_get_queue_id (int process_id, int history)
 {
-	static char buf[1024];
+	key_t key;
+	int queue_id;
 
-	switch (kind) {
-	case QNK_File:
-		snprintf (buf, sizeof (buf), "/dev/shm/zabbix_queue/queue_%d.%d.%d", q_num, process_id, index);
-		break;
-	case QNK_Index:
-		snprintf (buf, sizeof (buf), "/dev/shm/zabbix_queue/queue_%d_idx.%d", q_num, process_id);
-		break;
-	case QNK_Position:
-		snprintf (buf, sizeof (buf), "/dev/shm/zabbix_queue/queue_%d_pos.%d", q_num, process_id);
-		break;
+	key = ftok ("/tmp", process_id*2 + history);
+
+	if (key < 0) {
+		zabbix_log (LOG_LEVEL_ERR, "queue_get_queue_id: Cannot obtain IPC queue ID: %s", strerror (errno));
+		return -1;
 	}
 
-	return buf;
+	queue_id = msgget (key, IPC_CREAT | 0666);
+
+	if (queue_id < 0) {
+		zabbix_log (LOG_LEVEL_ERR, "queue_get_queue_id: Cannot initialize IPC queue: %s", strerror (errno));
+		return -1;
+	}
+
+	return queue_id;
 }
+
 
 
 char* queue_encode_entry (queue_entry_t* entry, char* buf, int size)
