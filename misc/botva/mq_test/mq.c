@@ -21,7 +21,7 @@ int main ()
 	int id = 0;
 
 	while (1) {
-		ipckey = ftok ("zabbix_server.queue", id++);
+		ipckey = ftok ("/tmp", id++);
 
 		if (ipckey < 0) {
 			printf ("Error creating token: %s\n", strerror (errno));
