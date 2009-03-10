@@ -187,8 +187,6 @@ void	child_hist_trapper_main (int i)
 
 	queue_fd = queue_get_queue_id (i, 1);
 
-	trapper_initialize_queue ();
-
 	key_values = metric_register ("trapper_history_values",  i);
 	key_skipped = metric_register ("trapper_history_skipped_bytes",  i);
 	metric_update (key_skipped, mtr_skipped);
