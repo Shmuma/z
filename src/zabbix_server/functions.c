@@ -695,10 +695,9 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
  ******************************************************************************/
 static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const char* stderr)
 {
-	char	value_esc[MAX_STRING_LEN];
 	int	nextcheck;
-
 	AGENT_RESULT prev_value;
+	item_value_u new, res;
 
 	prev_value.type = value->type;
 	prev_value.ui64 = value->ui64;
@@ -710,264 +709,36 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In update_item()");
 
-	value_esc[0]	= '\0';
-
 	nextcheck = calculate_item_nextcheck(item->itemid, item->type, item->delay, item->delay_flex, now);
-	if(item->delta == ITEM_STORE_AS_IS)
-	{
-		if(GET_STR_RESULT(value))
-		{
-			DBescape_string(value->str, value_esc, sizeof(value_esc));
-		}
 
-#ifdef HAVE_MEMCACHE
-		if (process_type != ZBX_PROCESS_TRAPPERD)
-#endif
-		DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,lastvalue='%s',lastclock=%d where itemid=" ZBX_FS_UI64,
-			nextcheck,
-			value_esc,
-			(int)now,
-			item->itemid);
+	/* update nextcheck */
+	if (process_type == ZBX_PROCESS_POLLER || process_type == ZBX_PROCESS_UNREACHABLE_POLLER) {
+		DBexecute("update items set nextcheck=%d where itemid=" ZBX_FS_UI64,
+			nextcheck, item->itemid);
+	}
 
-		if (CONFIG_HFS_PATH) {
-		    switch (item->value_type) {
-		    case ITEM_VALUE_TYPE_STR:
-		    case ITEM_VALUE_TYPE_TEXT:
-			HFS_update_item_values_str (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now,
-						    item->lastvalue_null ? NULL : item->lastvalue_str, value->str, NULL, stderr);
-			break;
-		    case ITEM_VALUE_TYPE_FLOAT:
+	switch (item->value_type) {
+	case ITEM_VALUE_TYPE_FLOAT:
+		new.d = value->dbl;
+		if (process_item_delta (item, &new, now, &res))
 			HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now,
-						    item->lastvalue_null ? 0.0 : item->lastvalue_dbl, value->dbl, 0.0, stderr);
-			break;
-		    case ITEM_VALUE_TYPE_UINT64:
+						    item->lastvalue_null ? 0.0 : item->lastvalue_dbl, res.d, new.d, stderr);
+		SET_DBL_RESULT(value, res.d);
+		break;
+
+	case ITEM_VALUE_TYPE_UINT64:
+		new.l = value->ui64;
+		if (process_item_delta (item, &new, now, &res))
 			HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now,
-						    item->lastvalue_null ? 0 : item->lastvalue_uint64, value->ui64, 0, stderr);
-			break;
-		    }
-		}
-	}
-	/* Logic for delta as speed of change */
-	else if(item->delta == ITEM_STORE_SPEED_PER_SECOND)
-	{
-		if(item->value_type == ITEM_VALUE_TYPE_FLOAT)
-		{
-			if(GET_DBL_RESULT(value))
-			{
-				if((item->prevorgvalue_null == 0) && (item->prevorgvalue_dbl <= value->dbl) )
-				{
-					/* In order to continue normal processing, we assume difference 1 second
-					   Otherwise function update_functions and update_triggers won't work correctly*/
-					if(now != item->lastclock)
-					{
-#ifdef HAVE_MEMCACHE
-						if (process_type != ZBX_PROCESS_TRAPPERD)
-#endif
-						DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_DBL "',"
-							"lastvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
-							nextcheck,
-							value->dbl,
-							(value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock),
-							(int)now,
-							item->itemid);
+						    item->lastvalue_null ? 0 : item->lastvalue_uint64, res.l, new.l, stderr);
+		SET_UI64_RESULT(value, res.l);
+		break;
 
-						if (CONFIG_HFS_PATH)
-							HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-										    item->lastvalue_dbl,
-										    (value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock),
-										    value->dbl, stderr);
-
-						SET_DBL_RESULT(value, (double)(value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock));
-					}
-					else
-					{
-#ifdef HAVE_MEMCACHE
-						if (process_type != ZBX_PROCESS_TRAPPERD)
-#endif
-						DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_DBL "',"
-							"lastvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
-							nextcheck,
-							value->dbl,
-							value->dbl - item->prevorgvalue_dbl,
-							(int)now,
-							item->itemid);
-
-						if (CONFIG_HFS_PATH)
-							HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-										    item->lastvalue_dbl, value->dbl - item->prevorgvalue_dbl, value->dbl,
-										    stderr);
-
-						SET_DBL_RESULT(value, (double)(value->dbl - item->prevorgvalue_dbl));
-					}
-				}
-				else
-				{
-#ifdef HAVE_MEMCACHE
-					if (process_type != ZBX_PROCESS_TRAPPERD)
-#endif
-					DBexecute("update items set nextcheck=%d,prevorgvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
-						nextcheck,
-						value->dbl,
-						(int)now,
-						item->itemid);
-
-					if (CONFIG_HFS_PATH)
-						HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-									    item->lastvalue_dbl, item->lastvalue_dbl, value->dbl, stderr);
-				}
-			}
-		}
-		else if(item->value_type == ITEM_VALUE_TYPE_UINT64)
-		{
-			if(GET_UI64_RESULT(value))
-			{
-				if((item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= value->ui64) )
-				{
-					if(now != item->lastclock)
-					{
-#ifdef HAVE_MEMCACHE
-						if (process_type != ZBX_PROCESS_TRAPPERD)
-#endif
-						DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_UI64 "',"
-							"lastvalue='" ZBX_FS_UI64 "',lastclock=%d where itemid=" ZBX_FS_UI64,
-							nextcheck,
-							value->ui64,
-							((zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64))/(now-item->lastclock),
-							(int)now,
-							item->itemid);
-
-						if (CONFIG_HFS_PATH)
-							HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-										    item->lastvalue_uint64,
-										    (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64)/(now-item->lastclock),
-										    value->ui64, stderr);
-
-						SET_UI64_RESULT(value, (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64)/(now-item->lastclock));
-					}
-					else
-					{
-#ifdef HAVE_MEMCACHE
-						if (process_type != ZBX_PROCESS_TRAPPERD)
-#endif
-						DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_UI64 "',"
-							"lastvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
-							calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex,now),
-							value->ui64,
-							(double)(value->ui64 - item->prevorgvalue_uint64),
-							(int)now,
-							item->itemid);
-
-						if (CONFIG_HFS_PATH)
-							HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-										    item->lastvalue_uint64,
-										    (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64),
-										    value->ui64, stderr);
-
-						SET_UI64_RESULT(value, (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64));
-					}
-				}
-				else
-				{
-#ifdef HAVE_MEMCACHE
-					if (process_type != ZBX_PROCESS_TRAPPERD)
-#endif
-					DBexecute("update items set nextcheck=%d,prevorgvalue='" ZBX_FS_UI64 "',lastclock=%d where itemid=" ZBX_FS_UI64,
-						calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex,now),
-						value->ui64,
-						(int)now,
-						item->itemid);
-
-					if (CONFIG_HFS_PATH)
-						HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-									    item->lastvalue_uint64, item->lastvalue_uint64, value->ui64, stderr);
-				}
-			}
-		}
-	}
-	/* Real delta: simple difference between values */
-	else if(item->delta == ITEM_STORE_SIMPLE_CHANGE)
-	{
-		if(item->value_type == ITEM_VALUE_TYPE_FLOAT)
-		{
-			if(GET_DBL_RESULT(value))
-			{
-				if((item->prevorgvalue_null == 0) && (item->prevorgvalue_dbl <= value->dbl))
-				{
-#ifdef HAVE_MEMCACHE
-				    if (process_type != ZBX_PROCESS_TRAPPERD)
-#endif
-				    DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_DBL "',"
-						"lastvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
-						calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex,now),
-						value->dbl,
-						(value->dbl - item->prevorgvalue_dbl),
-						(int)now,
-						item->itemid);
-
-				    if (CONFIG_HFS_PATH)
-					    HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-									item->lastvalue_dbl, value->dbl - item->prevorgvalue_dbl, value->dbl,
-									stderr);
-				    SET_DBL_RESULT(value, (double)(value->dbl - item->prevorgvalue_dbl));
-				}
-				else
-				{
-#ifdef HAVE_MEMCACHE
-				    if (process_type != ZBX_PROCESS_TRAPPERD)
-#endif
-				    DBexecute("update items set nextcheck=%d,prevorgvalue='" ZBX_FS_DBL "',lastclock=%d where itemid=" ZBX_FS_UI64,
-						calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex, now),
-						value->dbl,
-						(int)now,
-						item->itemid);
-
-				    if (CONFIG_HFS_PATH)
-					    HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-									item->lastvalue_dbl, item->lastvalue_dbl, value->dbl, stderr);
-				}
-			}
-		}
-		else if(item->value_type == ITEM_VALUE_TYPE_UINT64)
-		{
-			if(GET_UI64_RESULT(value))
-			{
-				if((item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= value->ui64))
-				{
-#ifdef HAVE_MEMCACHE
-				    if (process_type != ZBX_PROCESS_TRAPPERD)
-#endif
-				    DBexecute("update items set nextcheck=%d,prevvalue=lastvalue,prevorgvalue='" ZBX_FS_UI64 "',"
-						"lastvalue='" ZBX_FS_UI64 "',lastclock=%d where itemid=" ZBX_FS_UI64,
-						calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex,now),
-						value->ui64,
-						(value->ui64 - item->prevorgvalue_uint64),
-						(int)now,
-						item->itemid);
-
-				    if (CONFIG_HFS_PATH)
-					    HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-									item->lastvalue_uint64,
-									(zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64),
-									value->ui64, stderr);
-				    SET_UI64_RESULT(value, (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64));
-				}
-				else
-				{
-#ifdef HAVE_MEMCACHE
-					if (process_type != ZBX_PROCESS_TRAPPERD)
-#endif
-    					DBexecute("update items set nextcheck=%d,prevorgvalue='" ZBX_FS_UI64 "',lastclock=%d where itemid=" ZBX_FS_UI64,
-						calculate_item_nextcheck(item->itemid, item->type, item->delay,item->delay_flex, now),
-						value->ui64,
-						(int)now,
-						item->itemid);
-
-					if (CONFIG_HFS_PATH)
-						HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-									    item->lastvalue_uint64, item->lastvalue_uint64, value->ui64, stderr);
-				}
-			}
-		}
+	case ITEM_VALUE_TYPE_STR:
+	case ITEM_VALUE_TYPE_TEXT:
+		HFS_update_item_values_str (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now,
+					    item->lastvalue_null ? NULL : item->lastvalue_str, value->str, NULL, stderr);
+		break;
 	}
 
 	item->prevvalue_null		= item->lastvalue_null;
