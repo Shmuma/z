@@ -1,6 +1,13 @@
 #ifndef __QUEUE_H__
 #define __QUEUE_H__
 
+#include <sys/types.h>
+#include <sys/msg.h>
+#include <sys/ipc.h>
+#include <errno.h>
+#include <string.h>
+
+
 #include "common.h"
 #include "hfs.h"
 
@@ -47,10 +54,7 @@ typedef struct {
 } queue_history_entry_t;
 
 
-extern zbx_uint64_t entry_sig;
-
-
-const char* queue_get_name (queue_name_kind_t kind, int q_num, int process_id, int index);
+int queue_get_queue_id (int process_id, int history);
 
 char* queue_encode_entry (queue_entry_t* entry, char* buf, int size);
 char* queue_decode_entry (queue_entry_t* entry, char* buf, int size);

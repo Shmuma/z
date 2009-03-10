@@ -41,9 +41,6 @@ extern char* CONFIG_SERVER_SITE;
 extern char* CONFIG_HFS_PATH;
 
 
-static int	process_id = 0;
-
-
 static metric_key_t	key_reqs;
 static zbx_uint64_t	mtr_reqs = 0;
 
@@ -58,26 +55,6 @@ static zbx_uint64_t	mtr_hist = 0;
 
 
 static int	queue_fd[2] = { -1, -1 };
-
-
-static void    feeder_initialize_queue (int queue)
-{
-	key_t key;
-
-	key = ftok ("/tmp", process_id*2 + queue);
-
-	if (key < 0) {
-		zabbix_log (LOG_LEVEL_ERR, "feeder_initialize_queue: Cannot obtain IPC queue ID: %s", strerror (errno));
-		return;
-	}
-
-	queue_fd[queue] = msgget (key, IPC_CREAT | 0666);
-
-	if (queue_fd[queue] < 0) {
-		zabbix_log (LOG_LEVEL_ERR, "feeder_initialize_queue: Cannot initialize IPC queue: %s", strerror (errno));
-		return;
-	}
-}
 
 
 static void    feeder_queue_data (queue_entry_t *entry)
@@ -231,14 +208,13 @@ void	child_feeder_main(int i, zbx_sock_t *s)
 
 	zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Feeder]", i);
 
-	process_id = i;
 	key_reqs  = metric_register ("feeder_reqs", i);
 	key_list  = metric_register ("feeder_list", i);
 	key_data  = metric_register ("feeder_data", i);
 	key_hist  = metric_register ("feeder_hist", i);
 
-	feeder_initialize_queue (0);
-	feeder_initialize_queue (1);
+	queue_fd[0] = queue_get_queue_id (i, 0);
+	queue_fd[1] = queue_get_queue_id (i, 1);
 
 	/* Set max recv timeout for socket to 90 seconds. This will prevent stall of data handling process. */
 	tv.tv_sec = 90;

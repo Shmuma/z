@@ -58,9 +58,6 @@ static zbx_uint64_t mtr_skipped = 0;
 static metric_key_t key_skipped;
 
 
-static int 		process_id = 0;
-static int		history = 0;
-
 /* queue file descriptor */
 static int		queue_fd =  -1;
 
@@ -75,28 +72,6 @@ static int msg_size = 0;
 static msg_hdr_t* msg = NULL;
 
 
-
-static void trapper_initialize_queue ()
-{
-	key_t key;
-
-	key = ftok ("/tmp", process_id*2 + history);
-
-	if (key < 0) {
-		zabbix_log (LOG_LEVEL_ERR, "trapper_initialize_queue: Cannot obtain IPC queue ID: %s", strerror (errno));
-		return;
-	}
-
-	queue_fd = msgget (key, IPC_CREAT | 0666);
-
-	if (queue_fd < 0) {
-		zabbix_log (LOG_LEVEL_ERR, "trapper_initialize_queue: Cannot initialize IPC queue: %s", strerror (errno));
-		return;
-	}
-
-	msg_size = 1024;
-	msg = (msg_hdr_t*)malloc (msg_size);
-}
 
 
 static ssize_t dequeue_next_message ()
@@ -170,11 +145,8 @@ void	child_trapper_main(int i)
 	zabbix_log( LOG_LEVEL_DEBUG, "In child_trapper_main()");
 	zabbix_log( LOG_LEVEL_WARNING, "server #%d started [Trapper]", i);
 
-	process_id = i;
-	history = 0;
-
 	/* initialize queue */
-	trapper_initialize_queue ();
+	queue_fd = queue_get_queue_id (i, 0);
 
 	/* initialize metrics */
 	key_values = metric_register ("trapper_data_values",  i);
@@ -213,8 +185,7 @@ void	child_hist_trapper_main (int i)
 	zabbix_log( LOG_LEVEL_DEBUG, "In child_trapper_main()");
 	zabbix_log( LOG_LEVEL_WARNING, "server #%d started [HistTrapper]", i);
 
-	process_id = i;
-	history = 1;
+	queue_fd = queue_get_queue_id (i, 1);
 
 	trapper_initialize_queue ();
 
