@@ -697,6 +697,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 {
 	int	nextcheck;
 	AGENT_RESULT prev_value;
+	item_value_u new, res;
 
 	prev_value.type = value->type;
 	prev_value.ui64 = value->ui64;
@@ -716,145 +717,28 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 			nextcheck, item->itemid);
 	}
 
-	if(item->delta == ITEM_STORE_AS_IS)
-	{
-		if (CONFIG_HFS_PATH) {
-		    switch (item->value_type) {
-		    case ITEM_VALUE_TYPE_STR:
-		    case ITEM_VALUE_TYPE_TEXT:
-			HFS_update_item_values_str (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now,
-						    item->lastvalue_null ? NULL : item->lastvalue_str, value->str, NULL, stderr);
-			break;
-		    case ITEM_VALUE_TYPE_FLOAT:
+	switch (item->value_type) {
+	case ITEM_VALUE_TYPE_FLOAT:
+		new.d = value->dbl;
+		if (process_item_delta (item, &new, now, &res))
 			HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now,
-						    item->lastvalue_null ? 0.0 : item->lastvalue_dbl, value->dbl, 0.0, stderr);
-			break;
-		    case ITEM_VALUE_TYPE_UINT64:
+						    item->lastvalue_null ? 0.0 : item->lastvalue_dbl, res.d, new.d, stderr);
+		SET_DBL_RESULT(value, res.d);
+		break;
+
+	case ITEM_VALUE_TYPE_UINT64:
+		new.l = value->ui64;
+		if (process_item_delta (item, &new, now, &res))
 			HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now,
-						    item->lastvalue_null ? 0 : item->lastvalue_uint64, value->ui64, 0, stderr);
-			break;
-		    }
-		}
-	}
-	/* Logic for delta as speed of change */
-	else if(item->delta == ITEM_STORE_SPEED_PER_SECOND)
-	{
-		if(item->value_type == ITEM_VALUE_TYPE_FLOAT)
-		{
-			if(GET_DBL_RESULT(value))
-			{
-				if((item->prevorgvalue_null == 0) && (item->prevorgvalue_dbl <= value->dbl) )
-				{
-					/* In order to continue normal processing, we assume difference 1 second
-					   Otherwise function update_functions and update_triggers won't work correctly*/
-					if(now != item->lastclock)
-					{
-						if (CONFIG_HFS_PATH)
-							HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-										    item->lastvalue_dbl,
-										    (value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock),
-										    value->dbl, stderr);
+						    item->lastvalue_null ? 0 : item->lastvalue_uint64, res.l, new.l, stderr);
+		SET_UI64_RESULT(value, res.l);
+		break;
 
-						SET_DBL_RESULT(value, (double)(value->dbl - item->prevorgvalue_dbl)/(now-item->lastclock));
-					}
-					else
-					{
-						if (CONFIG_HFS_PATH)
-							HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-										    item->lastvalue_dbl, value->dbl - item->prevorgvalue_dbl, value->dbl,
-										    stderr);
-
-						SET_DBL_RESULT(value, (double)(value->dbl - item->prevorgvalue_dbl));
-					}
-				}
-				else
-				{
-					if (CONFIG_HFS_PATH)
-						HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-									    item->lastvalue_dbl, item->lastvalue_dbl, value->dbl, stderr);
-				}
-			}
-		}
-		else if(item->value_type == ITEM_VALUE_TYPE_UINT64)
-		{
-			if(GET_UI64_RESULT(value))
-			{
-				if((item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= value->ui64) )
-				{
-					if(now != item->lastclock)
-					{
-						if (CONFIG_HFS_PATH)
-							HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-										    item->lastvalue_uint64,
-										    (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64)/(now-item->lastclock),
-										    value->ui64, stderr);
-
-						SET_UI64_RESULT(value, (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64)/(now-item->lastclock));
-					}
-					else
-					{
-						if (CONFIG_HFS_PATH)
-							HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-										    item->lastvalue_uint64,
-										    (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64),
-										    value->ui64, stderr);
-
-						SET_UI64_RESULT(value, (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64));
-					}
-				}
-				else
-				{
-					if (CONFIG_HFS_PATH)
-						HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-									    item->lastvalue_uint64, item->lastvalue_uint64, value->ui64, stderr);
-				}
-			}
-		}
-	}
-	/* Real delta: simple difference between values */
-	else if(item->delta == ITEM_STORE_SIMPLE_CHANGE)
-	{
-		if(item->value_type == ITEM_VALUE_TYPE_FLOAT)
-		{
-			if(GET_DBL_RESULT(value))
-			{
-				if((item->prevorgvalue_null == 0) && (item->prevorgvalue_dbl <= value->dbl))
-				{
-				    if (CONFIG_HFS_PATH)
-					    HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-									item->lastvalue_dbl, value->dbl - item->prevorgvalue_dbl, value->dbl,
-									stderr);
-				    SET_DBL_RESULT(value, (double)(value->dbl - item->prevorgvalue_dbl));
-				}
-				else
-				{
-				    if (CONFIG_HFS_PATH)
-					    HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-									item->lastvalue_dbl, item->lastvalue_dbl, value->dbl, stderr);
-				}
-			}
-		}
-		else if(item->value_type == ITEM_VALUE_TYPE_UINT64)
-		{
-			if(GET_UI64_RESULT(value))
-			{
-				if((item->prevorgvalue_null == 0) && (item->prevorgvalue_uint64 <= value->ui64))
-				{
-				    if (CONFIG_HFS_PATH)
-					    HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-									item->lastvalue_uint64,
-									(zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64),
-									value->ui64, stderr);
-				    SET_UI64_RESULT(value, (zbx_uint64_t)(value->ui64 - item->prevorgvalue_uint64));
-				}
-				else
-				{
-					if (CONFIG_HFS_PATH)
-						HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (int)now,
-									    item->lastvalue_uint64, item->lastvalue_uint64, value->ui64, stderr);
-				}
-			}
-		}
+	case ITEM_VALUE_TYPE_STR:
+	case ITEM_VALUE_TYPE_TEXT:
+		HFS_update_item_values_str (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now,
+					    item->lastvalue_null ? NULL : item->lastvalue_str, value->str, NULL, stderr);
+		break;
 	}
 
 	item->prevvalue_null		= item->lastvalue_null;
