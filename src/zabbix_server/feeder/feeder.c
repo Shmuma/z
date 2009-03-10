@@ -67,14 +67,14 @@ static void    feeder_initialize_queue (int queue)
 	key = ftok ("/tmp", process_id*2 + queue);
 
 	if (key < 0) {
-		zabbix_log (LOG_LEVEL_ERR, "Cannot obtain IPC queue ID: %s", strerror (errno));
+		zabbix_log (LOG_LEVEL_ERR, "feeder_initialize_queue: Cannot obtain IPC queue ID: %s", strerror (errno));
 		return;
 	}
 
 	queue_fd[queue] = msgget (key, IPC_CREAT | 0666);
 
 	if (queue_fd[queue] < 0) {
-		zabbix_log (LOG_LEVEL_ERR, "Cannot initialize IPC queue: %s", strerror (errno));
+		zabbix_log (LOG_LEVEL_ERR, "feeder_initialize_queue: Cannot initialize IPC queue: %s", strerror (errno));
 		return;
 	}
 }
@@ -94,7 +94,7 @@ static void    feeder_queue_data (queue_entry_t *entry)
 
 	/* request is too large, discard it */
 	if (!buf_p) {
-		zabbix_log(LOG_LEVEL_ERR, "feeder_queue_data: Request is too large and won't fit in %d bytes buffer", sizeof (buf));
+		zabbix_log(LOG_LEVEL_ERR, "feeder_queue_data: Request is too large and won't fit in %d bytes buffer", sizeof (msg.buf));
 		return;
 	}
 
@@ -124,7 +124,7 @@ static void    feeder_queue_history_data (queue_history_entry_t *entry)
 	*(long*)buf = 1;
 	memcpy (buf+sizeof (long), entry->buf, entry->buf_size);
 
-	if (msgsnd (queue_fd[1], &msg, entry->buf_size+sizeof (long), IPC_NOWAIT) < 0)
+	if (msgsnd (queue_fd[1], buf, entry->buf_size+sizeof (long), IPC_NOWAIT) < 0)
 		zabbix_log (LOG_LEVEL_ERR, "feeder_queue_history_data: Error enqueue message of size %d: %s", entry->buf_size, strerror (errno));
 
 	free (buf);
