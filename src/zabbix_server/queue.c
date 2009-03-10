@@ -1,6 +1,7 @@
 #include "common.h"
 #include "queue.h"
 #include "hfs.h"
+#include "log.h"
 
 
 static char* empty_string = "";
