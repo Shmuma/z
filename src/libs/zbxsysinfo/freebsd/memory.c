@@ -239,6 +239,7 @@ static int	VM_MEMORY_FREE(const char *cmd, const char *param, unsigned flags, AG
 		
 #if defined(HAVE_SYS_VMMETER_VMTOTAL)
 	int mib[2],len;
+	zbx_uint64_t res = getpagesize ();
 	struct vmtotal v;
 
 	len=sizeof(struct vmtotal);
@@ -247,7 +248,10 @@ static int	VM_MEMORY_FREE(const char *cmd, const char *param, unsigned flags, AG
 
 	sysctl(mib,2,&v,&len,NULL,0);
 
-	SET_UI64_RESULT(result, v.t_free * getpagesize());
+	printf ("Page size: %lld, val = %d\n", res, v.t_free);
+	res *= v.t_free;
+	printf ("Result: %lld\n", res);
+	SET_UI64_RESULT(result, res);
 	return SYSINFO_RET_OK;
 #elif defined(HAVE_SYS_PSTAT_H)
 	struct	pst_static pst;
