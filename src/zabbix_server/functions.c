@@ -721,21 +721,30 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 			nextcheck, item->itemid);
 	}
 
+	/* update delta values */
 	switch (item->value_type) {
 	case ITEM_VALUE_TYPE_FLOAT:
 		new.d = value->dbl;
-		if (process_item_delta (item, &new, now, &res))
-			HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now,
-						    item->lastvalue_null ? 0.0 : item->lastvalue_dbl, res.d, new.d, stderr);
-		SET_DBL_RESULT(value, res.d);
+		if (process_item_delta (item, &new, now, &res)) {
+			SET_DBL_RESULT(value, res.d);
+		}
+		else {
+			SET_DBL_RESULT(value, 0.0);
+		}
+		HFS_update_item_values_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now,
+					    item->lastvalue_null ? 0.0 : item->lastvalue_dbl, value->dbl, new.d, stderr);
 		break;
 
 	case ITEM_VALUE_TYPE_UINT64:
 		new.l = value->ui64;
-		if (process_item_delta (item, &new, now, &res))
-			HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now,
-						    item->lastvalue_null ? 0 : item->lastvalue_uint64, res.l, new.l, stderr);
-		SET_UI64_RESULT(value, res.l);
+		if (process_item_delta (item, &new, now, &res)) {
+			SET_UI64_RESULT(value, res.l);
+		}
+		else {
+			SET_UI64_RESULT(value, 0);
+		}
+		HFS_update_item_values_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now,
+					    item->lastvalue_null ? 0 : item->lastvalue_uint64, value->ui64, new.l, stderr);
 		break;
 
 	case ITEM_VALUE_TYPE_STR:
