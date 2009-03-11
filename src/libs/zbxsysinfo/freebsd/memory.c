@@ -27,12 +27,15 @@ static int	VM_MEMORY_CACHED(const char *cmd, const char *param, unsigned flags, 
 #ifdef HAVE_SYS_SYSCTL_H
 	size_t len = 0;
 	unsigned int val;
+	zbx_uint64_t res;
 
 	len = sizeof (val);
 	if (sysctlbyname ("vm.stats.vm.v_cache_count", &val, &len, NULL, 0) == -1 || !len)
 		return SYSINFO_RET_FAIL;
 	else {
-		SET_UI64_RESULT (result, val * getpagesize());
+		res = getpagesize ();
+		res *= val;
+		SET_UI64_RESULT (result, res);
 		return SYSINFO_RET_OK;
 	}
 #elif defined(HAVE_PROC)
@@ -106,12 +109,14 @@ static int	VM_MEMORY_BUFFERS(const char *cmd, const char *param, unsigned flags,
 #elif defined(HAVE_SYS_SYSCTL_H)
 	size_t len = 0;
 	unsigned int val;
+	zbx_uint64_t res;
 
 	len = sizeof (val);
 	if (sysctlbyname ("vfs.bufspace", &val, &len, NULL, 0) == -1 || !len)
 		return SYSINFO_RET_FAIL;
 	else {
-		SET_UI64_RESULT (result, val);
+		res = val;
+		SET_UI64_RESULT (result, res);
 		return SYSINFO_RET_OK;
 	}
 #else
@@ -128,14 +133,17 @@ static int	VM_MEMORY_SHARED(const char *cmd, const char *param, unsigned flags, 
 #if defined(HAVE_SYS_VMMETER_VMTOTAL)
 	int mib[2],len;
 	struct vmtotal v;
+	zbx_uint64_t res;
 
 	len=sizeof(struct vmtotal);
 	mib[0]=CTL_VM;
 	mib[1]=VM_METER;
 
 	sysctl(mib,2,&v,&len,NULL,0);
+	res = getpagesize ();
+	res *= v.t_armshr;
 
-	SET_UI64_RESULT(result, v.t_armshr * getpagesize());
+	SET_UI64_RESULT(result, res);
 	return SYSINFO_RET_OK;
 #elif defined(HAVE_SYSINFO_SHAREDRAM)
 	struct sysinfo info;
@@ -212,13 +220,15 @@ static int	VM_MEMORY_TOTAL(const char *cmd, const char *param, unsigned flags, A
 	static int mib[] = { CTL_HW, HW_PHYSMEM };
 	size_t len;
 	unsigned int memory;
+	zbx_uint64_t res;
 	int ret;
 	
 	len=sizeof(memory);
 
 	if(0==sysctl(mib,2,&memory,&len,NULL,0))
 	{
-		SET_UI64_RESULT(result, memory);
+		res = memory;
+		SET_UI64_RESULT(result, res);
 		ret=SYSINFO_RET_OK;
 	}
 	else
@@ -248,9 +258,7 @@ static int	VM_MEMORY_FREE(const char *cmd, const char *param, unsigned flags, AG
 
 	sysctl(mib,2,&v,&len,NULL,0);
 
-	printf ("Page size: %lld, val = %d\n", res, v.t_free);
 	res *= v.t_free;
-	printf ("Result: %lld\n", res);
 	SET_UI64_RESULT(result, res);
 	return SYSINFO_RET_OK;
 #elif defined(HAVE_SYS_PSTAT_H)

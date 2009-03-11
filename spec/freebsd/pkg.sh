@@ -4,7 +4,7 @@ cp -f ../../misc/zabbix-rebase-server usr/local/sbin/
 cp -f ../../misc/checks/bin/* usr/local/etc/zabbix/bin/
 cp -f ../../misc/checks/conf.d/* usr/local/etc/zabbix/conf.d/
 
-VER=1.4.4_54
+VER=1.4.4_58
 
 # replace version in @name tag
 cat > plist <<EOF
