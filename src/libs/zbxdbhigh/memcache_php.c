@@ -95,7 +95,7 @@ int memcache_zbx_connect(const char* servers)
 		return 0;
 	}
 
-	//	memcached_behavior_set(memsite->conn, MEMCACHED_BEHAVIOR_NO_BLOCK, 1);
+	memcached_behavior_set(memsite->conn, MEMCACHED_BEHAVIOR_NO_BLOCK, 1);
 	memcached_behavior_set(memsite->conn, MEMCACHED_BEHAVIOR_CACHE_LOOKUPS, 1);
 	return 1;
 }
@@ -148,6 +148,7 @@ void memcache_zbx_reconnect (memsite_item_t* item)
 	mem_servers = memcached_servers_parse (item->server);
 	memcached_server_push (item->conn, mem_servers);
 	memcached_server_list_free(mem_servers);
+	memcached_behavior_set(memsite->conn, MEMCACHED_BEHAVIOR_NO_BLOCK, 1);
 	memcached_behavior_set(item->conn, MEMCACHED_BEHAVIOR_CACHE_LOOKUPS, 1);
 }
 
