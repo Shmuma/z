@@ -129,14 +129,15 @@ int memcache_zbx_delitem(DB_ITEM *item)
 }
 
 
-void* memcache_zbx_get_functions (zbx_uint64_t itemid, size_t* size)
+void* memcache_zbx_get_functions (zbx_uint64_t itemid)
 {
 	const char* key = memcache_get_key (MKT_ITEM_FUNCTIONS, itemid);
+	size_t size;
 
 	if (!key)
 		return NULL;
 
-	return memcache_zbx_read_val (NULL, key, size);
+	return memcache_zbx_read_val (NULL, key, &size);
 }
 
 

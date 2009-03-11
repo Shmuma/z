@@ -14,7 +14,7 @@ int memcache_zbx_getitem(char *key, char *host, DB_ITEM *res);
 int memcache_zbx_setitem(DB_ITEM *value);
 int memcache_zbx_delitem(DB_ITEM *value);
 
-void* memcache_zbx_get_functions (zbx_uint64_t itemid, size_t* size);
+void* memcache_zbx_get_functions (zbx_uint64_t itemid);
 void  memcache_zbx_set_functions (zbx_uint64_t itemid, void* value, size_t size);
 
 #endif // HAVE_MEMCACHE

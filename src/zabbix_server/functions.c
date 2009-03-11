@@ -44,6 +44,11 @@ typedef struct {
 } function_info_t;
 
 
+typedef struct {
+	int count;
+	function_info_t functions[1];
+} functions_info_t;
+
 
 /******************************************************************************
  *                                                                            *
@@ -70,17 +75,15 @@ void	update_functions(DB_ITEM *item)
 	char		*lastvalue;
 	int		ret=SUCCEED;
 	hfs_function_value_t fun_val;
-	function_info_t* info = NULL;
-	int count, i, info_size;
-	size_t size;
+	functions_info_t* info = NULL;
+	int i, info_size;
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In update_functions(" ZBX_FS_UI64 ")",
 		item->itemid);
 
 #ifdef HAVE_MEMCACHE
 	/* trying to obtain item's functions information from memcache */
-	info = memcache_zbx_get_functions (item->itemid, &size);
-	count = size / sizeof (function_info_t);
+	info = memcache_zbx_get_functions (item->itemid);
 #endif
 
 	if (!info) {
@@ -88,11 +91,12 @@ void	update_functions(DB_ITEM *item)
 		result = DBselect("select f.function,f.parameter,f.itemid,f.lastvalue,f.functionid from functions f where "
 				  " f.itemid=" ZBX_FS_UI64,
 				  item->itemid);
-		info_size = count = 0;
+		info = (functions_info_t*)malloc (sizeof (int));
+		info_size = info->count = 0;
 		
 		while ((row = DBfetch (result))) {
-			if (info_size == count) {
-				info = (function_info_t*)realloc (info, sizeof (function_info_t) * (info_size += 2));
+			if (info_size == info->count) {
+				info = (functions_info_t*)realloc (info, sizeof (int) + sizeof (function_info_t) * (info_size += 2));
 				if (!info) {
 					DBfree_result (result);
 					return;
@@ -100,38 +104,38 @@ void	update_functions(DB_ITEM *item)
 			}
 
 			if (row[0])
-				zbx_strlcpy (info[count].function, row[0], sizeof (info[count].function));
+				zbx_strlcpy (info->functions[info->count].function, row[0], sizeof (info->functions[0].function));
 			else
-				info[count].function[0] = 0;
+				info->functions[info->count].function[0] = 0;
 			if (row[1])
-				zbx_strlcpy (info[count].parameter, row[1], sizeof (info[count].parameter));
+				zbx_strlcpy (info->functions[info->count].parameter, row[1], sizeof (info->functions[0].parameter));
 			else
-				info[count].parameter[0] = 0;
+				info->functions[info->count].parameter[0] = 0;
 			if (row[3])
-				zbx_strlcpy (info[count].lastvalue, row[3], sizeof (info[count].parameter));
+				zbx_strlcpy (info->functions[info->count].lastvalue, row[3], sizeof (info->function[0].parameter));
 			else
-				info[count].lastvalue[0] = 0;
-			ZBX_STR2UINT64 (info[count].functionid, row[4]);
-			info[count].triggerid = 0;
-			count++;
+				info->functions[info->count].lastvalue[0] = 0;
+			ZBX_STR2UINT64 (info->functions[info->count].functionid, row[4]);
+			info->functions[info->count].triggerid = 0;
+			info->count++;
 		}
 
 		DBfree_result (result);
 
 #ifdef HAVE_MEMCACHE
-		memcache_zbx_set_functions (item->itemid, info, count*sizeof (function_info_t));
+		memcache_zbx_set_functions (item->itemid, info, sizeof (int) + count*sizeof (function_info_t));
 #endif
 	}
 
 /* Oracle does'n support this */
 /*	zbx_snprintf(sql,sizeof(sql),"select function,parameter,itemid,lastvalue from functions where itemid=%d group by function,parameter,itemid order by function,parameter,itemid",item->itemid);*/
 
-	for (i = 0; i < count; i++)
+	for (i = 0; i < info->count; i++)
 	{
-		function.function = info[i].function;
-		function.parameter = info[i].parameter;
+		function.function = info->functions[i].function;
+		function.parameter = info->functions[i].parameter;
 		function.itemid = item->itemid;
-		function.functionid = info[i].functionid;
+		function.functionid = info->functions[i].functionid;
 
 		if (!CONFIG_HFS_PATH)
 			lastvalue = strdup (info[i].lastvalue);
