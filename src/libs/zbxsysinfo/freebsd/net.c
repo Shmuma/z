@@ -43,7 +43,7 @@ static int get_ifmib_general(char *if_name, struct ifmibdata *ifmd)
 	name[3] = IFMIB_SYSTEM;
 	name[4] = IFMIB_IFCOUNT;
 
-	len = sizeof maxifno;
+	len = sizeof (maxifno);
 	if (sysctl(name, 5, &maxifno, &len, 0, 0) < 0)
 		/* err(EX_OSERR, "sysctl(net.link.generic.system.ifcount)"); */
 		return retval;
