@@ -112,7 +112,7 @@ void	update_functions(DB_ITEM *item)
 			else
 				info->functions[info->count].parameter[0] = 0;
 			if (row[3])
-				zbx_strlcpy (info->functions[info->count].lastvalue, row[3], sizeof (info->function[0].parameter));
+				zbx_strlcpy (info->functions[info->count].lastvalue, row[3], sizeof (info->functions[0].parameter));
 			else
 				info->functions[info->count].lastvalue[0] = 0;
 			ZBX_STR2UINT64 (info->functions[info->count].functionid, row[4]);
@@ -123,7 +123,7 @@ void	update_functions(DB_ITEM *item)
 		DBfree_result (result);
 
 #ifdef HAVE_MEMCACHE
-		memcache_zbx_set_functions (item->itemid, info, sizeof (int) + count*sizeof (function_info_t));
+		memcache_zbx_set_functions (item->itemid, info, sizeof (int) + info->count*sizeof (function_info_t));
 #endif
 	}
 
@@ -138,7 +138,7 @@ void	update_functions(DB_ITEM *item)
 		function.functionid = info->functions[i].functionid;
 
 		if (!CONFIG_HFS_PATH)
-			lastvalue = strdup (info[i].lastvalue);
+			lastvalue = strdup (info->functions[i].lastvalue);
 		else {
 			/* obtain function value from HFS */
 			fun_val.type = FVT_NULL;
