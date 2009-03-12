@@ -57,7 +57,7 @@ libzbxcommon_a_AR = $(AR) $(ARFLAGS)
 libzbxcommon_a_LIBADD =
 am_libzbxcommon_a_OBJECTS = misc.$(OBJEXT) regexp.$(OBJEXT) \
 	xml.$(OBJEXT) comms.$(OBJEXT) str.$(OBJEXT) \
-	zbxgetopt.$(OBJEXT) alias.$(OBJEXT)
+	zbxgetopt.$(OBJEXT) tpl.$(OBJEXT) alias.$(OBJEXT)
 libzbxcommon_a_OBJECTS = $(am_libzbxcommon_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -215,6 +215,7 @@ libzbxcommon_a_SOURCES = \
 	comms.c \
 	str.c \
 	zbxgetopt.c \
+	tpl.c \
 	alias.c
 
 EXTRA_DIST = gnuregex.c
@@ -270,6 +271,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/misc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/regexp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/str.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tpl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xml.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zbxgetopt.Po@am__quote@
 
