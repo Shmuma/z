@@ -27,7 +27,7 @@ zabbix_server_SOURCES = \
 	functions.c functions.h \
 	metrics.c metrics.h \
 	queue.c queue.h \
-	server.c
+	server.c cache.c cache.h
 
 if JABBER 
 JABBER_LDADD = $(top_srcdir)/src/libs/zbxjabber/libzbxjabber.a
