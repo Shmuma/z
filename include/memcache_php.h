@@ -10,6 +10,7 @@ typedef enum {
 	MKT_TRIGGER,
 	MKT_FUNCTION,
 	MKT_ITEM_FUNCTIONS,
+	MKT_ITEM_TRIGGERS,
 } memcache_key_type_t;
 
 typedef struct {
@@ -34,5 +35,6 @@ const char* memcache_get_key (memcache_key_type_t type, zbx_uint64_t itemid);
 
 int memcache_zbx_save_val (const char* key, void* value, int val_len);
 void* memcache_zbx_read_val (const char* site, const char* key, size_t* val_len);
+void memcache_zbx_del_val (const char* key);
 
 #endif

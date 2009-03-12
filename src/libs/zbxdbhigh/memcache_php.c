@@ -200,6 +200,21 @@ void* memcache_zbx_read_val (const char* site, const char* key, size_t* val_len)
 }
 
 
+void memcache_zbx_del_val (const char* key)
+{
+	memcached_return rc;
+
+	if (!memsite)
+		return 0;
+
+	rc = memcached_delete (memsite->conn, key, strlen (key), 0);
+	if (rc == MEMCACHED_ERRNO) {
+		/* trying to reconnect */
+		memcache_zbx_reconnect (memsite);
+	}
+}
+
+
 const char* memcache_get_key (memcache_key_type_t type, zbx_uint64_t itemid)
 {
 	static char buf[256];
@@ -223,6 +238,9 @@ const char* memcache_get_key (memcache_key_type_t type, zbx_uint64_t itemid)
 	case MKT_ITEM_FUNCTIONS:
 		snprintf (buf, sizeof (buf), "if|" ZBX_FS_UI64, itemid);
 		break;		
+	case MKT_ITEM_TRIGGERS:
+		snprintf (buf, sizeof (buf), "it|" ZBX_FS_UI64, itemid);
+		break;
 	default:
 		return NULL;
 	}
