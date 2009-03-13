@@ -31,6 +31,8 @@
 #include "expression.h"
 #include "memcache_php.h"
 
+#include "cache.h"
+
 extern char* CONFIG_SERVER_SITE;
 extern char* CONFIG_HFS_PATH;
 
@@ -222,54 +224,51 @@ void	update_triggers(zbx_uint64_t itemid)
 	DB_RESULT	result;
 	DB_ROW		row;
 	hfs_trigger_value_t hfs_val;
+	cache_triggers_t* cache;
+	int i, clean_needed = 0;
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In update_triggers [itemid:" ZBX_FS_UI64 "]",
 		itemid);
 
-	result = DBselect("select t.triggerid,t.expression,t.description,t.url,t.comments,t.status,t.value,t.priority from triggers t,functions f,items i where i.status<>%d and i.itemid=f.itemid and t.status=%d and f.triggerid=t.triggerid and f.itemid=" ZBX_FS_UI64,
-		ITEM_STATUS_NOTSUPPORTED,
-		TRIGGER_STATUS_ENABLED,
-		itemid);
+	cache = cache_get_item_triggers (itemid);
 
-	while((row=DBfetch(result)))
-	{
-		ZBX_STR2UINT64(trigger.triggerid,row[0]);
-		trigger.expression      = row[1];
-		trigger.description     = row[2];
-		trigger.url		= row[3];
-		trigger.comments	= row[4];
-		trigger.status		= atoi(row[5]);
-		trigger.value		= atoi(row[6]);
-		trigger.priority	= atoi(row[7]);
+	if (!cache)
+		return;
 
-		exp = strdup(trigger.expression);
+	for (i = 0; i < cache->count; i++) {
+		exp = strdup(cache->triggers[i].expression);
 
 		if (CONFIG_HFS_PATH)
-			if (HFS_get_trigger_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, trigger.triggerid, &hfs_val))
-				trigger.value = hfs_val.value;
+			if (HFS_get_trigger_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, cache->triggers[i].triggerid, &hfs_val))
+				cache->triggers[i].value = hfs_val.value;
 
-		if( evaluate_expression(&exp_value, &exp, trigger.value, error, sizeof(error)) != 0 )
+		if( evaluate_expression(&exp_value, &exp, cache->triggers[i].value, error, sizeof(error)) != 0 )
 		{
 			zabbix_log( LOG_LEVEL_WARNING, "Expression [%s] cannot be evaluated [%s]",
-				trigger.expression,
+				cache->triggers[i].expression,
 				error);
 			zabbix_syslog("Expression [%s] cannot be evaluated [%s]",
-				trigger.expression,
+				cache->triggers[i].expression,
 				error);
 /*			DBupdate_trigger_value(&trigger, exp_value, time(NULL), error);*//* We shouldn't update triggervalue if expressions failed */
 		}
 		else
 		{
-			DBupdate_trigger_value(&trigger, exp_value, time(NULL), NULL);
-			if (CONFIG_HFS_PATH && trigger.value != exp_value)
-				HFS_update_trigger_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, trigger.triggerid,
+			DBupdate_trigger_value(cache->triggers+i, exp_value, time(NULL), NULL);
+			if (CONFIG_HFS_PATH && cache->triggers[i].value != exp_value) {
+				HFS_update_trigger_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, cache->triggers[i].triggerid,
 							  exp_value, (hfs_time_t) time(NULL));
+				clean_needed = 1;
+			}
 		}
 		zbx_free(exp);
 	}
-	DBfree_result(result);
-	zabbix_log( LOG_LEVEL_DEBUG, "End update_triggers [" ZBX_FS_UI64 "]",
-		itemid);
+
+	cache_free_item_triggers (cache);
+	if (clean_needed)
+		cache_delete_cached_item_triggers (itemid);
+
+	zabbix_log( LOG_LEVEL_DEBUG, "End update_triggers [" ZBX_FS_UI64 "]", itemid);
 }
 
 void	calc_timestamp(char *line,int *timestamp, char *format)
