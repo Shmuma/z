@@ -77,13 +77,17 @@ void	update_functions(DB_ITEM *item)
 	hfs_function_value_t fun_val;
 	functions_info_t* info = NULL;
 	int i, info_size;
+	const char* key;
+	size_t size;
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In update_functions(" ZBX_FS_UI64 ")",
 		item->itemid);
 
 #ifdef HAVE_MEMCACHE
 	/* trying to obtain item's functions information from memcache */
-	info = memcache_zbx_get_functions (item->itemid);
+	key = memcache_get_key (MKT_ITEM_FUNCTIONS, item->itemid);
+
+	info = (functions_info_t*)memcache_zbx_read_val (NULL, key, &size);
 #endif
 
 	if (!info) {
@@ -123,7 +127,8 @@ void	update_functions(DB_ITEM *item)
 		DBfree_result (result);
 
 #ifdef HAVE_MEMCACHE
-		memcache_zbx_set_functions (item->itemid, info, sizeof (int) + info->count*sizeof (function_info_t));
+		size = sizeof (int) + info->count*sizeof (function_info_t);
+		memcache_zbx_save_val (key, info, size, CONFIG_MEMCACHE_ITEMS_TTL);
 #endif
 	}
 

@@ -756,7 +756,7 @@ int write_metafile (const char* filename, hfs_meta_t* meta, hfs_meta_item_t* ext
 	close (fd);
 
 #ifdef HAVE_MEMCACHE
-	memcache_zbx_save_val (filename, buf, len);
+	memcache_zbx_save_val (filename, buf, len, 0);
 #endif
 
 	free (buf);
@@ -1872,7 +1872,7 @@ void HFS_update_item_values_dbl (const char* hfs_base_dir, const char* siteid, z
 	((item_value_dbl_t*)buf)->prevorgvalue = prevorgvalue;
 	buffer_str (buf+sizeof (item_value_dbl_t), stderr, len-sizeof (item_value_dbl_t));
 
-	memcache_zbx_save_val (key, buf, len);
+	memcache_zbx_save_val (key, buf, len, 0);
 	free (buf);
 #else
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
@@ -1925,7 +1925,7 @@ void HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, z
 	((item_value_int_t*)buf)->prevorgvalue = prevorgvalue;
 	buffer_str (buf+sizeof (item_value_int_t), stderr, len-sizeof (item_value_int_t));
 
-	memcache_zbx_save_val (key, buf, len);
+	memcache_zbx_save_val (key, buf, len, 0);
 	free (buf);
 #else
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
@@ -1992,7 +1992,7 @@ void HFS_update_item_values_str (const char* hfs_base_dir, const char* siteid, z
 	rest -= str_buffer_length (prevorgvalue);
 
 	p = buffer_str (p, stderr, rest);
-	memcache_zbx_save_val (key, buf, len);
+	memcache_zbx_save_val (key, buf, len, 0);
 #else
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemValues);
 	int fd, kind;
@@ -2552,7 +2552,7 @@ void HFS_update_trigger_value(const char* hfs_path, const char* siteid, zbx_uint
 #ifdef HAVE_MEMCACHE
 	key = memcache_get_key (MKT_TRIGGER, triggerid);
 	len = sizeof (val);
-	memcache_zbx_save_val (key, &val, len);
+	memcache_zbx_save_val (key, &val, len, 0);
 #endif
 	return;
 }
@@ -2676,7 +2676,7 @@ int HFS_get_trigger_value (const char* hfs_path, const char* siteid, zbx_uint64_
 	/* save read value to memcache for future hits */
 	/* we already have initialized key, so just use it */
 	len = sizeof (*res);
-	memcache_zbx_save_val (key, res, len);
+	memcache_zbx_save_val (key, res, len, 0);
 #endif
 #endif
 	return 1;
@@ -3128,7 +3128,7 @@ int HFS_save_function_value (const char* hfs_path, const char* siteid, zbx_uint6
 #ifdef HAVE_MEMCACHE
 	const char* key = memcache_get_key (MKT_FUNCTION, functionid);
 
-	memcache_zbx_save_val (key, value, sizeof (hfs_function_value_t));
+	memcache_zbx_save_val (key, value, sizeof (hfs_function_value_t), 0);
 #endif
 
 	if (function_val_fd == -1)
@@ -3180,7 +3180,7 @@ int HFS_get_function_value (const char* hfs_path, const char* siteid, zbx_uint64
 		zabbix_log (LOG_LEVEL_ERR, "HFS_get_function_value: Error reading value");
 
 #ifdef HAVE_MEMCACHE
-	memcache_zbx_save_val (key, value, sizeof (hfs_function_value_t));
+	memcache_zbx_save_val (key, value, sizeof (hfs_function_value_t), 0);
 #endif
 	return 1;
 }

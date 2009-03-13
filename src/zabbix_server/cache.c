@@ -12,6 +12,7 @@ cache_triggers_t* cache_get_item_triggers (zbx_uint64_t itemid)
 	int cache = 0;
 
 #ifdef HAVE_MEMCACHE
+	/*  */
 #endif
 	
 }
