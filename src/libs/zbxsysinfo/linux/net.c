@@ -345,6 +345,30 @@ int     NET_TCP_LISTEN(const char *cmd, const char *param, unsigned flags, AGENT
 	return ret;
 }
 
+int     NET_UDP_LISTEN(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
+{
+	int port;
+	int ret = SYSINFO_RET_OK;
+	char str_port[100];
+	int found = 0;
+
+        assert(result);
+
+        init_result(result);
+
+	if (!sscanf (param, "%d", &port))
+		return SYSINFO_RET_FAIL;
+
+	snprintf (str_port, sizeof (str_port)-1, "%04X", port);
+	found = lookup_port ("/proc/net/udp", str_port);
+	if (!found)
+		found = lookup_port ("/proc/net/udp6", str_port);
+
+	SET_UI64_RESULT (result, found);
+	return ret;
+}
+
+
 int     NET_IF_COLLISIONS(const char *cmd, const char *param, unsigned flags, AGENT_RESULT *result)
 {
 	struct net_stat_s	ns;
