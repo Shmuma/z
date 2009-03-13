@@ -342,7 +342,8 @@ insert into help_items values(0,'net.if.in[if &lt;,mode&gt;]','Network interface
 insert into help_items values(0,'net.if.out[if &lt;,mode&gt;]','Network interface output statistic. Integer value. If mode is missing bytes is used.');
 insert into help_items values(0,'net.if.total[if &lt;,mode&gt;]','Network interface input+output statistic. Integer value. If mode is missing bytes is used.');
 insert into help_items values(0,'net.tcp.dns[ip, zone]','Checks if DNS service is up. 0 - DNS is down, 1 - DNS is up.');
-insert into help_items values(0,'net.tcp.listen[port]','Checks if this port is in LISTEN state. 0 - it is not, 1 - it is in LISTEN state.');
+insert into help_items values(0,'net.tcp.listen[port]','Checks if this TCP port is in LISTEN state. 0 - it is not, 1 - it is in LISTEN state.');
+insert into help_items values(0,'net.udp.listen[port]','Checks if this UDP port is in LISTEN state. 0 - it is not, 1 - it is in LISTEN state.');
 insert into help_items values(0,'net.tcp.port[&lt;ip&gt;, port]','Check, if it is possible to make TCP connection to the port number. 0 - cannot connect, 1 - can connect. IP address is optional. If ip is missing, 127.0.0.1 is used. Example: net.tcp.port[,80]');
 insert into help_items values(0,'net.tcp.service[service &lt;,ip&gt; &lt;,port&gt;]','Check if service server is running and accepting connections. 0 - service is down, 1 - service is running. If ip is missing 127.0.0.1 is used. If port number is missing, default service port is used. Example: net.tcp.service[ftp,,45].');
 insert into help_items values(0,'net.tcp.service.perf[service &lt;,ip&gt; &lt;,port&gt;]','Check performance of service server. 0 - service server is down, sec - number of seconds spent on connection to the service server. If ip is missing 127.0.0.1 is used.  If port number is missing, default service port is used.');
