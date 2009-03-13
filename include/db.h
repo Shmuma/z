@@ -373,8 +373,8 @@ DB_MEDIATYPE
 DB_TRIGGER
 {
 	zbx_uint64_t	triggerid;
-	char	expression[TRIGGER_EXPRESSION_LEN_MAX];
-	char	description[TRIGGER_DESCRIPTION_LEN_MAX];
+	char	*expression;
+	char	*description;
 	char	*url;
 	char	*comments;
 	int	status;

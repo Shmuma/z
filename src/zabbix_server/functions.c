@@ -229,8 +229,8 @@ void	update_triggers(zbx_uint64_t itemid)
 	while((row=DBfetch(result)))
 	{
 		ZBX_STR2UINT64(trigger.triggerid,row[0]);
-		strscpy(trigger.expression,row[1]);
-		strscpy(trigger.description,row[2]);
+		trigger.expression      = row[1];
+		trigger.description     = row[2];
 		trigger.url		= row[3];
 		trigger.comments	= row[4];
 		trigger.status		= atoi(row[5]);
