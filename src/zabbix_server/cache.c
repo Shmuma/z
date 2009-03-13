@@ -38,6 +38,7 @@ cache_triggers_t* cache_get_item_triggers (zbx_uint64_t itemid)
 	if (buf) {
 		/* if found, deserialize it  */
 		tpl = tpl_map (format, &place);
+		tpl_load (tpl, TPL_MEM, buf, size);
 
 		res->count = tpl_Alen (tpl, 1);
 		if (res->count)
@@ -54,7 +55,6 @@ cache_triggers_t* cache_get_item_triggers (zbx_uint64_t itemid)
 		}
 
 		free (buf);
-
 		if (!err)
 			return res;
 
