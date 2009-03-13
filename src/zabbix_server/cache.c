@@ -136,6 +136,7 @@ void cache_free_item_triggers (cache_triggers_t* triggers)
 		free (triggers->triggers[i].comments);
 	}
 
-	free (triggers->triggers);
+	if (triggers->count)
+		free (triggers->triggers);
 	free (triggers);
 }
