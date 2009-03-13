@@ -1127,6 +1127,6 @@ void	process_profile_value (char* server, char* value)
 
 	snprintf (key, len+4, "p|%s", server);
 
-	memcache_zbx_save_val (key, value, strlen (value)+1);
+	memcache_zbx_save_val (key, value, strlen (value)+1, 0);
 	free (key);
 }
