@@ -638,8 +638,8 @@ void update_triggers_status_to_unknown(zbx_uint64_t hostid,int clock,char *reaso
 	while((row=DBfetch(result)))
 	{
 		ZBX_STR2UINT64(trigger.triggerid,row[0]);
-		strscpy(trigger.expression,row[1]);
-		strscpy(trigger.description,row[2]);
+		trigger.expression      = row[1];
+		trigger.description     = row[2];
 		trigger.status		= atoi(row[3]);
 		trigger.priority	= atoi(row[4]);
 		trigger.value		= atoi(row[5]);
@@ -800,8 +800,8 @@ void DBupdate_triggers_status_after_restart(void)
 	while((row=DBfetch(result)))
 	{
 		ZBX_STR2UINT64(trigger.triggerid,row[0]);
-		strscpy(trigger.expression,row[1]);
-		strscpy(trigger.description,row[2]);
+		trigger.expression      = row[1];
+		trigger.description     = row[2];
 		trigger.status		= atoi(row[3]);
 		trigger.priority	= atoi(row[4]);
 		trigger.value		= atoi(row[5]);
