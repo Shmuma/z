@@ -2,6 +2,10 @@
 #define __CACHE_H__
 
 
+#include "common.h"
+#include "db.h"
+
+
 typedef struct {
 	int count;
 	DB_TRIGGER* triggers;
