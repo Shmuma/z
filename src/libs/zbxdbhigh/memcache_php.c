@@ -154,14 +154,14 @@ void memcache_zbx_reconnect (memsite_item_t* item)
 
 
 /* save value to memcache. Returns 0 if save failed, 1 otherise */
-int memcache_zbx_save_val (const char* key, void* value, int val_len)
+int memcache_zbx_save_val (const char* key, void* value, int val_len, int ttl)
 {
 	memcached_return rc;
 
 	if (!memsite)
 		return 0;
 
-	rc = memcached_set (memsite->conn, key, strlen (key), value, val_len, 0, 0);
+	rc = memcached_set (memsite->conn, key, strlen (key), value, val_len, (time_t)ttl, 0);
 	if (rc == MEMCACHED_ERRNO) {
 		/* trying to reconnect */
 		memcache_zbx_reconnect (memsite);
