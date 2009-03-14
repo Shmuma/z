@@ -963,10 +963,12 @@ int	DBupdate_item_status_to_notsupported(zbx_uint64_t itemid, char *error)
 	now = time(NULL);
 
 	/* '%s ' to make Oracle happy */
-	DBexecute("update items set status=%d,nextcheck=%d,error='%s ' where itemid=" ZBX_FS_UI64,
+	DBexecute("update items set status=%d,error='%s ' where itemid=" ZBX_FS_UI64,
 		ITEM_STATUS_NOTSUPPORTED,
-		CONFIG_REFRESH_UNSUPPORTED+now,
 		error_esc,
+		itemid);
+	DBexecute("update items_nextcheck set nextcheck=%d where itemid=" ZBX_FS_UI64,
+		CONFIG_REFRESH_UNSUPPORTED+now,
 		itemid);
 
 	return SUCCEED;
@@ -1658,7 +1660,7 @@ void	DBget_item_from_db(DB_ITEM *item,DB_ROW row)
 	item->port=atoi(row[3]);
 	item->delay=atoi(row[4]);
 	item->description=row[5];
-	item->nextcheck=atoi(row[6]);
+	item->nextcheck=row[6] ? atoi(row[6]) : 0;
 	item->type=atoi(row[7]);
 	item->snmp_community=row[8];
 	item->snmp_oid=row[9];

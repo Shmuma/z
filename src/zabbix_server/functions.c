@@ -717,11 +717,11 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In update_item()");
 
-	nextcheck = calculate_item_nextcheck(item->itemid, item->type, item->delay, item->delay_flex, now);
-
 	/* update nextcheck */
 	if (process_type == ZBX_PROCESS_POLLER || process_type == ZBX_PROCESS_UNREACHABLE_POLLER) {
-		if (DBexecute("update items_nextcheck set nextcheck=%d where itemid=" ZBX_FS_UI64, nextcheck, item->itemid) != ZBX_DB_OK)
+		nextcheck = calculate_item_nextcheck(item->itemid, item->type, item->delay, item->delay_flex, now);
+		/* for mysql this returns amount of affected rows. Author of DB layer definetly have shysofrenia. */
+		if (DBexecute("update items_nextcheck set nextcheck=%d where itemid=" ZBX_FS_UI64, nextcheck, item->itemid) == 0)
 			DBexecute("insert into items_nextcheck (itemid, nextcheck) values (%d," ZBX_FS_UI64 ")", item->itemid, nextcheck);
 	}
 
