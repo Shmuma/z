@@ -55,6 +55,7 @@ cache_triggers_t* cache_get_item_triggers (zbx_uint64_t itemid)
 		}
 
 		free (buf);
+		tpl_free (tpl);
 		if (!err)
 			return res;
 
