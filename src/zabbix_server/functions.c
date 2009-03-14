@@ -721,8 +721,8 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 
 	/* update nextcheck */
 	if (process_type == ZBX_PROCESS_POLLER || process_type == ZBX_PROCESS_UNREACHABLE_POLLER) {
-		DBexecute("update items set nextcheck=%d where itemid=" ZBX_FS_UI64,
-			nextcheck, item->itemid);
+		if (DBexecute("update items_nextcheck set nextcheck=%d where itemid=" ZBX_FS_UI64, nextcheck, item->itemid) != ZBX_DB_OK)
+			DBexecute("insert into items_nextcheck (itemid, nextcheck) values (%d," ZBX_FS_UI64 ")", item->itemid, nextcheck);
 	}
 
 	/* update delta values */

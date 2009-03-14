@@ -463,6 +463,15 @@ FIELD		|name		|t_varchar(64)	|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|image		|t_image	|''	|NOT NULL	|ZBX_SYNC
 INDEX		|1		|imagetype,name
 
+
+TABLE|items_nextcheck|itemid|ZBX_SYNC
+FIELD		|itemid		|t_id		|'0'	|NOT NULL	|ZBX_SYNC
+FIELD		|nextcheck	|t_time		|'0'	|NOT NULL	|0
+INDEX		|1		|itemid
+INDEX		|2		|nextcheck
+
+
+
 TABLE|items|itemid|ZBX_SYNC
 FIELD		|itemid		|t_id		|'0'	|NOT NULL	|ZBX_SYNC
 FIELD		|type		|t_integer	|'0'	|NOT NULL	|ZBX_SYNC
