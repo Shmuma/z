@@ -342,7 +342,7 @@ int get_values(void)
 	case ZBX_POLLER_TYPE_NORMAL:
 		if(CONFIG_REFRESH_UNSUPPORTED != 0)
 		{
-			result = DBselect("select %s where i.nextcheck<=%d and i.status in (%d,%d) and i.type not in (%d,%d,%d,%d) and h.status=%d and h.disable_until<=%d and h.errors_from=0 and h.hostid=i.hostid and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " order by i.nextcheck",
+			result = DBselect("select %s left join items_nextcheck inn on inn.itemid=i.itemid where (inn.nextcheck<=%d or inn.nextcheck is null) and i.status in (%d,%d) and i.type not in (%d,%d,%d,%d) and h.status=%d and h.disable_until<=%d and h.errors_from=0 and h.hostid=i.hostid and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " order by inn.nextcheck",
 				ZBX_SQL_ITEM_SELECT,
 				now,
 				ITEM_STATUS_ACTIVE, ITEM_STATUS_NOTSUPPORTED,
