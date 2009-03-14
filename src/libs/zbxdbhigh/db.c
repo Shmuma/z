@@ -951,22 +951,26 @@ int	DBupdate_item_status_to_notsupported(zbx_uint64_t itemid, char *error)
 
 	zabbix_log(LOG_LEVEL_DEBUG,"In DBupdate_item_status_to_notsupported()");
 
-	if(error!=NULL)
-	{
-		DBescape_string(error,error_esc,MAX_STRING_LEN);
-	}
-	else
-	{
-		strscpy(error_esc,"");
-	}
-
 	now = time(NULL);
 
 	/* '%s ' to make Oracle happy */
-	DBexecute("update items set status=%d,error='%s ' where itemid=" ZBX_FS_UI64,
-		ITEM_STATUS_NOTSUPPORTED,
-		error_esc,
-		itemid);
+	if (CONFIG_HFS_PATH)
+		DBexecute("update items set status=%d where itemid=" ZBX_FS_UI64,
+			  ITEM_STATUS_NOTSUPPORTED, itemid);
+	else {
+		if(error!=NULL) {
+			DBescape_string(error,error_esc,MAX_STRING_LEN);
+		}
+		else {
+			strscpy(error_esc,"");
+		}
+
+		DBexecute("update items set status=%d,error='%s ' where itemid=" ZBX_FS_UI64,
+			  ITEM_STATUS_NOTSUPPORTED,
+			  error_esc,
+			  itemid);
+	}
+
 	DBexecute("update items_nextcheck set nextcheck=%d where itemid=" ZBX_FS_UI64,
 		CONFIG_REFRESH_UNSUPPORTED+now,
 		itemid);

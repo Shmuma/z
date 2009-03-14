@@ -703,7 +703,7 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
  ******************************************************************************/
 static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const char* stderr)
 {
-	int	nextcheck;
+	int	nextcheck, ret_code;
 	AGENT_RESULT prev_value;
 	item_value_u new, res;
 
@@ -720,9 +720,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 	/* update nextcheck */
 	if (process_type == ZBX_PROCESS_POLLER || process_type == ZBX_PROCESS_UNREACHABLE_POLLER) {
 		nextcheck = calculate_item_nextcheck(item->itemid, item->type, item->delay, item->delay_flex, now);
-		/* for mysql this returns amount of affected rows. Author of DB layer definetly have shysofrenia. */
-		if (DBexecute("update items_nextcheck set nextcheck=%d where itemid=" ZBX_FS_UI64, nextcheck, item->itemid) == 0)
-			DBexecute("insert into items_nextcheck (itemid, nextcheck) values (%d," ZBX_FS_UI64 ")", item->itemid, nextcheck);
+		DBexecute("update items_nextcheck set nextcheck=%d where itemid=" ZBX_FS_UI64, nextcheck, item->itemid);
 	}
 
 	/* update delta values */
