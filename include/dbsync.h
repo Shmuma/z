@@ -541,6 +541,13 @@ static	ZBX_TABLE	tables[]={
 		{0}
 		}
 	},
+	{"items_nextcheck",	"itemid",	ZBX_SYNC,
+		{
+		{"itemid",	ZBX_TYPE_ID,	ZBX_SYNC},
+		{"nextcheck",	ZBX_TYPE_INT,	0},
+		{0}
+		}
+	},
 	{"items",	"itemid",	ZBX_SYNC,
 		{
 		{"itemid",	ZBX_TYPE_ID,	ZBX_SYNC},

@@ -508,6 +508,14 @@ CREATE TABLE images (
 );
 CREATE INDEX images_1 on images (imagetype,name);
 
+CREATE TABLE items_nextcheck (
+	itemid		number(20)		DEFAULT '0'	NOT NULL,
+	nextcheck		number(10)		DEFAULT '0'	NOT NULL,
+	PRIMARY KEY (itemid)
+);
+CREATE INDEX items_nextcheck_1 on items_nextcheck (itemid);
+CREATE INDEX items_nextcheck_2 on items_nextcheck (nextcheck);
+
 CREATE TABLE items (
 	itemid		number(20)		DEFAULT '0'	NOT NULL,
 	type		number(10)		DEFAULT '0'	NOT NULL,

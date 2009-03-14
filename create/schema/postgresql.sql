@@ -508,6 +508,14 @@ CREATE TABLE images (
 ) with OIDS;
 CREATE INDEX images_1 on images (imagetype,name);
 
+CREATE TABLE items_nextcheck (
+	itemid		bigint		DEFAULT '0'	NOT NULL,
+	nextcheck		integer		DEFAULT '0'	NOT NULL,
+	PRIMARY KEY (itemid)
+) with OIDS;
+CREATE INDEX items_nextcheck_1 on items_nextcheck (itemid);
+CREATE INDEX items_nextcheck_2 on items_nextcheck (nextcheck);
+
 CREATE TABLE items (
 	itemid		bigint		DEFAULT '0'	NOT NULL,
 	type		integer		DEFAULT '0'	NOT NULL,

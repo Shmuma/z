@@ -1746,6 +1746,46 @@ Replicate2MySQL.RunSQL
 end;
 /
 show errors
+create or replace function zabbix.ins_items_nextcheck (itemid in number,nextcheck in number) return varchar2
+is
+begin
+return
+'insert into items_nextcheck (itemid,nextcheck) values ('
+||Nvl(To_Char(itemid),'null')||','
+||Nvl(To_Char(nextcheck),'null')
+||')';
+end;
+/
+show errors
+create or replace trigger zabbix.trai_items_nextcheck after insert on zabbix.items_nextcheck for each row
+begin
+Replicate2MySQL.RunSQL
+(
+zabbix.ins_items_nextcheck (:new.itemid,:new.nextcheck)
+);
+end;
+/
+show errors
+create or replace trigger zabbix.trau_items_nextcheck after update on zabbix.items_nextcheck for each row
+begin
+Replicate2MySQL.RunSQL
+(
+'update zabbix.items_nextcheck set '
+||' itemid='||Nvl(To_Char(:new.itemid),'null')||','
+||' nextcheck='||Nvl(To_Char(:new.nextcheck),'null') || ' where  itemid='||:old.itemid );
+end;
+/
+show errors
+create or replace trigger zabbix.trad_items_nextcheck after delete on zabbix.items_nextcheck for each row
+begin
+Replicate2MySQL.RunSQL
+(
+'delete from zabbix.items_nextcheck '
+ || ' where  itemid='||:old.itemid 
+);
+end;
+/
+show errors
 create or replace function zabbix.ins_items (itemid in number,type in number,snmp_community in varchar2,snmp_oid in varchar2,snmp_port in number,hostid in number,description in varchar2,key_ in varchar2,delay in number,history in number,trends in number,nextcheck in number,lastvalue in varchar2,lastclock in number,prevvalue in varchar2,status in number,value_type in number,trapper_hosts in varchar2,units in varchar2,multiplier in number,delta in number,prevorgvalue in varchar2,snmpv3_securityname in varchar2,snmpv3_securitylevel in number,snmpv3_authpassphrase in varchar2,snmpv3_privpassphrase in varchar2,formula in varchar2,error in varchar2,lastlogsize in number,logtimefmt in varchar2,templateid in number,valuemapid in number,delay_flex in varchar2,params in varchar2,siteid in number,stderr in varchar2) return varchar2
 is
 begin
