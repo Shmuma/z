@@ -136,13 +136,14 @@ static int get_nextchecks(int** res_buf)
 	int		res = 0, count = 0;
 	int		ts, delay;
 	int		now = time (NULL);
+	zbx_uint64_t	itemid;
 
 /* Host status	0 == MONITORED
 		1 == NOT MONITORED
 		2 == UNREACHABLE */
 	switch (poller_type) {
 	case ZBX_POLLER_TYPE_UNREACHABLE:
-		result = DBselect("select inn.nextcheck, i.delay from hosts h,items i left join items_nextcheck inn on inn.itemid=i.itemid where " ZBX_SQL_MOD(h.hostid,%d) "=%d and (inn.nextcheck<=%d or inn.nextcheck is null) and i.status=%d and i.type not in (%d,%d,%d) and h.status=%d and h.disable_until<=%d and h.errors_from!=0 and h.hostid=i.hostid and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE "order by inn.nextcheck",
+		result = DBselect("select inn.nextcheck, i.delay, i.itemid from hosts h,items i left join items_nextcheck inn on inn.itemid=i.itemid where " ZBX_SQL_MOD(h.hostid,%d) "=%d and (inn.nextcheck<=%d or inn.nextcheck is null) and i.status=%d and i.type not in (%d,%d,%d) and h.status=%d and h.disable_until<=%d and h.errors_from!=0 and h.hostid=i.hostid and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE "order by inn.nextcheck",
 				  CONFIG_UNREACHABLE_POLLER_FORKS,
 				  poller_num-1,
 				  now+POLLER_GROUP_INTERVAL,
@@ -156,7 +157,7 @@ static int get_nextchecks(int** res_buf)
 	case ZBX_POLLER_TYPE_NORMAL:
 		if(CONFIG_REFRESH_UNSUPPORTED != 0)
 		{
-			result = DBselect("select inn.nextcheck,i.delay from hosts h,items i left join items_nextcheck inn on inn.itemid=i.itemid where h.status=%d and h.disable_until<%d and (inn.nextcheck<=%d or inn.nextcheck is null) and h.errors_from=0 and h.hostid=i.hostid and i.status in (%d,%d) and i.type not in (%d,%d,%d,%d) and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " order by inn.nextcheck",
+			result = DBselect("select inn.nextcheck,i.delay, i.itemid from hosts h,items i left join items_nextcheck inn on inn.itemid=i.itemid where h.status=%d and h.disable_until<%d and (inn.nextcheck<=%d or inn.nextcheck is null) and h.errors_from=0 and h.hostid=i.hostid and i.status in (%d,%d) and i.type not in (%d,%d,%d,%d) and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " order by inn.nextcheck",
 					  HOST_STATUS_MONITORED,
 					  now+POLLER_GROUP_INTERVAL,
 					  now+POLLER_GROUP_INTERVAL,
@@ -169,7 +170,7 @@ static int get_nextchecks(int** res_buf)
 		}
 		else
 		{
-			result = DBselect("select inn.nextcheck,i.delay from hosts h,items i left join items_nextcheck inn on inn.itemid=i.itemid where h.status=%d and h.disable_until<%d and (inn.nextcheck<=%d or inn.nextcheck is null) and h.errors_from=0 and h.hostid=i.hostid and i.status=%d and i.type not in (%d,%d,%d,%d) and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " order by inn.nextcheck",
+			result = DBselect("select inn.nextcheck,i.delay, i.itemid from hosts h,items i left join items_nextcheck inn on inn.itemid=i.itemid where h.status=%d and h.disable_until<%d and (inn.nextcheck<=%d or inn.nextcheck is null) and h.errors_from=0 and h.hostid=i.hostid and i.status=%d and i.type not in (%d,%d,%d,%d) and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " order by inn.nextcheck",
 					  HOST_STATUS_MONITORED,
 					  now+POLLER_GROUP_INTERVAL,
 					  now+POLLER_GROUP_INTERVAL,
@@ -182,7 +183,7 @@ static int get_nextchecks(int** res_buf)
 		}
 		break;
 	case ZBX_POLLER_TYPE_AGGREGATE:
-		result = DBselect("select inn.nextcheck, i.delay from hosts h,items i left join items_nextcheck inn on inn.itemid=i.itemid where h.status=%d and h.disable_until<%d and (inn.nextcheck <= %d or inn.nextcheck is null) and h.errors_from=0 and h.hostid=i.hostid and i.status=%d and i.type=%d and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " order by inn.nextcheck",
+		result = DBselect("select inn.nextcheck, i.delay, i.itemid from hosts h,items i left join items_nextcheck inn on inn.itemid=i.itemid where h.status=%d and h.disable_until<%d and (inn.nextcheck <= %d or inn.nextcheck is null) and h.errors_from=0 and h.hostid=i.hostid and i.status=%d and i.type=%d and " ZBX_SQL_MOD(i.itemid,%d) "=%d and i.key_ not in ('%s','%s','%s','%s') and " ZBX_COND_SITE " order by inn.nextcheck",
 				  HOST_STATUS_MONITORED,
 				  now+POLLER_GROUP_INTERVAL,
 				  now+POLLER_GROUP_INTERVAL,
@@ -207,6 +208,11 @@ static int get_nextchecks(int** res_buf)
 
 		if (!ts || ts < now)
 			ts = now;
+
+		if (!row[0]) {
+			ZBX_STR2UINT64 (itemid, row[2]);
+			DBexecute("insert into items_nextcheck (itemid, nextcheck) values (" ZBX_FS_UI64 ", 0)", itemid);
+		}
 
 		while (ts < now+POLLER_GROUP_INTERVAL) {
 			if (count == res) {
