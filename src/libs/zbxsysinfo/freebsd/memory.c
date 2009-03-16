@@ -109,7 +109,7 @@ static int	VM_MEMORY_BUFFERS(const char *cmd, const char *param, unsigned flags,
 #elif defined(HAVE_SYS_SYSCTL_H)
 	size_t len = 0;
 	unsigned int val;
-	zbx_uint64_t res;
+	zbx_uint64_t res = 0;
 
 	len = sizeof (val);
 	if (sysctlbyname ("vfs.bufspace", &val, &len, NULL, 0) == -1 || !len)
@@ -175,7 +175,7 @@ static int	VM_MEMORY_TOTAL(const char *cmd, const char *param, unsigned flags, A
 #if defined(HAVE_SYS_VMMETER_VMTOTAL)
 	int mib[2];
 	size_t len;
-	zbx_uint64_t total;
+	zbx_uint64_t total = 0;
 
 	len = sizeof(total);
 	mib[0]=CTL_HW;
