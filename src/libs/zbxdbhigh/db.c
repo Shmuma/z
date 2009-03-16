@@ -646,6 +646,9 @@ void update_triggers_status_to_unknown(zbx_uint64_t hostid,int clock,char *reaso
 		trigger.url		= row[6];
 		trigger.comments	= row[7];
 		DBupdate_trigger_value(&trigger,TRIGGER_VALUE_UNKNOWN,clock,reason);
+		if (CONFIG_HFS_PATH && trigger.value != TRIGGER_VALUE_UNKNOWN)
+			HFS_update_trigger_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, trigger.triggerid,
+						  TRIGGER_VALUE_UNKNOWN, clock);
 	}
 
 	DBfree_result(result);
