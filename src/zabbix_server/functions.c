@@ -238,10 +238,6 @@ void	update_triggers(zbx_uint64_t itemid)
 	for (i = 0; i < cache->count; i++) {
 		exp = strdup(cache->triggers[i].expression);
 
-		if (CONFIG_HFS_PATH)
-			if (HFS_get_trigger_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, cache->triggers[i].triggerid, &hfs_val))
-				cache->triggers[i].value = hfs_val.value;
-
 		if( evaluate_expression(&exp_value, &exp, cache->triggers[i].value, error, sizeof(error)) != 0 )
 		{
 			zabbix_log( LOG_LEVEL_WARNING, "Expression [%s] cannot be evaluated [%s]",
