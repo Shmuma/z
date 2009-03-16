@@ -78,7 +78,7 @@ void	update_functions(DB_ITEM *item)
 	int		ret=SUCCEED;
 	hfs_function_value_t fun_val;
 	functions_info_t* info = NULL;
-	int i, info_size, value_durty = 0;
+	int i, info_size;
 	const char* key;
 	size_t size;
 
@@ -94,9 +94,9 @@ void	update_functions(DB_ITEM *item)
 
 	if (!info) {
 		/* select and cache */
-		result = DBselect("select f.function,f.parameter,f.itemid,f.lastvalue,f.functionid from functions f, items i where "
-				  " f.itemid=" ZBX_FS_UI64 " and i.itemid=f.itemid and i.status=%d",
-				  item->itemid, ITEM_STATUS_ACTIVE);
+		result = DBselect("select f.function,f.parameter,f.itemid,f.lastvalue,f.functionid from functions f where "
+				  " f.itemid=" ZBX_FS_UI64,
+				  item->itemid);
 		info = (functions_info_t*)malloc (sizeof (int));
 		info_size = info->count = 0;
 		
@@ -130,7 +130,7 @@ void	update_functions(DB_ITEM *item)
 
 #ifdef HAVE_MEMCACHE
 		size = sizeof (int) + info->count*sizeof (function_info_t);
-		memcache_zbx_save_val (key, info, size, CONFIG_MEMCACHE_ITEMS_TTL*2);
+		memcache_zbx_save_val (key, info, size, CONFIG_MEMCACHE_ITEMS_TTL);
 #endif
 	}
 
@@ -144,14 +144,14 @@ void	update_functions(DB_ITEM *item)
 		function.itemid = item->itemid;
 		function.functionid = info->functions[i].functionid;
 
-/* 		if (!CONFIG_HFS_PATH) */
-		lastvalue = strdup (info->functions[i].lastvalue);
-/* 		else { */
-/* 			/\* obtain function value from HFS *\/ */
-/* 			fun_val.type = FVT_NULL; */
-/* 			HFS_get_function_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, function.functionid, &fun_val); */
-/* 			lastvalue = HFS_convert_function_val2str (&fun_val); */
-/* 		} */
+		if (!CONFIG_HFS_PATH)
+			lastvalue = strdup (info->functions[i].lastvalue);
+		else {
+			/* obtain function value from HFS */
+			fun_val.type = FVT_NULL;
+			HFS_get_function_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, function.functionid, &fun_val);
+			lastvalue = HFS_convert_function_val2str (&fun_val);
+		}
 
 		zabbix_log( LOG_LEVEL_DEBUG, "ItemId:" ZBX_FS_UI64 " Evaluating %s(%s)",
 			function.itemid,
@@ -172,20 +172,18 @@ void	update_functions(DB_ITEM *item)
 			/* Update only if lastvalue differs from new one */
 			if( (lastvalue == NULL) || !*lastvalue || (strcmp(lastvalue,value) != 0))
 			{
-/* 				if (CONFIG_HFS_PATH) { */
-/* 					if (HFS_convert_function_str2val (value, &fun_val)) */
-/* 						HFS_save_function_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, function.functionid, &fun_val); */
-/* 				} */
-/* 				else { */
-				strncpy (info->functions[i].lastvalue, value, sizeof (info->functions[i].lastvalue));
-				DBescape_string(value,value_esc,MAX_STRING_LEN);
-				DBexecute("update functions set lastvalue='%s' where itemid=" ZBX_FS_UI64 " and function='%s' and parameter='%s'",
-					  value_esc,
-					  function.itemid,
-					  function.function,
-					  function.parameter);
-				value_durty = 1;
-/* 				} */
+				if (CONFIG_HFS_PATH) {
+					if (HFS_convert_function_str2val (value, &fun_val))
+						HFS_save_function_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, function.functionid, &fun_val);
+				}
+				else {
+					DBescape_string(value,value_esc,MAX_STRING_LEN);
+					DBexecute("update functions set lastvalue='%s' where itemid=" ZBX_FS_UI64 " and function='%s' and parameter='%s'",
+						  value_esc,
+						  function.itemid,
+						  function.function,
+						  function.parameter );
+				}
 			}
 			else
 			{
@@ -195,13 +193,6 @@ void	update_functions(DB_ITEM *item)
 		if (lastvalue)
 			free (lastvalue);
 	}
-
-#ifdef HAVE_MEMCACHE
-	if (value_durty) {
-		size = sizeof (int) + info->count*sizeof (function_info_t);
-		memcache_zbx_save_val (key, info, size, CONFIG_MEMCACHE_ITEMS_TTL*2);
-	}
-#endif
 
 	if (info)
 		free (info);
@@ -827,7 +818,7 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 			item->host_name);
 		item->status = ITEM_STATUS_ACTIVE;
 
-		DBexecute("update items set status=%d where itemid=" ZBX_FS_UI64,
+		DBexecute("update items set status=%d,error='' where itemid=" ZBX_FS_UI64,
 			ITEM_STATUS_ACTIVE,
 			item->itemid);
 
