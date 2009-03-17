@@ -5,8 +5,8 @@
 
 typedef struct {
 	uint64_t num;
-	char* str;
 	int val;
+	char* str;
 } uberstruct_t;
 
 
@@ -21,7 +21,7 @@ int main ()
 	uberstruct_t* s = strs;
 	int i;
 	
- 	tn = tpl_map ("S(Usi)#", s, sizeof (strs)/sizeof (strs[0]));
+ 	tn = tpl_map ("S(Uis)#", s, sizeof (strs)/sizeof (strs[0]));
 	tpl_pack (tn, 0);
 	tpl_dump (tn, TPL_FILE, "test.tpl");
 	tpl_free (tn);

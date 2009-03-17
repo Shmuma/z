@@ -1,5 +1,5 @@
 test: test.c
-	gcc -o test test.c -ltpl -g -O0
+	gcc -o test -I../../../include/ test.c tpl.c -g -O0
 
 
 clean:
