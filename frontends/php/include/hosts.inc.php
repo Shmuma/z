@@ -356,8 +356,10 @@ function del_host_from_golem ($name)
 		else
 			info('Added new host ['.$host.']');
 
- 		$res = add_host_to_golem ($host);
- 		info ("Host added to golem (result: $res)");
+		if ($status != HOST_STATUS_TEMPLATE) {
+			$res = add_host_to_golem ($host);
+			info ("Host added to golem (result: $res)");
+		}
 
 		update_host_groups($hostid,$groups);
 
@@ -438,7 +440,7 @@ function del_host_from_golem ($name)
 		}
 
 		// update host name in golem, using delete/add
-		if ($old_host["host"] != $host) {
+		if ($old_host["host"] != $host && ($status != HOST_STATUS_TEMPLATE)) {
 			del_host_from_golem ($old_host["host"]);
 			add_host_to_golem ($host);
 		}
@@ -606,7 +608,7 @@ function del_host_from_golem ($name)
 	// delete host profile
 		delete_host_profile($hostid);
 
-		$hostname_db = DBselect ("select host from hosts where hostid=$hostid");
+		$hostname_db = DBselect ("select host from hosts where hostid=$hostid and status != ".HOST_STATUS_TEMPLATE);
 		if ($hostname_dr = DBfetch ($hostname_db)) {
 			$res = del_host_from_golem ($hostname_dr["host"]);
 			info ("Host removed from golem (result: $res)");
