@@ -104,25 +104,27 @@ include_once "include/page_header.php";
 	$cmbGroup = new CComboBox("groupid",$_REQUEST["groupid"],"submit()");
 	$cmbHosts = new CComboBox("hostid",$_REQUEST["hostid"],"submit()");
 	
-	$availiable_groups= get_accessible_groups_by_user($USER_DETAILS,PERM_READ_LIST, null, PERM_RES_IDS_ARRAY, get_current_nodeid());
+	$availiable_groups_arr = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_LIST, null, PERM_RES_IDS_ARRAY, get_current_nodeid());
 
-	if (count ($availiable_groups) == 0)
+	if (count ($availiable_groups_arr) == 0)
 		access_deny();
 
-	$vals = array_values ($availiable_groups);
-	if (!(isset($_REQUEST["groupid"]) && $_REQUEST["groupid"] > 0 && in_array($_REQUEST["groupid"], $availiable_groups)))
-		$_REQUEST["groupid"] = $vals[0];
-
-	$availiable_groups = implode(',', $availiable_groups);
+	$availiable_groups = implode(',', $availiable_groups_arr);
 
 	$result=DBselect("select distinct g.groupid,g.name from groups g, hosts_groups hg, hosts h, items i ".
 		" where g.groupid in (".$availiable_groups.") ".
 		" and hg.groupid=g.groupid and h.status=".HOST_STATUS_MONITORED.
 		" and h.hostid=i.hostid and hg.hostid=h.hostid and i.status=".ITEM_STATUS_ACTIVE.
 		" order by g.name");
-	while($row=DBfetch($result))
+        $vals = array ();
+        while($row=DBfetch($result)) {
 		$cmbGroup->AddItem($row['groupid'], $row['name']);
+		$vals[] = $row['groupid'];
+	}
 	$r_form->AddItem(array(S_GROUP.SPACE,$cmbGroup));
+
+	if (!(isset($_REQUEST["groupid"]) && $_REQUEST["groupid"] > 0 && in_array($_REQUEST["groupid"], $availiable_groups_arr)))
+		$_REQUEST["groupid"] = $vals[0];
 
 	if($_REQUEST["groupid"] > 0)
 	{

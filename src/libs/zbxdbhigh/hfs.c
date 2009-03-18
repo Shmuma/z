@@ -2959,6 +2959,13 @@ void HFS_clear_item_history (const char* hfs_path, const char* siteid, zbx_uint6
 		unlink (f_name);
 		free (f_name);
 	}
+
+#ifdef HAVE_MEMCACHE
+	/* clear meta from memcache */
+	f_name = get_name (hfs_path, siteid, itemid, NK_ItemMeta);
+	memcache_zbx_del_val (siteid, f_name);
+	free (f_name);
+#endif
 }
 
 
@@ -3177,7 +3184,7 @@ int HFS_get_function_value (const char* hfs_path, const char* siteid, zbx_uint64
 	}
 
 	if (read (function_val_fd, value, sizeof (hfs_function_value_t)) != sizeof (hfs_function_value_t))
-		zabbix_log (LOG_LEVEL_ERR, "HFS_get_function_value: Error reading value");
+		zabbix_log (LOG_LEVEL_ERR, "HFS_get_function_value: Error reading value for function %lld", functionid);
 
 #ifdef HAVE_MEMCACHE
 	memcache_zbx_save_val (key, value, sizeof (hfs_function_value_t), 0);
