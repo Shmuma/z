@@ -200,17 +200,18 @@ void* memcache_zbx_read_val (const char* site, const char* key, size_t* val_len)
 }
 
 
-void memcache_zbx_del_val (const char* key)
+void memcache_zbx_del_val (const char* site, const char* key)
 {
 	memcached_return rc;
+	memsite_item_t* conn;
 
-	if (!memsite)
-		return 0;
+	if ((conn = memcache_zbx_site_lookup (site)) == NULL)
+		return;
 
-	rc = memcached_delete (memsite->conn, key, strlen (key), 0);
+	rc = memcached_delete (conn->conn, key, strlen (key), 0);
 	if (rc == MEMCACHED_ERRNO) {
 		/* trying to reconnect */
-		memcache_zbx_reconnect (memsite);
+		memcache_zbx_reconnect (conn);
 	}
 }
 
