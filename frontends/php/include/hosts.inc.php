@@ -24,6 +24,20 @@ require_once "include/profiles.inc.php";
 require_once "include/triggers.inc.php";
 require_once "include/items.inc.php";
 
+// Golem Function
+function add_host_to_golem ($name)
+{
+	return join ("", file ("http://golem.yandex.net/api/manage_host.sbml?action=create&hostname=$name"));
+}
+
+
+function del_host_from_golem ($name)
+{
+	return join ("", file ("http://golem.yandex.net/api/manage_host.sbml?action=delete&hostname=$name"));
+}
+
+
+
 /* SITES functions */
 	function	add_site($name, $descr, $dburl, $active)
 	{
@@ -342,6 +356,9 @@ require_once "include/items.inc.php";
 		else
 			info('Added new host ['.$host.']');
 
+ 		$res = add_host_to_golem ($host);
+ 		info ("Host added to golem (result: $res)");
+
 		update_host_groups($hostid,$groups);
 
 		add_group_to_host($hostid,$newgroup);
@@ -418,6 +435,12 @@ require_once "include/items.inc.php";
 		if(count($new_templates) > 0)
 		{
 			sync_host_with_templates($hostid,array_keys($new_templates));
+		}
+
+		// update host name in golem, using delete/add
+		if ($old_host["host"] != $host) {
+			del_host_from_golem ($old_host["host"]);
+			add_host_to_golem ($host);
 		}
 
 		return	$result;
@@ -582,6 +605,12 @@ require_once "include/items.inc.php";
 
 	// delete host profile
 		delete_host_profile($hostid);
+
+		$hostname_db = DBselect ("select host from hosts where hostid=$hostid");
+		if ($hostname_dr = DBfetch ($hostname_db)) {
+			$res = del_host_from_golem ($hostname_dr["host"]);
+			info ("Host removed from golem (result: $res)");
+		}
 
 	// delete host
 		return DBexecute("delete from hosts where hostid=$hostid");
