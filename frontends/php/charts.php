@@ -95,7 +95,7 @@ include_once "include/page_header.php";
 <?php
 	$h1 = array(S_GRAPHS_BIG.SPACE."/".SPACE);
 	
-	$availiable_groups_arr = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_LIST, null, PERM_RES_IDS_ARRAY, get_current_nodeid());
+	$availiable_groups_arr = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY, null, PERM_RES_IDS_ARRAY, get_current_nodeid());
         $availiable_groups = implode(',', $availiable_groups_arr);
 	$denyed_groups = get_accessible_groups_by_user($USER_DETAILS,PERM_READ_ONLY, PERM_MODE_LT);
 
@@ -135,15 +135,15 @@ include_once "include/page_header.php";
 		" and hg.groupid=g.groupid and h.status=".HOST_STATUS_MONITORED.
 		" and h.hostid=i.hostid and hg.hostid=h.hostid and i.itemid=gi.itemid ".
 		" order by g.name");
-        $vals = array ();
+        $groups = array ();
 	while($row=DBfetch($result))
 	{
 		$cmbGroup->AddItem($row['groupid'], $row["name"]);
-		$vals[0] = $row['groupid'];
+		$groups[] = $row['groupid'];
 	}
 	$r_form->AddItem(array(S_GROUP.SPACE,$cmbGroup));
-	if (!(isset($_REQUEST["groupid"]) && $_REQUEST["groupid"] > 0 && in_array($_REQUEST["groupid"], $availiable_groups_arr)))
-		$_REQUEST["groupid"] = $vals[0];
+        if (!isset($_REQUEST["groupid"]) || !in_array($_REQUEST["groupid"], $groups))
+		$_REQUEST["groupid"] = $groups[0];
 
 	$cmbHosts->AddItem(0,S_ALL_SMALL, $_REQUEST["hostid"] == 0 ? "yes" : "no");
 	if($_REQUEST["groupid"] > 0)
@@ -161,11 +161,16 @@ include_once "include/page_header.php";
 			" and hg.groupid not in (".$denyed_groups.") and i.itemid=gi.itemid".
 			" order by h.host";
 	}
+
 	$result=DBselect($sql);
+        $hosts = array ();
 	while($row=DBfetch($result))
 	{
 		$cmbHosts->AddItem($row['hostid'], $row['host'], $_REQUEST["hostid"] == $row['hostid'] ? "yes" : "no");
+		$hosts[] = $row['hostid'];
 	}
+        if (isset($_REQUEST["hostid"]) && !in_array($_REQUEST["hostid"], $hosts))
+		$_REQUEST["hostid"] = $hosts[0];
 
 	$r_form->AddItem(array(SPACE.S_HOST.SPACE,$cmbHosts));
 
