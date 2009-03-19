@@ -101,6 +101,9 @@ void		HFSadd_history_vals (const char* hfs_base_dir, const char* siteid, zbx_uin
 void		HFSadd_history_vals_uint (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, unsigned int delay, zbx_uint64_t* values, int count, hfs_time_t clock);
 
 void		HFSadd_history_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t clock, const char* value);
+void		HFSadd_history_log (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t clock, const char* value, 
+				    hfs_time_t timestamp, char* eventlog_source, int eventlog_severity);
+
 size_t		HFSread_item (const char* hfs_base_dir, const char* siteid,
 				int trend,		zbx_uint64_t itemid,
 				size_t x,
