@@ -798,6 +798,9 @@ char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemi
     case NK_ItemString:
             snprintf (res, len, "%s/%s/items/%llu/%llu/strings.data", hfs_base_dir, siteid, item_ord, itemid);
 	    break;
+    case NK_ItemLog:
+            snprintf (res, len, "%s/%s/items/%llu/%llu/logs.data", hfs_base_dir, siteid, item_ord, itemid);
+	    break;
     case NK_TrendItemData:
     case NK_TrendItemMeta:
             snprintf (res, len, "%s/%s/items/%llu/%llu/trends.%s", hfs_base_dir, siteid, item_ord, itemid,
@@ -2308,16 +2311,9 @@ int HFS_get_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint6
 /* routine appends string to item's  string table */
 void HFSadd_history_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t clock, const char* value)
 {
-	zabbix_log (LOG_LEVEL_DEBUG, "In HFSadd_history_str()");
-	store_value_str (hfs_base_dir, siteid, itemid, clock, value, IT_STRING);
-}
-
-
-
-int store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t clock, const char* value, item_type_t type)
-{
-	int len = 0, fd;
+	int len = 0, buf_len, fd;
 	char* p_name = get_name (hfs_base_dir, siteid, itemid, NK_ItemString);
+	char *buf, *p;
 
 	if (value)
 		len = strlen (value);
@@ -2325,23 +2321,37 @@ int store_value_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t 
 	if ((fd = xopen (p_name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
 		zabbix_log (LOG_LEVEL_DEBUG, "Canot open file %s", p_name);
 		free (p_name);
-		return 0;
+		return;
 	}
 
 	lseek (fd, 0, SEEK_END);
-
 	free (p_name);
 
-	write (fd, &clock, sizeof (clock));
-	write (fd, &len, sizeof (len));
-	if (len)
-		write (fd, value, len+1);
-	/* write len twice for backward reading */
-	write (fd, &len, sizeof (len));
+	buf_len = sizeof (clock) + str_buffer_length (value) + sizeof (len);
+	buf = (char*)malloc (buf_len);
 
+	*(hfs_time_t*)buf = clock;
+	p = buffer_str (buf+sizeof (clock), value, buf_len - sizeof (clock));
+	if (!p) {
+		free (buf);
+		close (fd);
+		return;
+	}
+
+	write (fd, buf, buf_len);
+	free (buf);
 	close (fd);
-	return 0;
+	return;
 }
+
+
+
+void HFSadd_history_log (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t clock, const char* value, 
+			 hfs_time_t timestamp, char* eventlog_source, int eventlog_severity)
+{
+	
+}
+
 
 
 /* Read all values inside given time region. */
@@ -2352,6 +2362,11 @@ size_t HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint6
 	char* p_name = get_name (hfs_base_dir, siteid, itemid, NK_ItemString);
 	size_t count = 0;
 	hfs_item_str_value_t* tmp;
+	struct __attribute__ ((packed)) {
+		int len;
+		hfs_time_t clock;
+		int len2;
+	} tmp_str;
 
 	*result = NULL;
 
@@ -2421,11 +2436,11 @@ size_t HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint6
 				tmp[count-1].value = NULL;
 
 			/* read metadata of next string */
-			if (read (fd, &len, sizeof (len)) != sizeof (len) || 
-			    read (fd, &clock, sizeof (clock)) != sizeof (clock) ||
-			    read (fd, &len, sizeof (len)) != sizeof (len))
+			if (read (fd, &tmp_str, sizeof (tmp_str)) != sizeof (tmp_str))
 				break;
 
+			clock = tmp_str.clock;
+			len = tmp_str.len2;
 			if (clock > to)
 				break;
 		}

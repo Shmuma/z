@@ -618,15 +618,8 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 				else
 					ok = 0;
 			}
-			if (!ok || !process_item_delta (item, &new_val, now, &res_val)) {
-/* 				zabbix_log(LOG_LEVEL_ERR, "Value not stored for itemid [%d]. Unknown delta [%d]", */
-/* 					item->itemid, */
-/* 					item->delta); */
-/* 				zabbix_syslog("Value not stored for itemid [%d]. Unknown delta [%d]", */
-/* 					item->itemid, */
-/* 					item->delta); */
+			if (!ok || !process_item_delta (item, &new_val, now, &res_val))
 				ret = FAIL;
-			}
 			else {
 				if (CONFIG_HFS_PATH)
 					if(item->value_type==ITEM_VALUE_TYPE_UINT64)
@@ -652,8 +645,14 @@ static int	add_history(DB_ITEM *item, AGENT_RESULT *value, int now)
 		}
 		else if(item->value_type==ITEM_VALUE_TYPE_LOG)
 		{
-			if(GET_STR_RESULT(value))
-				DBadd_history_log(0, item->itemid,value->str,now,item->timestamp,item->eventlog_source,item->eventlog_severity);
+			if(GET_STR_RESULT(value)) {
+				if (CONFIG_HFS_PATH)
+					HFSadd_history_log (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, now, 
+							    value->str, (hfs_time_t)item->timestamp, item->eventlog_source, 
+							    item->eventlog_severity);
+				else
+					DBadd_history_log(0, item->itemid,value->str,now,item->timestamp,item->eventlog_source,item->eventlog_severity);
+			}
 #ifndef HAVE_MEMCACHE
 			DBexecute("update items set lastlogsize=%d where itemid=" ZBX_FS_UI64,
 				item->lastlogsize,
