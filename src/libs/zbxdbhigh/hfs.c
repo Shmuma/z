@@ -2288,6 +2288,57 @@ int HFS_get_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_u
 
 
 
+int HFS_get_item_values_log (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t* lastclock,
+			     char** prevvalue, char** lastvalue, hfs_time_t* timestamp, 
+			     char** eventlog_source, int* eventlog_severity, char** stderr)
+{
+#ifdef HAVE_MEMCACHE
+	const char* key;
+	size_t len;
+	char* buf;
+	hfs_log_last_t entry;
+	tpl_node* tpl;
+
+	key = memcache_get_key (MKT_LAST_LOG, itemid);
+
+	buf = memcache_zbx_read_val (siteid, key, &len);
+	if (!buf)
+		return 0;
+
+	tpl = tpl_map (TPL_HFS_LOG_LAST, &entry);
+	
+	if (!tpl) {
+		free (buf);
+		return 0;
+	}
+
+	tpl_load (tpl, TPL_MEM, buf, len);
+
+	if (tpl_unpack (tpl, 0) <= 0) {
+		free (buf);
+		tpl_free (tpl);
+		return 0;
+	}
+
+	/* assign structure values */
+	*lastclock = entry.clock;
+	*prevvalue = entry.prev;
+	*lastvalue = entry.last;
+	*timestamp = entry.timestamp;
+	*eventlog_source = entry.source;
+	*eventlog_severity = entry.severity;
+	*stderr = entry.stderr;
+
+	tpl_free (tpl);
+	free (buf);
+	return 1;
+#else
+	return 0;
+#endif
+}
+
+
+
 void HFS_update_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int status, const char* error)
 {
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemStatus);
