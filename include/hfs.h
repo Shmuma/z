@@ -169,6 +169,9 @@ void		HFS_update_item_values_int (const char* hfs_base_dir, const char* siteid, 
 void		HFS_update_item_values_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t lastclock,
 					    const char* prevvalue, const char* lastvalue, const char* prevorgvalue,
 					    const char* stderr);
+void		HFS_update_item_values_log (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t lastclock,
+					    const char* prevvalue, const char* lastvalue, hfs_time_t timestamp, 
+					    const char* eventlog_source, int eventlog_severity, const char* stderr);
 int		HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t* lastclock,
 					 double* prevvalue, double* lastvalue, double* prevorgvalue, char** stderr);
 int		HFS_get_item_values_int (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t* lastclock,

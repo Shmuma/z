@@ -749,6 +749,12 @@ static void	update_item(DB_ITEM *item, AGENT_RESULT *value, time_t now, const ch
 		HFS_update_item_values_str (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now,
 					    item->lastvalue_null ? NULL : item->lastvalue_str, value->str, NULL, stderr);
 		break;
+
+	case ITEM_VALUE_TYPE_LOG:
+		HFS_update_item_values_log (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, (hfs_time_t)now, 
+					    item->lastvalue_null ? NULL : item->lastvalue_str, value->str,
+					    (hfs_time_t)item->timestamp, item->eventlog_source, item->eventlog_severity);
+		break;
 	}
 
 	item->prevvalue_null		= item->lastvalue_null;

@@ -2033,6 +2033,43 @@ void HFS_update_item_values_str (const char* hfs_base_dir, const char* siteid, z
 }
 
 
+void HFS_update_item_values_log (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t lastclock,
+				 const char* prevvalue, const char* lastvalue,
+				 hfs_time_t timestamp, const char* eventlog_source, int eventlog_severity,
+				 const char* stderr)
+{
+#ifdef HAVE_MEMCACHE
+	const char* key;
+	hfs_log_last_t entry;
+	tpl_node* tpl;
+	char* buf;
+	size_t len;
+
+	key = memcache_get_key (MKT_LAST_LOG, itemid);
+
+	/* fill structure */
+	entry.clock = lastclock;
+	entry.prev = prevvalue;
+	entry.last = lastvalue;
+	entry.timestamp = timestamp;
+	entry.source = eventlog_source;
+	entry.severity = eventlog_severity;
+	entry.stderr = stderr;
+
+	tpl = tpl_map (TPL_HFS_LOG_LAST, &entry);
+	tpl_pack (tpl, 0);
+	if (!tpl_dump (tpl, TPL_MEM, &buf, &len)) {
+		/* save in memcache */
+		memcache_zbx_save_val (key, buf, len, 0);
+		free (buf);
+	}
+
+	tpl_free (tpl);
+#endif
+}
+
+
+
 int HFS_get_item_values_dbl (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t* lastclock,
 			     double* prevvalue, double* lastvalue, double* prevorgvalue,
 			     char** stderr)
@@ -2380,6 +2417,8 @@ void HFSadd_history_log (const char* hfs_base_dir, const char* siteid, zbx_uint6
 		write (fd, &len, sizeof (len));
 		free (buf);
 	}
+
+	tpl_free (tpl);
 
 	close (fd);
 }
