@@ -23,6 +23,7 @@
 #include "hfs.h"
 #include "hfs_internal.h"
 #include "memcache_php.h"
+#include "tpl.h"
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -2349,7 +2350,37 @@ void HFSadd_history_str (const char* hfs_base_dir, const char* siteid, zbx_uint6
 void HFSadd_history_log (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t clock, const char* value, 
 			 hfs_time_t timestamp, char* eventlog_source, int eventlog_severity)
 {
-	
+	char* p_name = get_name (hfs_base_dir, siteid, itemid, NK_ItemLog);
+	int fd;
+	hfs_log_entry_t entry;
+	tpl_node_t* tpl;
+	size_t len;
+	char* buf;
+
+	if ((fd = xopen (p_name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
+		zabbix_log (LOG_LEVEL_DEBUG, "Canot open file %s", p_name);
+		free (p_name);
+		return;
+	}
+
+	free (p_name);
+	lseek (fd, 0, SEEK_END);
+
+	entry.clock = clock;
+	entry.entry = value;
+	entry.timestamp = timestamp;
+	entry.source = eventlog_source;
+	entry.severity = eventlog_severity;
+
+	/* pack structure using TPL */
+	tpl = tpl_pack (TPL_HFS_LOG_ENTRY, &entry);
+	if (!tpl_dump (tpl, TPL_MEM, &buf, &len)) {
+		write (fd, buf, len);
+		write (fd, &len, sizeof (len));
+		free (buf);
+	}
+
+	close (fd);
 }
 
 
