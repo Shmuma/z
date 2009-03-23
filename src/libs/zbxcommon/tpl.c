@@ -424,11 +424,12 @@ static tpl_node *tpl_map_va(char *fmt, va_list ap) {
                 if (!parent->children) goto fail;
                 preceding = parent->children->prev; /* first child's prev is 'last child'*/
                 t = preceding->type;
-                /* TODO this is for atomic case (tautological in S(...) I think... include s? */
+                /* TODO this is for atomic case (tautological in S(...) I think... */
                 if (!(t == TPL_TYPE_BYTE   || t == TPL_TYPE_INT32 ||
                       t == TPL_TYPE_UINT32 || t == TPL_TYPE_DOUBLE ||
                       t == TPL_TYPE_UINT64 || t == TPL_TYPE_INT64 || 
-                      t == TPL_TYPE_UINT16 || t == TPL_TYPE_INT16 )) goto fail;
+                      t == TPL_TYPE_UINT16 || t == TPL_TYPE_INT16 || 
+                      t == TPL_TYPE_STR )) goto fail;
                 if (infer) {
                     memcpy(&f, fxlens_img, sizeof(uint32_t)); /* copy to aligned */
                     fxlens_img = (void*)((long)fxlens_img + sizeof(uint32_t)); 
@@ -466,6 +467,7 @@ static tpl_node *tpl_map_va(char *fmt, va_list ap) {
                         np->data = tpl_hook.realloc(np->data, tpl_types[np->type].sz * 
                                                               np->num * n->num);
                         if (!np->data) fatal_oom();
+                        memset(np->data, 0, tpl_types[np->type].sz * np->num * n->num);
                       }
                     }
                     else { /* simple atom-# form does not require a loop */
@@ -477,6 +479,7 @@ static tpl_node *tpl_map_va(char *fmt, va_list ap) {
                       preceding->data = tpl_hook.realloc(preceding->data, 
                           tpl_types[t].sz * preceding->num);
                       if (!preceding->data) fatal_oom();
+                      memset(preceding->data,0,tpl_types[t].sz * preceding->num);
                       if (n->parent->type == TPL_TYPE_ARY) {
                           ((tpl_atyp*)(n->parent->data))->sz += tpl_types[t].sz * 
                                                                 (preceding->num-1);

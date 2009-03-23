@@ -2353,7 +2353,7 @@ void HFSadd_history_log (const char* hfs_base_dir, const char* siteid, zbx_uint6
 	char* p_name = get_name (hfs_base_dir, siteid, itemid, NK_ItemLog);
 	int fd;
 	hfs_log_entry_t entry;
-	tpl_node_t* tpl;
+	tpl_node* tpl;
 	size_t len;
 	char* buf;
 
@@ -2373,7 +2373,8 @@ void HFSadd_history_log (const char* hfs_base_dir, const char* siteid, zbx_uint6
 	entry.severity = eventlog_severity;
 
 	/* pack structure using TPL */
-	tpl = tpl_pack (TPL_HFS_LOG_ENTRY, &entry);
+	tpl = tpl_map (TPL_HFS_LOG_ENTRY, &entry);
+	tpl_pack (tpl, 0);
 	if (!tpl_dump (tpl, TPL_MEM, &buf, &len)) {
 		write (fd, buf, len);
 		write (fd, &len, sizeof (len));
