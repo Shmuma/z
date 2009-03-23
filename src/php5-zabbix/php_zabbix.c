@@ -567,12 +567,13 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 	long long itemid = 0;
 	char *site = NULL;
 	int site_len = 0, type;
-	hfs_time_t lastclock;
+	hfs_time_t lastclock, timestamp;
+	int i_severity;
 	char* buf = NULL;
 
 	double d_prev, d_last, d_prevorg;
 	unsigned long long i_prev, i_last, i_prevorg;
-	char *s_prev, *s_last, *s_prevorg, *s_stderr;
+	char *s_prev, *s_last, *s_prevorg, *s_stderr, *s_source;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll", &site, &site_len, &itemid, &type) == FAILURE)
 		RETURN_FALSE;
@@ -621,6 +622,28 @@ PHP_FUNCTION(zabbix_hfs_item_values)
 		asprintf(&buf, "%lld", i_last);
 		add_assoc_string (return_value, "lastvalue", buf, 1);
 		free (buf);
+		break;
+
+	case ITEM_VALUE_TYPE_LOG:
+		if (!HFS_get_item_values_log (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, &lastclock, &s_prev, &s_last, &timestamp, 
+					      &s_source, &i_severity, &s_stderr))
+			RETURN_FALSE;
+		
+		if (s_prev) {
+			add_assoc_string (return_value, "prevvalue", s_prev, 1);
+			free (s_prev);
+		}
+                else
+			add_assoc_string (return_value, "prevvalue", "", 1);
+		if (s_last) {
+			add_assoc_string (return_value, "lastvalue", s_last, 1);
+			free (s_last);
+		}
+                else
+			add_assoc_string (return_value, "lastvalue", "", 1);
+		if (s_source)
+			free (s_source);
+		
 		break;
 
 	default:
