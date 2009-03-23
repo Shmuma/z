@@ -258,7 +258,7 @@ include_once "include/page_header.php";
 				$lastclock,
 				new CCol($lastvalue, $lastvalue=='-' ? 'center' : null),
 				$change,
-				format_stderr ($db_item["stderr"]),
+				format_long_line ($db_item["stderr"]),
 				$actions
 				)));
 		}
