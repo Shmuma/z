@@ -1618,6 +1618,28 @@ int	DBget_item_values(DB_ITEM *item)
 				item->prevorgvalue_null = 1;
 			}
 			break;
+		case ITEM_VALUE_TYPE_LOG:
+			item->prevorgvalue_null = 1;
+			item->prevorgvalue_str = NULL;
+			rc = HFS_get_item_values_log(CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
+						     &lastclock,
+						     &item->prevvalue_str,
+						     &item->lastvalue_str,
+						     &item->timestamp,
+						     &item->eventlog_source,
+						     &item->eventlog_severity,
+						     &item->stderr);
+			if (!rc) {
+				item->prevvalue_str = NULL;
+				item->lastvalue_str = NULL;
+				item->prevorgvalue_str = NULL;
+				item->eventlog_source = NULL;
+
+				item->prevvalue_null    = 1;
+				item->lastvalue_null    = 1;
+				item->prevorgvalue_null = 1;
+			}
+			break;
 		default:
 			rc = HFS_get_item_values_str(CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid,
 						     &lastclock,
