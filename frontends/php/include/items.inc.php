@@ -1132,7 +1132,7 @@ COpt::profiling_stop('prepare table');
 
 	function format_long_line ($value)
 	{
-		$value = nbsp(htmlspecialchars ($value));
+		$value = htmlspecialchars ($value);
 		if (strlen ($value) > 20) {
 			$short = substr ($value, 0, 20)." ...";
 			return "<label title=\"$value\">$short</label>";
