@@ -51,7 +51,7 @@ err_w=0
 
 msg=""
 degraded_vds=`get_val $VD_DEGRADED`
-[ $degraded_vds -lt 0 ] && die 2 $NO_ANS_MSG
+[ $degraded_vds -lt 0 ] && die 2 "$NO_ANS_MSG"
 if [ $degraded_vds -gt 0 ] 
 then
     msg="$msg$degraded_vds degraded VDs, "
@@ -59,7 +59,7 @@ then
 fi
 
 offline_vds=`get_val $VD_OFFLINE`
-[ $offline_vds -lt 0 ] && die 2 $NO_ANS_MSG
+[ $offline_vds -lt 0 ] && die 2 "$NO_ANS_MSG"
 if [ $offline_vds -gt 0 ] 
 then
     msg="$msg$offline_vds offline VDs, "
@@ -67,7 +67,7 @@ then
 fi
 
 failed_pds=`get_val $PD_FAILED`
-[ $failed_pds -lt 0 ] && die 2 $NO_ANS_MSG
+[ $failed_pds -lt 0 ] && die 2 "$NO_ANS_MSG"
 if [ $failed_pds -gt 0 ] 
 then
     msg="$msg$failed_pds failed PDs, "
@@ -75,7 +75,7 @@ then
 fi
 
 will_fail_pds=`get_val $PD_WILL_FAIL`
-[ $will_fail_pds -lt 0 ] && die 2 $NO_ANS_MSG
+[ $will_fail_pds -lt 0 ] && die 2 "$NO_ANS_MSG"
 if [ $will_fail_pds -gt 0 ] 
 then
     msg="$msg$will_fail_pds PDs are ready to fail, "
