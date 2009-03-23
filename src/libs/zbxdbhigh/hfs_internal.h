@@ -44,6 +44,12 @@ typedef struct {
 #define TPL_HFS_LOG_LAST "S(UssUsis)"
 
 
+typedef struct __attribute__ ((packed)) {
+	hfs_time_t clock;
+	hfs_off_t ofs;
+} hfs_log_dir_t;
+
+
 
 typedef enum {
 	NK_ItemData,
@@ -55,6 +61,7 @@ typedef enum {
 	NK_ItemStatus,
 	NK_ItemString,
 	NK_ItemLog,
+	NK_ItemLogDir,
 	NK_TriggerStatus,
 	NK_Alert,
 	NK_HostError,
