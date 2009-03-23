@@ -2442,11 +2442,9 @@ void HFSadd_history_log (const char* hfs_base_dir, const char* siteid, zbx_uint6
 			 hfs_time_t timestamp, char* eventlog_source, int eventlog_severity)
 {
 	char* p_name = get_name (hfs_base_dir, siteid, itemid, NK_ItemLog);
-	int fd;
+	int fd, res;
 	hfs_log_entry_t entry;
 	tpl_node* tpl;
-	size_t len;
-	char* buf;
 	hfs_off_t ofs;
 	hfs_log_dir_t dir_entry;
 
@@ -2468,14 +2466,12 @@ void HFSadd_history_log (const char* hfs_base_dir, const char* siteid, zbx_uint6
 	/* pack structure using TPL */
 	tpl = tpl_map (TPL_HFS_LOG_ENTRY, &entry);
 	tpl_pack (tpl, 0);
-	if (!tpl_dump (tpl, TPL_MEM, &buf, &len)) {
-		write (fd, buf, len);
-		write (fd, &len, sizeof (len));
-		free (buf);
-	}
-
+	res = tpl_dump (tpl, TPL_FD, fd);
 	tpl_free (tpl);
 	close (fd);
+
+	if (res < 0)
+		return;
 
 	/* write offset of entry in directory */
 	p_name = get_name (hfs_base_dir, siteid, itemid, NK_ItemLogDir);
