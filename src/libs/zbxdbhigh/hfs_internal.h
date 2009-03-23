@@ -31,6 +31,20 @@ typedef struct {
 #define TPL_HFS_LOG_ENTRY "S(UsUsi)"
 
 
+typedef struct {
+	hfs_time_t clock;
+	char* prev;
+	char* last;
+	hfs_time_t timestamp;
+	char* source;
+	int severity;
+	char* stderr;
+} hfs_log_last_t;
+
+#define TPL_HFS_LOG_LAST "S(UssUsis)"
+
+
+
 typedef enum {
 	NK_ItemData,
 	NK_ItemMeta,

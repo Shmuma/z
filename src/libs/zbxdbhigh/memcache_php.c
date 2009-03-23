@@ -230,6 +230,9 @@ const char* memcache_get_key (memcache_key_type_t type, zbx_uint64_t itemid)
 	case MKT_LAST_STRING:
 		snprintf (buf, sizeof (buf), "l|s|" ZBX_FS_UI64, itemid);
 		break;
+	case MKT_LAST_LOG:
+		snprintf (buf, sizeof (buf), "l|l|" ZBX_FS_UI64, itemid);
+		break;
 	case MKT_TRIGGER:
 		snprintf (buf, sizeof (buf), "t|" ZBX_FS_UI64, itemid);
 		break;
