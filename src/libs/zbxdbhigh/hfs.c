@@ -802,6 +802,9 @@ char* get_name (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemi
     case NK_ItemLog:
             snprintf (res, len, "%s/%s/items/%llu/%llu/logs.data", hfs_base_dir, siteid, item_ord, itemid);
 	    break;
+    case NK_ItemLogDir:
+            snprintf (res, len, "%s/%s/items/%llu/%llu/logs.dir", hfs_base_dir, siteid, item_ord, itemid);
+	    break;
     case NK_TrendItemData:
     case NK_TrendItemMeta:
             snprintf (res, len, "%s/%s/items/%llu/%llu/trends.%s", hfs_base_dir, siteid, item_ord, itemid,
@@ -2444,6 +2447,8 @@ void HFSadd_history_log (const char* hfs_base_dir, const char* siteid, zbx_uint6
 	tpl_node* tpl;
 	size_t len;
 	char* buf;
+	hfs_off_t ofs;
+	hfs_log_dir_t dir_entry;
 
 	if ((fd = xopen (p_name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
 		zabbix_log (LOG_LEVEL_DEBUG, "Canot open file %s", p_name);
@@ -2452,7 +2457,7 @@ void HFSadd_history_log (const char* hfs_base_dir, const char* siteid, zbx_uint6
 	}
 
 	free (p_name);
-	lseek (fd, 0, SEEK_END);
+	ofs = lseek (fd, 0, SEEK_END);
 
 	entry.clock = clock;
 	entry.entry = value;
@@ -2470,7 +2475,23 @@ void HFSadd_history_log (const char* hfs_base_dir, const char* siteid, zbx_uint6
 	}
 
 	tpl_free (tpl);
+	close (fd);
 
+	/* write offset of entry in directory */
+	p_name = get_name (hfs_base_dir, siteid, itemid, NK_ItemLogDir);
+
+	if ((fd = xopen (p_name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
+		zabbix_log (LOG_LEVEL_DEBUG, "Canot open file %s", p_name);
+		free (p_name);
+		return;
+	}
+
+	free (p_name);
+	lseek (fd, 0, SEEK_END);
+	dir_entry.clock = clock;
+	dir_entry.ofs = ofs;
+
+	write (fd, &dir_entry, sizeof (dir_entry));
 	close (fd);
 }
 
