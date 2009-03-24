@@ -20,10 +20,8 @@ NO_ANS_MSG="No answer from lsi card via snmp"
 die ()
 {
         echo $1
-        if test "a$2" != a; then
-            echo "$2" 1>&2
-            zabbix_sender -s $host -c /etc/zabbix/zabbix_agentd.conf -k snmp-lsi.message -o "$2" > /dev/null
-        fi
+        echo "$2" 1>&2
+        zabbix_sender -s $host -c /etc/zabbix/zabbix_agentd.conf -k snmp-lsi.message -o "$2" > /dev/null
 	exit 0
 }
 
