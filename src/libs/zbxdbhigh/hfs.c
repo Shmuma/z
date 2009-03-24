@@ -2052,12 +2052,12 @@ void HFS_update_item_values_log (const char* hfs_base_dir, const char* siteid, z
 
 	/* fill structure */
 	entry.clock = lastclock;
-	entry.prev = prevvalue;
-	entry.last = lastvalue;
+	entry.prev = (char*)prevvalue;
+	entry.last = (char*)lastvalue;
 	entry.timestamp = timestamp;
-	entry.source = eventlog_source;
+	entry.source = (char*)eventlog_source;
 	entry.severity = eventlog_severity;
-	entry.stderr = stderr;
+	entry.stderr = (char*)stderr;
 
 	tpl = tpl_map (TPL_HFS_LOG_LAST, &entry);
 	tpl_pack (tpl, 0);
@@ -2445,7 +2445,7 @@ void HFSadd_history_log (const char* hfs_base_dir, const char* siteid, zbx_uint6
 	int fd, res;
 	hfs_log_entry_t entry;
 	tpl_node* tpl;
-	hfs_off_t ofs;
+	hfs_off_t ofs, ofs_dir;
 	hfs_log_dir_t dir_entry;
 
 	if ((fd = xopen (p_name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
@@ -2455,10 +2455,11 @@ void HFSadd_history_log (const char* hfs_base_dir, const char* siteid, zbx_uint6
 	}
 
 	free (p_name);
+
 	ofs = lseek (fd, 0, SEEK_END);
 
 	entry.clock = clock;
-	entry.entry = value;
+	entry.entry = (char*)value;
 	entry.timestamp = timestamp;
 	entry.source = eventlog_source;
 	entry.severity = eventlog_severity;
@@ -2470,27 +2471,161 @@ void HFSadd_history_log (const char* hfs_base_dir, const char* siteid, zbx_uint6
 	tpl_free (tpl);
 	close (fd);
 
-	if (res < 0)
-		return;
+	if (!res)  {
+		/* write offset of entry in directory */
+		p_name = get_name (hfs_base_dir, siteid, itemid, NK_ItemLogDir);
 
-	/* write offset of entry in directory */
-	p_name = get_name (hfs_base_dir, siteid, itemid, NK_ItemLogDir);
+		if ((fd = xopen (p_name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
+			zabbix_log (LOG_LEVEL_DEBUG, "Canot open file %s", p_name);
+			free (p_name);
+			return;
+		}
 
-	if ((fd = xopen (p_name, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
-		zabbix_log (LOG_LEVEL_DEBUG, "Canot open file %s", p_name);
 		free (p_name);
-		return;
+		lseek (fd, 0, SEEK_END);
+
+		dir_entry.clock = clock;
+		dir_entry.ofs = ofs;
+
+		write (fd, &dir_entry, sizeof (dir_entry));
+		close (fd);
 	}
-
-	free (p_name);
-	lseek (fd, 0, SEEK_END);
-	dir_entry.clock = clock;
-	dir_entry.ofs = ofs;
-
-	write (fd, &dir_entry, sizeof (dir_entry));
-	close (fd);
 }
 
+
+size_t HFSread_count_log (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, int start, const char* filter, int filer_include, 
+			  hfs_log_entry_t** result)
+{
+	/* get log directory size to estimate rought position to start from */
+	char* p_name = get_name (hfs_base_dir, siteid, itemid, NK_ItemLogDir);
+	int fd, fd_data;
+	struct stat st;
+	int records, st_pos;
+
+	if (!p_name)
+		return 0;
+	if ((fd = open (p_name, O_RDONLY)) == -1) {
+		zabbix_log (LOG_LEVEL_DEBUG, "HFSread_count_log: Canot open file %s", p_name);
+		free (p_name);
+		return 0;
+	}
+	free (p_name);
+
+	p_name = get_name (hfs_base_dir, siteid, itemid, NK_ItemLog);
+	if ((fd_data = open (p_name, O_RDONLY)) == -1) {
+		zabbix_log (LOG_LEVEL_DEBUG, "HFSread_count_log: Canot open file %s", p_name);
+		free (p_name);
+		return 0;
+	}
+	free (p_name);
+
+	if (fstat (fd, &st)) {
+		zabbix_log (LOG_LEVEL_DEBUG, "HFSread_count_log: stat failed on dir entry for item %lld", itemid);
+		close (fd);
+		close (fd_data);
+		return 0;
+	}
+
+	records = st.st_size / sizeof (hfs_log_dir_t);
+
+	if (start < 0 || start > records)
+		start = records-100;
+	if (start < 0)
+		start = 0;
+
+	/* we have start position to collect and process (backwards) */
+
+
+	close (fd);
+	close (fd_data);
+
+	return 0;
+}
+
+
+size_t HFSread_items_log (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t from, hfs_time_t to, 
+			 const char* filter, int filter_include, hfs_log_entry_t** result)
+{
+	char* p_name = get_name (hfs_base_dir, siteid, itemid, NK_ItemLogDir);
+	int fd;
+	hfs_off_t start;
+	int count, buf_size, i, found;
+	static hfs_log_dir_t dir[512];
+	tpl_node* tpl;
+	hfs_log_entry_t entry;
+
+	if ((fd = open (p_name, O_RDONLY)) == -1) {
+		zabbix_log (LOG_LEVEL_DEBUG, "HFSread_items_log: Canot open file %s", p_name);
+		free (p_name);
+		return 0;
+	}
+	free (p_name);
+
+	/* read directory with blocks, search for start position */
+	found = 0;
+	while (1) {
+		count = read (fd, dir, sizeof (dir)) / sizeof (hfs_log_dir_t);
+
+		if (count <= 0)
+			break;
+
+		for (i = 0; i < count; i++) {
+			if (dir[i].clock >= from) {
+				start = dir[i].ofs;
+				found = 1;
+				break;
+			}
+		}
+
+		if (found)
+			break;
+	}
+
+	close (fd);
+
+	if (!found)
+		return 0;
+
+	/* we have an offset, read items until to exceeded */
+	p_name = get_name (hfs_base_dir, siteid, itemid, NK_ItemLog);
+
+	if ((fd = open (p_name, O_RDONLY)) == -1) {
+		zabbix_log (LOG_LEVEL_DEBUG, "HFSread_items_log: Canot open file %s", p_name);
+		free (p_name);
+		return 0;
+	}
+	free (p_name);
+
+	lseek (fd, start, SEEK_SET);
+	buf_size = count = 0;
+	tpl = tpl_map (TPL_HFS_LOG_ENTRY, &entry);
+	*result = NULL;
+
+	while (1) {
+		if (tpl_load (tpl, TPL_FD, fd) < 0)
+			break;
+		if (tpl_unpack (tpl, 1) <= 0)
+			break;
+
+		if (buf_size == count) {
+			*result = (hfs_log_entry_t*)realloc (*result, sizeof (hfs_log_entry_t) * (buf_size += 50));
+			if (!*result) {
+				count = 0;
+				break;
+			}
+		}
+
+		memcpy (*result+count, &entry, sizeof (entry));
+		count++;
+		if (entry.clock >= to)
+			break;
+	}
+
+	tpl_free (tpl);
+	close (fd);
+
+	return count;
+}
 
 
 /* Read all values inside given time region. */
