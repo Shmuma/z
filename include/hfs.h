@@ -85,6 +85,18 @@ typedef struct __attribute__ ((packed)) {
 } item_value_int_t;
 
 
+typedef struct {
+	hfs_time_t clock;
+	char* entry;
+	hfs_time_t timestamp;
+	char* source;
+	int severity;
+} hfs_log_entry_t;
+
+#define TPL_HFS_LOG_ENTRY "S(UsUsi)"
+
+
+
 typedef void (*read_count_fn_t) (item_type_t type, item_value_u val, hfs_time_t timestamp, void *res);
 
 int 		xopen(const char *fn, int flags, mode_t mode);
@@ -113,8 +125,14 @@ size_t		HFSread_item (const char* hfs_base_dir, const char* siteid,
 int		HFSread_count(const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, void* init_res, read_count_fn_t fn);
 int		HFSread_interval(const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t from, hfs_time_t to, void* init_res, read_count_fn_t fn);
 
-size_t		HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t from, hfs_time_t to, hfs_item_str_value_t **result);
+size_t		HFSread_item_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t from, hfs_time_t to, 
+				  hfs_item_str_value_t **result);
 size_t		HFSread_count_str (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, hfs_item_str_value_t **result);
+
+size_t		HFSread_items_log (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t from, hfs_time_t to,
+				   const char* filter, int filter_include, hfs_log_entry_t** result);
+size_t		HFSread_count_log (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int count, int start, const char* filter,
+				   int filer_include, hfs_log_entry_t** result);
 
 zbx_uint64_t	HFS_get_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t from);
 zbx_uint64_t	HFS_get_count_u64_eq (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, hfs_time_t from, zbx_uint64_t value);
