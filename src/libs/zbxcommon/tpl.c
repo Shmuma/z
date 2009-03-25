@@ -1011,6 +1011,7 @@ TPL_API int tpl_dump(tpl_node *r, int mode, ...) {
             }
         } while (sz > 0);
         free(buf);
+        rc = 0;
     } else if (mode & TPL_MEM) {
         addr_out = (void**)va_arg(ap, void*);
         sz_out = va_arg(ap, size_t*);
