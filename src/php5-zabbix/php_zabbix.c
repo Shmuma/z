@@ -21,6 +21,7 @@ static zend_function_entry php_zabbix_functions[] = {
 	PHP_FE(zabbix_hfs_read_trends, NULL)
 	PHP_FE(zabbix_hfs_last, NULL)
 	PHP_FE(zabbix_hfs_read_str, NULL)
+	PHP_FE(zabbix_hfs_read_log, NULL)
 	PHP_FE(zabbix_hfs_last_str, NULL)
 	PHP_FE(zabbix_hfs_hosts_availability, NULL)
 	PHP_FE(zabbix_hfs_update_item_status, NULL)
@@ -323,7 +324,6 @@ PHP_FUNCTION(zabbix_hfs_read_str)
 	n = HFSread_item_str(ZABBIX_GLOBAL(hfs_base_dir), site, itemid, from, to, &res);
 
 	for (i = 0; i < n; i++) {
-		char *buf = NULL;
 		zval* val;
 
 		MAKE_STD_ZVAL(z_obj);
@@ -352,6 +352,67 @@ PHP_FUNCTION(zabbix_hfs_read_str)
 }
 /* }}} */
 
+
+/* {{{ proto array zabbix_hfs_read_log(char *site, int itemid, int from_time, int to_time, char* filter, int filter_include) */
+PHP_FUNCTION(zabbix_hfs_read_log)
+{
+	char* site = NULL, *filter = NULL;
+	int site_len = 0, filter_len = 0, filter_include = 0;
+	time_t from = 0, to = 0;
+	hfs_log_entry_t* res;
+	size_t n, i;
+	long long itemid = 0;
+	zval *z_obj;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "slllsl", &site, &site_len, &itemid, &from, &to,
+				  &filter, &filter_len, &filter_include) == FAILURE)
+		RETURN_FALSE;
+
+        if (array_init(return_value) == FAILURE)
+		RETURN_FALSE;
+
+	n = HFSread_items_log (site, itemid, from, ti, filter, filter_include, &res);
+
+	for (i = 0; i < n; i++) {
+		zval *val, *src;
+
+		MAKE_STD_ZVAL(z_obj);
+		MAKE_STD_ZVAL(val);
+		MAKE_STD_ZVAL(src);
+
+		object_init (z_obj);
+
+		add_property_long (z_obj, "clock", res[i].clock);
+		add_property_long (z_obj, "timestamp", res[i].timestamp);
+		add_property_long (z_obj, "severity", res[i].severity);
+
+		if (res[i].entry) {
+			ZVAL_STRING (val, res[i].entry, 1)
+		}
+		else {
+			ZVAL_EMPTY_STRING (val);
+		}
+		add_property_zval (z_obj, "value", val);
+
+		if (res[i].source) {
+			ZVAL_STRING (src, res[i].source, 1)
+		}
+		else {
+			ZVAL_EMPTY_STRING (src);
+		}
+		add_property_zval (z_obj, "source", src);
+
+		add_next_index_object (return_value, z_obj TSRMLS_CC);
+
+		if (res[i].entry)
+			free (res[i].entry);
+		if (res[i].source)
+			free (res[i].source);
+	}
+
+	if (res)
+		free (res);
+}
 
 
 /* read_count_fn_t */

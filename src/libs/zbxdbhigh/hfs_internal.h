@@ -20,16 +20,6 @@ typedef struct __attribute__ ((packed)) hfs_meta {
 } hfs_meta_t;
 
 
-typedef struct {
-	hfs_time_t clock;
-	char* entry;
-	hfs_time_t timestamp;
-	char* source;
-	int severity;
-} hfs_log_entry_t;
-
-#define TPL_HFS_LOG_ENTRY "S(UsUsi)"
-
 
 typedef struct {
 	hfs_time_t clock;
