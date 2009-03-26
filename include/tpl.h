@@ -44,6 +44,8 @@ extern "C" {
 #define TPL_FD       (1 << 2)
 #define TPL_UFREE    (1 << 3)  
 #define TPL_DATAPEEK (1 << 4)  
+#define TPL_FXLENS   (1 << 5)  
+#define TPL_GETSIZE  (1 << 6)
 /* do not add flags here without renumbering the internal flags! */
 
 /* flags for tpl_gather mode */
