@@ -2615,7 +2615,7 @@ size_t HFSread_items_log (const char* hfs_base_dir, const char* siteid, zbx_uint
 		if (tpl_unpack (tpl, 0) <= 0)
 			break;
 
-		if (filter) {
+		if (do_filter) {
 			if (filter_include) {
 				if (strstr (entry.entry, filter) == NULL)
 					continue;
@@ -2624,6 +2624,15 @@ size_t HFSread_items_log (const char* hfs_base_dir, const char* siteid, zbx_uint
 				if (strstr (entry.entry, filter) != NULL)
 					continue;
 			}
+		}
+
+		if (entry.timestamp) {
+			if (entry.timestamp >= to)
+				break;
+		}
+		else {
+			if (entry.clock >= to)
+				break;
 		}
 
 		if (buf_size == count) {
@@ -2636,14 +2645,6 @@ size_t HFSread_items_log (const char* hfs_base_dir, const char* siteid, zbx_uint
 
 		memcpy (*result+count, &entry, sizeof (entry));
 		count++;
-		if (entry.timestamp) {
-			if (entry.timestamp >= to)
-				break;
-		}
-		else {
-			if (entry.clock >= to)
-				break;
-		}
 	}
 
 	tpl_free (tpl);

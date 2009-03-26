@@ -344,8 +344,10 @@ include_once "include/page_header.php";
 					}
 				}
 
-				foreach ($objs as $obj)
+				foreach ($objs as $obj) {
 					$obj->itemid = $itemid;
+					$obj->value = iconv ("cp1251", "utf8", $obj->value);
+				}
 
 				// merge events into main list
 				$events = array_merge ($events, $objs);
