@@ -213,7 +213,7 @@ include_once "include/page_header.php";
 
 				if (is_array ($hfs_data)) {
 					$db_item["lastclock"] = $hfs_data["lastclock"];
-					$db_item["lastvalue"] = $hfs_data["lastvalue"];
+					$db_item["lastvalue"] = iconv ("cp1251", "utf8", $hfs_data["lastvalue"]);
 					$db_item["prevvalue"] = $hfs_data["prevvalue"];
 					$db_item["stderr"]    = $hfs_data["stderr"];
 				}
@@ -330,7 +330,7 @@ include_once "include/page_header.php";
 
 				if (is_array ($hfs_data)) {
 					$db_item["lastclock"] = $hfs_data["lastclock"];
-					$db_item["lastvalue"] = $hfs_data["lastvalue"];
+					$db_item["lastvalue"] = iconv ("cp1251", "utf8", $hfs_data["lastvalue"]);
 					$db_item["prevvalue"] = $hfs_data["prevvalue"];
 					$db_item["stderr"]    = $hfs_data["stderr"];
 				}
