@@ -2019,7 +2019,7 @@ void HFS_update_item_values_str (const char* hfs_base_dir, const char* siteid, z
 	free (name);
 
 	/* lock obtained, write data */
-	if (write (fd, &lastclock, sizeof (lastclock)) == -1) == -1)
+	if (write (fd, &lastclock, sizeof (lastclock)) == -1)
 		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_item_values_str: write(): %s", strerror(errno));
 	
 	kind = 2;
@@ -2617,11 +2617,11 @@ size_t HFSread_items_log (const char* hfs_base_dir, const char* siteid, zbx_uint
 
 		if (filter) {
 			if (filter_include) {
-				if (strstr (entry.value, filter) == NULL)
+				if (strstr (entry.entry, filter) == NULL)
 					continue;
 			}
 			else {
-				if (strstr (entry.value, filter) != NULL)
+				if (strstr (entry.entry, filter) != NULL)
 					continue;
 			}
 		}
