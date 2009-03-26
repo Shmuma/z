@@ -2471,7 +2471,7 @@ void HFSadd_history_log (const char* hfs_base_dir, const char* siteid, zbx_uint6
 	tpl_free (tpl);
 	close (fd);
 
-	if (!res)  {
+	if (!res) {
 		/* write offset of entry in directory */
 		p_name = get_name (hfs_base_dir, siteid, itemid, NK_ItemLogDir);
 

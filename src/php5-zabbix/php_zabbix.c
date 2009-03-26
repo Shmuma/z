@@ -371,7 +371,7 @@ PHP_FUNCTION(zabbix_hfs_read_log)
         if (array_init(return_value) == FAILURE)
 		RETURN_FALSE;
 
-	n = HFSread_items_log (site, itemid, from, ti, filter, filter_include, &res);
+	n = HFSread_items_log (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, from, to, filter, filter_include, &res);
 
 	for (i = 0; i < n; i++) {
 		zval *val, *src;
