@@ -307,40 +307,65 @@ include_once "include/page_header.php";
 
 		if($item_type==ITEM_VALUE_TYPE_LOG)
 		{
-			$itemid_lst = "";
+			$itemid_lst = array ();
 			if(is_array($_REQUEST["itemid"]))
-			{
-				$itemid_lst = implode(',',$_REQUEST["itemid"]);
-				$item_cout = count($_REQUEST["itemid"]);
-			}
-			else
-			{
 				$itemid_lst = $_REQUEST["itemid"];
-				$item_cout = 1;
+			else
+				$itemid_lst[] = $_REQUEST["itemid"];
+
+			$item_count = count($itemid_lst);
+
+			// obtain events
+			$events = array ();
+			$filter = "";
+			$filter_include = 0;
+			if (isset($_REQUEST["filter"]) && $_REQUEST["filter"]!="") {
+				$filter = $_REQUEST["filter"];
+				if ($_REQUEST["filter_task"] == FILTER_TAST_SHOW)
+					$filter_include = 1;
+				elseif ($_REQUEST["filter_task"] == FILTER_TAST_HIDE)
+					$filter_include = 0;
+				else
+					$filter = "";
 			}
 
-			$sql_filter = "";
-			if(isset($_REQUEST["filter"]) && $_REQUEST["filter"]!="")
-			{
-				if($_REQUEST["filter_task"] == FILTER_TAST_SHOW)
-					$sql_filter = " and h.value like ".zbx_dbstr("%".$_REQUEST["filter"]."%")."";
-				elseif($_REQUEST["filter_task"] == FILTER_TAST_HIDE)
-					$sql_filter = " and h.value not like ".zbx_dbstr("%".$_REQUEST["filter"]."%")."";
+			foreach ($itemid_lst as $itemid) {
+				// get site of item
+				$site = zbx_item_site ($itemid);
+
+				$objs = array ();
+				if ($site != "") {
+					if ($_REQUEST["action"]=="showlatest") {
+					}
+					else {
+						$o = zabbix_hfs_read_log ($site, $itemid, $time, $till, $filter, $filter_include);
+						if (is_array ($o))
+							$objs = $o;
+					}
+				}
+
+				foreach ($objs as $obj)
+					$obj->itemid = $itemid;
+
+				// merge events into main list
+				$events = array_merge ($events, $objs);
 			}
 
+function compare_events ($evt1, $evt2)
+{
+	if ($evt1->timestamp > 0 && $evt2->timestamp > 0)
+		return $evt2->timestamp - $evt1->timestamp;
+	else
+		return $evt2->clock - $evt1->clock;
+}
 
-			$sql = "select hst.host,i.itemid,i.key_,i.description,h.clock,h.value,i.valuemapid,h.timestamp,h.source,h.severity".
-				" from history_log h, items i, hosts hst".
-				" where hst.hostid=i.hostid and h.itemid=i.itemid".$sql_filter." and i.itemid in (".$itemid_lst.")".$cond_clock.
-				" order by h.clock desc, h.id desc";
+			usort ($events, "compare_events");
 
-			$result=DBselect($sql,$limit);
-
-			if(!isset($_REQUEST["plaintext"]))
+ 			if(!isset($_REQUEST["plaintext"]))
 			{
 				$table = new CTableInfo('...','log_history_table');
 				$table->SetHeader(array(S_TIMESTAMP,
-					$item_cout > 1 ? S_ITEM : null,
+					$item_count > 1 ? S_ITEM : null,
 					S_LOCAL_TIME,S_SOURCE,S_SEVERITY,S_VALUE),"header");
 
 				$table->ShowStart(); // to solve memory leak we call 'Show' method by steps
@@ -350,13 +375,13 @@ include_once "include/page_header.php";
 				echo "<PRE>\n";
 			}
 
-			while($row=DBfetch($result))
+			foreach ($events as $event)
 			{
 				$color_style = null;
 
 				if(isset($_REQUEST["filter"]) && $_REQUEST["filter"]!="")
 				{
-					$contain = stristr($row["value"],$_REQUEST["filter"]) ? TRUE : FALSE;
+					$contain = stristr($event->value,$_REQUEST["filter"]) ? TRUE : FALSE;
 
 					if(!isset($_REQUEST["mark_color"])) $_REQUEST["mark_color"] = MARK_COLOR_RED;
 
@@ -373,39 +398,39 @@ include_once "include/page_header.php";
 					}
 				}
 
-				$new_row = array(nbsp(date("[Y.M.d H:i:s]",$row["clock"])));
+				$new_row = array(nbsp(date("[Y.M.d H:i:s]",$event->clock)));
 
-				if($item_cout > 1)
-					array_push($new_row,$row["host"].":".item_description($row["description"],$row["key_"]));
+				if($item_count > 1)
+					array_push($new_row,$event->host.":".item_description($event->description,$event->key));
 
-				if($row["timestamp"] == 0)
+				if($event->timestamp == 0)
 				{
 					array_push($new_row,new CCol("-","center"));
 				}
 				else
 				{
-					array_push($new_row,date("Y.M.d H:i:s",$row["timestamp"]));
+					array_push($new_row,date("Y.M.d H:i:s",$event->timestamp));
 				}
 				
-				if($row["source"] == "")
+				if($event->source == "")
 				{
 					array_push($new_row,new CCol("-","center"));
 				}
 				else
 				{
-					array_push($new_row,$row["source"]);
+					array_push($new_row,$event->source);
 				}
 
 				array_push($new_row, 
 						new CCol(
-							get_severity_description($row["severity"]),
-							get_severity_style($row["severity"])
+							get_severity_description($event->severity),
+							get_severity_style($event->severity)
 							)
 					);
 
-				$row["value"] = trim($row["value"],"\r\n");
+				$event->value = trim($event->value,"\r\n");
 //				array_push($new_row,htmlspecialchars($row["value"]));
-				array_push($new_row,htmlspecialchars(encode_log($row["value"])));
+				array_push($new_row,htmlspecialchars(encode_log($event->value)));
 
 				if(!isset($_REQUEST["plaintext"]))
 				{
@@ -417,7 +442,7 @@ include_once "include/page_header.php";
 						$min_color = 0x98;
 						$max_color = 0xF8;
 						$int_color = ($max_color - $min_color) / count($_REQUEST["itemid"]);
-						$int_color *= array_search($row["itemid"],$_REQUEST["itemid"]);
+						$int_color *= array_search($event->itemid,$_REQUEST["itemid"]);
 						$int_color += $min_color;
 						$crow->AddOption("style","background-color: ".sprintf("#%X%X%X",$int_color,$int_color,$int_color));
 					} else {
@@ -428,8 +453,8 @@ include_once "include/page_header.php";
 				}
 				else
 				{
-					echo date("Y-m-d H:i:s",$row["clock"]);
-					echo "\t".$row["clock"]."\t".$row["value"]."\n";
+					echo date("Y-m-d H:i:s",$event->clock);
+					echo "\t".$event->clock."\t".$event->value."\n";
 				}
 			}
 			if(!isset($_REQUEST["plaintext"]))

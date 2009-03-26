@@ -9,6 +9,17 @@ function zbx_hfs_available ()
 }
 
 
+function zbx_item_site ($itemid)
+{
+	$res = DBselect ("select s.name from items i, hosts h, sites s where i.itemid = $itemid and i.hostid = h.hostid and h.siteid = s.siteid");
+
+	if ($row = DBfetch ($res))
+		return $row["name"];
+	else
+		return "";
+}
+
+
 function zbx_hfs_sites ($groupid, $hostid)
 {
 	if ($groupid == 0 && $hostid == 0)
