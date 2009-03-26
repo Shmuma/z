@@ -359,7 +359,7 @@ PHP_FUNCTION(zabbix_hfs_read_log)
 	char* site = NULL, *filter = NULL;
 	int site_len = 0, filter_len = 0, filter_include = 0;
 	time_t from = 0, to = 0;
-	hfs_log_entry_t* res;
+	hfs_log_entry_t* res = NULL;
 	size_t n, i;
 	long long itemid = 0;
 	zval *z_obj;

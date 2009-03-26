@@ -2484,7 +2484,11 @@ void HFSadd_history_log (const char* hfs_base_dir, const char* siteid, zbx_uint6
 		free (p_name);
 		lseek (fd, 0, SEEK_END);
 
-		dir_entry.clock = clock;
+		/* if event have a timestamp, use it unstead of current time */
+		if (timestamp)
+			dir_entry.clock = timestamp;
+		else
+			dir_entry.clock = clock;
 		dir_entry.ofs = ofs;
 
 		write (fd, &dir_entry, sizeof (dir_entry));
@@ -2604,7 +2608,7 @@ size_t HFSread_items_log (const char* hfs_base_dir, const char* siteid, zbx_uint
 	while (1) {
 		if (tpl_load (tpl, TPL_FD, fd) < 0)
 			break;
-		if (tpl_unpack (tpl, 1) <= 0)
+		if (tpl_unpack (tpl, 0) <= 0)
 			break;
 
 		if (buf_size == count) {
@@ -2617,8 +2621,14 @@ size_t HFSread_items_log (const char* hfs_base_dir, const char* siteid, zbx_uint
 
 		memcpy (*result+count, &entry, sizeof (entry));
 		count++;
-		if (entry.clock >= to)
-			break;
+		if (entry.timestamp) {
+			if (entry.timestamp >= to)
+				break;
+		}
+		else {
+			if (entry.clock >= to)
+				break;
+		}
 	}
 
 	tpl_free (tpl);
