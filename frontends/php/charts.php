@@ -101,7 +101,7 @@ include_once "include/page_header.php";
 
 	if($_REQUEST['graphid'] > 0 && DBfetch(DBselect('select distinct graphid from graphs where graphid='.$_REQUEST['graphid'])))
 	{
-		if(! ($row = DBfetch(DBselect(" select distinct h.host, g.name from hosts h, hosts_groups hg, items i, graphs_items gi, graphs g ".
+		if(! ($row = DBfetch(DBselect(" select distinct h.host, g.name, h.hostid, hg.groupid from hosts h, hosts_groups hg, items i, graphs_items gi, graphs g ".
 					" where h.status=".HOST_STATUS_MONITORED.
 					" and h.hostid=i.hostid and g.graphid=".$_REQUEST["graphid"].
 					" and hg.hostid=h.hostid and i.itemid=gi.itemid and gi.graphid=g.graphid".
@@ -114,6 +114,8 @@ include_once "include/page_header.php";
 			access_deny();
 		}
 		array_push($h1, new CLink($row["name"], "?graphid=".$_REQUEST["graphid"].(isset($_REQUEST["fullscreen"]) ? "&fullscreen=1" : "")));
+		$_REQUEST["groupid"] = $row["groupid"];
+		$_REQUEST["hostid"] = $row["hostid"];
 	}
 	else
 	{
@@ -142,8 +144,9 @@ include_once "include/page_header.php";
 		$groups[] = $row['groupid'];
 	}
 	$r_form->AddItem(array(S_GROUP.SPACE,$cmbGroup));
-        if (!isset($_REQUEST["groupid"]) || !in_array($_REQUEST["groupid"], $groups))
-		$_REQUEST["groupid"] = $groups[0];
+	if (!isset ($_REQUEST["graphid"]) || $_REQUEST["graphid"] == 0)
+		if (!isset($_REQUEST["groupid"]) || !in_array($_REQUEST["groupid"], $groups))
+			$_REQUEST["groupid"] = $groups[0];
 
 	$cmbHosts->AddItem(0,S_ALL_SMALL, $_REQUEST["hostid"] == 0 ? "yes" : "no");
 	if($_REQUEST["groupid"] > 0)
@@ -169,8 +172,9 @@ include_once "include/page_header.php";
 		$cmbHosts->AddItem($row['hostid'], $row['host'], $_REQUEST["hostid"] == $row['hostid'] ? "yes" : "no");
 		$hosts[] = $row['hostid'];
 	}
-        if (isset($_REQUEST["hostid"]) && !in_array($_REQUEST["hostid"], $hosts))
-		$_REQUEST["hostid"] = $hosts[0];
+	if (!isset ($_REQUEST["graphid"]) || $_REQUEST["graphid"] == 0)
+	        if (isset($_REQUEST["hostid"]) && !in_array($_REQUEST["hostid"], $hosts))
+			$_REQUEST["hostid"] = $hosts[0];
 
 	$r_form->AddItem(array(SPACE.S_HOST.SPACE,$cmbHosts));
 
