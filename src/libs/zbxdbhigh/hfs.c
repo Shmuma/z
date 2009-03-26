@@ -2557,6 +2557,10 @@ size_t HFSread_items_log (const char* hfs_base_dir, const char* siteid, zbx_uint
 	static hfs_log_dir_t dir[512];
 	tpl_node* tpl;
 	hfs_log_entry_t entry;
+	int do_filter = 0;
+
+	if (filter && strcmp (filter, ""))
+		do_filter = 1;
 
 	if ((fd = open (p_name, O_RDONLY)) == -1) {
 		zabbix_log (LOG_LEVEL_DEBUG, "HFSread_items_log: Canot open file %s", p_name);
@@ -2610,6 +2614,17 @@ size_t HFSread_items_log (const char* hfs_base_dir, const char* siteid, zbx_uint
 			break;
 		if (tpl_unpack (tpl, 0) <= 0)
 			break;
+
+		if (filter) {
+			if (filter_include) {
+				if (strstr (entry.value, filter) == NULL)
+					continue;
+			}
+			else {
+				if (strstr (entry.value, filter) != NULL)
+					continue;
+			}
+		}
 
 		if (buf_size == count) {
 			*result = (hfs_log_entry_t*)realloc (*result, sizeof (hfs_log_entry_t) * (buf_size += 50));
