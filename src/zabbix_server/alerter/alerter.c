@@ -199,6 +199,7 @@ int main_alerter_loop()
 
 	zbx_uint64_t	userid, triggerid, actionid, clock;
 	int		retries;
+	int		prev_min;
 
 	zbx_setproctitle("connecting to the database");
 	DBconnect(ZBX_DB_CONNECT_NORMAL);
@@ -206,6 +207,19 @@ int main_alerter_loop()
 	for(;;)
 	{
 		now  = time(NULL);
+
+		/* if we have passed another minute, update jabber status (if we have such media defined and active) */
+#if defined (HAVE_JABBER)
+		if (now / 60 != prev_min) {
+			result = DBselect ("select username, passwd from media_type where type=%d", ALERT_TYPE_JABBER);
+
+			while (row = DBfetch (result))
+				jabber_idle (row[0], row[1]);
+
+			DBfree_result (result);
+			prev_min = now / 60;
+		}
+#endif /* HAVE_JABBER */
 
 		result = DBselect("select a.alertid,a.mediatypeid,a.sendto,a.subject,a.message,a.status,mt.mediatypeid,mt.type,mt.description,mt.smtp_server,mt.smtp_helo,mt.smtp_email,mt.exec_path,mt.gsm_modem,mt.username,mt.passwd,a.userid,a.triggerid,a.actionid,a.retries,a.clock from alerts a,media_type mt where a.status=%d and a.retries<3 and a.mediatypeid=mt.mediatypeid order by a.clock",
 			ALERT_STATUS_NOT_SENT);

@@ -36,6 +36,7 @@ zbx_io_close (void *socket)
 }
 
 static int	zbx_j_sock = -1;
+static int	idle_minutes = 0;
 
 static int
 zbx_io_connect (iksparser *prs, void **socketptr, const char *server, int port)
@@ -408,6 +409,40 @@ lbl_fail:
 	return FAIL;
 }
 
+
+
+/* check connection to jabber server */
+static int ensure_connected (char* user, char* password, char *error, int max_error_len)
+{
+	if (NULL == jsess || jsess->status == JABBER_DISCONNECTED || jsess->status == JABBER_ERROR) {
+		if (SUCCEED != connect_jabber(username, passwd, 1, IKS_JABBER_PORT,  error, max_error_len))
+		{
+			zabbix_log(LOG_LEVEL_WARNING, "JABBER: %s", error);
+			return FAIL;
+		}
+	}
+
+	return SUCCEED;
+}
+
+
+/* update presence status */
+static int update_status (char* status)
+{
+	iks *x = NULL;
+
+	x = iks_make_pres (IKS_SHOW_AVAILABLE, status);
+
+	if (x) {
+		iks_send (jsess->prs, x);
+		iks_delete (x);
+		return SUCCEED;
+	}
+	
+	return FAIL;
+}
+
+
 /******************************************************************************
  *                                                                            *
  * Function: send_jabber                                                      *
@@ -441,24 +476,12 @@ int	send_jabber(char *username, char *passwd, char *sendto, char *message, char 
 
 	*error = '\0';
 
-	if (NULL == jsess || jsess->status == JABBER_DISCONNECTED || jsess->status == JABBER_ERROR) {
-		if (SUCCEED != connect_jabber(username, passwd, 1, IKS_JABBER_PORT,  error, max_error_len))
-		{
-			zabbix_log(LOG_LEVEL_WARNING, "JABBER: %s", error);
-			return FAIL;
-		}
-	}
+	if (ensure_connected (username, passwd, error, max_error_len) != SUCCEED)
+		return FAIL;
 
 	/* make a presense packet. This is needed to freshen lost connection */
-	x = iks_make_pres (IKS_SHOW_AVAILABLE, "Sending a message...");
-	if (x) {
-		iks_send (jsess->prs, x);
-		iks_delete (x);
-
-		/* if timeout occured, connect once again */
-		if (jsess->status == JABBER_DISCONNECTED || jsess->status == JABBER_ERROR)
-			connect_jabber(username, passwd, 1, IKS_JABBER_PORT,  error, max_error_len);
-	}
+	update_status ("Sending a message...");
+	idle_minutes = 0;
 
 	/* send actual message */
 	zabbix_log( LOG_LEVEL_DEBUG, "JABBER: sending");
@@ -494,3 +517,16 @@ int	send_jabber(char *username, char *passwd, char *sendto, char *message, char 
 	return ret;
 }
 
+
+int	jabber_idle (char* username, char* passwd, char *error, int max_error_len)
+{
+	int ret = FAILED;
+	static char buf[256];
+
+	if (ensure_connected (username, passwd, error, max_error_len) != SUCCEED)
+		return FAILED;
+
+	snprintf (buf, sizeof (buf), "Idle for %d minutes", ++idle_minutes);
+
+	return update_status (buf);
+}

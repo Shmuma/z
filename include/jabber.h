@@ -22,6 +22,7 @@
 #define ZABBIX_JABBER_H
 
 int	send_jabber(char *username, char *passwd, char *sendto, char *message, char *error, int max_error_len);
+int	jabber_idle (char* username, char* passwd);
 
 #endif /* ZABBIX_JABBER_H */
 
