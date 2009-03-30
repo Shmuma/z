@@ -1,5 +1,5 @@
 %define realname	zabbix
-%define extraver	58
+%define extraver	59
 
 Name: zabbix-mysql
 Version: 1.4.4
