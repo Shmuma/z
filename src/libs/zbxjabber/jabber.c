@@ -25,6 +25,9 @@
 
 #include <iksemel.h>
 
+extern char* CONFIG_SERVER_SITE;
+
+
 static void
 zbx_io_close (void *socket)
 {
@@ -217,6 +220,12 @@ static int disconnect_jabber()
 	return SUCCEED;
 }
 
+
+static void sigpipe_handler (int sig)
+{
+	disconnect_jabber ();
+}
+
 static int on_stream (jabber_session_p sess, int type, iks *node)
 {
 	iks *x = NULL;
@@ -351,7 +360,7 @@ static int connect_jabber(const char *jabber_id, const char *password, int use_s
 
 	if (NULL == jsess->acc->resource) {
 		/* user gave no resource name, use the default */
-		buf = zbx_dsprintf (buf, "%s@%s/%s", jsess->acc->user, jsess->acc->server, "ZABBIX");
+		buf = zbx_dsprintf (buf, "%s@%s/%s", jsess->acc->user, jsess->acc->server, CONFIG_SERVER_SITE ? CONFIG_SERVER_SITE : "Zabbix");
 		jsess->acc = iks_id_new (iks_parser_stack (jsess->prs), buf);
 		zbx_free (buf);
 	}
@@ -415,7 +424,7 @@ lbl_fail:
 static int ensure_connected (char* user, char* password, char *error, int max_error_len)
 {
 	if (NULL == jsess || jsess->status == JABBER_DISCONNECTED || jsess->status == JABBER_ERROR) {
-		if (SUCCEED != connect_jabber(username, passwd, 1, IKS_JABBER_PORT,  error, max_error_len))
+		if (SUCCEED != connect_jabber(user, password, 1, IKS_JABBER_PORT,  error, max_error_len))
 		{
 			zabbix_log(LOG_LEVEL_WARNING, "JABBER: %s", error);
 			return FAIL;
@@ -468,7 +477,7 @@ int	send_jabber(char *username, char *passwd, char *sendto, char *message, char 
 	/* we ignore sigpipe signal. Jabber connection can timeout and
 	   socket will give us sigpipe. We should have change to
 	   handle this.*/
-	signal (SIGPIPE, SIG_IGN);
+	signal (SIGPIPE, sigpipe_handler);
 
 	assert(error);
 
@@ -520,13 +529,13 @@ int	send_jabber(char *username, char *passwd, char *sendto, char *message, char 
 
 int	jabber_idle (char* username, char* passwd, char *error, int max_error_len)
 {
-	int ret = FAILED;
+	int ret = FAIL;
 	static char buf[256];
 
 	if (ensure_connected (username, passwd, error, max_error_len) != SUCCEED)
-		return FAILED;
+		return FAIL;
 
-	snprintf (buf, sizeof (buf), "Idle for %d minutes", ++idle_minutes);
+	snprintf (buf, sizeof (buf), "Idle for %d minute(s)", ++idle_minutes);
 
 	return update_status (buf);
 }

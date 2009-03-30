@@ -214,7 +214,7 @@ int main_alerter_loop()
 			result = DBselect ("select username, passwd from media_type where type=%d", ALERT_TYPE_JABBER);
 
 			while (row = DBfetch (result))
-				jabber_idle (row[0], row[1]);
+				jabber_idle (row[0], row[1], error, sizeof (error));
 
 			DBfree_result (result);
 			prev_min = now / 60;
