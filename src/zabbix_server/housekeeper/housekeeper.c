@@ -151,10 +151,7 @@ static int housekeeping_events(int now)
 {
 	int		event_history;
 	DB_RESULT	result;
-	DB_RESULT	result2;
 	DB_ROW		row1;
-	DB_ROW		row2;
-	zbx_uint64_t	eventid;
 	int		res = SUCCEED;
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In housekeeping_events(%d)",
@@ -172,21 +169,7 @@ static int housekeeping_events(int now)
 	else
 	{
 		event_history=atoi(row1[0]);
-
-		result2 = DBselect("select eventid from events where clock<%d",
-			now-24*3600*event_history);
-		while((row2=DBfetch(result2)))
-		{
-			ZBX_STR2UINT64(eventid,row2[0]);
-			
-			DBexecute("delete from acknowledges where eventid=" ZBX_FS_UI64,
-				eventid);
-			
-			DBexecute("delete from events where eventid=" ZBX_FS_UI64,
-				eventid);
-		}
-		DBfree_result(result2);
-
+		DBexecute ("delete from events where clock < %d", now-24*3600*event_history);
 	}
 	
 	DBfree_result(result);
