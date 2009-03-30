@@ -53,40 +53,57 @@ static int evaluate_LOGSOURCE(char *value, DB_ITEM *item, char *parameter)
 	DB_ROW	row;
 
 	char		sql[MAX_STRING_LEN];
-	int		now;
 	int		res = SUCCEED;
+	hfs_time_t	lastclock, timestamp;
+	char		*prevvalue, *lastvalue, *eventlog_source, *stderr;
+	int		eventlog_severity;
 
 	if(item->value_type != ITEM_VALUE_TYPE_LOG)
 	{
 		return	FAIL;
 	}
 
-	now=time(NULL);
+	/* obtain last value from HFS/memcache */
+	if (CONFIG_HFS_PATH) {
+		if (HFS_get_item_values_log (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, &lastclock, &prevvalue, &lastvalue, 
+					     &timestamp, &eventlog_source, &eventlog_severity, &stderr)) {
+			if (eventlog_source && strcmp (eventlog_source, parameter) == 0)
+				strcpy(value, "1");
+			else
+				strcpy(value, "0");
 
-	zbx_snprintf(sql,sizeof(sql),"select source from history_log where itemid=" ZBX_FS_UI64 " order by clock desc",
-		item->itemid);
-
-	result = DBselectN(sql,1);
-	row = DBfetch(result);
-
-	if(!row || DBis_null(row[0])==SUCCEED)
-	{
-		zabbix_log(LOG_LEVEL_DEBUG, "Result for LOGSOURCE is empty" );
-		res = FAIL;
-	}
-	else
-	{
-		if(strcmp(row[0], parameter) == 0)
-		{
-			strcpy(value,"1");
+			if (prevvalue)
+				free (prevvalue);
+			if (lastvalue)
+				free (lastvalue);
+			if (eventlog_source)
+				free (eventlog_source);
+			if (stderr)
+				free (stderr);
 		}
 		else
-		{
-			strcpy(value,"0");
-		}
+			return FAIL;
 	}
-	if (result)
-		DBfree_result(result);
+	else {
+		zbx_snprintf(sql,sizeof(sql),"select source from history_log where itemid=" ZBX_FS_UI64 " order by clock desc",
+			     item->itemid);
+
+		result = DBselectN(sql,1);
+		row = DBfetch(result);
+
+		if(!row || DBis_null(row[0])==SUCCEED) {
+			zabbix_log(LOG_LEVEL_DEBUG, "Result for LOGSOURCE is empty" );
+			res = FAIL;
+		}
+		else {
+			if(strcmp(row[0], parameter) == 0)
+				strcpy(value,"1");
+			else
+				strcpy(value,"0");
+		}
+		if (result)
+			DBfree_result(result);
+	}
 
 	return res;
 }
@@ -114,32 +131,48 @@ static int evaluate_LOGSEVERITY(char *value, DB_ITEM *item, char *parameter)
 	DB_ROW		row;
 
 	char		sql[MAX_STRING_LEN];
-	int		now;
 	int		res = SUCCEED;
+	hfs_time_t	lastclock, timestamp;
+	char		*prevvalue, *lastvalue, *eventlog_source, *stderr;
+	int		eventlog_severity;
 
 	if(item->value_type != ITEM_VALUE_TYPE_LOG)
 	{
 		return	FAIL;
 	}
 
-	now=time(NULL);
-
-	zbx_snprintf(sql,sizeof(sql),"select severity from history_log where itemid=" ZBX_FS_UI64 " order by clock desc",
-		item->itemid);
-
-	result = DBselectN(sql,1);
-	row = DBfetch(result);
-	if(!row || DBis_null(row[0])==SUCCEED)
-	{
-		zabbix_log(LOG_LEVEL_DEBUG, "Result for LOGSEVERITY is empty" );
-		res = FAIL;
+	if (CONFIG_HFS_PATH) {
+		if (HFS_get_item_values_log (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, &lastclock, &prevvalue, &lastvalue, 
+					     &timestamp, &eventlog_source, &eventlog_severity, &stderr)) {
+			snprintf (value, MAX_STRING_LEN, "%d", eventlog_severity);
+			if (prevvalue)
+				free (prevvalue);
+			if (lastvalue)
+				free (lastvalue);
+			if (eventlog_source)
+				free (eventlog_source);
+			if (stderr)
+				free (stderr);
+		}
+		else
+			return FAIL;
 	}
-	else
-	{
-		strcpy(value,row[0]);
+	else {
+		zbx_snprintf(sql,sizeof(sql),"select severity from history_log where itemid=" ZBX_FS_UI64 " order by clock desc",
+			     item->itemid);
+
+		result = DBselectN(sql,1);
+		row = DBfetch(result);
+		if(!row || DBis_null(row[0])==SUCCEED) {
+			zabbix_log(LOG_LEVEL_DEBUG, "Result for LOGSEVERITY is empty" );
+			res = FAIL;
+		}
+		else {
+			strcpy(value,row[0]);
+		}
+		if (result)
+			DBfree_result(result);
 	}
-	if (result)
-		DBfree_result(result);
 
 	return res;
 }
