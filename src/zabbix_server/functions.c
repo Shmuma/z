@@ -460,6 +460,8 @@ int	process_data(int history, hfs_time_t ts, char *server,char *key,char *value,
 			item.lastlogsize=atoi(lastlogsize);
 			item.timestamp=atoi(timestamp);
 
+			/* for log events, filter old event entries */
+			history = (time (NULL) - item.timestamp) > (5*item.delay);
 			calc_timestamp(value,&item.timestamp,item.logtimefmt);
 
 			item.eventlog_severity=atoi(severity);
