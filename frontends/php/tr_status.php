@@ -94,7 +94,7 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 		"sort"=>	array(T_ZBX_STR, O_OPT,  null,	IN('"host","priority","description","lastchange"'), null),
 		"noactions"=>	array(T_ZBX_STR, O_OPT,  null,	IN('"true","false"'), null),
 		"compact"=>	array(T_ZBX_STR, O_OPT,  null,	IN('"true","false"'), null),
-		"onlytrue"=>	array(T_ZBX_STR, O_OPT,  null,	IN('"true","false"'), null),
+		"onlytrue"=>	array(T_ZBX_STR, O_OPT,  null,	IN('"true","recent","false"'), null),
 		"show_unknown"=>	array(T_ZBX_INT, O_OPT,	P_SYS,	IN(array(0,1)),	null),
 		"select"=>	array(T_ZBX_STR, O_OPT,  null,	IN('"true","false"'), null),
 		"txt_select"=>	array(T_ZBX_STR, O_OPT,  null,	null, null),
@@ -104,7 +104,7 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 
 	check_fields($fields);
 
-	$_REQUEST["onlytrue"]		=	get_request("onlytrue", get_profile("web.tr_status.onlytrue", 'true'));
+	$_REQUEST["onlytrue"]		=	get_request("onlytrue", get_profile("web.tr_status.onlytrue", 'recent'));
 	$_REQUEST["noactions"]		=	get_request("noactions", get_profile("web.tr_status.noactions", 'true'));
 	$_REQUEST["compact"]		=	get_request("compact", get_profile("web.tr_status.compact", 'true'));
 	$_REQUEST['show_unknown']	=	get_request('show_unknown',get_profile('web.tr_status.show_unknown',0));
@@ -124,7 +124,7 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 	$sort		 = get_request('sort',		'priority');
 	$noactions	 = get_request('noactions',	'true');
 	$compact	 = get_request('compact',	'true');
-	$onlytrue	 = get_request('onlytrue',	'true');
+	$onlytrue	 = get_request('onlytrue',	'recent');
 	$show_unknown= get_request('show_unknown',0);
 	$select		 = get_request('select',		'false');
 	$txt_select	 = get_request('txt_select',	"");
@@ -212,8 +212,20 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 	if(!isset($_REQUEST["fullscreen"]))
 	{
 		$left_col = array();
-		array_push($left_col, '[', new CLink($onlytrue != 'true' ? S_SHOW_ONLY_TRUE : S_SHOW_ALL_TRIGGERS,
-			"tr_status.php?onlytrue=".($onlytrue != 'true' ? 'true' : 'false').
+		if ($onlytrue == 'true') {
+			$msg = S_SHOW_TRUE_AND_CHANGED;
+			$url = 'recent';
+		}
+		elseif ($onlytrue == 'recent') {
+			$msg = S_SHOW_ALL_TRIGGERS;
+			$url = 'false';
+		}
+		else {
+			$msg = S_SHOW_ONLY_TRUE;
+			$url = 'true';
+		}
+		array_push($left_col, '[', new CLink($msg,
+			"tr_status.php?onlytrue=$url".
 			"&noactions=$noactions&compact=$compact&select=$select&txt_select=$txt_select&sort=$sort"
 			), ']'.SPACE);
 			
@@ -322,7 +334,10 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 	$cond .= ($_REQUEST['groupid'] > 0)?' AND hg.groupid='.$_REQUEST['groupid'].' ':'';
 
 	if (!zbx_hfs_available()) {
-		$cond .=($onlytrue=='true')?' AND ((t.value=1) OR (('.time().' - lastchange)<'.TRIGGER_BLINK_PERIOD.')) ':'';
+		if ($onlytrue == 'true')
+			$cond .= ' AND ((t.value=1)';
+		elseif ($onlytrue == 'recent')
+			$cond .= ' AND ((t.value=1) OR (('.time().' - lastchange)<'.TRIGGER_BLINK_PERIOD.'))';
 	
 		$cond.=($show_unknown == 0)?' AND t.value<>2 ':'';
 	}
@@ -363,8 +378,12 @@ echo '<script type="text/javascript" src="js/blink.js"></script>';
 		// when trigger values got from HFS, we must filter them manually
 		if ($show_unknown == 0 && $row["value"] == 2)
 			continue;
-		if ($onlytrue == 'true')
-			if ($row["value"] != 1 && ((time ()-$row["lastchange"]) > TRIGGER_BLINK_PERIOD))
+		if ($onlytrue == 'true') {
+			if ($row["value"] != 1)
+				continue;
+		}
+		elseif ($onlytrue == 'recent')
+			if (($row["value"] == 0) && ((time ()-$row["lastchange"]) > TRIGGER_BLINK_PERIOD))
 				continue;
 
 		if($row["url"] != "")
