@@ -1222,6 +1222,7 @@
 	'S_STATUS_OF_TRIGGERS'=>		'Status of triggers',
 	'S_STATUS_OF_TRIGGERS_BIG'=>		'STATUS OF TRIGGERS',
 	'S_SHOW_ONLY_TRUE'=>			'Show only true',
+	'S_SHOW_TRUE_AND_CHANGED'=>		'Show true and changed',
 	'S_HIDE_ACTIONS'=>			'Hide actions',
 	'S_SHOW_ACTIONS'=>			'Show actions',
 	'S_SHOW_ALL_TRIGGERS'=>			'Show all triggers',
