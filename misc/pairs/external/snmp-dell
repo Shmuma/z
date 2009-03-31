@@ -74,7 +74,7 @@ then
 	fi
 fi
 
-#sleep 1
+[ $no_answer -eq 1 ] && die 2 "No answer from dell via snmp"
 
 set -- `/usr/bin/snmpget -v1 -c public -t $TIMEOUT $host $VDISK_STATUS_OID 2>/dev/null`
 
@@ -116,8 +116,6 @@ else
 			;;
 	esac
 fi
-
-#sleep 1
 
 [ $no_answer -eq 1 ] && die 2 "No answer from dell via snmp"
 
