@@ -20,7 +20,7 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 TSTAMP=`date '+%s'`
 
 ALARM_PAT='error|warning|fail|\(da[0-9]+:[a-z0-9]+:[0-9]+:[0-9]+:[0-9]+\)|mfi[0-9]|ip_conntrack:\ table\ full|messages\ suppressed'
-IGNORE_PAT='thr_sleep|arplookup|page\ allocation\ failure|nfs\ send\ error\ 32\ |PCI\ error\ interrupt|(at [0-9a-f]+)? rip[: ][0-9a-f]+ rsp[: ][0-9a-f]+ error[: ]|smb|pid\ [0-9]+|swap_pager_getswapspace|uhub[0-9]|usbd|ukbd|optimal|rebuild|acpi_throttle[0-9]:\ failed\ to\ attach\ P_CNT|ipfw:\ pullup\ failed|MOD_LOAD'
+IGNORE_PAT='thr_sleep|arplookup|page\ allocation\ failure|nfs\ send\ error\ 32\ |PCI\ error\ interrupt|(at [0-9a-f]+)? rip[: ][0-9a-f]+ rsp[: ][0-9a-f]+ error[: ]|smb|pid\ [0-9]+|swap_pager_getswapspace|uhub[0-9]|usbd|ukbd|optimal|rebuild|acpi_throttle[0-9]:\ failed\ to\ attach\ P_CNT|ipfw:\ pullup\ failed|MOD_LOAD|syncache_expand'
 CRIT_PAT='EDAC|REJECT|I/O|medium|defect|mechanical|retrying|broken|degraded|offline|failed|unconfigured_bad|domain_links.*segfault'
 
 [ -s $CONF ] && . $CONF
