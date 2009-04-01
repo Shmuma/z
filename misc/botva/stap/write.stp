@@ -1,0 +1,45 @@
+global write_bytes;
+global io_stat;
+global count;
+global names;
+global devs;
+global mmaps;
+
+/* 0x900002 == /dev/md2 */
+probe vfs.write.return
+{
+        dev = $file->f_dentry->d_inode->i_sb->s_dev;
+
+        if (dev == 0x900002 && $return > 0) {
+                write_bytes += $return;
+                io_stat[pid()] += $return;
+                count[pid()]++;
+                names[pid()] = execname ();
+                devs[pid()] = dev;
+        }
+}
+
+
+probe syscall.mmap
+{
+        mmaps++;
+}
+
+probe syscall.mmap2
+{
+        mmaps++;
+}
+
+
+probe timer.ms(1000)
+{
+/*     if (write_bytes > 3000000) { */
+        printf ("%s: write: %d, mmaps: %d\n", ctime (gettimeofday_s()), write_bytes, mmaps);
+        foreach ([pid] in io_stat- limit 10) {
+                printf("%8d %12d %8d avg %d\t%x\t%10s\n", pid, io_stat[pid], count[pid], io_stat[pid]/count[pid], devs[pid], names[pid])
+        }
+/*     } */
+    mmaps = write_bytes = 0;
+    delete io_stat;
+    delete count;
+}
