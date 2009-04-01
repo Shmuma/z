@@ -15,10 +15,10 @@ SQL="select a.userid as UserID, a.clock as Clock, t.value as Value, t.descriptio
 #echo "Monitor: $MHOST" >> $OUT
 mysql zabbix -B --user=root -e "$SQL" | sed 's/^ *//g' | tail -n +2 > $OUT
 
-host=$(cat $OUT | grep Host | cut -f 2 -d ' ')
-event=$(cat $OUT | grep Name | cut -f 2- -d ' ')
-descr=$(cat $OUT | grep Description | cut -f 2- -d ' ' | sed 's/&/%26;/g')
-value=$(cat $OUT | grep Value | cut -f 2 -d ' ')
+host=$(cat $OUT | grep '^Host' | cut -f 2 -d ' ')
+event=$(cat $OUT | grep '^Name' | cut -f 2- -d ' ')
+descr=$(cat $OUT | grep '^Description' | cut -f 2- -d ' ' | sed 's/&/%26;/g')
+value=$(cat $OUT | grep '^Value' | cut -f 2 -d ' ')
 
 #echo $host $event $value $descr
 
