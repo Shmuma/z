@@ -1,0 +1,26 @@
+global read_bytes;
+global io_stat;
+global count;
+
+probe syscall.read.return
+{
+    if (execname () == "zabbix_server" && $return > 0) {
+        read_bytes += $return;
+        io_stat[pid()] += $return;
+        count[pid()]++;
+    }
+}
+
+
+probe timer.ms(1000)
+{
+    if (read_bytes > 5000000) {
+        printf ("%s: read: %d\n", ctime (gettimeofday_s()), read_bytes);
+        foreach ([pid] in io_stat- limit 10) {
+            printf("%8d %12d %8d avg %d\n", pid, io_stat[pid], count[pid], io_stat[pid]/count[pid])
+        }
+    }
+    read_bytes = 0;
+    delete io_stat;
+    delete count;
+}
