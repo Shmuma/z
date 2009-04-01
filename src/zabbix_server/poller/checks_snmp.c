@@ -284,10 +284,12 @@ int	get_value_snmp(DB_ITEM *item, AGENT_RESULT *value)
 
 				/* Not correct. Returns huge values. */
 /*				SET_UI64_RESULT(value, (zbx_uint64_t)*vars->val.integer);*/
-				if (vars->type == ASN_GAUGE && *vars->val.integer >= 4294967294)
+				if (vars->type == ASN_GAUGE && *vars->val.integer >= 4294967294) {
 					SET_UI64_RESULT(value, (unsigned long)0);
-				else
+				}
+				else {
 					SET_UI64_RESULT(value, (unsigned long)*vars->val.integer);
+				}
 
 				zabbix_log( LOG_LEVEL_DEBUG, "OID [%s] Type [%d] UI64[" ZBX_FS_UI64 "]",
 					    item->snmp_oid,
