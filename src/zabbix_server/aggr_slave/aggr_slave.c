@@ -680,6 +680,8 @@ static void process_aggr_entry (plan_item_t* item)
 				sprintf (stderr, "%s: '%s'", host, stderrs[i]);
 			}
 		}
+
+		free (winners);
 	}
 
  exit:
