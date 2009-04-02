@@ -49,13 +49,13 @@ typedef struct {
 
 typedef struct {
 	const char* itemfunc;
-	double* (*hook) (aggregate_item_info_t* items, int items_count, const char* param);
+	double* (*hook) (aggregate_item_info_t* items, int items_count, const char* param, char** stderrs);
 } aggregate_gather_hook_t;
 
 
 typedef struct {
 	const char* grpfunc;
-	double (*hook) (double* vals, int count, int* info_index);
+	double (*hook) (double* vals, int count, bool* winners);
 } aggregate_reduce_hook_t;
 
 
@@ -334,7 +334,7 @@ static char* find_hostname_of_itemid (zbx_uint64_t itemid)
 
 /* ---------------------------------------- */
 /* HFS aggregate hooks                      */
-static double* aggr_gather_last (aggregate_item_info_t* items, int items_count, const char* param)
+static double* aggr_gather_last (aggregate_item_info_t* items, int items_count, const char* param, char** stderrs)
 {
 	double* res = (double*)malloc (sizeof (double) * items_count);
 	int i;
@@ -345,19 +345,22 @@ static double* aggr_gather_last (aggregate_item_info_t* items, int items_count, 
 	for (i = 0; i < items_count; i++) {
 		switch (items[i].value_type) {
 		case ITEM_VALUE_TYPE_FLOAT:
-			res[i] = HFS_get_item_last_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid);
+			res[i] = HFS_get_item_last_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, stderrs+i);
 			break;
 
 		case ITEM_VALUE_TYPE_UINT64:
-			res[i] = HFS_get_item_last_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid);
+			res[i] = HFS_get_item_last_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, stderrs+i);
 			break;
+		default:
+			res[i] = 0.0;
+			stderrs[i] = NULL;
 		}
 	}
 
 	return res;
 }
 
-static double* aggr_gather_sum (aggregate_item_info_t* items, int items_count, const char* param)
+static double* aggr_gather_sum (aggregate_item_info_t* items, int items_count, const char* param, char** stderrs)
 {
 	double* res = (double*)malloc (sizeof (double) * items_count);
 	int i, seconds;
@@ -378,10 +381,15 @@ static double* aggr_gather_sum (aggregate_item_info_t* items, int items_count, c
 		switch (items[i].value_type) {
 		case ITEM_VALUE_TYPE_FLOAT:
 			res[i] = HFS_get_sum_float (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, arg, seconds);
+			HFS_get_item_last_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, stderrs+i);
 			break;
 		case ITEM_VALUE_TYPE_UINT64:
 			res[i] = HFS_get_sum_u64 (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, arg, seconds);
+			HFS_get_item_last_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, stderrs+i);
 			break;
+		default:
+			res[i] = 0.0;
+			stderrs[i] = NULL;
 		}
 	}
 
@@ -389,7 +397,7 @@ static double* aggr_gather_sum (aggregate_item_info_t* items, int items_count, c
 }
 
 
-static double* aggr_gather_min (aggregate_item_info_t* items, int items_count, const char* param)
+static double* aggr_gather_min (aggregate_item_info_t* items, int items_count, const char* param, char** stderrs)
 {
 	double* res = (double*)malloc (sizeof (double) * items_count);
 	int i, seconds;
@@ -410,10 +418,15 @@ static double* aggr_gather_min (aggregate_item_info_t* items, int items_count, c
 		switch (items[i].value_type) {
 		case ITEM_VALUE_TYPE_FLOAT:
 			res[i] = HFS_get_min_float (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, arg, seconds);
+			HFS_get_item_last_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, stderrs+i);
 			break;
 		case ITEM_VALUE_TYPE_UINT64:
 			res[i] = HFS_get_min_u64 (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, arg, seconds);
+			HFS_get_item_last_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, stderrs+i);
 			break;
+		default:
+			res[i] = 0.0;
+			stderrs[i] = NULL;
 		}
 	}
 
@@ -421,7 +434,7 @@ static double* aggr_gather_min (aggregate_item_info_t* items, int items_count, c
 }
 
 
-static double* aggr_gather_max (aggregate_item_info_t* items, int items_count, const char* param)
+static double* aggr_gather_max (aggregate_item_info_t* items, int items_count, const char* param, char** stderrs)
 {
 	double* res = (double*)malloc (sizeof (double) * items_count);
 	int i, seconds;
@@ -442,10 +455,15 @@ static double* aggr_gather_max (aggregate_item_info_t* items, int items_count, c
 		switch (items[i].value_type) {
 		case ITEM_VALUE_TYPE_FLOAT:
 			res[i] = HFS_get_max_float (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, arg, seconds);
+			HFS_get_item_last_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, stderrs+i);
 			break;
 		case ITEM_VALUE_TYPE_UINT64:
 			res[i] = HFS_get_max_u64 (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, arg, seconds);
+			HFS_get_item_last_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, stderrs+i);
 			break;
+		default:
+			res[i] = 0.0;
+			stderrs[i] = NULL;
 		}
 	}
 
@@ -453,7 +471,7 @@ static double* aggr_gather_max (aggregate_item_info_t* items, int items_count, c
 }
 
 
-static double* aggr_gather_delta (aggregate_item_info_t* items, int items_count, const char* param)
+static double* aggr_gather_delta (aggregate_item_info_t* items, int items_count, const char* param, char** stderrs)
 {
 	double* res = (double*)malloc (sizeof (double) * items_count);
 	int i, seconds;
@@ -474,10 +492,15 @@ static double* aggr_gather_delta (aggregate_item_info_t* items, int items_count,
 		switch (items[i].value_type) {
 		case ITEM_VALUE_TYPE_FLOAT:
 			res[i] = HFS_get_delta_float (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, arg, seconds);
+			HFS_get_item_last_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, stderrs+i);
 			break;
 		case ITEM_VALUE_TYPE_UINT64:
 			res[i] = HFS_get_delta_u64 (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, arg, seconds);
+			HFS_get_item_last_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, stderrs+i);
 			break;
+		default:
+			res[i] = 0.0;
+			stderrs[i] = NULL;
 		}
 	}
 
@@ -485,7 +508,7 @@ static double* aggr_gather_delta (aggregate_item_info_t* items, int items_count,
 }
 
 
-static double* aggr_gather_count (aggregate_item_info_t* items, int items_count, const char* param)
+static double* aggr_gather_count (aggregate_item_info_t* items, int items_count, const char* param, char** stderrs)
 {
 	double* res = (double*)malloc (sizeof (double) * items_count);
 	int i;
@@ -496,8 +519,20 @@ static double* aggr_gather_count (aggregate_item_info_t* items, int items_count,
 
 	arg = time (NULL) - atoi (param) + 1;
 
-	for (i = 0; i < items_count; i++)
+	for (i = 0; i < items_count; i++) {
 		res[i] = HFS_get_count (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, arg);
+
+		switch (items[i].value_type) {
+		case ITEM_VALUE_TYPE_FLOAT:
+			HFS_get_item_last_dbl (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, stderrs+i);
+			break;
+		case ITEM_VALUE_TYPE_UINT64:
+			HFS_get_item_last_int (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, items[i].itemid, stderrs+i);
+			break;
+		default:
+			stderrs[i] = NULL;
+		}
+	}
 
 	return res;
 }
@@ -517,47 +552,43 @@ static aggregate_gather_hook_t hfs_gather_hooks[] = {
 /* HFS gather hooks                          */
 /* info_index argument is used when we calculate min or max values. In
    it we'll store index of item with resulting max/min value */
-static double aggr_reduce_max (double* vals, int count, int* info_index)
+static double aggr_reduce_max (double* vals, int count, bool* winners)
 {
 	int i;
 	double res = 0;
 
-	if (count > 0) {
+	if (count > 0)
 		res = vals[0];
-		*info_index = 0;
-	}
 
 	for (i = 1; i < count; i++)
-		if (vals[i] > res) {
+		if (vals[i] > res)
 			res = vals[i];
-			*info_index = i;
-		}
+	for (i = 0; i < count; i++)
+		winners[i] = fabs (vals[i] - res) < 0.001;
 
 	return res;
 }
 
 
-static double aggr_reduce_min (double* vals, int count, int* info_index)
+static double aggr_reduce_min (double* vals, int count, bool* winners)
 {
 	int i;
 	double res = 0;
 
-	if (count > 0) {
+	if (count > 0)
 		res = vals[0];
-		*info_index = 0;
-	}
 
 	for (i = 1; i < count; i++)
-		if (vals[i] < res) {
+		if (vals[i] < res)
 			res = vals[i];
-			*info_index = i;
-		}
+	for (i = 0; i < count; i++)
+		winners[i] = fabs (vals[i] - res) < 0.001;
 
 	return res;
 }
 
 
-static double aggr_reduce_sum (double* vals, int count, int* info_index)
+static double aggr_reduce_sum (double* vals, int count, bool* winners)
 {
 	int i;
 	double res = 0;
@@ -568,7 +599,7 @@ static double aggr_reduce_sum (double* vals, int count, int* info_index)
 }
 
 
-static double aggr_reduce_avg (double* vals, int count, int* info_index)
+static double aggr_reduce_avg (double* vals, int count, bool* winners)
 {
 	return aggr_reduce_sum (vals, count, info_index) / count;
 }
@@ -588,10 +619,11 @@ static void process_aggr_entry (plan_item_t* item)
 {
 	char *grp_func, *group, *itemkey, *item_func, *param;
 	aggregate_item_info_t* items = NULL;
-	int items_count, found = 0, i, info_index, value_got = 0;
+	int items_count = 0, found = 0, i, info_index, value_got = 0;
 	double* items_values = NULL;
 	double result;
-	char* stderr = NULL;
+	char** stderrs = NULL;
+	bool *winners = NULL;
 
 	if (!parse_aggr_key (item->key, &grp_func, &group, &itemkey, &item_func, &param))
 		return;
@@ -600,15 +632,14 @@ static void process_aggr_entry (plan_item_t* item)
 	/* find items' IDs for our group and site */
 	items = get_aggregate_items (group, itemkey, &items_count);
 
-/* 	zabbix_log (LOG_LEVEL_ERR, "Aggr Slave: process item %lld with key %s. Count of values are %d", item->itemid, item->key, items_count); */
-
 	if (items_count) {
 		/* process items */
 		/* call apropriate hook to obtain per-item value */
+		stderrs = (char**)malloc (items_count * sizeof (char*));
 		for (i = 0; i < sizeof (hfs_gather_hooks) / sizeof (hfs_gather_hooks[0]) && !found; i++)
 			if (strcmp (item_func, hfs_gather_hooks[i].itemfunc) == 0) {
 				found = 1;
-				items_values = hfs_gather_hooks[i].hook (items, items_count, param);
+				items_values = hfs_gather_hooks[i].hook (items, items_count, param, stderrs);
 			}
 
 		if (!found)
@@ -616,33 +647,53 @@ static void process_aggr_entry (plan_item_t* item)
 		if (!items_values)
 			goto exit;
 
-/* 		for (i = 0; i < items_count; i++) */
-/* 			zabbix_log (LOG_LEVEL_ERR, "Aggr Slave: value %d = %f", i, items_values[i]); */
-
 		/* calculate value of this site */
 		found = 0;
 		info_index = -1;
+		winners = (bool*)calloc (items_count, sizeof (bool));
 		for (i = 0; i < sizeof (hfs_reduce_hooks) / sizeof (hfs_reduce_hooks[0]) && !found; i++)
 			if (strcmp (grp_func, hfs_reduce_hooks[i].grpfunc) == 0) {
 				found = 1;
-				result = hfs_reduce_hooks[i].hook (items_values, items_count, &info_index);
+				result = hfs_reduce_hooks[i].hook (items_values, items_count, winners);
 				value_got = 1;
 			}
 
-		if (info_index >= 0 && info_index < items_count)
-			/* lookup hostname of winning item. It will be stderr of value. */
-			stderr = find_hostname_of_itemid (items[info_index].itemid);
+		/* make result stderr with winning hosts (if any) and their stderrs */
+		stderr = NULL;
+		for (i = 0; i < items_count; i++) {
+			char *host, *std;
+			if (!winners[i])
+				continue;
+			host = find_hostname_of_itemid (items[i].itemid);
+			if (stderr) {
+				/* ", host: 'msg'" */
+				std = (char*)malloc (strlen (stderr) + 2 + strlen (host) + 4 + strlen (stderrs[i]) + 1);
+				sprintf (std, "%s, %s: '%s'", stderr, host, stderrs[i]);
+				free (stderr);
+				stderr = std;
+			}
+			else {
+				/* "host: 'msg'" */
+				stderr = (char*)malloc (strlen (host) + 4 + strlen (stderrs[i]) + 1);
+				if (!stderr)
+					break;
+				sprintf (stderr, "%s: '%s'", host, stderrs[i]);
+			}
+		}
+
+		free (winners);
 	}
 
  exit:
-/* 	if (value_got) */
-/* 		zabbix_log (LOG_LEVEL_ERR, "Aggr Slave: item %lld finished, value = %f, stderr = %s", item->itemid, result, stderr); */
-/* 	else */
-/* 		zabbix_log (LOG_LEVEL_ERR, "Aggr Slave: item %lld finished, no value is calculated", item->itemid); */
-
 	/* save result of calculations */
 	if (value_got)
 		HFS_save_aggr_slave_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, item->itemid, time (NULL), value_got, result, stderr);
+	if (stderrs) {
+		for (i = 0; i < items_count; i++)
+			if (stderrs[i])
+				free (stderrs[i]);
+		free (stderrs);
+	}
 	if (items)
 		free (items);
 	if (items_values)

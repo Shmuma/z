@@ -221,11 +221,6 @@ static int disconnect_jabber()
 }
 
 
-static void sigpipe_handler (int sig)
-{
-	disconnect_jabber ();
-}
-
 static int on_stream (jabber_session_p sess, int type, iks *node)
 {
 	iks *x = NULL;
@@ -477,7 +472,7 @@ int	send_jabber(char *username, char *passwd, char *sendto, char *message, char 
 	/* we ignore sigpipe signal. Jabber connection can timeout and
 	   socket will give us sigpipe. We should have change to
 	   handle this.*/
-	signal (SIGPIPE, sigpipe_handler);
+	signal (SIGPIPE, SIG_IGN);
 
 	assert(error);
 

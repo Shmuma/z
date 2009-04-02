@@ -205,8 +205,8 @@ void		HFS_update_item_status (const char* hfs_base_dir, const char* siteid, zbx_
 int		HFS_get_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, int* status, char** error);
 
 
-double		HFS_get_item_last_dbl (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid);
-zbx_uint64_t	HFS_get_item_last_int (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid);
+double		HFS_get_item_last_dbl (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, char** stderr);
+zbx_uint64_t	HFS_get_item_last_int (const char* hfs_base_dir, const char* siteid, zbx_uint64_t itemid, char** stderr);
 
 
 /* trigger statuses */
