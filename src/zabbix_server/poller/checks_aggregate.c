@@ -119,7 +119,7 @@ static int	evaluate_aggregate_hfs(zbx_uint64_t itemid, int delay, AGENT_RESULT *
 	while (row = DBfetch (db_res)) {
 		if (items_count == item_buf)
 			items = (aggr_item_t*)realloc (items, sizeof (aggr_item_t)*(item_buf += 10));
-		if (!site || !strcmp (site, row[0])) {
+		if (!site || !strcasecmp (site, row[0])) {
 			HFS_get_aggr_slave_value (CONFIG_HFS_PATH, row[0], itemid, &ts, &valid, &items[items_count].value, &stderr);
 			if (valid && (now-ts) / delay < 3)
 				items[items_count++].stderr = stderr;
