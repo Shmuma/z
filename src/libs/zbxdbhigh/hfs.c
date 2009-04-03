@@ -3327,7 +3327,7 @@ zbx_uint64_t	HFS_get_item_last_int (const char* hfs_base_dir, const char* siteid
 	hfs_time_t lastclock;
 	zbx_uint64_t prev, last, prevorg, res = 0;
 	*stderr = NULL;
-	if (HFS_get_item_values_int (hfs_base_dir, siteid, itemid, &lastclock, &prev, &last, &prevorg, &stderr))
+	if (HFS_get_item_values_int (hfs_base_dir, siteid, itemid, &lastclock, &prev, &last, &prevorg, stderr))
 		res = last;
 	return res;
 #else
