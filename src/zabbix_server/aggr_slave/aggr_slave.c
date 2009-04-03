@@ -693,6 +693,7 @@ static void process_aggr_entry (plan_item_t* item)
 			if (stderr)
 				free (stderr);
 			stderr = std;
+			free (host);
 
 			/* append message */
 			if (stderrs[i]) {
