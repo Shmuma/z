@@ -638,7 +638,7 @@ static void process_aggr_entry (plan_item_t* item)
 	if (items_count) {
 		/* process items */
 		/* call apropriate hook to obtain per-item value */
-		stderrs = (char**)malloc (items_count * sizeof (char*));
+		stderrs = (char**)calloc (items_count, sizeof (char*));
 		for (i = 0; i < sizeof (hfs_gather_hooks) / sizeof (hfs_gather_hooks[0]) && !found; i++)
 			if (strcmp (item_func, hfs_gather_hooks[i].itemfunc) == 0) {
 				found = 1;
