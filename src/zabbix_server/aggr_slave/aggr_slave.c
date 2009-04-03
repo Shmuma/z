@@ -665,24 +665,44 @@ static void process_aggr_entry (plan_item_t* item)
 		stderr = NULL;
 		for (i = 0; i < items_count; i++) {
 			char *host, *std;
+			int len;
 			if (!winners[i])
 				continue;
 			host = find_hostname_of_itemid (items[i].itemid);
+
+			if (!host)
+				continue;
+
+			/* append comma */
 			if (stderr) {
-				/* ", host: 'msg'" */
-				int len = strlen (stderr) + 2 + strlen (host) + 4 + strlen (stderrs[i]) + 1;
+				len = strlen (stderr) + 3;
 				std = (char*)malloc (len);
-				snprintf (std, len, "%s, %s: '%s'", stderr, host, stderrs[i]);
+				if (!std)
+					break;
+				snprintf (std, len, "%s, ", stderr);
 				free (stderr);
 				stderr = std;
 			}
-			else {
-				/* "host: 'msg'" */
-				int len = strlen (host) + 4 + strlen (stderrs[i]) + 1;
-				stderr = (char*)malloc (len);
-				if (!stderr)
+
+			/* append hostname */
+			len = stderr ? strlen (stderr) : 0 + strlen (host) + 2 + 1;
+			std = (char*)malloc (len);
+			if (!std)
+				break;
+			snprintf (std, len, "%s%s", stderr ? stderr : "", host);
+			if (stderr)
+				free (stderr);
+			stderr = std;
+
+			/* append message */
+			if (stderrs[i]) {
+				len = strlen (stderr) + 4 + strlen (stderrs[i]);
+				std = (char*)malloc (len);
+				if (!std)
 					break;
-				snprintf (stderr, len, "%s: '%s'", host, stderrs[i]);
+				snprintf (std, len, "%s: '%s'", stderr, stderrs[i]);
+				free (stderr);
+				stderr = std;
 			}
 		}
 
