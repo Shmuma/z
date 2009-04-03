@@ -100,7 +100,7 @@ static aggregate_reduce_hook_t hfs_reduce_hooks[] = {
  * grpfunc: grpmax, grpmin, grpsum, grpavg
  * itemfunc: last, min, max, avg, sum,count
  */
-static int	evaluate_aggregate_hfs(zbx_uint64_t itemid, int delay, AGENT_RESULT *res, char *grpfunc)
+static int	evaluate_aggregate_hfs(zbx_uint64_t itemid, int delay, AGENT_RESULT *res, char *grpfunc, char* site)
 {
 	int i, result = NOTSUPPORTED, found = 0;
 	DB_RESULT db_res;
@@ -119,12 +119,14 @@ static int	evaluate_aggregate_hfs(zbx_uint64_t itemid, int delay, AGENT_RESULT *
 	while (row = DBfetch (db_res)) {
 		if (items_count == item_buf)
 			items = (aggr_item_t*)realloc (items, sizeof (aggr_item_t)*(item_buf += 10));
-		HFS_get_aggr_slave_value (CONFIG_HFS_PATH, row[0], itemid, &ts, &valid, &items[items_count].value, &stderr);
-		if (valid && (now-ts) / delay < 3)
-			items[items_count++].stderr = stderr;
-		else
-			if (stderr)
-				free (stderr);
+		if (!site || !strcmp (site, row[0])) {
+			HFS_get_aggr_slave_value (CONFIG_HFS_PATH, row[0], itemid, &ts, &valid, &items[items_count].value, &stderr);
+			if (valid && (now-ts) / delay < 3)
+				items[items_count++].stderr = stderr;
+			else
+				if (stderr)
+					free (stderr);
+		}
 	}
 
 	DBfree_result (db_res);
@@ -196,13 +198,16 @@ int	get_value_aggregate(DB_ITEM *item, AGENT_RESULT *result)
 {
 	char    key[MAX_STRING_LEN];
 	char	function_grp[MAX_STRING_LEN];
-	char	*p,*p2;
+	char	site[MAX_STRING_LEN];
+	char	*p,*p2, *p3;
 	int 	ret = SUCCEED;
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In get_value_aggregate([%s])",
 		item->key);
 
 	init_result(result);
+
+	site[0] = 0;
 
 	strscpy(key, item->key);
 	if((p=strchr(key,'[')) != NULL)
@@ -211,6 +216,25 @@ int	get_value_aggregate(DB_ITEM *item, AGENT_RESULT *result)
 		strscpy(function_grp,key);
 		*p='[';
 		p++;
+
+		/* search for site value */
+		p2 = strchr (p, ',');
+		if (p2) {
+			*p2 = 0;
+			p3 = strchr (p, '@');
+			if (p3) {
+				strscpy (site, p3+1);
+				/* get rid of quotes (optional) */
+				p = site;
+				while (*p) {
+					if (*p == '"')
+						*p = 0;
+					else
+						p++;
+				}
+			}
+			*p2 = ',';
+		}
 	}
 	else	ret = NOTSUPPORTED;
 
@@ -220,7 +244,7 @@ int	get_value_aggregate(DB_ITEM *item, AGENT_RESULT *result)
 
 	if (ret == SUCCEED) {
 		if (CONFIG_HFS_PATH) {
-			if (evaluate_aggregate_hfs (item->itemid, item->delay, result, function_grp) != SUCCEED)
+			if (evaluate_aggregate_hfs (item->itemid, item->delay, result, function_grp, site[0] ? site : NULL) != SUCCEED)
 				ret = NOTSUPPORTED;
 		}
 		else

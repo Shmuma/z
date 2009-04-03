@@ -218,7 +218,7 @@ static plan_t* build_checks_plan (int period)
 
 
 
-static int parse_aggr_key (const char* key, char** grp_func, char** group, char** itemkey, char** item_func, char** param)
+static int parse_aggr_key (const char* key, char** grp_func, char** group, char** site, char** itemkey, char** item_func, char** param)
 {
 	char *p, *p2;
 	char** args[] = { group, itemkey, item_func, param };
@@ -262,8 +262,23 @@ static int parse_aggr_key (const char* key, char** grp_func, char** group, char*
 	if (err) {
 		free (*grp_func);
 		for (i = 0; i < sizeof (args) / sizeof (args[0]); i++)
-			if (*args[i])
+			if (*args[i]) {
 				free (*args[i]);
+				*args[i] = NULL;
+			}
+		return 0;
+	}
+	else {
+		if (!*group)
+			return 0;
+		/* split group to group and site name (may be missing) */
+		p = strchr (*group, '@');
+		if (!p)
+			*site = NULL;
+		else {
+			*p = 0;
+			*site = strdup (p+1);
+		}
 	}
 
 	return 1;
@@ -619,7 +634,7 @@ static aggregate_reduce_hook_t hfs_reduce_hooks[] = {
 
 static void process_aggr_entry (plan_item_t* item)
 {
-	char *grp_func, *group, *itemkey, *item_func, *param;
+	char *grp_func, *group, *site, *itemkey, *item_func, *param;
 	aggregate_item_info_t* items = NULL;
 	int items_count = 0, found = 0, i, info_index, value_got = 0;
 	double* items_values = NULL;
@@ -628,12 +643,14 @@ static void process_aggr_entry (plan_item_t* item)
 	int *winners = NULL;
 	char* stderr = NULL;
 
-	if (!parse_aggr_key (item->key, &grp_func, &group, &itemkey, &item_func, &param))
+	/* process item's key */
+	site = NULL;
+	if (!parse_aggr_key (item->key, &grp_func, &group, &site, &itemkey, &item_func, &param))
 		return;
 
-	/* process item's key */
 	/* find items' IDs for our group and site */
-	items = get_aggregate_items (group, itemkey, &items_count);
+	if (!site || (CONFIG_SERVER_SITE && !strcmp (CONFIG_SERVER_SITE, site)))
+		items = get_aggregate_items (group, itemkey, &items_count);
 
 	if (items_count) {
 		/* process items */
