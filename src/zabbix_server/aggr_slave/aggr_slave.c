@@ -649,7 +649,7 @@ static void process_aggr_entry (plan_item_t* item)
 		return;
 
 	/* find items' IDs for our group and site */
-	if (!site || (CONFIG_SERVER_SITE && !strcmp (CONFIG_SERVER_SITE, site)))
+	if (!site || (CONFIG_SERVER_SITE && !strcasecmp (CONFIG_SERVER_SITE, site)))
 		items = get_aggregate_items (group, itemkey, &items_count);
 
 	if (items_count) {
