@@ -23,6 +23,8 @@
 #include "hfs.h"
 #include "../functions.h"
 
+#include <math.h>
+
 
 extern char* CONFIG_HFS_PATH;
 
@@ -32,7 +34,7 @@ extern char* CONFIG_HFS_PATH;
 /* HFS gather hooks                          */
 /* info_index argument is used when we calculate min or max values. In
    it we'll store index of item with resulting max/min value */
-static double aggr_reduce_max (aggr_item_t* vals, int count, bool* winners)
+static double aggr_reduce_max (aggr_item_t* vals, int count, int* winners)
 {
 	int i;
 	double res = 0;
@@ -44,13 +46,13 @@ static double aggr_reduce_max (aggr_item_t* vals, int count, bool* winners)
 		if (vals[i].value > res)
 			res = vals[i].value;
 	for (i = 0; i < count; i++)
-		winners[i] = fabs (vals[i] - res) < 0.001;
+		winners[i] = fabs (vals[i].value - res) < 0.001;
 
 	return res;
 }
 
 
-static double aggr_reduce_min (aggr_item_t* vals, int count, bool* winners)
+static double aggr_reduce_min (aggr_item_t* vals, int count, int* winners)
 {
 	int i;
 	double res = 0;
@@ -62,13 +64,13 @@ static double aggr_reduce_min (aggr_item_t* vals, int count, bool* winners)
 		if (vals[i].value < res)
 			res = vals[i].value;
 	for (i = 0; i < count; i++)
-		winners[i] = fabs (vals[i] - res) < 0.001;
+		winners[i] = fabs (vals[i].value - res) < 0.001;
 
 	return res;
 }
 
 
-static double aggr_reduce_sum (aggr_item_t* vals, int count, bool* winners)
+static double aggr_reduce_sum (aggr_item_t* vals, int count, int* winners)
 {
 	int i;
 	double res = 0;
@@ -79,9 +81,9 @@ static double aggr_reduce_sum (aggr_item_t* vals, int count, bool* winners)
 }
 
 
-static double aggr_reduce_avg (aggr_item_t* vals, int count, bool* winners)
+static double aggr_reduce_avg (aggr_item_t* vals, int count, int* winners)
 {
-	return aggr_reduce_sum (vals, count, info_index) / count;
+	return aggr_reduce_sum (vals, count, winners) / count;
 }
 
 
@@ -109,7 +111,7 @@ static int	evaluate_aggregate_hfs(zbx_uint64_t itemid, int delay, AGENT_RESULT *
 	int valid;
 	char* stderr;
 	double value;
-	bool* winners;
+	int* winners;
 
 	/* collect values from all sites */
 	db_res = DBselect ("select s.name from sites s");
@@ -129,7 +131,7 @@ static int	evaluate_aggregate_hfs(zbx_uint64_t itemid, int delay, AGENT_RESULT *
 
 	/* calculate final value */
 	found = 0;
-	winners = (bool*)calloc (sizeof (bool), items_count);
+	winners = (int*)calloc (sizeof (int), items_count);
 	for (i = 0; i < sizeof (hfs_reduce_hooks) / sizeof (hfs_reduce_hooks[0]) && !found; i++)
 		if (strcmp (grpfunc, hfs_reduce_hooks[i].grpfunc) == 0) {
 			found = 1;
@@ -142,8 +144,9 @@ static int	evaluate_aggregate_hfs(zbx_uint64_t itemid, int delay, AGENT_RESULT *
 			continue;
 		if (stderr) {
 			char* s;
-			s = (char*)malloc (strlen (stderr) + 2 + strlen (items[i].stderr) + 1);
-			sprintf (s, "%s, %s", stderr, items[i].stderr);
+			int len = strlen (stderr) + 2 + strlen (items[i].stderr) + 1;
+			s = (char*)malloc (len);
+			snprintf (s, len, "%s, %s", stderr, items[i].stderr);
 			free (stderr);
 			stderr = s;
 		}

@@ -7,6 +7,8 @@
 
 #include "aggr_slave.h"
 
+#include <math.h>
+
 
 extern char* CONFIG_SERVER_SITE;
 extern char* CONFIG_HFS_PATH;
@@ -55,7 +57,7 @@ typedef struct {
 
 typedef struct {
 	const char* grpfunc;
-	double (*hook) (double* vals, int count, bool* winners);
+	double (*hook) (double* vals, int count, int* winners);
 } aggregate_reduce_hook_t;
 
 
@@ -552,7 +554,7 @@ static aggregate_gather_hook_t hfs_gather_hooks[] = {
 /* HFS gather hooks                          */
 /* info_index argument is used when we calculate min or max values. In
    it we'll store index of item with resulting max/min value */
-static double aggr_reduce_max (double* vals, int count, bool* winners)
+static double aggr_reduce_max (double* vals, int count, int* winners)
 {
 	int i;
 	double res = 0;
@@ -570,7 +572,7 @@ static double aggr_reduce_max (double* vals, int count, bool* winners)
 }
 
 
-static double aggr_reduce_min (double* vals, int count, bool* winners)
+static double aggr_reduce_min (double* vals, int count, int* winners)
 {
 	int i;
 	double res = 0;
@@ -588,7 +590,7 @@ static double aggr_reduce_min (double* vals, int count, bool* winners)
 }
 
 
-static double aggr_reduce_sum (double* vals, int count, bool* winners)
+static double aggr_reduce_sum (double* vals, int count, int* winners)
 {
 	int i;
 	double res = 0;
@@ -599,9 +601,9 @@ static double aggr_reduce_sum (double* vals, int count, bool* winners)
 }
 
 
-static double aggr_reduce_avg (double* vals, int count, bool* winners)
+static double aggr_reduce_avg (double* vals, int count, int* winners)
 {
-	return aggr_reduce_sum (vals, count, info_index) / count;
+	return aggr_reduce_sum (vals, count, winners) / count;
 }
 
 
@@ -623,7 +625,8 @@ static void process_aggr_entry (plan_item_t* item)
 	double* items_values = NULL;
 	double result;
 	char** stderrs = NULL;
-	bool *winners = NULL;
+	int *winners = NULL;
+	char* stderr;
 
 	if (!parse_aggr_key (item->key, &grp_func, &group, &itemkey, &item_func, &param))
 		return;
@@ -650,7 +653,7 @@ static void process_aggr_entry (plan_item_t* item)
 		/* calculate value of this site */
 		found = 0;
 		info_index = -1;
-		winners = (bool*)calloc (items_count, sizeof (bool));
+		winners = (int*)calloc (items_count, sizeof (int));
 		for (i = 0; i < sizeof (hfs_reduce_hooks) / sizeof (hfs_reduce_hooks[0]) && !found; i++)
 			if (strcmp (grp_func, hfs_reduce_hooks[i].grpfunc) == 0) {
 				found = 1;
@@ -667,17 +670,19 @@ static void process_aggr_entry (plan_item_t* item)
 			host = find_hostname_of_itemid (items[i].itemid);
 			if (stderr) {
 				/* ", host: 'msg'" */
-				std = (char*)malloc (strlen (stderr) + 2 + strlen (host) + 4 + strlen (stderrs[i]) + 1);
-				sprintf (std, "%s, %s: '%s'", stderr, host, stderrs[i]);
+				int len = strlen (stderr) + 2 + strlen (host) + 4 + strlen (stderrs[i]) + 1;
+				std = (char*)malloc (len);
+				snprintf (std, len, "%s, %s: '%s'", stderr, host, stderrs[i]);
 				free (stderr);
 				stderr = std;
 			}
 			else {
 				/* "host: 'msg'" */
-				stderr = (char*)malloc (strlen (host) + 4 + strlen (stderrs[i]) + 1);
+				int len = strlen (host) + 4 + strlen (stderrs[i]) + 1;
+				stderr = (char*)malloc (len);
 				if (!stderr)
 					break;
-				sprintf (stderr, "%s: '%s'", host, stderrs[i]);
+				snprintf (stderr, len, "%s: '%s'", host, stderrs[i]);
 			}
 		}
 
