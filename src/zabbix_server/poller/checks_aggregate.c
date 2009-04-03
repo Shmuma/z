@@ -142,16 +142,18 @@ static int	evaluate_aggregate_hfs(zbx_uint64_t itemid, int delay, AGENT_RESULT *
 	for (i = 0; i < items_count; i++) {
 		if (!winners[i])
 			continue;
-		if (stderr) {
-			char* s;
-			int len = strlen (stderr) + 2 + strlen (items[i].stderr) + 1;
-			s = (char*)malloc (len);
-			snprintf (s, len, "%s, %s", stderr, items[i].stderr);
-			free (stderr);
-			stderr = s;
+		if (items[i].stderr) {
+			if (stderr) {
+				char* s;
+				int len = strlen (stderr) + 2 + strlen (items[i].stderr) + 1;
+				s = (char*)malloc (len);
+				snprintf (s, len, "%s, %s", stderr, items[i].stderr);
+				free (stderr);
+				stderr = s;
+			}
+			else
+				stderr = strdup (items[i].stderr);
 		}
-		else
-			stderr = strdup (items[i].stderr);
 	}
 
 	if (stderr)
@@ -196,7 +198,6 @@ int	get_value_aggregate(DB_ITEM *item, AGENT_RESULT *result)
 	char	function_grp[MAX_STRING_LEN];
 	char	*p,*p2;
 	int 	ret = SUCCEED;
-
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In get_value_aggregate([%s])",
 		item->key);
