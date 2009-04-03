@@ -697,7 +697,7 @@ static void process_aggr_entry (plan_item_t* item)
 
 			/* append message */
 			if (stderrs[i]) {
-				len = strlen (stderr) + 4 + strlen (stderrs[i]);
+				len = strlen (stderr) + 4 + strlen (stderrs[i]) + 1;
 				std = (char*)malloc (len);
 				if (!std)
 					break;
