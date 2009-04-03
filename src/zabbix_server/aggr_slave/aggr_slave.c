@@ -685,7 +685,7 @@ static void process_aggr_entry (plan_item_t* item)
 			}
 
 			/* append hostname */
-			len = stderr ? strlen (stderr) : 0 + strlen (host) + 2 + 1;
+			len = (stderr ? strlen (stderr) : 0) + strlen (host) + 1;
 			std = (char*)malloc (len);
 			if (!std)
 				break;
