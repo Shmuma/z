@@ -626,7 +626,7 @@ static void process_aggr_entry (plan_item_t* item)
 	double result;
 	char** stderrs = NULL;
 	int *winners = NULL;
-	char* stderr;
+	char* stderr = NULL;
 
 	if (!parse_aggr_key (item->key, &grp_func, &group, &itemkey, &item_func, &param))
 		return;
