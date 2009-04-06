@@ -43,6 +43,12 @@ if [ "$1" = "configure" ]; then
     # shared memory segments
     ipcs -m | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 2 | while read key; do ipcrm -m $key; done
 
+    # mdadm permissions
+    if [[ x`grep -F -c 'monitor ALL=NOPASSWD: /sbin/mdadm --detail /dev/md*' /etc/sudoers` == 'x0' ]]
+    then
+        echo 'monitor ALL=NOPASSWD: /sbin/mdadm --detail /dev/md*' >> /etc/sudoers
+    fi
+
     # run zabbix-rebase-server
     /usr/sbin/zabbix-rebase-server
 

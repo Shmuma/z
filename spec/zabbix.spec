@@ -126,6 +126,12 @@ done
 # add monitor user to disks group if needed.
 usermod -a -G disk monitor
 
+# mdadm permissions
+if [[ x`grep -F -c 'monitor ALL=NOPASSWD: /sbin/mdadm --detail /dev/md*' /etc/sudoers` == 'x0' ]]
+then
+    echo 'monitor ALL=NOPASSWD: /sbin/mdadm --detail /dev/md*' >> /etc/sudoers
+fi
+
 # clean ipcs to ensure new instance can start correctly (semaphores)
 #ipcs -s | grep zabbix | sed 's/  */ /g' | cut -d ' ' -f 2 | while read key; do ipcrm -s $key; done
 # shared memory segments
