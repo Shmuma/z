@@ -555,7 +555,7 @@ int	DBupdate_trigger_value(DB_TRIGGER *trigger, int new_value, int now, char *re
 		}
 
 		/* Generate also UNKNOWN events, We are not interested in prev trigger value here. */
-		if(event_last_status != new_value && event_last_status != TRIGGER_VALUE_UNKNOWN)
+		if(event_last_status != new_value)
 		{
 			/* Preparing event for processing */
 			memset(&event,0,sizeof(DB_EVENT));
