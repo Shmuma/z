@@ -762,6 +762,7 @@ static void	expand_trigger_description_constants(
 #define MVAR_HOST			"{HOST}" /* short host name (w/o dots) */
 #define MVAR_IPADDRESS			"{IPADDRESS}"
 #define MVAR_TIME			"{TIME}"
+#define MVAR_SITE			"{SITE}"
 #define MVAR_ITEM_LASTVALUE		"{ITEM.LASTVALUE}"
 #define MVAR_ITEM_NAME			"{ITEM.NAME}"
 #define MVAR_ITEM_STDERR		"{ITEM.STDERR}"
@@ -1335,6 +1336,20 @@ zabbix_log(LOG_LEVEL_DEBUG, "str_out1 [%s] pl [%s]", str_out, pl);
 				replace_to = zbx_dsprintf(replace_to, "%s", tmp);
 			else
 				replace_to = zbx_dsprintf(replace_to, "");
+		}
+		else if (macro_type & (MACRO_TYPE_MESSAGE_SUBJECT | MACRO_TYPE_MESSAGE_BODY | MACRO_TYPE_TRIGGER_DESCRIPTION) &&
+			strncmp(pr, MVAR_SITE, strlen(MVAR_SITE)) == 0)
+		{
+			var_len = strlen(MVAR_SITE);
+			result = DBselect("select s.name from functions f, items i, hosts h, sites s where "
+					  " f.triggerid=" ZBX_FS_UI64 " and f.itemid=i.itemid and i.hostid=h.hostid and h.siteid=s.siteid",
+					  event->objectid);
+
+			if (row = DBfetch(result)) {
+				replace_to = zbx_dsprintf (replace_to, "%s", row[0]);
+			}
+
+			DBfree_result (result);
 		}
 		else if(macro_type & (MACRO_TYPE_MESSAGE_SUBJECT | MACRO_TYPE_MESSAGE_BODY) &&
 			strncmp(pr, MVAR_TRIGGER_KEY, strlen(MVAR_TRIGGER_KEY)) == 0)
