@@ -2429,7 +2429,8 @@ void HFSadd_history_str (const char* hfs_base_dir, const char* siteid, zbx_uint6
 		close (fd);
 		return;
 	}
-
+	
+	*(int*)p = len;
 	write (fd, buf, buf_len);
 	free (buf);
 	close (fd);
