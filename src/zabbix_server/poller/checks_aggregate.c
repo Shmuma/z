@@ -177,7 +177,7 @@ static int	evaluate_aggregate_hfs(zbx_uint64_t itemid, int delay, AGENT_RESULT *
 
 
 
-void get_item_site (zbx_uint64_t itemid, char* site)
+void get_item_site_inplace (zbx_uint64_t itemid, char* site)
 {
 	DB_RESULT result;
 	DB_ROW row;
@@ -188,7 +188,7 @@ void get_item_site (zbx_uint64_t itemid, char* site)
 			   itemid);
 
 	if (row = DBfetch (result))
-		snprintf (res, MAX_STRING_LEN, "%s", row[0]);
+		snprintf (site, MAX_STRING_LEN, "%s", row[0]);
 
 	DBfree_result (result);
 }
@@ -265,7 +265,7 @@ int	get_value_aggregate(DB_ITEM *item, AGENT_RESULT *result)
 	if (ret == SUCCEED) {
 		if (CONFIG_HFS_PATH) {
 			if (!site[0] && site_filter)
-				get_item_site (item->itemid, site);
+				get_item_site_inplace (item->itemid, site);
 
 			if (evaluate_aggregate_hfs (item->itemid, item->delay, result, function_grp, site[0] ? site : NULL) != SUCCEED)
 				ret = NOTSUPPORTED;
