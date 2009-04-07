@@ -177,6 +177,24 @@ static int	evaluate_aggregate_hfs(zbx_uint64_t itemid, int delay, AGENT_RESULT *
 
 
 
+void get_item_site (zbx_uint64_t itemid, char* site)
+{
+	DB_RESULT result;
+	DB_ROW row;
+
+	site[0] = 0;
+
+	result = DBselect ("select s.name from items i, hosts h, sites s where i.itemid=" ZBX_FS_UI64 " and i.hostid=h.hostid and h.siteid=s.siteid",
+			   itemid);
+
+	if (row = DBfetch (result))
+		snprintf (res, MAX_STRING_LEN, "%s", row[0]);
+
+	DBfree_result (result);
+}
+
+
+
 /******************************************************************************
  *                                                                            *
  * Function: get_value_aggregate                                              *
@@ -201,6 +219,7 @@ int	get_value_aggregate(DB_ITEM *item, AGENT_RESULT *result)
 	char	site[MAX_STRING_LEN];
 	char	*p,*p2, *p3;
 	int 	ret = SUCCEED;
+	int	site_filter = 0;
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In get_value_aggregate([%s])",
 		item->key);
@@ -232,6 +251,7 @@ int	get_value_aggregate(DB_ITEM *item, AGENT_RESULT *result)
 					else
 						p++;
 				}
+				site_filter = 1;
 			}
 			*p2 = ',';
 		}
@@ -244,6 +264,9 @@ int	get_value_aggregate(DB_ITEM *item, AGENT_RESULT *result)
 
 	if (ret == SUCCEED) {
 		if (CONFIG_HFS_PATH) {
+			if (!site[0] && site_filter)
+				get_item_site (item->itemid, site);
+
 			if (evaluate_aggregate_hfs (item->itemid, item->delay, result, function_grp, site[0] ? site : NULL) != SUCCEED)
 				ret = NOTSUPPORTED;
 		}
