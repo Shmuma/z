@@ -1,4 +1,4 @@
-#include "common.h"
+>#include "common.h"
 #include "cfg.h"
 #include "db.h"
 
@@ -632,6 +632,27 @@ static aggregate_reduce_hook_t hfs_reduce_hooks[] = {
 
 
 
+char* get_item_site (zbx_uint64_t itemid)
+{
+	DB_RESULT result;
+	DB_ROW row;
+	char* res = NULL;
+
+	result = DBselect ("select s.name from items i, hosts h, sites s where i.itemid=" ZBX_FS_UI64 " and i.hostid=h.hostid and h.siteid=s.siteid",
+			   itemid);
+
+	if (row = DBfetch (result))
+		res = strdup (row[0]);
+
+	DBfree_result (result);
+
+	if (!res)
+		res = strdup ("");
+
+	return res;
+}
+
+
 static void process_aggr_entry (plan_item_t* item)
 {
 	char *grp_func, *group, *site, *itemkey, *item_func, *param;
@@ -647,6 +668,12 @@ static void process_aggr_entry (plan_item_t* item)
 	site = NULL;
 	if (!parse_aggr_key (item->key, &grp_func, &group, &site, &itemkey, &item_func, &param))
 		return;
+
+	/* empty site -- special case: use site from item's host */
+	if (site && *site == 0) {
+		free (site);
+		site = get_item_site (item->itemid);
+	}
 
 	/* find items' IDs for our group and site */
 	if (!site || (CONFIG_SERVER_SITE && !strcasecmp (CONFIG_SERVER_SITE, site)))
@@ -739,6 +766,8 @@ static void process_aggr_entry (plan_item_t* item)
 	}
 	if (items)
 		free (items);
+	if (site)
+		free (site);
 	if (items_values)
 		free (items_values);
 	if (stderr)
