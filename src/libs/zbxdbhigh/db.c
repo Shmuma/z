@@ -554,62 +554,32 @@ int	DBupdate_trigger_value(DB_TRIGGER *trigger, int new_value, int now, char *re
 			}
 		}
 
-		/* The lastest event has the same status, do not generate new one */
-		if(event_last_status != new_value)
+		/* Generate also UNKNOWN events, We are not interested in prev trigger value here. */
+		if(event_last_status != new_value && event_last_status != TRIGGER_VALUE_UNKNOWN)
 		{
-/*			if(	((trigger->value == TRIGGER_VALUE_TRUE) && (new_value == TRIGGER_VALUE_FALSE)) ||
-				((trigger->value == TRIGGER_VALUE_FALSE) && (new_value == TRIGGER_VALUE_TRUE)) ||
-				((event_last_status == TRIGGER_VALUE_FALSE) && (trigger->value == TRIGGER_VALUE_UNKNOWN) && (new_value == TRIGGER_VALUE_TRUE)) ||
-				((event_last_status == TRIGGER_VALUE_TRUE) && (trigger->value == TRIGGER_VALUE_UNKNOWN) && (new_value == TRIGGER_VALUE_FALSE)) ||
-				((event_prev_status == TRIGGER_VALUE_UNKNOWN) && (event_last_status == TRIGGER_VALUE_UNKNOWN) && (trigger->value == TRIGGER_VALUE_UNKNOWN) && (new_value == TRIGGER_VALUE_TRUE)) ||
-				((event_prev_status == TRIGGER_VALUE_FALSE) && (event_last_status == TRIGGER_VALUE_UNKNOWN) && (trigger->value == TRIGGER_VALUE_UNKNOWN) && (new_value == TRIGGER_VALUE_TRUE)) ||
-				((event_prev_status == TRIGGER_VALUE_TRUE) && (event_last_status == TRIGGER_VALUE_UNKNOWN) && (trigger->value == TRIGGER_VALUE_UNKNOWN) && (new_value == TRIGGER_VALUE_FALSE))
-			)*/
+			/* Preparing event for processing */
+			memset(&event,0,sizeof(DB_EVENT));
+			event.eventid = 0;
+			event.source = EVENT_SOURCE_TRIGGERS;
+			event.object = EVENT_OBJECT_TRIGGER;
+			event.objectid = trigger->triggerid;
+			event.clock = now;
+			event.value = new_value;
+			event.acknowledged = 0;
 
-			/* Generate also UNKNOWN events, We are not interested in prev trigger value here. */
-			if(event_last_status != new_value)
-/*			if(	((event_last_status == TRIGGER_VALUE_FALSE) && (new_value != TRIGGER_VALUE_FALSE)) ||
-				((event_last_status == TRIGGER_VALUE_TRUE) && (new_value != TRIGGER_VALUE_TRUE)) ||
-				((event_prev_status == TRIGGER_VALUE_UNKNOWN) && (event_last_status == TRIGGER_VALUE_UNKNOWN) && (new_value != TRIGGER_VALUE_UNKNOWN)) ||
-				((event_prev_status == TRIGGER_VALUE_FALSE) && (event_last_status == TRIGGER_VALUE_UNKNOWN) &&(new_value == TRIGGER_VALUE_TRUE)) ||
-				((event_prev_status == TRIGGER_VALUE_TRUE) && (event_last_status == TRIGGER_VALUE_UNKNOWN) && (trigger->value == TRIGGER_VALUE_UNKNOWN) && (new_value == TRIGGER_VALUE_FALSE))
-			)*/
+			/* Processing event */
+			if(process_event(&event) == SUCCEED)
 			{
-				/* Preparing event for processing */
-				memset(&event,0,sizeof(DB_EVENT));
-				event.eventid = 0;
-				event.source = EVENT_SOURCE_TRIGGERS;
-				event.object = EVENT_OBJECT_TRIGGER;
-				event.objectid = trigger->triggerid;
-				event.clock = now;
-				event.value = new_value;
-				event.acknowledged = 0;
-
-				/* Processing event */
-				if(process_event(&event) == SUCCEED)
-				{
-					zabbix_log(LOG_LEVEL_DEBUG,"Event processed OK");
-				}
-				else
-				{
-					ret = FAIL;
-					zabbix_log(LOG_LEVEL_WARNING,"Event processed not OK");
-				}
+				zabbix_log(LOG_LEVEL_DEBUG,"Event processed OK");
 			}
 			else
 			{
 				ret = FAIL;
+				zabbix_log(LOG_LEVEL_WARNING,"Event processed not OK");
 			}
 		}
 		else
 		{
-			ret = FAIL;
-		}
-
-		if( FAIL == ret)
-		{
-			zabbix_log(LOG_LEVEL_DEBUG,"Event not added for triggerid [" ZBX_FS_UI64 "]",
-				trigger->triggerid);
 			ret = FAIL;
 		}
 	}
