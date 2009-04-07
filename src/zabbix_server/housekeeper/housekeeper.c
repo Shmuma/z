@@ -325,9 +325,9 @@ int main_housekeeper_loop()
 
 /* 		housekeeping_process_log(now); */
 
-		zbx_setproctitle("housekeeper [removing old events]");
+/* 		zbx_setproctitle("housekeeper [removing old events]"); */
 
-		housekeeping_events(now);
+/* 		housekeeping_events(now); */
 
 		zbx_setproctitle("housekeeper [removing old alerts]");
 
