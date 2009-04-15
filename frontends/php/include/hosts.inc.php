@@ -33,7 +33,8 @@ function add_host_to_golem ($name)
 
 function del_host_from_golem ($name)
 {
-	return join ("", file ("http://golem.yandex.net/api/manage_host.sbml?action=delete&hostname=$name"));
+	//	return join ("", file ("http://golem.yandex.net/api/manage_host.sbml?action=delete&hostname=$name"));
+	return "skipped";
 }
 
 
