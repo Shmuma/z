@@ -125,7 +125,8 @@ COpt::profiling_start("page");
 				"label"			=> S_INVENTORY,
 				"default_page_id"	=> 0,
 				"pages"=>array(
-					array("url"=>"hostprofiles.php"	,"label"=>S_HOSTS	)
+					array("url"=>"hostprofiles.php"	,"label"=>S_HOSTS	),
+					array("url"=>"disksprofiles.php" ,"label"=>S_DISKS	)
 					)
 				),
 		"reports"=>array(

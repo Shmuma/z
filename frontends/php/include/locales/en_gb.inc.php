@@ -608,6 +608,7 @@
 	'S_CANNOT_DELETE_SITE'=>		'Cannot delete site',
 
 	'S_HOSTS'=>				'Hosts',
+	'S_DISKS'=>				'Disks',
 	'S_ITEMS'=>				'Items',
 	'S_ITEMS_BIG'=>				'ITEMS',
 	'S_TRIGGERS'=>				'Triggers',
@@ -1338,6 +1339,12 @@
 //	hostprofiles.php
 	'S_HOST_PROFILES'=>			'Host profiles',
 	'S_HOST_PROFILES_BIG'=>			'HOST PROFILES',
+
+//	disksprofiles.php
+	'S_DISKS_PROFILES'=>			'Disks profiles',
+	'S_DISKS_PROFILES_BIG'=>		'DISKS PROFILES',
+	'S_UPDATE_TIME'=>			'Update time',
+	'S_DISKS_SERIALS'=>			'Serial numbers',
 
 //	popup.php
 	'S_EMPTY'=>				'Empty',
