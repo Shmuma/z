@@ -255,7 +255,7 @@ int     DBget_function_result(char **result,char *functionid)
 		hfs_function_value_t fun_val;
 
 		ZBX_STR2UINT64 (id, functionid);
-		if (!HFS_get_function_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, id, &fun_val))
+		if (!HFS_get_function_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, id, &fun_val) || fun_val.type == FVT_NULL)
 			res = FAIL;
 		else
 			*result = HFS_convert_function_val2str (&fun_val);
