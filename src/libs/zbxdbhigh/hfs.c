@@ -3495,8 +3495,10 @@ int HFS_get_function_value (const char* hfs_path, const char* siteid, zbx_uint64
 		return 1;
 	}
 
-	if (read (function_val_fd, value, sizeof (hfs_function_value_t)) != sizeof (hfs_function_value_t))
+	if (read (function_val_fd, value, sizeof (hfs_function_value_t)) != sizeof (hfs_function_value_t)) {
 		zabbix_log (LOG_LEVEL_ERR, "HFS_get_function_value: Error reading value for function %lld", functionid);
+		return 0;
+	}
 
 #ifdef HAVE_MEMCACHE
 	memcache_zbx_save_val (key, value, sizeof (hfs_function_value_t), 0);
