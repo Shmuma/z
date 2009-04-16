@@ -149,8 +149,10 @@ void	update_functions(DB_ITEM *item)
 		else {
 			/* obtain function value from HFS */
 			fun_val.type = FVT_NULL;
-			HFS_get_function_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, function.functionid, &fun_val);
-			lastvalue = HFS_convert_function_val2str (&fun_val);
+			if (!HFS_get_function_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, function.functionid, &fun_val) || fun_val.type == FVT_NULL)
+				lastvalue = HFS_convert_function_val2str (&fun_val);
+			else
+				lastvalue = NULL;
 		}
 
 		zabbix_log( LOG_LEVEL_DEBUG, "ItemId:" ZBX_FS_UI64 " Evaluating %s(%s)",

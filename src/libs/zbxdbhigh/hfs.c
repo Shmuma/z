@@ -3474,32 +3474,21 @@ int HFS_get_function_value (const char* hfs_path, const char* siteid, zbx_uint64
 	const char* key = memcache_get_key (MKT_FUNCTION, functionid);
 	void* buf;
 	size_t len;
+	int res = 0;
 
 	buf = memcache_zbx_read_val (siteid, key, &len);
 	if (buf) {
 		if (len == sizeof (hfs_function_value_t)) {
 			memcpy (value, buf, sizeof (hfs_function_value_t));
-			zabbix_log (LOG_LEVEL_DEBUG, "HFS_get_function_value(memcache): Got correct buffer, key %s, type %d",
-				    key, value->type);
-			switch (value->type) {
-			case FVT_UINT64:
-				zabbix_log (LOG_LEVEL_DEBUG, "HFS_get_function_value(memcache): Int value: %llu",
-				    value->value.l);
-				break;
-			case FVT_DOUBLE:
-				zabbix_log (LOG_LEVEL_DEBUG, "HFS_get_function_value(memcache): Double value: %lf",
-				    value->value.d);
-				break;
-			}
+			res = 1;
 		}
-		else
-			zabbix_log (LOG_LEVEL_DEBUG, "HFS_get_function_value(memcache): Buffer returned, but length mismatch. "
-				    "Got %d, should be %d. Key %s", (int)len, sizeof (hfs_function_value_t), key);
 		free (buf);
-		return 1;
 	}
 	else
 		zabbix_log (LOG_LEVEL_DEBUG, "HFS_get_function_value(memcache): Empty bufer returned for key %s", key);
+
+	if (res == 1)
+		return res;
 #endif
 
 	if (function_val_fd == -1)
