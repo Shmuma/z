@@ -379,15 +379,12 @@ void main_pinger_loop(int num)
 		num);
 
 	pinger_num = num;
+	zbx_setproctitle("connecting to the database");
+
+	DBconnect(ZBX_DB_CONNECT_NORMAL);
 
 	for(;;)
 	{
-		zbx_setproctitle("connecting to the database");
-
-		DBconnect(ZBX_DB_CONNECT_NORMAL);
-	
-/*	zabbix_set_log_level(LOG_LEVEL_DEBUG);*/
-
 		ret = create_host_file();
 	
 		if( SUCCEED == ret)
@@ -400,15 +397,11 @@ void main_pinger_loop(int num)
 			zbx_get_thread_id());
 		unlink(str);
 	
-/*	zabbix_set_log_level(LOG_LEVEL_WARNING); */
-
-		DBclose();
-
 		zbx_setproctitle("pinger [sleeping for %d seconds]",
 			CONFIG_PINGER_FREQUENCY);
 
 		sleep(CONFIG_PINGER_FREQUENCY);
 	}
 
-	/* Never reached */
+	DBclose();
 }
