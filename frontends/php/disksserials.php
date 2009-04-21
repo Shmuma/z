@@ -3,7 +3,7 @@
 
 function error ($msg)
 {
-	print "<b>$msg</b></body></html>";
+	print "Error: $msg";
 	exit;
 }
 
