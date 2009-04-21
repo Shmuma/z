@@ -1137,9 +1137,8 @@ void	process_profile_value (char* server, char* value)
 		return;
 	}
 
-	memcpy (buf, value, v_len);
-	buf[v_len] = 0;
-	memcpy (buf+v_len+1, &ts, sizeof (ts));
+	memcpy (buf, &ts, sizeof (ts));
+	memcpy (buf+sizeof(ts), value, v_len+1);
 
 	snprintf (key, len+4, "p|%s", server);
 
