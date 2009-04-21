@@ -66,15 +66,12 @@ while ($site = oci_fetch_array ($st, OCI_RETURN_NULLS)) {
 	foreach ($res as $key => $val) {
 		$hosts = split ("\|", $key);
 		$host = $hosts[1];
-		$strs = unpack ("a*", $val);
-		print "<pre>";
-		print_r ($strs);
-		print "</pre>";
-// 		if (strlen ($strs[1])) {
-// 			$serials = split (": ", $strs[1]);
-// 			$serial = $serials[1];
-// 			print "$host,$serial,$strs[2]<br>";
-// 		}
+		$strs = unpack ("Its/a*sn/", $val);
+		if (strlen ($strs["sn"])) {
+			$serials = split (": ", $strs["sn"]);
+			$serial = $serials[1];
+			print "$host,$serial,$strs[ts]<br>";
+		}
 	}
 
 	$memcache->close ();
