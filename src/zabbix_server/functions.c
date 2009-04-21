@@ -1116,6 +1116,8 @@ void	process_profile_value (char* server, char* value)
 {
 	int len = strlen (server);
 	char* key;
+	time_t ts = time (NULL);
+	char* buf;
 
 	if (!server || !value)
 		return;
@@ -1125,8 +1127,19 @@ void	process_profile_value (char* server, char* value)
 	if (!key)
 		return;
 
+	buf = malloc (len + sizeof (ts) + 1);
+
+	if (!buf) {
+		free (key);
+		return;
+	}
+
+	memcpy (buf, value, len);
+	buf[len] = 0;
+	memcpy (buf+len+1, &ts, sizeof (ts));
+
 	snprintf (key, len+4, "p|%s", server);
 
-	memcache_zbx_save_val (key, value, strlen (value)+1, 0);
+	memcache_zbx_save_val (key, buf, len+sizeof (ts)+1, 0);
 	free (key);
 }
