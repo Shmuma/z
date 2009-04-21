@@ -65,7 +65,7 @@ while ($site = oci_fetch_array ($st, OCI_RETURN_NULLS)) {
 	foreach ($res as $key => $val) {
 		$hosts = split ("\|", $key);
 		$host = $hosts[1];
-		$strs = unpack ("Its/a*sn/", $val);
+		$strs = unpack ("Its/Iasd/a*sn/", $val);
 		if (strlen ($strs["sn"])) {
 			$serials = split (": ", $strs["sn"]);
 			$serial = trim ($serials[1]);
