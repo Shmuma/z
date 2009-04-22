@@ -37,6 +37,8 @@
 # endif
 
 
+extern int CONFIG_MEMCACHE_META_TTL;
+
 /* global file descriptors */
 static int function_val_fd = -1;
 
@@ -658,17 +660,23 @@ hfs_meta_t *read_metafile(const char *metafile, const char* siteid)
 		return NULL;
 
 #ifdef HAVE_MEMCACHE
-	buf = memcache_zbx_read_val (siteid, metafile, &len);
+	p = buf = memcache_zbx_read_val (siteid, metafile, &len);
+
+	if (buf) {
+		res->last_write = *(hfs_time_t*)buf;
+		p = buf + sizeof (hfs_time_t);
+	}
 #endif
 
 	if (!buf) {
-		/* if we have no file, create empty one */
+		/* if we have no file, create an empty one */
 		if ((fd = open(metafile, O_RDONLY)) < 0) {
 			res->blocks = 0;
 			res->last_delay = 0;
 			res->last_type = IT_DOUBLE;
 			res->last_ofs = 0;
 			res->meta = NULL;
+			res->last_write = 0;
 			return res;
 		}
 
@@ -678,6 +686,8 @@ hfs_meta_t *read_metafile(const char *metafile, const char* siteid)
 
 		/* read whole file into buffer (we hope) */
 		len = read (fd, buf, st.st_size);
+		res->last_write = time (NULL);
+		p = buf;
 	}
 
 	if (len < sizeof (hfs_meta_t) - sizeof (res->meta)) {
@@ -688,10 +698,9 @@ hfs_meta_t *read_metafile(const char *metafile, const char* siteid)
 		return NULL;
 	}
 
-	p = buf;
-	memcpy (res, p, sizeof (hfs_meta_t) - sizeof (res->meta));
-	p += sizeof (hfs_meta_t) - sizeof (res->meta);
-	len -= sizeof (hfs_meta_t) - sizeof (res->meta);
+	memcpy (res, p, sizeof (hfs_meta_t) - sizeof (res->meta) - sizeof (hfs_time_t));
+	p += sizeof (hfs_meta_t) - sizeof (res->meta) - sizeof (hfs_time_t);
+	len -= sizeof (hfs_meta_t) - sizeof (res->meta) - sizeof (hfs_time_t);
 
 	res->meta = (hfs_meta_item_t *) malloc(sizeof(hfs_meta_item_t)*res->blocks);
         if (!res->meta) {
@@ -739,8 +748,8 @@ char* buffer_metafile (hfs_meta_t* meta, hfs_meta_item_t* extra, int* length)
 
 	*length = len;
 
-	memcpy (buf, meta, sizeof (hfs_meta_t) - sizeof (meta->meta));
-	p = buf + sizeof (hfs_meta_t) - sizeof (meta->meta);
+	memcpy (buf, meta, sizeof (hfs_meta_t) - sizeof (meta->meta) - sizeof (hfs_time_t));
+	p = buf + sizeof (hfs_meta_t) - sizeof (meta->meta) - sizeof (hfs_time_t);
 
 	for (i = 0; i < meta->blocks - (extra ? 1 : 0); i++) {
 		memcpy (p, meta->meta+i, sizeof (hfs_meta_item_t));
@@ -757,8 +766,9 @@ char* buffer_metafile (hfs_meta_t* meta, hfs_meta_item_t* extra, int* length)
 int write_metafile (const char* filename, hfs_meta_t* meta, hfs_meta_item_t* extra)
 {
 	int fd;
-	unsigned char* buf;
+	unsigned char* buf, *buf2;
 	int len;
+	int flush = 1;
 
 	buf = buffer_metafile (meta, extra, &len);
 
@@ -766,18 +776,24 @@ int write_metafile (const char* filename, hfs_meta_t* meta, hfs_meta_item_t* ext
 		return 0;
 
 #ifdef HAVE_MEMCACHE
-	
+	flush = (time () - meta->last_write) < CONFIG_MEMCACHE_META_TTL;
+	buf2 = (char*)malloc (len + sizeof (hfs_time_t));
+	if (buf2) {
+		*(hfs_time_t*)buf2 = meta->last_write;
+		memcpy (buf2 + sizeof (hfs_time_t), buf, len);
+		memcache_zbx_save_val (filename, buf2, len+sizeof (hfs_time_t), 0);
+	}
 #endif
 
-        if ((fd = xopen (filename, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
-		return 0;
+	if (flush) {
+		if ((fd = xopen (filename, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1) {
+			free (buf);
+			return 0;
+		}
 
-	write (fd, buf, len);
-	close (fd);
-
-#ifdef HAVE_MEMCACHE
-	memcache_zbx_save_val (filename, buf, len, 0);
-#endif
+		write (fd, buf, len);
+		close (fd);
+	}
 
 	free (buf);
 	return 1;

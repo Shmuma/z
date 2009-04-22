@@ -17,6 +17,7 @@ typedef struct __attribute__ ((packed)) hfs_meta {
     item_type_t last_type;
     hfs_off_t last_ofs;
     hfs_meta_item_t* meta;
+    hfs_time_t last_write;
 } hfs_meta_t;
 
 

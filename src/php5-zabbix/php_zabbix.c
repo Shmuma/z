@@ -150,6 +150,7 @@ PHP_FUNCTION(zabbix_hfs_read_history)
 	size_t sizex = 0;
 	long long itemid = 0;
 
+	memcache_zbx_prepare_conn_table (ZABBIX_GLOBAL(sites_memcache));
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sllllll", &site, &site_len, &sizex, &itemid, &graph_from, &graph_to, &from, &to) == FAILURE)
 		RETURN_FALSE;
 
@@ -198,6 +199,7 @@ PHP_FUNCTION(zabbix_hfs_read_trends)
 	size_t sizex = 0;
 	long long itemid = 0;
 
+	memcache_zbx_prepare_conn_table (ZABBIX_GLOBAL(sites_memcache));
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sllllll", &site, &site_len, &sizex, &itemid, &graph_from, &graph_to, &from, &to) == FAILURE)
 		RETURN_FALSE;
 
@@ -264,6 +266,7 @@ PHP_FUNCTION(zabbix_hfs_read)
 	time_t from = 0, to = 0;
 	long long itemid = 0;
 
+	memcache_zbx_prepare_conn_table (ZABBIX_GLOBAL(sites_memcache));
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "slll", &site, &site_len, &itemid, &from, &to) == FAILURE)
 		RETURN_FALSE;
 
@@ -315,6 +318,7 @@ PHP_FUNCTION(zabbix_hfs_read_str)
 	time_t from = 0, to = 0;
 	long long itemid = 0;
 
+	memcache_zbx_prepare_conn_table (ZABBIX_GLOBAL(sites_memcache));
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "slll", &site, &site_len, &itemid, &from, &to) == FAILURE)
 		RETURN_FALSE;
 
@@ -364,6 +368,7 @@ PHP_FUNCTION(zabbix_hfs_read_log)
 	long long itemid = 0;
 	zval *z_obj;
 
+	memcache_zbx_prepare_conn_table (ZABBIX_GLOBAL(sites_memcache));
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "slllsl", &site, &site_len, &itemid, &from, &to,
 				  &filter, &filter_len, &filter_include) == FAILURE)
 		RETURN_FALSE;
@@ -438,6 +443,7 @@ PHP_FUNCTION(zabbix_hfs_last)
 	int site_len = 0;
 	struct items_array res;
 
+	memcache_zbx_prepare_conn_table (ZABBIX_GLOBAL(sites_memcache));
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll", &site, &site_len, &itemid, &count) == FAILURE)
 		RETURN_FALSE;
 
@@ -492,6 +498,7 @@ PHP_FUNCTION(zabbix_hfs_last_str)
 	long long count = 0;
 	long long itemid = 0;
 
+	memcache_zbx_prepare_conn_table (ZABBIX_GLOBAL(sites_memcache));
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll", &site, &site_len, &itemid, &count) == FAILURE)
 		RETURN_FALSE;
 
@@ -542,6 +549,7 @@ PHP_FUNCTION(zabbix_hfs_hosts_availability)
 	hfs_host_status_t* statuses;
 	char buf[100];
 
+	memcache_zbx_prepare_conn_table (ZABBIX_GLOBAL(sites_memcache));
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &site, &site_len) == FAILURE)
 		RETURN_FALSE;
 
@@ -732,6 +740,7 @@ PHP_FUNCTION(zabbix_hfs_triggers_values)
         hfs_trigger_value_t* values;
         char buf[100];
 
+	memcache_zbx_prepare_conn_table (ZABBIX_GLOBAL(sites_memcache));
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &site, &site_len) == FAILURE)
 		RETURN_FALSE;
 
@@ -792,6 +801,7 @@ PHP_FUNCTION(zabbix_hfs_trigger_events)
 	int site_len = 0, res_count;
 	hfs_event_value_t* res;
 
+	memcache_zbx_prepare_conn_table (ZABBIX_GLOBAL(sites_memcache));
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll", &site, &site_len, &triggerid, &count) == FAILURE)
 		RETURN_FALSE;
 
@@ -828,6 +838,7 @@ PHP_FUNCTION(zabbix_hfs_host_events)
 	int site_len = 0, res_count;
 	hfs_event_value_t* res;
 
+	memcache_zbx_prepare_conn_table (ZABBIX_GLOBAL(sites_memcache));
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "slll", &site, &site_len, &hostid, &skip, &count) == FAILURE)
 		RETURN_FALSE;
 
@@ -880,6 +891,7 @@ PHP_FUNCTION(zabbix_hfs_get_alerts)
 	int res_count, i;
 	hfs_alert_value_t* alerts = NULL;
 
+	memcache_zbx_prepare_conn_table (ZABBIX_GLOBAL(sites_memcache));
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll", &site, &site_len, &skip, &count) == FAILURE)
 		RETURN_FALSE;
 

@@ -205,6 +205,7 @@ char	*CONFIG_HFS_PATH		= NULL;
 #ifdef HAVE_MEMCACHE
 char *CONFIG_MEMCACHE_SERVER		= NULL;
 int CONFIG_MEMCACHE_ITEMS_TTL		= 30;
+int CONFIG_MEMCACHE_META_TTL		= 60;
 #endif
 
 /******************************************************************************
@@ -273,6 +274,7 @@ void	init_config(void)
 #ifdef HAVE_MEMCACHE
 		{"MemcacheServers",&CONFIG_MEMCACHE_SERVER,0,TYPE_STRING,PARM_OPT,0,0},
 		{"MemcacheItemsTTL",&CONFIG_MEMCACHE_ITEMS_TTL,0,TYPE_INT,PARM_OPT,0,0},
+		{"MemcacheMetaTTL",&CONFIG_MEMCACHE_META_TTL,0,TYPE_INT,PARM_OPT,0,0},
 #endif
 		{0}
 	};
