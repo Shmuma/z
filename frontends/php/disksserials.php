@@ -1,10 +1,9 @@
-<html>
-<body>
 <?php
+	header ("Content-Type: text/plain");
 
 function error ($msg)
 {
-	print "<b>$msg</b></body></html>";
+	print "Error: $msg";
 	exit;
 }
 
@@ -66,11 +65,11 @@ while ($site = oci_fetch_array ($st, OCI_RETURN_NULLS)) {
 	foreach ($res as $key => $val) {
 		$hosts = split ("\|", $key);
 		$host = $hosts[1];
-		$strs = unpack ("Its/a*sn/", $val);
+		$strs = unpack ("Its/Iasd/a*sn/", $val);
 		if (strlen ($strs["sn"])) {
 			$serials = split (": ", $strs["sn"]);
-			$serial = $serials[1];
-			print "$host,$serial,$strs[ts]<br>";
+			$serial = trim ($serials[1]);
+			print "$host,$serial,$strs[ts]\n";
 		}
 	}
 
@@ -80,6 +79,3 @@ while ($site = oci_fetch_array ($st, OCI_RETURN_NULLS)) {
 oci_close ($conn);
 
 ?>
-
-</body>
-</html>

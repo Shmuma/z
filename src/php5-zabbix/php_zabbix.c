@@ -579,6 +579,7 @@ PHP_FUNCTION(zabbix_hfs_update_item_status)
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll", &site, &site_len, &itemid, &status) == FAILURE)
 		RETURN_FALSE;
 
+	memcache_zbx_prepare_conn_table (ZABBIX_GLOBAL(sites_memcache));
         HFS_update_item_status (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, status, NULL);
 }
 /* }}} */
@@ -596,6 +597,7 @@ PHP_FUNCTION(zabbix_hfs_item_status)
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl", &site, &site_len, &itemid) == FAILURE)
 		RETURN_FALSE;
 
+	memcache_zbx_prepare_conn_table (ZABBIX_GLOBAL(sites_memcache));
 	if (!HFS_get_item_status (ZABBIX_GLOBAL(hfs_base_dir), site, itemid, &status, &error))
 		RETURN_FALSE;
 
