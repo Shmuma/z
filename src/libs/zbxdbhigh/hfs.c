@@ -2365,6 +2365,8 @@ void HFS_update_item_status (const char* hfs_base_dir, const char* siteid, zbx_u
 {
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemStatus);
 	int fd;
+	int len;
+	char* buf, *p;
 
 	if (!name)
 		return;
@@ -2379,15 +2381,31 @@ void HFS_update_item_status (const char* hfs_base_dir, const char* siteid, zbx_u
 		free (name);
 		return;
 	}
-	free (name);
 
-	/* lock obtained, write data */
-	if (write (fd, &status, sizeof (status)) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_update_item_status: write(): %s", strerror(errno));
+	/* make buffer */
+	len = sizeof (status) + str_buffer_length (error);
+	buf = malloc (len);
 
-	write_str (fd, error);
+	if (!len) {
+		close (fd);
+		free (name);
+		return;
+	}
 
+	*(int*)buf = status;
+	p = buf + sizeof (status);
+	buffer_str (p, error, len - sizeof (status));
+
+	write (fd, buf, len);
 	close (fd);
+
+#ifdef HAVE_MEMCACHE
+	/* cache item's status in memcache */
+	memcache_zbx_save_val_ext (siteid, name, buf, len, 0);
+#endif
+
+	free (buf);
+	free (name);
 }
 
 
@@ -2395,25 +2413,60 @@ int HFS_get_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint6
 {
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemStatus);
 	int fd;
+	char* buf;
+	int len;
+	struct stat st;
 
 	if (!name)
 		return 0;
 
-	/* open file for reading */
-	fd = open (name, O_RDONLY);
-	if (fd < 0) {
-		zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_status: open(): %s: %s", name, strerror(errno));
-		free (name);
-		return 0;
+#ifdef HAVE_MEMCACHE
+	/* first check in memcache */
+	buf = memcache_zbx_read_val (sitid, name, &len);
+#endif
+
+	if (!buf) {
+		/* read from file and allocate buffer for data */
+		/* open file for reading */
+		fd = open (name, O_RDONLY);
+		if (fd < 0) {
+			zabbix_log(LOG_LEVEL_DEBUG, "HFS_get_item_status: open(): %s: %s", name, strerror(errno));
+			free (name);
+			return 0;
+		}
+
+		if (!fstat (fd, &st)) {
+			len = st.st_size;
+			buf = (char*)malloc (len);
+
+			if (!buf || read (buf, fd, len) != len) {
+				if (buf)
+					free (buf);
+				close (fd);
+				free (name);
+				return 0;
+			}
+		}
+		else {
+			close (fd);
+			free (name);
+			return 0;
+		}
+
+		close (fd);
 	}
+
+	/* unbuffer data */
+	*status = *(int*)buf;
+	*error = unbuffer_str (buf + sizeof (*status));
+
+#ifdef HAVE_MEMCACHE
+	/* cache item's status in memcache for future generations */
+	memcache_zbx_save_val_ext (siteid, name, buf, len, 0);
+#endif
+
 	free (name);
-
-	/* reading data */
-	if (read (fd, status, sizeof (*status)) == -1)
-		zabbix_log(LOG_LEVEL_CRIT, "HFS_get_item_status: read(): %s", strerror(errno));
-	*error = read_str (fd);
-
-	close (fd);
+	free (buf);
 	return 1;
 }
 

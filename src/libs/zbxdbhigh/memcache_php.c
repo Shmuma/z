@@ -174,6 +174,26 @@ int memcache_zbx_save_val (const char* key, void* value, int val_len, int ttl)
 }
 
 
+/* save value to memcache. Returns 0 if save failed, 1 otherise */
+int memcache_zbx_save_val_ext (const char* site, const char* key, void* value, int val_len, int ttl)
+{
+	memcached_return rc;
+	memsite_item_t* conn;
+
+	if ((conn = memcache_zbx_site_lookup (site)) == NULL)
+		return 0;
+
+	rc = memcached_set (conn->conn, key, strlen (key), value, val_len, (time_t)ttl, 0);
+	if (rc == MEMCACHED_ERRNO) {
+		/* trying to reconnect */
+		memcache_zbx_reconnect (conn);
+	}
+
+	return 1;
+}
+
+
+
 
 /* fetch value from memcache. Return NULL if fetch failed. Return value must bee freed */
 void* memcache_zbx_read_val (const char* site, const char* key, size_t* val_len)
