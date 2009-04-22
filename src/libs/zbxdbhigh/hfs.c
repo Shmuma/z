@@ -722,25 +722,22 @@ hfs_meta_t* read_meta (const char* hfs_base_dir, const char* siteid, zbx_uint64_
 }
 
 
+/* serialize metafile */
 /* Write metafile. If extra argument passed, it also will be
    written. Warning! If extra is not NULL, meta->blocks must be
    already incremented.  */
-int write_metafile (const char* filename, hfs_meta_t* meta, hfs_meta_item_t* extra)
+char* buffer_metafile (hfs_meta_t* meta, hfs_meta_item_t* extra, int* length)
 {
-	int fd;
-	unsigned char* buf = NULL, *p;
 	int len, i;
-
-        if ((fd = xopen (filename, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
-		return 0;
+	char* buf = NULL, *p;
 
 	len = sizeof (hfs_meta_t) - sizeof (meta->meta) + meta->blocks * sizeof (hfs_meta_item_t);
 	buf = (unsigned char*)malloc (len);
 
-	if (!buf) {
-		close (fd);
-		return 0;
-	}
+	if (!buf)
+		return NULL;
+
+	*length = len;
 
 	memcpy (buf, meta, sizeof (hfs_meta_t) - sizeof (meta->meta));
 	p = buf + sizeof (hfs_meta_t) - sizeof (meta->meta);
@@ -752,6 +749,28 @@ int write_metafile (const char* filename, hfs_meta_t* meta, hfs_meta_item_t* ext
 
 	if (extra)
 		memcpy (p, extra, sizeof (hfs_meta_item_t));
+
+	return buf;
+}
+
+
+int write_metafile (const char* filename, hfs_meta_t* meta, hfs_meta_item_t* extra)
+{
+	int fd;
+	unsigned char* buf;
+	int len;
+
+	buf = buffer_metafile (meta, extra, &len);
+
+	if (!buf)
+		return 0;
+
+#ifdef HAVE_MEMCACHE
+	
+#endif
+
+        if ((fd = xopen (filename, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) == -1)
+		return 0;
 
 	write (fd, buf, len);
 	close (fd);
