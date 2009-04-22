@@ -2413,7 +2413,7 @@ int HFS_get_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint6
 {
 	char* name = get_name (hfs_base_dir, siteid, itemid, NK_ItemStatus);
 	int fd;
-	char* buf;
+	char* buf, *p;
 	int len;
 	struct stat st;
 
@@ -2422,7 +2422,7 @@ int HFS_get_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint6
 
 #ifdef HAVE_MEMCACHE
 	/* first check in memcache */
-	buf = memcache_zbx_read_val (sitid, name, &len);
+	buf = memcache_zbx_read_val (siteid, name, &len);
 #endif
 
 	if (!buf) {
@@ -2439,7 +2439,7 @@ int HFS_get_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint6
 			len = st.st_size;
 			buf = (char*)malloc (len);
 
-			if (!buf || read (buf, fd, len) != len) {
+			if (!buf || read (fd, buf, len) != len) {
 				if (buf)
 					free (buf);
 				close (fd);
@@ -2458,7 +2458,8 @@ int HFS_get_item_status (const char* hfs_base_dir, const char* siteid, zbx_uint6
 
 	/* unbuffer data */
 	*status = *(int*)buf;
-	*error = unbuffer_str (buf + sizeof (*status));
+	p = buf + sizeof (*status);
+	*error = unbuffer_str (&p);
 
 #ifdef HAVE_MEMCACHE
 	/* cache item's status in memcache for future generations */
