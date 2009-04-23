@@ -40,6 +40,8 @@ int debug;
 char *sites_memcache;
 ZEND_END_MODULE_GLOBALS(zabbix)
 
+int CONFIG_MEMCACHE_META_TTL;
+
 #ifdef ZTS
 # define ZABBIX_GLOBAL(v) TSRMG(zabbix_globals_id, zend_zabbix_globals *, v)
 #else
