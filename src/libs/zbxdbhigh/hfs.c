@@ -644,6 +644,7 @@ void foldl_count (const char* hfs_base_dir, const char* siteid, zbx_uint64_t ite
     close (fd);
 }
 
+
 hfs_meta_t *read_metafile(const char *metafile, const char* siteid)
 {
 	hfs_meta_t *res;
@@ -665,6 +666,7 @@ hfs_meta_t *read_metafile(const char *metafile, const char* siteid)
 	if (buf) {
 		res->last_write = *(hfs_time_t*)buf;
 		p = buf + sizeof (hfs_time_t);
+		len -= sizeof (hfs_time_t);
 	}
 #endif
 
@@ -690,7 +692,7 @@ hfs_meta_t *read_metafile(const char *metafile, const char* siteid)
 		p = buf;
 	}
 
-	if (len < sizeof (hfs_meta_t) - sizeof (res->meta)) {
+	if (len < sizeof (hfs_meta_t) - sizeof (res->meta) - sizeof (hfs_time_t)) {
 		if (fd >= 0)
 			close (fd);
 		free (res);
@@ -713,6 +715,11 @@ hfs_meta_t *read_metafile(const char *metafile, const char* siteid)
 
 	if (len == sizeof (hfs_meta_item_t) * res->blocks)
 		memcpy (res->meta, p, sizeof (hfs_meta_item_t) * res->blocks);
+	else {
+		free (res->meta);
+		free (res);
+		res = NULL;
+	}
 
 	if (fd >= 0)
 		close (fd);
@@ -740,7 +747,7 @@ char* buffer_metafile (hfs_meta_t* meta, hfs_meta_item_t* extra, int* length)
 	int len, i;
 	char* buf = NULL, *p;
 
-	len = sizeof (hfs_meta_t) - sizeof (meta->meta) + meta->blocks * sizeof (hfs_meta_item_t);
+	len = sizeof (hfs_meta_t) - sizeof (meta->meta) - sizeof (hfs_time_t) + meta->blocks * sizeof (hfs_meta_item_t);
 	buf = (unsigned char*)malloc (len);
 
 	if (!buf)
@@ -776,12 +783,15 @@ int write_metafile (const char* filename, hfs_meta_t* meta, hfs_meta_item_t* ext
 		return 0;
 
 #ifdef HAVE_MEMCACHE
-	flush = (time () - meta->last_write) < CONFIG_MEMCACHE_META_TTL;
+	flush = (time (NULL) - meta->last_write) > CONFIG_MEMCACHE_META_TTL;
 	buf2 = (char*)malloc (len + sizeof (hfs_time_t));
 	if (buf2) {
+		if (flush)
+			meta->last_write = time (NULL);
 		*(hfs_time_t*)buf2 = meta->last_write;
 		memcpy (buf2 + sizeof (hfs_time_t), buf, len);
 		memcache_zbx_save_val (filename, buf2, len+sizeof (hfs_time_t), 0);
+		free (buf2);
 	}
 #endif
 

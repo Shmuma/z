@@ -10,6 +10,7 @@ char *help_message[] = { "Help", 0 };
 
 zbx_process_type_t process_type = -1;
 
+int CONFIG_MEMCACHE_META_TTL;
 int CONFIG_MEMCACHE_ITEMS_TTL;
 size_t DB_ITEM_OFFSETS[CHARS_LEN_MAX];
 char *CONFIG_MEMCACHE_SERVER;
