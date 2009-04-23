@@ -55,7 +55,7 @@ static zbx_uint64_t mtr_items_count = 0;
 static metric_key_t key_items_count;
 
 
-#define POLLER_GROUP_INTERVAL 120
+#define POLLER_GROUP_INTERVAL 600
 
 
 int	get_value(DB_ITEM *item, AGENT_RESULT *result)
