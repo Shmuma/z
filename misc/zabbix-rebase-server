@@ -2,27 +2,64 @@
 
 use IO::Socket;
 
-$socket = IO::Socket::INET->new (
-    PeerAddr => "setup.yandex.net",
-    PeerPort => 80,
-    Type => SOCK_STREAM) or die "Cannot connect to setup.yandex.net for rebase: $@\n";
+my $found = 0;
+my $dcname, $srv;
 
-$req = <<EOF;
+# check for make.conf DC setting (NOC's FreeBSD systems)
+if (-r "/etc/make.conf") {
+    open MK, "/etc/make.conf" || last;
+
+    while (<MK>) {
+        chomp;
+        print "$_\n";
+        if (/^\s*OURDC_NAME\s*=\s*(.*)\s*$/) {
+            $found = 1;
+            $dcname = lc ($1);
+            last;
+        }
+    }
+
+    close MK;
+
+    # normalize name
+    if ($found) {
+        if ($dcname eq "3") {
+            $dcname = "dc3";
+        } elsif ($dcname eq "iva") {
+            $dcname = "iva1";
+        } elsif ($dcname eq "ugr" || $dcname eq "fian" || $dcname eq "eto") {
+            # nothing to do
+        } else {
+            $dcname = "fian";
+        }
+    }
+    $srv = "monitor-$dcname.yandex.net";
+}
+
+if (!$found) {
+    $socket = IO::Socket::INET->new (
+        PeerAddr => "setup.yandex.net",
+        PeerPort => 80,
+        Type => SOCK_STREAM) or die "Cannot connect to setup.yandex.net for rebase: $@\n";
+
+    $req = <<EOF;
 GET /cgi-bin/get_monitoring_master HTTP/1.0
 
 EOF
 
-print $socket $req;
+    print $socket $req;
 
-while (<$socket>) {
-    chomp;
-    last if /^\s*$/;
+    while (<$socket>) {
+        chomp;
+        last if /^\s*$/;
+    }
+
+    $srv = <$socket>;
+
+    close ($socket);
 }
 
-$srv = <$socket>;
 print "Got new monitor server name: $srv";
-
-close ($socket);
 
 $cfg = "/etc/";
 $cfg = "/usr/local$cfg" if $0 =~ /^\/usr\/local/;
