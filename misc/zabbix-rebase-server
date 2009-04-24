@@ -11,7 +11,6 @@ if (-r "/etc/make.conf") {
 
     while (<MK>) {
         chomp;
-        print "$_\n";
         if (/^\s*OURDC_NAME\s*=\s*(.*)\s*$/) {
             $found = 1;
             $dcname = lc ($1);
