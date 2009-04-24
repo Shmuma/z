@@ -245,7 +245,7 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
 	meta->last_delay = delay;
 	meta->last_type = type;
 
-	if (!write_metafile (p_meta, meta, &item))
+	if (!write_metafile (p_meta, meta, &item, type == IT_TRENDS))
 		goto err_exit;
 
 	/* append data */
@@ -310,7 +310,7 @@ int hfs_store_values (const char* p_meta, const char* p_data, hfs_time_t clock, 
         if (ip->end < clock + delay*(count-1))
             ip->end = clock + delay*(count-1);
 
-	write_metafile (p_meta, meta, NULL);
+	write_metafile (p_meta, meta, NULL, type == IT_TRENDS);
 	retval = 0;
     }
 
@@ -770,7 +770,7 @@ char* buffer_metafile (hfs_meta_t* meta, hfs_meta_item_t* extra, int* length)
 }
 
 
-int write_metafile (const char* filename, hfs_meta_t* meta, hfs_meta_item_t* extra)
+int write_metafile (const char* filename, hfs_meta_t* meta, hfs_meta_item_t* extra, int wo_cache)
 {
 	int fd;
 	unsigned char* buf, *buf2;
@@ -783,15 +783,17 @@ int write_metafile (const char* filename, hfs_meta_t* meta, hfs_meta_item_t* ext
 		return 0;
 
 #ifdef HAVE_MEMCACHE
-	flush = (time (NULL) - meta->last_write) > CONFIG_MEMCACHE_META_TTL;
-	buf2 = (char*)malloc (len + sizeof (hfs_time_t));
-	if (buf2) {
-		if (flush)
-			meta->last_write = time (NULL);
-		*(hfs_time_t*)buf2 = meta->last_write;
-		memcpy (buf2 + sizeof (hfs_time_t), buf, len);
-		memcache_zbx_save_val (filename, buf2, len+sizeof (hfs_time_t), 0);
-		free (buf2);
+	if (!wo_cache) {
+		flush = (time (NULL) - meta->last_write) > CONFIG_MEMCACHE_META_TTL;
+		buf2 = (char*)malloc (len + sizeof (hfs_time_t));
+		if (buf2) {
+			if (flush)
+				meta->last_write = time (NULL);
+			*(hfs_time_t*)buf2 = meta->last_write;
+			memcpy (buf2 + sizeof (hfs_time_t), buf, len);
+			memcache_zbx_save_val (filename, buf2, len+sizeof (hfs_time_t), 0);
+			free (buf2);
+		}
 	}
 #endif
 
