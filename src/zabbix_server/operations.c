@@ -207,6 +207,7 @@ static void run_remote_command(char* host_name, char* command)
 		item.useip=atoi(row[2]);
 		item.port=atoi(row[3]);
 		item.host_dns=row[4];
+		item.key = (char*)malloc (ITEM_KEY_LEN_MAX);
 		
 		zbx_snprintf(item.key,ITEM_KEY_LEN_MAX,"system.run[%s,nowait]",command);
 		
@@ -214,6 +215,7 @@ static void run_remote_command(char* host_name, char* command)
 		
 		ret = get_value_agent(&item, &agent_result);
 
+		free (item.key);
 		alarm(0);
 	}
 	DBfree_result(result);
