@@ -210,14 +210,14 @@ int main_alerter_loop()
 
 		/* if we have passed another minute, update jabber status (if we have such media defined and active) */
 #if defined (HAVE_JABBER)
-		if (now / 60 != prev_min) {
+		if (now / 600 != prev_min) {
 			result = DBselect ("select username, passwd from media_type where type=%d", ALERT_TYPE_JABBER);
 
 			while (row = DBfetch (result))
 				jabber_idle (row[0], row[1], error, sizeof (error));
 
 			DBfree_result (result);
-			prev_min = now / 60;
+			prev_min = now / 600;
 		}
 #endif /* HAVE_JABBER */
 
