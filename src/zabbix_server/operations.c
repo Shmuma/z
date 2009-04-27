@@ -206,7 +206,8 @@ static void run_remote_command(char* host_name, char* command)
 		item.host_ip=row[1];
 		item.useip=atoi(row[2]);
 		item.port=atoi(row[3]);
-		item.host_dns=row[4];
+		item.host_dns = row[4];
+		item.value_type = ITEM_VALUE_TYPE_STR;
 		item.key = (char*)malloc (ITEM_KEY_LEN_MAX);
 		
 		zbx_snprintf(item.key,ITEM_KEY_LEN_MAX,"system.run[%s,nowait]",command);
