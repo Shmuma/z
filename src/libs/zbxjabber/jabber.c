@@ -525,12 +525,13 @@ int	send_jabber(char *username, char *passwd, char *sendto, char *message, char 
 int	jabber_idle (char* username, char* passwd, char *error, int max_error_len)
 {
 	int ret = FAIL;
-	static char buf[256];
+	static char buf[2560];
 
 	if (ensure_connected (username, passwd, error, max_error_len) != SUCCEED)
 		return FAIL;
 
-	snprintf (buf, sizeof (buf), "Idle for %d minute(s)", ++idle_minutes);
+	idle_minutes++;
+	snprintf (buf, sizeof (buf), "Idle for %d minute(s)", 10*idle_minutes);
 
 	return update_status (buf);
 }
