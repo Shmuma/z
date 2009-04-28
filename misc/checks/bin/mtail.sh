@@ -5,7 +5,7 @@
 
 [ $# -ne 2 ] && echo "Usage: mtail.sh filename id_string" && exit 1
 
-STATE_PATH=/tmp/zabbix/mtail/
+STATE_PATH=/var/spool/zabbix/mtail/
 
 case `uname` in
     Linux)
