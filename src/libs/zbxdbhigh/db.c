@@ -46,7 +46,7 @@
 
 extern char* CONFIG_HFS_PATH;
 extern char* CONFIG_SERVER_SITE;
-extern char* CONFIG_DEPENDENCY_THRESHOLD;
+extern int CONFIG_DEPENDENCY_THRESHOLD;
 
 void	DBclose(void)
 {
