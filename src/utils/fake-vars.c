@@ -16,7 +16,7 @@ size_t DB_ITEM_OFFSETS[CHARS_LEN_MAX];
 char *CONFIG_MEMCACHE_SERVER;
 char *CONFIG_HFS_PATH;
 char *CONFIG_SERVER_SITE;
-
+int CONFIG_DEPENDENCY_THRESHOLD		= 10;
 
 char   *CONFIG_DBHOST                  = NULL;
 char   *CONFIG_DBNAME                  = NULL;
