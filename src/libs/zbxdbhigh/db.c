@@ -46,6 +46,7 @@
 
 extern char* CONFIG_HFS_PATH;
 extern char* CONFIG_SERVER_SITE;
+extern char* CONFIG_DEPENDENCY_THRESHOLD;
 
 void	DBclose(void)
 {
@@ -426,7 +427,8 @@ static int	trigger_dependent_rec(zbx_uint64_t triggerid, int *level)
 	DB_RESULT	result;
 	DB_ROW		row;
 
-	zbx_uint64_t	triggerid_tmp;
+	zbx_uint64_t	triggerid_tmp, lastchange;
+	time_t		now = time (NULL);
 	int		value_tmp;
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In trigger_dependent_rec(triggerid:" ZBX_FS_UI64 ",level:%d)",
@@ -442,12 +444,20 @@ static int	trigger_dependent_rec(zbx_uint64_t triggerid, int *level)
 		return ret;
 	}
 
-	result = DBselect("select t.triggerid, t.value from trigger_depends d,triggers t where d.triggerid_down=" ZBX_FS_UI64 " and d.triggerid_up=t.triggerid",
+	result = DBselect("select t.triggerid, t.value, t.lastchange from trigger_depends d,triggers t where d.triggerid_down=" ZBX_FS_UI64 " and d.triggerid_up=t.triggerid",
 		triggerid);
 	while((row=DBfetch(result)))
 	{
 		ZBX_STR2UINT64(triggerid_tmp, row[0]);
 		value_tmp = atoi(row[1]);
+		ZBX_STR2UINT64(lastchange, row[2]);
+		if (now - lastchange < CONFIG_DEPENDENCY_THRESHOLD*60) {
+			zabbix_log (LOG_LEVEL_DEBUG, "Trigger depends on " ZBX_FS_UI64 " which changed %d minutes ago. Will not apply actions.", 
+				    triggerid_tmp, (int)(now-lastchange));
+			ret = SUCCEED;
+			break;
+		}
+
 		if(TRIGGER_VALUE_TRUE == value_tmp || trigger_dependent_rec(triggerid_tmp, level) == SUCCEED)
 		{
 			zabbix_log( LOG_LEVEL_DEBUG, "This trigger depends on " ZBX_FS_UI64 ". Will not apply actions",
@@ -455,6 +465,7 @@ static int	trigger_dependent_rec(zbx_uint64_t triggerid, int *level)
 			ret = SUCCEED;
 			break;
 		}
+
 	}
 	DBfree_result(result);
 
@@ -522,7 +533,7 @@ int	DBupdate_trigger_value(DB_TRIGGER *trigger, int new_value, int now, char *re
 
 
 	/* New trigger value differs from current one AND ...*/
-	/* ... Do not update status if there are dependencies with status TRUE*/
+	/* ... Do not update status if there are dependencies with status TRUE or not expired threshold*/
 	if(trigger->value != new_value && trigger_dependent(trigger->triggerid) == FAIL)
 	{
 		get_latest_event_status(trigger->triggerid, &event_prev_status, &event_last_status);
