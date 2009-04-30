@@ -506,12 +506,15 @@ static int	trigger_dependent(zbx_uint64_t triggerid)
 	return ret;
 }
 
-int	DBupdate_trigger_value(DB_TRIGGER *trigger, int new_value, int now, char *reason)
+int	DBupdate_trigger_value(DB_TRIGGER *trigger, int new_value, int now, char *reason, int* updated)
 {
 	int	ret = SUCCEED;
 	DB_EVENT	event;
 	int		event_last_status;
 	int		event_prev_status;
+
+	if (updated)
+		*updated = 0;
 
 	if(reason==NULL)
 	{
@@ -533,8 +536,7 @@ int	DBupdate_trigger_value(DB_TRIGGER *trigger, int new_value, int now, char *re
 
 
 	/* New trigger value differs from current one AND ...*/
-	/* ... Do not update status if there are dependencies with status TRUE or not expired threshold*/
-	if(trigger->value != new_value && trigger_dependent(trigger->triggerid) == FAIL)
+	if(trigger->value != new_value)
 	{
 		get_latest_event_status(trigger->triggerid, &event_prev_status, &event_last_status);
 
@@ -563,10 +565,13 @@ int	DBupdate_trigger_value(DB_TRIGGER *trigger, int new_value, int now, char *re
 					reason,
 					trigger->triggerid);
 			}
+			if (updated)
+				*updated = 1;
 		}
 
 		/* Generate also UNKNOWN events, We are not interested in prev trigger value here. */
-		if(event_last_status != new_value)
+		/* ... Do not send events if there are dependencies with status TRUE or not expired threshold*/
+		if(event_last_status != new_value && trigger_dependent(trigger->triggerid) == FAIL)
 		{
 			/* Preparing event for processing */
 			memset(&event,0,sizeof(DB_EVENT));
@@ -607,6 +612,7 @@ void update_triggers_status_to_unknown(zbx_uint64_t hostid,int clock,char *reaso
 	DB_RESULT	result;
 	DB_ROW		row;
 	DB_TRIGGER	trigger;
+	int		updated = 0;
 
 	zabbix_log(LOG_LEVEL_DEBUG,"In update_triggers_status_to_unknown()");
 
@@ -626,8 +632,8 @@ void update_triggers_status_to_unknown(zbx_uint64_t hostid,int clock,char *reaso
 		trigger.value		= atoi(row[5]);
 		trigger.url		= row[6];
 		trigger.comments	= row[7];
-		DBupdate_trigger_value(&trigger,TRIGGER_VALUE_UNKNOWN,clock,reason);
-		if (CONFIG_HFS_PATH && trigger.value != TRIGGER_VALUE_UNKNOWN)
+		DBupdate_trigger_value(&trigger,TRIGGER_VALUE_UNKNOWN,clock,reason, &updated);
+		if (CONFIG_HFS_PATH && updated)
 			HFS_update_trigger_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, trigger.triggerid,
 						  TRIGGER_VALUE_UNKNOWN, clock);
 	}
@@ -806,7 +812,7 @@ void DBupdate_triggers_status_after_restart(void)
 		lastchange=atoi(row2[0]);
 		DBfree_result(result2);
 
-		DBupdate_trigger_value(&trigger,TRIGGER_VALUE_UNKNOWN,lastchange,"ZABBIX was down.");
+		DBupdate_trigger_value(&trigger,TRIGGER_VALUE_UNKNOWN,lastchange,"ZABBIX was down.", NULL);
 	}
 
 	DBfree_result(result);

@@ -227,7 +227,7 @@ void	update_triggers(zbx_uint64_t itemid)
 	DB_ROW		row;
 	hfs_trigger_value_t hfs_val;
 	cache_triggers_t* cache;
-	int i, clean_needed = 0;
+	int i, clean_needed = 0, updated = 0;
 
 	zabbix_log( LOG_LEVEL_DEBUG, "In update_triggers [itemid:" ZBX_FS_UI64 "]",
 		itemid);
@@ -252,8 +252,8 @@ void	update_triggers(zbx_uint64_t itemid)
 		}
 		else
 		{
-			DBupdate_trigger_value(cache->triggers+i, exp_value, time(NULL), NULL);
-			if (CONFIG_HFS_PATH && cache->triggers[i].value != exp_value) {
+			DBupdate_trigger_value(cache->triggers+i, exp_value, time(NULL), NULL, &updated);
+			if (CONFIG_HFS_PATH && updated) {
 				HFS_update_trigger_value (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, cache->triggers[i].triggerid,
 							  exp_value, (hfs_time_t) time(NULL));
 				clean_needed = 1;
