@@ -26,6 +26,10 @@
 	require_once "include/users.inc.php";
 	require_once "include/hfs.inc.php";
 
+	global $USER_DETAILS;
+
+	$USER_DETAILS["options"]["hide_ro_host_groups"] = 0;
+
 	$srctbl		= get_request("srctbl",  '');	// source table name
 
 	switch($srctbl)
