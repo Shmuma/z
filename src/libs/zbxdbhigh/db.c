@@ -596,6 +596,10 @@ int	DBupdate_trigger_value(DB_TRIGGER *trigger, int new_value, int now, char *re
 		}
 		else
 		{
+			/* We won't execute actions but still needs to save trigger changing */
+			HFS_add_event (CONFIG_HFS_PATH, CONFIG_SERVER_SITE, 0, trigger->triggerid,
+                               now, new_value, 0, 0);
+
 			ret = FAIL;
 		}
 	}
