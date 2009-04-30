@@ -526,7 +526,7 @@ int	DBadd_alert(zbx_uint64_t actionid, zbx_uint64_t userid, zbx_uint64_t trigger
 void	DBupdate_triggers_status_after_restart(void);
 int	DBget_prev_trigger_value(zbx_uint64_t triggerid);
 /*int	DBupdate_trigger_value(int triggerid,int value,int clock);*/
-int     DBupdate_trigger_value(DB_TRIGGER *trigger, int new_value, int now, char *reason);
+int     DBupdate_trigger_value(DB_TRIGGER *trigger, int new_value, int now, char *reason, int* updated);
 
 int	DBget_items_count(void);
 int	DBget_items_unsupported_count(void);
