@@ -1,0 +1,31 @@
+Source: zabbix
+Section: net
+Priority: optional
+Maintainer: Max Lapan <lapan@yandex-team.ru>
+Build-Depends: debhelper (>= 4), libsnmp9-dev | libsnmp-dev, dpatch, automake1.9, po-debconf, libldap2-dev, libcurl4-gnutls-dev, libsetproctitle0-dev, pkg-config, libmysqlclient15-dev, libiksemel-dev, fakeroot
+Standards-Version: 3.7.3
+Version: 1.4.4-yandex-hardy60
+ 
+Package: zabbix-agent
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, adduser, logrotate, ucf
+Description: software for monitoring of your networks -- agent
+ Zabbix is an all-in-one 24x7 free monitoring solution for both
+ commercial and non-commercial use. 
+ .
+ Zabbix can be installed on any UNIX platform. It acts as server that 
+ monitors client systems running on different platforms as well as other
+ Network devices. The Software can be used for:
+ .
+  o high level monitoring of IT Services
+  o centralised monitoring of your servers and applications
+  o monitoring of SNMP-enabled devices
+  o performance monitoring (process load, network activity, disk
+    activity, memory usage, OS parameters etc.)
+  o data visualization
+ .
+ and much more.
+ .
+ This package provides all binaries which are needed to integrate
+ a System as zabbix client.
+

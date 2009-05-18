@@ -1,10 +1,10 @@
 #!/bin/sh
 
 case ${1:-incorrect} in
-    sarge|etch|lenny|feisty|gutsy|hardy)
+    sarge|etch|lenny|feisty|gutsy|hardy|intrepid|jaunty)
         ;;
     *)
-        echo "You must specify valid distro as first argument (sarge, etch, lenny, feisty, gutsy, hardy)"
+        echo "You must specify valid distro as first argument (sarge, etch, lenny, feisty, gutsy, hardy, intrepid, jaunty)"
         exit 1
 esac
 
